@@ -6,9 +6,10 @@
 %	REPORT INFORMATION
 %------------------------------------------------------------------------------
 
-\title{ProjectName -- C/Java/Python}
+\title{Carcassonne -- Python}
 \subtitle{Rapport préliminaire}
-\author{Étudiant1, Étudiant2, Étudiant3, Étudiant4, Étudiant5}
+\author{Loïc THIN, Tony HUANG, Clément SIMON, Anthony BEAUVIEUX, Maxence SALIN}
+\date{}
 
 %------------------------------------------------------------------------------
 
@@ -25,79 +26,82 @@
 %	MAIN MATTER
 %------------------------------------------------------------------------------
 
-\section*{Introduction}
+\section{Présentation du jeu}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles, c’est un jeu stochastique à information parfaite conçu pour 2 à 6 joueurs par Klaus-Jürgen Wrede en 2000.
+\textbf{Carcassonne} est initialement conçu pour 2 à 5 joueurs, les extensions du jeu (notamment The River) permettent d'étendre à un sixième joueur.
+La version qui nous intéresse se base sur 72 tuiles, 8 pions par joueur, et l'extension The River qui ajoute 12 nouvelles tuiles.
+Le but du jeu étant que chacun leur tour, les joueurs construisent petit à petit le plateau de jeu en posant des tuiles de manière cohérente au plateau déjà établi tout en plaçant leurs pions de manière stratégique pour accumuler des points.
 
-Pellentesque iaculis molestie euismod. In hac habitasse platea dictumst. Duis eu
-gravida sem. Vivamus pulvinar, tellus auctor sollicitudin iaculis, quam massa
-blandit ligula, in mollis est tellus et velit. Nulla gravida sapien nibh, nec
-faucibus lorem aliquam sed. Curabitur rutrum elit purus, et congue neque
-venenatis vitae. Sed non magna nisi. Pellentesque euismod non ipsum a hendrerit.
-Pellentesque vehicula tincidunt lacinia. Sed rhoncus porttitor facilisis.
 
-Etiam sed molestie odio. Nunc cursus sollicitudin est vitae posuere. Nullam
-pellentesque metus eu dui porttitor bibendum. Morbi egestas arcu ut urna dictum
-placerat non non nisl. Quisque non ante in eros cursus pulvinar. Sed augue
-libero, eleifend a urna eget, pellentesque condimentum odio. Sed sed dui non
-diam mattis interdum eget sed urna. Integer consectetur, erat id rutrum posuere,
-dui velit dictum mi, quis tincidunt magna diam sit amet nunc. Etiam dui augue,
-sollicitudin rhoncus nisl a, rhoncus tempor purus.
+\subsection{Règles}
+\subsubsection{Spécificités}
+\begin{itemize}
+  \item[-] Chaque tuile est carrée et a donc 4 côtés et un centre. Chaque côté a un type parmi Road, City, Field et Stream. le centre peut être spécifié parmi City, Field, Banner, Monastery (On comprendra le sens de ses termes en avançant dans les règles).
+	\item[-] Chaque pion peut devenir un type de personnage différent en fonction du type de partie de tuile sur laquelle il est posé, Il devient un Knight sur une City, un Farmer sur un Field, un Thief sur une Road, et un Monk sur un Monastery
+\end{itemize}
 
-Suspendisse cursus erat et metus fermentum ullamcorper. Etiam eros arcu, dapibus
-quis efficitur ut, congue id nunc. Pellentesque aliquam venenatis convallis.
-Nulla nisi justo, aliquet quis lacus eget, aliquet maximus velit. Maecenas ex
-turpis, iaculis eget dignissim non, efficitur vel mi. Maecenas pharetra elit
-ornare sem suscipit ornare id id sapien. Vivamus sem neque, consectetur vitae
-aliquet non, finibus eu lectus. Fusce aliquam ipsum ut viverra vehicula. Donec
-ultrices varius nulla vel finibus. Donec convallis fringilla ante id porta.
+\subsubsection{Début de partie}
+\begin{itemize}
+  \item[-] 2 à 6 joueurs avec chacun sa couleur.
+	\item[-] 8 pions pour chaque joueur (de la même couleur que le joueur).
+	\item[-] une tuile initiale posée au centre du plateau : Au choix entre la tile Lake et la tile Spring (les deux sont représentées par le code FFSF).
+	\item[-] une pile de 72 tuiles face cachée servant de pioche (les 72 tuiles du jeu initial).
+  \item[-] une pile de 10 tuiles face cachée servant de pioche pour le Stream (les 10 tuiles de The River restantes), on ajoute la tuile restante entre Lake ou Spring en dessous de cette pile.
 
-\section{Première section}
+\end{itemize}
+\subsubsection{Objectif du jeu}
+Évoluer le plateau de jeu avec de nouvelles tuiles de la pioche de manière cohérente et stratégique, avec la possibilité de placer 	un pion sur la tuile posée pour gagner des points et/ou pour empêcher un adversaire de marquer des points. Le gagnant est celui qui a le plus de points à la fin de la partie.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\subsubsection{Règles d'un tour de jeu}
+Il y a deux parties, la construction du Stream, et la suite de la construction du plateau. La première partie prend la pioche du Stream comme la pioche actuelle, la seconde prend l'autre pile de pioche de 72 cartes.
+Chaque joueur dans un ordre prédéfini (souvent en sens horaire en commençant par le joueur le plus jeune) effectue les actions suivantes :
+\begin{itemize}
+  \item[-] Piocher une tuile de la pile de pioche actuelle (visible par les autres joueurs).
+  \item[-] Placer la tuile piochée sur le plateau avec les restrictions suivantes :
+    \begin{itemize}
+      \item[.] La tuile doit être posée avec au moins un côté adjacent aux autres tuiles posées sur le plateau.
+      \item[.] Les côtés de la tuile posée doivent être cohérent avec les côtés concernés des tuiles adjacentes (même type sur les côtés qui se touchent).
+      \item[.] Si on est sur la construction du Stream, on doit forcément connecter le Stream précédent. On doit aussi ne pas tourner deux fois dans le même sens à la suite avec le Stream (voir exemples).
+    \end{itemize}
+  \item[-] (Optionnel) Placer un pion sur une des parties de la tuile qui vient d'être posée (un des quatres côtés ou le centre) hors Stream.
+  \item[-] Si un type de terrain de la tuile posée est relié par ce même type de terrain à un type de terrain d'une tuile déjà occupée par un pion, alors un autre pion ne peut pas être posé dessus (Les Road, Stream et City comptent comme des séparateurs pour les types de terrains).
+  \item[-] Si un type de terrain est complet par la pose de la tuile :
+    \begin{itemize}
+      \item[.] Une Road est complète si ses deux côtés atteignent soit une intersection soit une fin de Road, dans ce cas le joueur qui a un Thief sur cette route remporte un nombre de points égal à la longueur de sa route (nombre de tuiles qui compose la route), en cas d'égalité tous les joueurs qui possèdent le plus de Thief sur la Road remportent les points qu'ils auraient gagné en étant seul.
+      \item[.] Une City est complète si elle est close et sans vide, dans ce cas le joueur qui a le plus de Knight dans la ville remporte 2 points par tuile composant sa City + 2 points par Banner de sa City, en cas d'égalité, on applique la même logique que pour les Road avec les Thief. 
+      \item[.] Un Monastery est complet quand les 8 cases entourant sa tuile sont occupées. Le joueur qui a un Monk dans ce 	Monastery gagne 9 points.
+      \item[.] Le Stream est complet quand il est fermé, dans ce cas le joueur qui le clos finit son tour normalement, puis le jeu continue avec la pile de pioche de 72 cartes.
+      \item[.] Les Fields ne sont résolus qu'à la fin de la partie (ainsi un Farmer posé reste jusqu'à la fin de la partie).
+    \end{itemize}
+  \item[-] Tous les City, Road, Monastery complétés ce tour voient les pions qui leur étaient associés être retirés du plateau et être renvoyés en tant que pions vierges aux joueurs de leur couleur.
+\end{itemize}
 
-\section{Seconde section}
+\subsubsection{Fin de partie}
+Le jeu prend fin quand il n'y a plus de tuiles dans la pioche de 72 cartes. Les joueurs ajoutent à leur score les points des terrains non finies de la manière suivante :
+\begin{itemize}
+  \item[-] Une Road incomplète rapporte un point par tuile la composant pour le joueur ayant le plus de Thief dessus (avec la même logique en cas d'égalité qu'avant)
+  \item[-] Une City incomplète rapporte un point par tuile la composant et pour chaque Banner présente à l'intérieur pour le joueur ayant le plus de Knight dessus (encore une fois même logique en cas d'égalité qu'avant)
+  \item[-] Un Monastery incomplet rapporte un point pour chaque tuile l'entourant (lui compris), rapportant donc de 2 à 8 points.
+  \item[-] Pour les Fields : Chaque Farm (ensemble de Fields, un Field isolé reste une Farm) est possédée par le joueur ayant le plus de Farmer dessus, il gagne alors 3 points par City complétée adjacente à la Farm. En cas d'égalité, on applique le même principe qu'avant.
 
-Voici un exemple de code en Python :
+\end{itemize}
 
-{\large
-  \begin{minted}[frame=single]{python}
-def hello_world():
-    print("Hello, World!")
-hello_world()
-  \end{minted}
-}
+Le joueur ayant le plus de points après affectation des points de fin de partie remporte la partie.
 
-Un exemple d'image flottante (Fig.~\ref{fig:example}).
+\subsection{Complexité}
 
-\begin{figure}[!ht]
-  \centering
-  \frame{\includegraphics[width=.85\textwidth]{layered_architectures.png}}
-  \caption{Une architecture en couches}\label{fig:example}
-\end{figure}
+\textbf{Carcassonne} est un jeu aux règles simples, mais offrant une grande variété de stratégies et actions possibles plus la partie avance.
+Ainsi, sa complexité est comparable aux jeux d'échecs ou de go. La complexité combinatoire du jeu est élevée en raison du grand nombre de tuiles et de la manière dont elles peuvent être placées sur le plateau, ainsi que des différentes stratégies que les joueurs peuvent adopter en fonction des positions des tuiles et des pions.
+Sa complexité d'arbre de jeu est de l'ordre de 10\textsuperscript{194}\cite{heydencarcassonne}, ce qui rend le jeu difficile à résoudre complètement par des méthodes de recherche exhaustive.
+\subsection{Existant}
+Il existe déjà de no
 
-\section*{Conclusion}
+\section{Algorithmes et structures de données}
 
-Suspendisse sit amet nisi placerat, vestibulum nisl vel, iaculis nunc.
-Suspendisse quis libero vel ipsum gravida congue nec id arcu. Donec vel mi
-viverra, commodo urna vitae, tincidunt lectus. Fusce pellentesque, lectus a
-placerat vestibulum, magna lectus placerat nibh, vehicula pellentesque lacus
-erat non nulla. Suspendisse maximus, turpis at suscipit egestas, libero massa
-ultrices libero, at tincidunt velit eros a eros. Maecenas id tempor nunc.
-Phasellus condimentum porttitor sapien in sagittis. Proin in metus diam. Mauris
-in turpis sed ex viverra iaculis. Sed lobortis, tellus vitae congue blandit, leo
-elit auctor libero, id tempor ante dolor quis quam. Donec eget ligula quam.
-Maecenas porttitor massa vel felis elementum tristique.
+\section{Architecture}
+
+\section{Spécifications étendues}
 
 %------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
@@ -106,6 +110,7 @@ Maecenas porttitor massa vel felis elementum tristique.
 \nocite{*}
 \bibliographystyle{plain}
 \bibliography{bibliography}
+
 
 %------------------------------------------------------------------------------
 % BACK MATTER
@@ -120,5 +125,4 @@ nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
 fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
 culpa qui officia deserunt mollit anim id est laborum.
-
 \end{document}
