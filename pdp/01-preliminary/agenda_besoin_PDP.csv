@@ -1,0 +1,41 @@
+﻿Besoin;Ordre de priorité;Heure de travail estimé
+F1 : Lancement du programme;Essentiel;5
+F2 : Fichier de configuration;Secondaire;3
+F3 : Internationalisation (i18n);Optionnel;5
+F4 : Interface en ligne de commande;Secondaire;3
+F5 : Interface graphique;Secondaire;5
+F6 : Mode blitz;Optionnel;2
+F7 : Mode contest;Optionnel;2
+F8 : Graine aléatoire;Secondaire;2
+F9 : Mélange des tuiles;Essentiel;8
+F10 : Options spécifiques;Secondaire;2
+F11 : Gestion des règles;Essentiel;15
+F12 : Gestion des erreurs de l'utilisateur;Secondaire;5
+F13 : Gestion du undo/redo;Secondaire;5
+F14 : Gestion des conseils;Optionnel;1
+F15 : Shell interactif;Secondaire;4
+F16 : Proposer de sauvegarder avant de quitter;Optionnel;1
+F17 : Édition de la commande en cours;Secondaire;4
+F18 : Historique des commandes tapées;Secondaire;4
+F19 : Complétion des commandes;Secondaire;4
+F20 : Notation des coups;Essentiel;5
+F21 : Sauvegarde et restauration d'une partie;Secondaire;5
+F22 : Commentaires dans la sauvegarde;Optionnel;2
+F23 : Format des paramètres du jeu;Secondaire;2
+F24 : Format du plateau de jeu;Essentiel;10
+F25 : Format de l'historique;Secondaire;2
+F26 : Module graph;Essentiel;8
+F27 : Algorithmes de manipulation des graphes;Essentiel;10
+F28 : Menus de l'application;Secondaire;5
+F29 : Raccourcis clavier;Optionnel;2
+F30 : Drag'n'Drop;Secondaire;?
+F31 : Temps de réflexion borné;Secondaire;?
+F32 : Minimax avec alphabeta-pruning;Essentiel;?
+F33 : Fonctions d'évaluation pour Minimax;Essentiel;?
+F34 : Approfondissement itératif de Minimax;Secondaire;?
+F35 : Profondeur de recherche de Minimax;Secondaire;?
+F36 : Monte Carlo Tree Search (MCTS);Secondaire;?
+F37 : Fonction de sélection par Machine Learning;Secondaire;?
+F38 : Découverte de serveurs et connexion client-serveur basique;Secondaire;?
+F39 : Serveur multi-clients et gestion de parties;Secondaire;?
+F40 : Système d'invitations et gestion avancée des joueurs;Secondaire;?
