@@ -1,0 +1,17 @@
+\begin{thebibliography}{1}
+
+\bibitem{rulescarcassonne}
+{Christopher Obe}.
+\newblock Carcassonne complete annotated rules.
+\newblock
+  \url{https://www.dover.nh.gov/Assets/government/city-operations/library/borrow/library-of-things/carcassonne-rules.pdf},
+  2014.
+
+\bibitem{heydencarcassonne}
+Cathleen Heyden.
+\newblock Implementing a computer player for carcassonne.
+\newblock Master's thesis, Maastricht University, 2009.
+\newblock
+  https://project.dke.maastrichtuniversity.nl/games/files/msc/MasterThesisCarcassonne.pdf.
+
+\end{thebibliography}
