@@ -129,6 +129,13 @@ Les joueurs jouent à tour de rôle selon un ordre prédéfini (généralement d
   Tous les pions associés à des \textit{City}, \textit{Road} ou \textit{Monastery} complétés durant ce tour sont retirés du plateau et rendus à leurs propriétaires.
 \end{enumerate}
 
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=0.60\textwidth]{images/carcassonne_exemple_partie.png}}
+    \centering
+    \caption{Exemple d'une tuile où une \textit{City} possède une \textit{Banner}}\label{fig:example_tour}
+\end{figure}
+
 \subsubsection{Fin de partie}
 
 La partie prend fin lorsqu’il n’y a plus de tuiles dans la pioche principale.
@@ -193,9 +200,171 @@ La complexité de l’arbre de jeu est estimée à environ $10^{194}$ \cite{heyd
 Par conséquent, la création d’une intelligence artificielle capable de jouer parfaitement à \textbf{Carcassonne} devient impossible. Le brute-force ne sera alors pas une solution envisageable pour notre projet.
 
 
+
+
+
+
+
 \section{Algorithmes et structures de données}
 
+\subsection{Besoin F8}
+L’algorithme retenu repose sur la combinaison de deux sources d’information indépendantes:
+\begin{itemize}
+  \item[-] l’heure système en milliseconde.
+  \item[-] l’identifiant du processus courant.
+\end{itemize}
+
+{\normalsize
+  \begin{minted}[frame=single, escapeinside=||]{python}
+fonction generate_seed():
+  si une graine est fournie par l|’|utilisateur alors
+      retourner la graine fournie
+  sinon
+      t |$\leftarrow$| heure système en milliseconde
+      p |$\leftarrow$| identifiant du processus courant
+      retourner t |$\times$| p
+  fin si
+  fin fonction
+  \end{minted}
+}
+
+
+
+
+  
+
+Exemple:
+Temps en milliseconde(t) = 4118
+pid(p) = 23259
+seed = 4118 * 23259 = 95780562
+
+
+
+
+
+
+
+
+
 \section{Architecture}
+
+Le projet adopte une architecture 3-tiers visant à séparer clairement les responsabilités afin d’améliorer la maintenabilité, la testabilité et l’évolutivité du code.
+Cette architecture nous paraît pertinente compte tenu de l’aspect objet du langage python. De plus, le projet amène naturellement à une structuration de ce genre.
+Cette architecture est structurée autour de trois modules principaux : Présentation, Logique Métier et Données, organisés selon des dépendances unidirectionnelles.
+
+\subsection{Découpage en modules}
+
+\subsubsection{Module Présentation}
+
+Le module Présentation est responsable des interactions avec l’utilisateur et de l’affichage de l’état du jeu.
+Il comprend notamment :
+la gestion des commandes à travers le shell en CLI ou des actions à partir de la GUI,
+
+
+l’affichage du plateau, des tuiles, des meeples et des scores à travers CLI ou GUI,
+
+
+Ce module ne contient aucune règle métier.
+Il délègue toute décision concernant la validité des actions ou l’évolution du jeu au module Logique Métier.
+Responsabilités principales :
+
+\begin{itemize}
+  \item Interprétation des actions utilisateur ;
+  \item Appels aux interfaces de la logique métier ;
+  \item Rafraîchissement de l’affichage.
+
+\end{itemize}
+
+
+\subsubsection{Module Logique Métier}
+Le module Logique Métier constitue le cœur du jeu.
+Il encapsule l’ensemble des règles du jeu et gère l’état interne de la partie.
+Il est notamment responsable :
+de la validation des coups (placement des tuiles, des meeples) à travers les algorithmes demandés,
+
+\begin{itemize}
+  \item de la mise à jour du plateau (à travers la liste d’adjacence),
+  \item du calcul des scores,
+  \item de la gestion des tours de jeu et des conditions de fin de partie.  
+  \item des actions des IA (avec les fonctions d’évaluations)
+  \item de l’état du serveur, avec gestion des parties
+\end{itemize}
+
+Ce module est totalement indépendant de l’interface graphique et de la persistance.
+Responsabilités principales :
+
+\begin{itemize}
+  \item Implémentation des règles du jeu ;
+  \item Gestion de l’état de la partie ;
+  \item Gestion des IA de jeu ;
+  \item Gestion des actions liées au serveur
+\end{itemize}
+
+\subsubsection{Module Données}
+Le module Données est dédié à la persistance et à la gestion des données du jeu.
+Il permet notamment :
+\begin{itemize}
+  \item la sauvegarde et le chargement d’une partie,
+  \item la sauvegarde de historique,
+  \item la sauvegarde des données relatives aux IA (structures de données) et des meilleurs coups enregistrés pour l’iterative deepening,
+  \item la sauvegarde des données relatives aux parties en cours, à l’état du serveur et des joueurs.
+\end{itemize}
+
+Ce module n’implémente aucune règle métier et n’interagit jamais directement avec l’interface utilisateur.
+Responsabilités principales :
+\begin{itemize}
+  \item Sauvegarde des informations liées au jeu de près ou de loin (avec IA et serveurs) ;
+  \item Possibilité de sauvegarder les parties en cours pour les recharger (dans des fichiers au format répondant aux fonctionnalités).
+\end{itemize}
+
+\subsection{Dépendances entre modules}
+Les dépendances entre modules sont strictement unidirectionnelles, conformément au principe d’architecture N-tiers :
+\begin{itemize}
+  \item le module Présentation dépend du module Logique Métier ;
+  \item le module Logique Métier dépend du module Données ;
+  \item le module Données ne dépend d’aucun autre module.
+\end{itemize}
+
+
+Aucune dépendance directe n’existe entre la Présentation et les Données.
+Cette organisation garantit une séparation claire des responsabilités et limite le couplage entre les composants.
+
+\subsection{Interfaces principales}
+
+Les interactions entre modules sont réalisées exclusivement via des interfaces bien définies.
+
+Interface Présentation $\rightarrow$ Logique Métier
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+place_tile(tile, position)
+place_meeple(position)
+get_game_state()
+is_game_over()
+  \end{minted}
+}
+
+
+
+Ces interfaces permettent à la présentation d’agir sur le jeu sans connaître l’implémentation interne des règles.
+
+Interface Logique Métier $\rightarrow$ Données
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+save_game(game_state)
+load_game()
+  \end{minted}
+}
+
+
+
+
+La logique métier délègue la persistance au module Données via ces interfaces abstraites.
+
+
 
 \section{Spécifications étendues}
 
