@@ -1,0 +1,386 @@
+\documentclass[a4paper]{article}
+
+\usepackage{pdp}
+
+%------------------------------------------------------------------------------
+%	REPORT INFORMATION
+%------------------------------------------------------------------------------
+
+\title{Carcassonne -- Python}
+\subtitle{Rapport préliminaire}
+\author{Anthony BEAUVIEUX, Tony HUANG, Maxence SALIN, Clément SIMON, Loïc THIN}
+\date{}
+
+%------------------------------------------------------------------------------
+
+\begin{document}
+
+%------------------------------------------------------------------------------
+%	TITLE PAGE
+%------------------------------------------------------------------------------
+
+\maketitle
+\thispagestyle{empty}
+
+%------------------------------------------------------------------------------
+%	MAIN MATTER
+%------------------------------------------------------------------------------
+
+\section{Présentation du jeu}
+
+\subsection{Contexte}
+
+\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par \textsf{Klaus-Jürgen Wrede} en 2000, conçu pour 2 à 6 joueurs.
+Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l’ensemble des éléments présents sur le plateau est visible de tous les joueurs.
+
+\begin{wrapfigure}{l}{0.25\textwidth}
+  \centering
+    \frame{\includegraphics[width=0.1\textwidth]{images/carcassonne_starting_tile.png}}
+    \caption{Tuile de départ}\label{fig:tuile_de_départ}
+  \end{wrapfigure}
+
+La version considérée ici utilise les 72 tuiles du jeu de base, auxquelles s'ajoutent les 12 tuiles de l'extension \textit{The River}. 
+Parmi les 72 tuiles se trouve la tuile de départ (voir figure \ref{fig:tuile_de_départ}) qui est placée au centre du plateau avant que la partie commence. 
+Cette tuile est la même pour chaque partie comportant une \textit{City} en haut (couleur marron), une \textit{Road} qui traverse de gauche à droite et un \textit{Field} en bas.
+Chaque joueur dispose de 7 pions de sa couleur pour marquer des points au cours de la partie.
+Le but du jeu est que les joueurs construisent progressivement le plateau, à tour de rôle, en posant des tuiles de manière cohérente et en plaçant stratégiquement leurs pions pour accumuler des points. Le vainqueur est le joueur qui totalise le plus de points à la fin de la partie.
+
+
+
+\subsection{Règles}
+
+Les règles de \textbf{Carcassonne} utilisées sont celles de la version 2012\cite{rulescarcassonne}.
+
+\subsubsection{Spécificités}
+\begin{description}[style=nextline]
+  \item[Tuile] Chaque tuile possède quatre côtés ainsi qu’un centre.
+  Chaque côté correspond à un type de terrain parmi \textit{Road}, \textit{City} ou \textit{Field}.
+  Le centre peut représenter une \textit{City}, un \textit{Field}, une \textit{Banner} ou un \textit{Monastery}.
+  \begin{figure}[H]
+    \centering
+    
+  \begin{minipage}{0.35\textwidth}
+    \centering
+    \frame{\includegraphics[width=0.25\textwidth]{images/carcassonne_example_tile_CFRR.png}}
+    \caption{Exemple d'une tuile avec une \textit{City}, une \textit{Road} et un \textit{Field}}\label{fig:exemple_tuile_1}
+  \end{minipage}
+  \hspace{0.5cm}
+ \begin{minipage}{0.35\textwidth}
+    \centering
+    \frame{\includegraphics[width=0.25\textwidth]{images/carcassonne_example_tile_banner.png}}
+    \caption{Exemple d'une tuile où une \textit{City} possède une \textit{Banner}}\label{fig:exemple_tuile_2}
+  \end{minipage}
+  
+  \end{figure}
+
+  \item[Pion] Lorsqu’un pion est placé sur une tuile, il prend un rôle en fonction du type de terrain occupé :
+  \textit{Knight} sur une \textit{City}, \textit{Farmer} sur un \textit{Field}, \textit{Thief} sur une \textit{Road}
+  et \textit{Monk} sur un \textit{Monastery}.
+\end{description}
+
+
+
+\subsubsection{Déroulement d'un tour}
+
+Les joueurs jouent à tour de rôle selon un ordre prédéfini (généralement dans le sens horaire, en commençant par le joueur le plus jeune).  
+À son tour, un joueur effectue les actions suivantes dans l’ordre indiqué :
+
+\begin{enumerate}
+  \item \textbf{Piocher une tuile}  
+  Le joueur pioche une tuile dans la pioche actuellement active. Cette tuile est visible par l’ensemble des joueurs.
+
+  \item \textbf{Placer la tuile}  
+  La tuile piochée doit être placée sur le plateau en respectant les règles suivantes :
+  \begin{itemize}
+    \item[-] La tuile doit être adjacente à au moins une autre tuile déjà posée.
+    \item[-] Les côtés en contact doivent être de même type de terrain.
+  \end{itemize}
+
+  \item \textbf{Placer un pion (optionnel)}  
+  Le joueur peut placer un pion sur une partie de la tuile qu’il vient de poser (un des quatre côtés ou le centre).
+
+  \item \textbf{Restriction de placement des pions}  
+  Si une partie de terrain de la tuile posée est reliée à une partie du même type déjà occupée par un pion, aucun nouveau pion ne peut y être placé.  
+  Les \textit{Road} et \textit{City} agissent comme des séparateurs entre les terrains.
+
+  \item \textbf{Résolution des terrains complétés}  
+  Si la pose de la tuile complète un ou plusieurs terrains, ceux-ci sont résolus immédiatement :
+  \begin{description}[style=nextline]
+    \item[ Road]
+    Une route est complète lorsque ses deux extrémités atteignent une intersection ou une fin de route.
+    Le joueur possédant le plus de pions (\textit{Thief}) sur cette route gagne un nombre de points égal au nombre de tuiles composant la route.
+    En cas d’égalité, tous les joueurs concernés marquent ces points.
+
+    \item[ City]
+    Une ville est complète lorsqu’elle est entièrement fermée.
+    Le joueur possédant le plus de pions (\textit{Knight}) gagne 2 points par tuile composant la ville, ainsi que 2 points par \textit{Banner}.
+    En cas d’égalité, les points sont attribués à tous les joueurs concernés.
+
+    \item[ Monastery]
+    Un monastère est complet lorsque les 8 cases entourant sa tuile sont occupées.
+    Le joueur possédant le pion dans le \textit{Monastery} (\textit{Monk}) gagne alors 9 points.
+
+    \item[ Field]
+    Les champs ne sont résolus qu’à la fin de la partie.
+    Un pion dans un \textit{Field} (\textit{Farmer}) reste donc en jeu jusqu’à la fin.
+  \end{description}
+
+  \item \textbf{Retour des pions}  
+  Tous les pions associés à des \textit{City}, \textit{Road} ou \textit{Monastery} complétés durant ce tour sont retirés du plateau et rendus à leurs propriétaires.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=0.60\textwidth]{images/carcassonne_exemple_partie.png}}
+    \centering
+    \caption{Exemple d'une tuile où une \textit{City} possède une \textit{Banner}}\label{fig:example_tour}
+\end{figure}
+
+\subsubsection{Fin de partie}
+
+La partie prend fin lorsqu’il n’y a plus de tuiles dans la pioche principale.
+Les joueurs ajoutent alors à leur score les points correspondant aux terrains non complétés,
+selon les règles suivantes :
+
+\begin{description}[style=nextline]
+  \item[ Road]
+  Une route incomplète rapporte 1 point par tuile la composant au joueur possédant le plus de pions (\textit{Thief}) sur cette route.
+  En cas d’égalité, tous les joueurs concernés marquent ces points.
+
+  \item[ City]
+  Une ville incomplète rapporte 1 point par tuile la composant ainsi que 1 point par \textit{Banner} présent,
+  pour le joueur possédant le plus de pions (\textit{Knight}).
+  En cas d’égalité, les points sont attribués à tous les joueurs concernés.
+
+  \item[ Monastery]
+  Un monastère incomplet rapporte 1 point par tuile adjacente, y compris la tuile du monastère,
+  pour un total compris entre 2 et 8 points.
+
+  \item[ Field]
+  Chaque \textit{Farm} (ensemble de \textit{Field} connectés ; un \textit{Field} isolé constitue une \textit{Farm})
+  est attribuée au joueur possédant le plus de pions (\textit{Farmer}).
+  Ce joueur marque 3 points par \textit{City} complète adjacente à la \textit{Farm}.
+  En cas d’égalité, les points sont attribués à tous les joueurs concernés.
+\end{description}
+
+Le joueur ayant obtenu le plus grand nombre de points à l’issue du décompte final remporte la partie.
+
+\subsubsection{Extension : \textit{The River}}
+
+\begin{wrapfigure}{r}{0.25\textwidth}
+    \centering
+    \frame{\includegraphics[width=0.1\textwidth]{images/carcassonne_example_tile_theriver.png}}
+    \centering
+    \caption{Tuile \textit{Lake} de l'extension \textit{The River}}\label{fig:tuile_The_River}
+  \end{wrapfigure}
+
+L’extension \textit{The River} introduit 12 tuiles supplémentaires et modifie exclusivement la phase de mise en place du jeu.
+La tuile de départ standard est remplacée par une tuile \textit{Lake}, qui marque la source de la rivière. 
+Les autres tuiles de l’extension sont mélangées, à l’exception de la seconde tuile \textit{Lake}, placée volontairement en fin de pile afin de constituer l’embouchure de la rivière.
+Les joueurs piochent ensuite ces tuiles à tour de rôle et les placent conformément aux règles habituelles de Carcassonne, de manière à former un cours d’eau continu.
+La phase de mise en place se termine lorsque la tuile \textit{Lake} finale est posée, complétant ainsi la rivière. 
+À partir de ce moment, la partie se poursuit selon les règles standard de Carcassonne, sur un terrain initialement structuré.
+
+Afin de garantir la cohérence du terrain et d’éviter toute situation de blocage, il est interdit de placer une tuile de rivière de manière à orienter le cours d’eau vers une autre tuile de la rivière déjà posée.
+
+\subsection{Complexité}
+
+\textbf{Carcassonne} est un jeu aux règles simples, mais qui offre une grande richesse stratégique, les choix des joueurs se complexifiant à mesure que le plateau s’étend. 
+Ainsi, sa complexité est comparable à celle de jeux classiques comme les échecs ou le shogi.
+
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=0.8\textwidth]{images/carcassonne_complexite.png}}
+    \caption{Comparaison de la complexité de Carcassonne avec d'autres jeux \cite{heydencarcassonne}}
+    \label{fig:complexite_carcassonne}
+\end{figure}
+
+La complexité combinatoire du jeu est particulièrement élevée en raison du grand nombre de tuiles et des multiples façons dont elles peuvent être placées sur le plateau, ainsi que des stratégies variées que les joueurs peuvent adopter selon la configuration des tuiles et la position des pions. 
+La complexité de l’arbre de jeu est estimée à environ $10^{194}$ \cite{heydencarcassonne}, ce qui rend toute résolution complète du jeu par des méthodes de recherche exhaustive irréaliste. 
+Par conséquent, la création d’une intelligence artificielle capable de jouer parfaitement à \textbf{Carcassonne} devient impossible. Le brute-force ne sera alors pas une solution envisageable pour notre projet.
+
+
+
+
+
+
+
+\section{Algorithmes et structures de données}
+
+\subsection{Besoin F8}
+L’algorithme retenu repose sur la combinaison de deux sources d’information indépendantes:
+\begin{itemize}
+  \item[-] l’heure système en milliseconde.
+  \item[-] l’identifiant du processus courant.
+\end{itemize}
+
+{\normalsize
+  \begin{minted}[frame=single, escapeinside=||]{python}
+fonction generate_seed():
+  si une graine est fournie par l|’|utilisateur alors
+      retourner la graine fournie
+  sinon
+      t |$\leftarrow$| heure système en milliseconde
+      p |$\leftarrow$| identifiant du processus courant
+      retourner t |$\times$| p
+  fin si
+  fin fonction
+  \end{minted}
+}
+
+
+
+
+  
+
+Exemple:
+Temps en milliseconde(t) = 4118
+pid(p) = 23259
+seed = 4118 * 23259 = 95780562
+
+
+
+
+
+
+
+
+
+\section{Architecture}
+
+Le projet adopte une architecture 3-tiers visant à séparer clairement les responsabilités afin d’améliorer la maintenabilité, la testabilité et l’évolutivité du code.
+Cette architecture nous paraît pertinente compte tenu de l’aspect objet du langage python. De plus, le projet amène naturellement à une structuration de ce genre.
+Cette architecture est structurée autour de trois modules principaux : Présentation, Logique Métier et Données, organisés selon des dépendances unidirectionnelles.
+
+\subsection{Découpage en modules}
+
+\subsubsection{Module Présentation}
+
+Le module Présentation est responsable des interactions avec l’utilisateur et de l’affichage de l’état du jeu.
+Il comprend notamment :
+la gestion des commandes à travers le shell en CLI ou des actions à partir de la GUI,
+
+
+l’affichage du plateau, des tuiles, des meeples et des scores à travers CLI ou GUI,
+
+
+Ce module ne contient aucune règle métier.
+Il délègue toute décision concernant la validité des actions ou l’évolution du jeu au module Logique Métier.
+Responsabilités principales :
+
+\begin{itemize}
+  \item Interprétation des actions utilisateur ;
+  \item Appels aux interfaces de la logique métier ;
+  \item Rafraîchissement de l’affichage.
+
+\end{itemize}
+
+
+\subsubsection{Module Logique Métier}
+Le module Logique Métier constitue le cœur du jeu.
+Il encapsule l’ensemble des règles du jeu et gère l’état interne de la partie.
+Il est notamment responsable :
+de la validation des coups (placement des tuiles, des meeples) à travers les algorithmes demandés,
+
+\begin{itemize}
+  \item de la mise à jour du plateau (à travers la liste d’adjacence),
+  \item du calcul des scores,
+  \item de la gestion des tours de jeu et des conditions de fin de partie.  
+  \item des actions des IA (avec les fonctions d’évaluations)
+  \item de l’état du serveur, avec gestion des parties
+\end{itemize}
+
+Ce module est totalement indépendant de l’interface graphique et de la persistance.
+Responsabilités principales :
+
+\begin{itemize}
+  \item Implémentation des règles du jeu ;
+  \item Gestion de l’état de la partie ;
+  \item Gestion des IA de jeu ;
+  \item Gestion des actions liées au serveur
+\end{itemize}
+
+\subsubsection{Module Données}
+Le module Données est dédié à la persistance et à la gestion des données du jeu.
+Il permet notamment :
+\begin{itemize}
+  \item la sauvegarde et le chargement d’une partie,
+  \item la sauvegarde de historique,
+  \item la sauvegarde des données relatives aux IA (structures de données) et des meilleurs coups enregistrés pour l’iterative deepening,
+  \item la sauvegarde des données relatives aux parties en cours, à l’état du serveur et des joueurs.
+\end{itemize}
+
+Ce module n’implémente aucune règle métier et n’interagit jamais directement avec l’interface utilisateur.
+Responsabilités principales :
+\begin{itemize}
+  \item Sauvegarde des informations liées au jeu de près ou de loin (avec IA et serveurs) ;
+  \item Possibilité de sauvegarder les parties en cours pour les recharger (dans des fichiers au format répondant aux fonctionnalités).
+\end{itemize}
+
+\subsection{Dépendances entre modules}
+Les dépendances entre modules sont strictement unidirectionnelles, conformément au principe d’architecture N-tiers :
+\begin{itemize}
+  \item le module Présentation dépend du module Logique Métier ;
+  \item le module Logique Métier dépend du module Données ;
+  \item le module Données ne dépend d’aucun autre module.
+\end{itemize}
+
+
+Aucune dépendance directe n’existe entre la Présentation et les Données.
+Cette organisation garantit une séparation claire des responsabilités et limite le couplage entre les composants.
+
+\subsection{Interfaces principales}
+
+Les interactions entre modules sont réalisées exclusivement via des interfaces bien définies.
+
+Interface Présentation $\rightarrow$ Logique Métier
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+place_tile(tile, position)
+place_meeple(position)
+get_game_state()
+is_game_over()
+  \end{minted}
+}
+
+
+
+Ces interfaces permettent à la présentation d’agir sur le jeu sans connaître l’implémentation interne des règles.
+
+Interface Logique Métier $\rightarrow$ Données
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+save_game(game_state)
+load_game()
+  \end{minted}
+}
+
+
+
+
+La logique métier délègue la persistance au module Données via ces interfaces abstraites.
+
+
+
+\section{Spécifications étendues}
+
+\pgfplotstabletypeset[
+  col sep=semicolon,
+  string type,
+  every head row/.style={before row=\toprule, after row=\midrule},
+  every last row/.style={after row=\bottomrule}
+]{agenda_besoin_PDP.csv}
+%------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%------------------------------------------------------------------------------
+\newpage
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{bibliography}
+
+\end{document}

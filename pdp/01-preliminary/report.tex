@@ -30,7 +30,7 @@
 
 \subsection{Contexte}
 
-\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par \textsf{Klaus-Jürgen Wrede} en 2000, conçu pour 2 à 5 joueurs, et pouvant accueillir jusqu'à 6 joueurs grâce à l'extension \textit{The River}.
+\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par \textsf{Klaus-Jürgen Wrede} en 2000, conçu pour 2 à 6 joueurs.
 Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l’ensemble des éléments présents sur le plateau est visible de tous les joueurs.
 
 \begin{wrapfigure}{l}{0.25\textwidth}
@@ -104,57 +104,30 @@ Les joueurs jouent à tour de rôle selon un ordre prédéfini (généralement d
   Les \textit{Road} et \textit{City} agissent comme des séparateurs entre les terrains.
 
   \item \textbf{Résolution des terrains complétés}  
-  Si la pose de la tuile complète un ou plusieurs terrains, ceux-ci sont résolus immédiatement :
-  \begin{description}[style=nextline]
-    \item[ Road]
-    Une route est complète lorsque ses deux extrémités atteignent une intersection ou une fin de route.
-    Le joueur possédant le plus de pions (\textit{Thief}) sur cette route gagne un nombre de points égal au nombre de tuiles composant la route.
-    En cas d’égalité, tous les joueurs concernés marquent ces points.
-
-    \item[ City]
-    Une ville est complète lorsqu’elle est entièrement fermée.
-    Le joueur possédant le plus de pions (\textit{Knight}) gagne 2 points par tuile composant la ville, ainsi que 2 points par \textit{Banner}.
-    En cas d’égalité, les points sont attribués à tous les joueurs concernés.
-
-    \item[ Monastery]
-    Un monastère est complet lorsque les 8 cases entourant sa tuile sont occupées.
-    Le joueur possédant le pion dans le \textit{Monastery} (\textit{Monk}) gagne alors 9 points.
-
-    \item[ Field]
-    Les champs ne sont résolus qu’à la fin de la partie.
-    Un pion dans un \textit{Field} (\textit{Farmer}) reste donc en jeu jusqu’à la fin.
-  \end{description}
+  Si la pose de la tuile complète un ou plusieurs terrains, ceux-ci sont résolus immédiatement et le joueur marque des points selon certaines règles. (voir partie \ref{subsubsec:score})
 
   \item \textbf{Retour des pions}  
   Tous les pions associés à des \textit{City}, \textit{Road} ou \textit{Monastery} complétés durant ce tour sont retirés du plateau et rendus à leurs propriétaires.
+
 \end{enumerate}
 
-\begin{figure}[H]
-    \centering
-    \frame{\includegraphics[width=0.60\textwidth]{images/carcassonne_exemple_partie.png}}
-    \centering
-    \caption{Exemple d'une tuile où une \textit{City} possède une \textit{Banner}}\label{fig:example_tour}
-\end{figure}
+\subsubsection{Score}
+\label{subsubsec:score}
+Le score est calculé à deux moments différents : lors de la complétion d’un terrain (immédiatement après la pose d’une tuile) et à la fin de la partie (décompte final).
+Les joueurs ajoutent alors à leur score les points correspondant aux terrains selon les règles suivantes :
 
-\subsubsection{Fin de partie}
-
-La partie prend fin lorsqu’il n’y a plus de tuiles dans la pioche principale.
-Les joueurs ajoutent alors à leur score les points correspondant aux terrains non complétés,
-selon les règles suivantes :
-
-\begin{description}[style=nextline]
+  \begin{description}[style=nextline]
   \item[ Road]
-  Une route incomplète rapporte 1 point par tuile la composant au joueur possédant le plus de pions (\textit{Thief}) sur cette route.
+  Une route rapporte 1 point par tuile la composant au joueur possédant le plus de pions (\textit{Thief}) sur cette route.
   En cas d’égalité, tous les joueurs concernés marquent ces points.
 
   \item[ City]
-  Une ville incomplète rapporte 1 point par tuile la composant ainsi que 1 point par \textit{Banner} présent,
-  pour le joueur possédant le plus de pions (\textit{Knight}).
+  Une ville complète rapport 2 points par tuile la composant ainsi que 2 points par \textit{Banner} présent,
+  pour le joueur possédant le plus de pions (\textit{Knight}). Les points rapportés deviennent 1 en cas de ville incomplète.
   En cas d’égalité, les points sont attribués à tous les joueurs concernés.
 
   \item[ Monastery]
-  Un monastère incomplet rapporte 1 point par tuile adjacente, y compris la tuile du monastère,
-  pour un total compris entre 2 et 8 points.
+  Un monastère incomplet rapporte 1 point par tuile adjacente, y compris la tuile du monastère et les tuiles diagonales.
 
   \item[ Field]
   Chaque \textit{Farm} (ensemble de \textit{Field} connectés ; un \textit{Field} isolé constitue une \textit{Farm})
@@ -164,43 +137,23 @@ selon les règles suivantes :
 \end{description}
 
 Le joueur ayant obtenu le plus grand nombre de points à l’issue du décompte final remporte la partie.
-
-\subsubsection{Extension : \textit{The River}}
-
-\begin{wrapfigure}{r}{0.25\textwidth}
+\begin{figure}[H]
     \centering
-    \frame{\includegraphics[width=0.1\textwidth]{images/carcassonne_example_tile_theriver.png}}
+    \frame{\includegraphics[width=0.60\textwidth]{images/carcassonne_exemple_partie_complete.png}}
     \centering
-    \caption{Tuile \textit{Lake} de l'extension \textit{The River}}\label{fig:tuile_The_River}
-  \end{wrapfigure}
+    \caption{Exemple de terrains complétés, avec deux villes entourées en rouge et une route entourée en bleu}\label{fig:example_tour}
+\end{figure}
 
-L’extension \textit{The River} introduit 12 tuiles supplémentaires et modifie exclusivement la phase de mise en place du jeu.
-La tuile de départ standard est remplacée par une tuile \textit{Lake}, qui marque la source de la rivière. 
-Les autres tuiles de l’extension sont mélangées, à l’exception de la seconde tuile \textit{Lake}, placée volontairement en fin de pile afin de constituer l’embouchure de la rivière.
-Les joueurs piochent ensuite ces tuiles à tour de rôle et les placent conformément aux règles habituelles de Carcassonne, de manière à former un cours d’eau continu.
-La phase de mise en place se termine lorsque la tuile \textit{Lake} finale est posée, complétant ainsi la rivière. 
-À partir de ce moment, la partie se poursuit selon les règles standard de Carcassonne, sur un terrain initialement structuré.
 
-Afin de garantir la cohérence du terrain et d’éviter toute situation de blocage, il est interdit de placer une tuile de rivière de manière à orienter le cours d’eau vers une autre tuile de la rivière déjà posée.
 
 \subsection{Complexité}
 
 \textbf{Carcassonne} est un jeu aux règles simples, mais qui offre une grande richesse stratégique, les choix des joueurs se complexifiant à mesure que le plateau s’étend. 
 Ainsi, sa complexité est comparable à celle de jeux classiques comme les échecs ou le shogi.
 
-\begin{figure}[H]
-    \centering
-    \frame{\includegraphics[width=0.8\textwidth]{images/carcassonne_complexite.png}}
-    \caption{Comparaison de la complexité de Carcassonne avec d'autres jeux \cite{heydencarcassonne}}
-    \label{fig:complexite_carcassonne}
-\end{figure}
-
 La complexité combinatoire du jeu est particulièrement élevée en raison du grand nombre de tuiles et des multiples façons dont elles peuvent être placées sur le plateau, ainsi que des stratégies variées que les joueurs peuvent adopter selon la configuration des tuiles et la position des pions. 
 La complexité de l’arbre de jeu est estimée à environ $10^{194}$ \cite{heydencarcassonne}, ce qui rend toute résolution complète du jeu par des méthodes de recherche exhaustive irréaliste. 
 Par conséquent, la création d’une intelligence artificielle capable de jouer parfaitement à \textbf{Carcassonne} devient impossible. Le brute-force ne sera alors pas une solution envisageable pour notre projet.
-
-
-
 
 
 
@@ -368,12 +321,8 @@ La logique métier délègue la persistance au module Données via ces interface
 
 \section{Spécifications étendues}
 
-\pgfplotstabletypeset[
-  col sep=semicolon,
-  string type,
-  every head row/.style={before row=\toprule, after row=\midrule},
-  every last row/.style={after row=\bottomrule}
-]{agenda_besoin_PDP.csv}
+
+
 %------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
 %------------------------------------------------------------------------------

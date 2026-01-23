@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{save\PYGZus{}game}\PYG{p}{(}\PYG{n}{game\PYGZus{}state}\PYG{p}{)}
+\PYG{n}{load\PYGZus{}game}\PYG{p}{()}
+\end{Verbatim}
