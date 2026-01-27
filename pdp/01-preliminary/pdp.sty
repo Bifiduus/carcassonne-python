@@ -10,6 +10,9 @@
 \usepackage[T1]{fontenc}
 \usepackage[svgnames]{xcolor} % Enabling colors by their 'svgnames'
 
+\definecolor{myblue}{RGB}{21, 96, 189}
+
+
 \usepackage{lmodern}
 \usepackage{palatino}
 \renewcommand\ttdefault{pcr}
@@ -109,7 +112,7 @@
   \noindent\HRule%
   \vspace{0pt} % Horizontal rule before the title
   \fontsize{32}{36}\usefont{T1}{ppl}{b}{n}\selectfont % Palatino
-  \color{Orange} % Text color for the title and author(s)
+  \color{myblue} % Text color for the title and author(s)
 }
 
 \posttitle{%
@@ -140,7 +143,7 @@
 
 % Section principale : très grande
 \titleformat{\section}[hang]
-  {\normalfont\LARGE\bfseries}
+  {\normalfont\LARGE\bfseries\color{myblue}}
   {\thesection}{1em}{}
 
 \titlespacing*{\section}{0pt}{4ex plus 1ex minus .2ex}{3ex}
@@ -164,3 +167,5 @@
 \usepackage{subcaption}
 
 \usepackage{wrapfig}
+
+\usepackage[most]{tcolorbox}
