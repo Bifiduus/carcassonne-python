@@ -255,7 +255,7 @@ Cette technique a pour avantage de déterminer une solution optimale à une prof
 Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l’arbre des états d’un jeu en élaguant les branches qui n’apportent aucun gain nouveau pour le joueur “max”. 
 En stockant la meilleure valeur courante pour le joueur maximal ($\alpha$) et celle pour le joueur “min” ($\beta$) lors du parcours, l’algorithme n’évalue plus certains nœuds non-significatifs (et leurs potentiels enfants) quand $\alpha \geq \beta$, en réduisant potentiellement son temps d'exécution selon l’arbre donné.
 
-\subsection{Fonctions d’évaluation heuristique}
+\subsection{Fonction d’évaluation heuristique}
 
 Étant donné l’impossibilité d’explorer l’arbre de jeu jusqu’à des états terminaux, l’algorithme Minimax repose sur une fonction d’évaluation heuristique permettant d’estimer la qualité d’un état de jeu intermédiaire.
 Cette fonction associe une valeur numérique à un état donné, représentant l’avantage relatif du joueur courant par rapport à son adversaire.
