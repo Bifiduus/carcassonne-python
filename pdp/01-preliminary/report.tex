@@ -125,19 +125,19 @@ Les points sont attribués à deux moments :
 Les joueurs ajoutent alors à leur score les points correspondant aux terrains selon les règles suivantes :
 
   \begin{description}[style=nextline]
-  \item[ Road :]
+  \item[ \textcolor{gray}{Road} :]
   Une \textit{Road} rapporte 1 point par tuile la composant au joueur possédant le plus de pions (\textit{Thief}) sur cette \textit{Road}.
   En cas d’égalité, tous les joueurs concernés marquent ces points.
 
-  \item[ City :]
+  \item[ \textcolor{brown}{City} :]
   Une \textit{City} complète rapporte 2 points par tuile qui la compose ainsi que 2 points par \textit{Banner} présent,
   pour le joueur possédant le plus de pions (\textit{Knight}). Si la \textit{City} est incomplète à la fin de la partie, chaque tuile rapporte 1 point et chaque \textit{Banner} rapporte également 1 point.
   En cas d’égalité, les points sont attribués à tous les joueurs concernés.
 
-  \item[ Monastery :]
+  \item[ \textcolor{red}{Monastery} :]
   Un \textit{Monastery} rapporte 1 point par tuile ayant un sommet ou côté en commun, y compris la tuile du \textit{Monastery}. Le score maximal d'un \textit{Monastery} est donc de 9 points.
 
-  \item[ Field :]
+  \item[ \textcolor{green}{Field} :]
   Chaque ensemble de \textit{Fields} connectés ou isolés est attribué au joueur possédant le plus de pions (\textit{Farmer}).
   Il marque alors 3 points par \textit{City} complète adjacente aux \textit{Field}.
   En cas d’égalité,tous les joueurs concernés marquent ces points.
@@ -151,7 +151,6 @@ A l’issue du décompte final, le joueur ayant obtenu le plus grand nombre de p
     \centering
     \caption{Exemple de terrains complétés, avec deux \textit{City} entourées en rouge et une \textit{Road} entourée en bleu}\label{fig:example_tour}
 \end{figure}
-
 
 
 \subsection{Complexité}
@@ -192,9 +191,8 @@ Plusieurs algorithmes jouent ainsi un rôle central dans la réalisation des bes
 \end{itemize}
 
 La mise en œuvre efficace de ces algorithmes repose sur des structures de données adaptées permettant de représenter l’état du jeu et d’en faciliter la manipulation. 
-Le plateau de jeu, constitué de tuiles connectées par leurs côtés, est modélisé à l’aide de graphes, offrant une représentation naturelle des relations d’adjacence entre les tuiles. 
-Des tables de hachage sont utilisées afin d’accéder rapidement aux états du jeu, aux configurations déjà évaluées ou aux informations associées aux tuiles et aux pions. 
-Enfin, des piles sont employées pour gérer certains mécanismes séquentiels, tels que la pioche des tuiles ou la sauvegarde temporaire d’états lors de l’exploration de l’arbre de jeu.
+Le plateau de jeu, constitué de tuiles connectées par leurs côtés, peut être modélisé à l’aide de graphes, offrant une représentation naturelle des relations d’adjacence entre les tuiles. 
+Egalement, des piles peuvent être employées pour gérer certains mécanismes séquentiels, tels que la pioche des tuiles ou la sauvegarde temporaire d’états lors de l’exploration de l’arbre de jeu.
 
 Dans la suite de cette section, nous nous concentrerons plus particulièrement sur les quatre premiers algorithmes présentés qui constituent le cœur du système de prise de décision implémenté dans le projet.
 
@@ -280,7 +278,6 @@ La modélisation du plateau sous forme de graphes, associée à l’utilisation 
 
 Ainsi, bien que l’exploration exhaustive de l’arbre de jeu reste impossible, le système mis en place fournit des conseils et des stratégies de qualité, exploitant de manière pragmatique les ressources computationnelles disponibles. 
 Cette combinaison d’algorithmes et de structures de données constitue le cœur de l’intelligence artificielle du projet et offre une base solide pour l’extension future des fonctionnalités, telles que l’intégration de stratégies plus sophistiquées ou de variantes du jeu.
-
 
 
 
