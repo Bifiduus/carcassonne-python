@@ -1,0 +1,36 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
+
+[project]
+dynamic = ["version"] # Variables handled in dynamic metadata
+name = "carcassonne"
+description = "The Carcassonne boardgame as a computer program."
+authors = [
+  {name = "Clément SIMON", email = "clement.simon.1@etu.u-bordeaux.fr"},
+  {name = "Maxence SALIN", email = "maxence.salin@etu.u-bordeaux.fr"},
+  {name = "Loic THIN", email = "loic.thin@etu.u-bordeaux.fr"},
+  {name = "Anthony BEAUVIEUX", email = "anthony.beauvieux@etu.u-bordeaux.fr"},
+  {name = "Tony HUANG", email = "tony.huang@etu.u-bordeaux.fr"},
+]
+license = "BSD-2-Clause"
+license-files = ["LICENSE.md"]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pytest", # Testing framework
+  "pytest-cov", # Code coverage plugin
+  "sphinx", # Documentation generator
+  "sphinx_rtd_theme", # ReadTheDocs theme for Sphinx
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "carcassonne.__version__"} # Get version from package dynamically
+
+[tool.pytest.ini_options]
+addopts = [ # Add options for pytest
+  "--cov=carcassonne",
+  "--cov-report=html",
+  "--cov-report=term",
+  "--cov-branch",
+]

@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: carcassonne
+Version: 0.1.0
+Summary: The Carcassonne boardgame as a computer program.
+Author-email: Clément SIMON <clement.simon.1@etu.u-bordeaux.fr>, Maxence SALIN <maxence.salin@etu.u-bordeaux.fr>, Loic THIN <loic.thin@etu.u-bordeaux.fr>, Anthony BEAUVIEUX <anthony.beauvieux@etu.u-bordeaux.fr>, Tony HUANG <tony.huang@etu.u-bordeaux.fr>
+License-Expression: BSD-2-Clause
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: pytest
+Requires-Dist: pytest-cov
+Requires-Dist: sphinx
+Requires-Dist: sphinx_rtd_theme
+Dynamic: license-file
