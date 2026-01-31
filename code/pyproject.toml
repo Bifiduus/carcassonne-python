@@ -34,3 +34,6 @@ addopts = [ # Add options for pytest
   "--cov-report=term",
   "--cov-branch",
 ]
+
+[project.scripts]
+carcassonne = "carcassonne.__main__:main"

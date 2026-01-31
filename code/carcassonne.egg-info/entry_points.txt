@@ -1,0 +1,2 @@
+[console_scripts]
+carcassonne = carcassonne.__main__:main

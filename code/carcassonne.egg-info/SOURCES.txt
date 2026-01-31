@@ -1,9 +1,11 @@
 LICENSE.md
 pyproject.toml
 carcassonne/__init__.py
+carcassonne/__main__.py
 carcassonne.egg-info/PKG-INFO
 carcassonne.egg-info/SOURCES.txt
 carcassonne.egg-info/dependency_links.txt
+carcassonne.egg-info/entry_points.txt
 carcassonne.egg-info/requires.txt
 carcassonne.egg-info/top_level.txt
 carcassonne/Données/GameRepository.py
