@@ -4,6 +4,9 @@ import argparse
 from carcassonne import __version__
 from carcassonne.Présentation.Interface import GameCLI
 
+from carcassonne.Présentation.GameController import GameLoop
+from carcassonne.LogiqueMétier.RulesEngine import RulesEngine
+
 
 def main():
     # pylint: disable=docstring-first-line-empty

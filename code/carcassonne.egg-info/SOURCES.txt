@@ -1,5 +1,7 @@
 LICENSE.md
 pyproject.toml
+carcassonne/IGamePersistence.py
+carcassonne/IGameService.py
 carcassonne/__init__.py
 carcassonne/__main__.py
 carcassonne.egg-info/PKG-INFO
