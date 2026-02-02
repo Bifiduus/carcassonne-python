@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class IGameService(ABC):
+class IGamePersistence(ABC):
     @abstractmethod
     def save(self):
         pass

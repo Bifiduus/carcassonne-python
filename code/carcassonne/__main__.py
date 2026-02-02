@@ -3,6 +3,9 @@ import argparse
 
 from carcassonne import __version__
 
+from carcassonne.Présentation.GameController import GameLoop
+from carcassonne.LogiqueMétier.RulesEngine import RulesEngine
+
 
 def main():
     # pylint: disable=docstring-first-line-empty
@@ -21,5 +24,7 @@ def main():
         print(f"Carcassonne: version {__version__}")
 
     # Call a function to start the game
+    rules_engine = RulesEngine()
+    gameLoop = GameLoop(rules_engine)
 
     return 0
