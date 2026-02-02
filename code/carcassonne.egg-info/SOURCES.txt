@@ -15,3 +15,4 @@ carcassonne/Données/Servers.py
 carcassonne/Présentation/BoardView.py
 carcassonne/Présentation/GameController.py
 carcassonne/Présentation/InputHandler.py
+carcassonne/Présentation/Interface.py
