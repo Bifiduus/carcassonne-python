@@ -2,6 +2,7 @@
 import argparse
 
 from carcassonne import __version__
+from carcassonne.Présentation.Interface import GameCLI
 
 
 def main():
@@ -21,5 +22,7 @@ def main():
         print(f"Carcassonne: version {__version__}")
 
     # Call a function to start the game
+    game_cli = GameCLI(None)
+    game_cli.run()
 
     return 0
