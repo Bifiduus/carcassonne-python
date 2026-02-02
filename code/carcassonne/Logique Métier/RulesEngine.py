@@ -6,7 +6,7 @@ tiles_dict = {'FFFF': ['m'], 'FFFR': ['m'], 'CFFF': [], 'FCFC': ['f'], 'CFCF': [
 
 direction_list = ['N', 'S', 'W', 'E']
 
-def playMove(move, gamestate): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
+def checkMove(move, gamestate): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
     counter = 0
     assert isinstance(move, str), "the move needs to be a str\n"
     move_parts = move.split('/')
