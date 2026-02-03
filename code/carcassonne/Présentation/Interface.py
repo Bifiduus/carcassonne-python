@@ -1,5 +1,8 @@
+from carcassonne.IGameService import IGameService
+from carcassonne.Présentation import CommandsHandler
+
 class GameCLI:
-    def __init__(self, game):
+    def __init__(self, game : IGameService):
         self.game = game
         self.running = True
 
@@ -9,30 +12,54 @@ class GameCLI:
 
         while self.running:
             try:
-                texte = input("> ").strip()
-                self.handle_command(self, texte, self.game.current_player)
+                command = input(">> ").strip()
+                self.handle_command(command)
             except KeyboardInterrupt:
                 print("\nFin de partie.")
                 self.running = False
 
-    def handle_command(self, command, player):
-        
-        if command == "help":
-            self.show_help()
-        elif command == "status":
-            self.show_status(player)
-        elif command.startswith("place "):
-            self.p(command[6:], player)
-        elif command.startswith("meeple "):
-            self.place_meeple(command[7:], player)
-        elif command == "end":
-            self.end_turn(player)
+    def handle_command(self, command):
+
+        if command.startswith("new "):
+            args = command[4:].strip()
+            CommandsHandler.new_game(self, args)
+        elif command == "help":
+            CommandsHandler.help(self)
+        elif command == "quit":
+            CommandsHandler.quit(self)
+        elif command.startswith("load "):   
+            filename = command[5:].strip()
+            CommandsHandler.load(self, filename)
+        elif command.startswith("save "):
+            filename = command[5:].strip()
+            CommandsHandler.save(self, filename)
+        elif command == "shuffle":
+            CommandsHandler.shuffle(self)
+        elif command == "hint":
+            CommandsHandler.hint(self)
+        elif command == "undo":
+            CommandsHandler.undo(self)
+        elif command == "redo":
+            CommandsHandler.redo(self)
+        elif command == "show hand":
+            CommandsHandler.show_hand(self)
+        elif command == "show score":
+            CommandsHandler.show_score(self)
+        elif command == "show history":
+            CommandsHandler.show_history(self)
+        elif command == "show configuration":
+            CommandsHandler.show_configuration(self)
+        elif command.startswith("set "):
+            content = command[4:].strip()
+            if "=" in content:
+                param, value = content.split("=", 1)
+                param = param.strip()
+                value = value.strip()
+            else:
+                param = content
+                value = None
+            CommandsHandler.set_parameter(self, param, value)
+            
+
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
-        def show_help(self):
-            print("Commandes disponibles:")
-            print("  help          - Affiche cette aide")
-            print("  status        - Affiche le statut actuel du jeu")
-            print("  place <args>  - Place une tuile avec les arguments spécifiés")
-            print("  meeple <args> - Place un meeple avec les arguments spécifiés")
-            print("  end           - Termine le tour actuel")
