@@ -27,6 +27,12 @@ def main():
         help="display the version of the program",
         action="store_true",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="increase verbosity",
+        action="store_true",
+    )
     args = parser.parse_args()
     if args.version:
         print(f"Carcassonne: version {__version__}")
