@@ -13,31 +13,48 @@ class RulesEngine(IGameService):
         }
 
         self.direction_list = ['N', 'S', 'W', 'E']
-
+    
     def placeTile(self, move): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
         counter = 0
-        assert isinstance(move, str), "the move needs to be a str\n"
+        if not isinstance(move, str):
+            print("the move needs to be a str\n")
+            return
         
         move_parts = move.split('/')
-        assert 2 <= len(move_parts) <= 4, "the move is invalid, are you sure you computed it right?\n"
-        assert move_parts[counter] in self.tiles_dict, "the tile you try to play doesn't exist, are you sure you computed it right?"
+        if not 2 <= len(move_parts) <= 4:
+            print("the move is invalid, are you sure you computed it right?\n")
+            return
+        if move_parts[counter] not in self.tiles_dict:
+            print("the tile you try to play doesn't exist, are you sure you computed it right?")
+            return
         
         counter += 1
         if (len(move_parts[counter]) == 1):
-            assert move_parts[counter] in self.tiles_dict[move_parts[counter - 1]], "the tile you try to place doesn't have that center"
+            if move_parts[counter] not in self.tiles_dict[move_parts[counter - 1]]:
+                print("the tile you try to place doesn't have that center")
+                return  
             counter += 1
         else :
-            assert 'void' in self.tiles_dict[move_parts[counter - 1]], "the tile you try to place needs a center"
+            if 'void' not in self.tiles_dict[move_parts[counter - 1]]:
+                print("the tile you try to place needs a center")
+                return
             
         #assert(move_parts[counter][0] < gamestate.current_turn, "the tile you try to attach yours to has a invalid number")
-        assert move_parts[counter][1] in self.direction_list, "the tile's side you try to attach yours on must be N, S, W or E"
-        assert 0 <= int(move_parts[counter][2]) <= 3, "the rotation you apply to your tile must be between 0 and 3"
+        if move_parts[counter][1] not in self.direction_list:   
+            print("the tile's side you try to attach yours on must be N, S, W or E")
+            return      
+        if not (0 <= int(move_parts[counter][2]) <= 3): 
+            print("the rotation you apply to your tile must be between 0 and 3")
+            return  
         
         counter += 1
         if (len(move_parts) == counter - 1):
-            assert move_parts[counter] in (self.direction_list + ['C']), "the tile's side you try to place a meeple on must be N, S, W, E or C"
+            if move_parts[counter] not in (self.direction_list + ['C']):
+                print("the tile's side you try to place a meeple on must be N, S, W, E or C")
+                return
         #assert(gamestate.isLegalMove(move), "the move isn't valid")
         #jouer le move dans les structures
+        print(move + " placed successfully.")
     
     def getGameStates(self):
         pass

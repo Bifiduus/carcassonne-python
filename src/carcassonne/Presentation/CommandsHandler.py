@@ -1,3 +1,5 @@
+from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+
 def new_game(self, args):
         #self.game.startNewGame()
         print("Nouvelle partie commencée.")
@@ -18,6 +20,7 @@ def help(self):
     print("  show history       - Affiche l'historique des coups joués")
     print("  show configuration - Affiche la configuration actuelle du jeu")
     print("  set (PARAM=VALUE)  - Définit un paramètre de configuration")
+    print("  play <move>        - Joue le coup spécifié par <move>")
 
 def quit(self):
         print("Quitte le jeu. À bientôt!")
@@ -72,3 +75,6 @@ def show_configuration(self):
 def set_parameter(self, param, value):
         #self.game.setGameParameter(param, value)
         print(f"Paramètre '{param}' défini à '{value}'.")
+        
+def play(self, move, game):
+        game.placeTile(move)
