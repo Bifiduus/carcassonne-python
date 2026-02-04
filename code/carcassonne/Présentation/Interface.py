@@ -1,7 +1,27 @@
+from carcassonne.IGameService import IGameService
+from carcassonne.Présentation import CommandsHandler
+
+import readline
+import os
+import atexit
+from pathlib import Path
+
+
+
 class GameCLI:
     def __init__(self, game):
         self.game = game
         self.running = True
+        """HISTORY_FILE = os.path.expanduser("~/.carcassonne_history")
+
+        try:
+            readline.read_history_file(HISTORY_FILE)
+            print(HISTORY_FILE)
+            print("Previous command history loaded.")
+        except FileNotFoundError:
+            print("No previous history file found.")
+
+        atexit.register(readline.write_history_file, HISTORY_FILE)"""
 
     def run(self):
         print("Bienvenue dans Carcassonne")
