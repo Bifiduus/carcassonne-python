@@ -1,38 +1,42 @@
 from collections import deque
-from typing import Any, List, Optional, Set
-from src.carcassonne.Datas.GraphData import Graph
+from typing import List, Optional, Set
+from src.carcassonne.Datas.GraphData import GraphData
 
 class GraphLogic:
     @staticmethod
-    def shortest_path(graph: Graph, start: Any, end: Any) -> Optional[List[Any]]:
-        if start not in graph.adj_list or end not in graph.adj_list:
+    def shortest_path(graph: GraphData, start_id: int, end_id: int) -> Optional[List[int]]:
+        if start_id not in graph.vertices or end_id not in graph.vertices:
             return None
-        queue = deque([[start]])
-        visited = set([start])
+        queue = deque([[start_id]])
+        visited = {start_id}
         while queue:
             path = queue.popleft()
-            node = path[-1]
-            if node == end:
+            current = path[-1]
+            if current == end_id:
                 return path
-            for neighbor in graph.neighbors(node):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    queue.append(path + [neighbor])
+            for neighbor_id in graph.vertices[current].neighbors.values():
+                if neighbor_id not in visited:
+                    visited.add(neighbor_id)
+                    queue.append(path + [neighbor_id])
         return None
 
     @staticmethod
-    def connected_components(graph: Graph) -> List[Set[Any]]:
-        visited = set()
-        components = []
-        for vertex in graph.adj_list:
-            if vertex not in visited:
-                comp = set()
-                queue = deque([vertex])
-                while queue:
-                    v = queue.popleft()
-                    if v not in visited:
-                        visited.add(v)
-                        comp.add(v)
-                        queue.extend([n for n in graph.neighbors(v) if n not in visited])
-                components.append(comp)
+    def connected_components(graph: GraphData) -> List[Set[int]]:
+        visited: Set[int] = set()
+        components: List[Set[int]] = []
+        for vertex_id in graph.vertices:
+            if vertex_id in visited:
+                continue
+            comp: Set[int] = set()
+            queue = deque([vertex_id])
+            while queue:
+                current = queue.popleft()
+                if current in visited:
+                    continue
+                visited.add(current)
+                comp.add(current)
+                for neighbor_id in graph.vertices[current].neighbors.values():
+                    if neighbor_id not in visited:
+                        queue.append(neighbor_id)
+            components.append(comp)
         return components
