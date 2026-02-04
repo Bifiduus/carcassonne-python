@@ -1,6 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{n}{place\PYGZus{}tile}\PYG{p}{(}\PYG{n}{tile}\PYG{p}{,} \PYG{n}{position}\PYG{p}{)}
-\PYG{n}{place\PYGZus{}meeple}\PYG{p}{(}\PYG{n}{position}\PYG{p}{)}
-\PYG{n}{get\PYGZus{}game\PYGZus{}state}\PYG{p}{()}
-\PYG{n}{is\PYGZus{}game\PYGZus{}over}\PYG{p}{()}
-\end{Verbatim}
