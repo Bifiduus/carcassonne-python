@@ -6,7 +6,7 @@ from carcassonne import __version__
 from carcassonne.Presentation.Interface import GameCLI
 from carcassonne.BusinessLogic.RulesEngine import RulesEngine
 
-class _ArgumentParser(argparse.ArgumentParser):
+class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
         self.print_usage(sys.stderr)
@@ -20,7 +20,7 @@ def main():
     """
     Starting point of the program.
     """
-    parser = _ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument(
         "-V",
         "--version",
@@ -42,6 +42,10 @@ def main():
     args = parser.parse_args()
     if args.version:
         print(f"Carcassonne: version {__version__}")
+    if args.debug:
+        print("Debug mode enabled.", file=sys.stderr)
+    elif args.verbose:
+        print("Verbose mode enabled.")
 
     # Call a function to start the game
     game_service = RulesEngine()
