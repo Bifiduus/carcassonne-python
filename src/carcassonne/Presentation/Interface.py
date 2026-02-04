@@ -98,7 +98,9 @@ class GameCLI:
                 param = content
                 value = None
             CommandsHandler.set_parameter(self, param, value)
-            
+        elif command.startswith("play"):
+            move = command[5:].strip()
+            CommandsHandler.play(self, move, game=self.game)  
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
