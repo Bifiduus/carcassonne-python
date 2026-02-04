@@ -9,7 +9,6 @@ from carcassonne.BusinessLogic.RulesEngine import RulesEngine
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
-        self.print_usage(sys.stderr)
         print(f"error: {message}", file=sys.stderr)
         self.print_help(sys.stderr)
         raise SystemExit(1)
