@@ -3,7 +3,7 @@ from carcassonne.IGameService import IGameService
 
 class RulesEngine(IGameService):
     
-    def __init__(self):
+    def __init__(self, data):
         self.tiles_dict = {
             'FFFF': ['m'], 'FFFR': ['m'], 'CFFF': ['void'], 'FCFC': ['f'], 'CFCF': ['c', 'b'],
             'CCCC': ['b'], 'FFCC': ['void'], 'CCFF': ['void', 'b'], 'CCCF': ['void', 'b'], 'CCCR': ['void', 'b'], 'FRFR': ['void'],
@@ -12,9 +12,85 @@ class RulesEngine(IGameService):
             'CSRS': ['void'],'RSRS': ['void'], 'RRSS': ['void']
         }
 
-        self.direction_list = ['N', 'S', 'W', 'E']
+        self.direction_list = ['N', 'E', 'S', 'W']
+        self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
+        
+        self.data = data
+
+    def areEqualSides(self, tile1, tile2_details):
+        """
+        Checks if the sides of two tiles from the computed move are equal.
+
+        This handles two formats for `tile2_details`:
+        - a tile code (e.g. 'CRRF') in which case we compare the corresponding side
+        - a move spec (e.g. '12N2') where the first number is the tile id, the second char is the orientation (N/S/W/E) 
+            and second number is the rotation applied to the tile to place
+
+        Rotation arithmetic uses Python's modulo so negative results wrap (e.g. (2 - 3) % 4 -> 3).
+
+        Returns True if the sides are equal, False otherwise.
+        """
+        
+        orientation_tile2 = tile2_details[1]
+        orientation_tile1 = self.direction_list[(self.direction_dict[orientation_tile2] + 2) % 4]
+            
+        rotation_tile1 = int(tile2_details[2])
+        rotation_tile2 = game.getTileRotation(int(tile2_details[0]))
+
+        # direction index between 0 and 3 (0 being North, 3 being West) on tile1 that will face the orientation before rotation (which side of the tile we want to place is concerned)
+        dir_idx = self.direction_dict[orientation_tile1]
+
+        # compute the index on tile1 that will face the orientation after rotation
+        # using modulo to wrap negatives (e.g. (2 - 3) % 4 == 3)
+        index_tile1 = (dir_idx - rotation_tile1) % 4
+        side1 = tile1[index_tile1]
+
+        # same with tile2
+        side2 = game.getTile(tile2_details[0])[self.direction_dict[orientation_tile2] - rotation_tile2 % 4]
+        
+        return side1 == side2
     
-    def placeTile(self, move): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
+    def isLegalMove(self, move_parts, game):
+        
+        """
+        Checks if the given move is legal in the current game state.
+        
+        Returns True if the move is legal, False otherwise.
+        """
+        counter = 0
+        
+        if not self.data.isTileLeft(move_parts[counter], game):
+            return False
+        
+        counter += 1
+        if len(move_parts[counter]) == 1:
+            counter += 1
+            
+        if not game.isTileSideAttachable(move_parts[counter][0], move_parts[counter][1], game):
+            return False
+        
+        if self.areEqualSides(move_parts[0], move_parts[counter]):
+            return False
+        
+        # Verify meeple placement if applicable
+        counter += 1
+        if len(move_parts) == counter - 1:
+            if not game.canPlaceMeepleOnTileSide(move_parts[0], move_parts[counter], game):
+                return False
+        
+        return True
+    
+    def placeTile(self, move, game): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
+        
+        """
+        Tries to place a tile according to the computed move :
+        - Checks if the move is a string.
+        - Splits the move into parts.
+        - Validates each part of the move.
+        - Tests if the move is legal in the current game state.
+        - If all checks pass, places the tile in the game structures.
+        """
+    
         counter = 0
         if not isinstance(move, str):
             print("the move needs to be a str\n")
@@ -39,7 +115,9 @@ class RulesEngine(IGameService):
                 print("the tile you try to place needs a center")
                 return
             
-        #assert(move_parts[counter][0] < gamestate.current_turn, "the tile you try to attach yours to has a invalid number")
+        if int(move_parts[counter][0]) >= game.getTurnNumber():
+            print("the tile you try to attach yours to has an invalid number")
+            return
         if move_parts[counter][1] not in self.direction_list:   
             print("the tile's side you try to attach yours on must be N, S, W or E")
             return      
@@ -52,7 +130,10 @@ class RulesEngine(IGameService):
             if move_parts[counter] not in (self.direction_list + ['C']):
                 print("the tile's side you try to place a meeple on must be N, S, W, E or C")
                 return
-        #assert(gamestate.isLegalMove(move), "the move isn't valid")
+        if not self.isLegalMove(move_parts, game):
+            print("the move isn't valid")
+            return
+        
         #jouer le move dans les structures
         print(move + " placed successfully.")
     

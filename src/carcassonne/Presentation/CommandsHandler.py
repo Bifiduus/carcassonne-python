@@ -77,4 +77,4 @@ def set_parameter(self, param, value):
         print(f"Paramètre '{param}' défini à '{value}'.")
         
 def play(self, move, game):
-        game.placeTile(move)
+        game.placeTile(move, game)
