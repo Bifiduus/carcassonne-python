@@ -33,6 +33,12 @@ def main():
         help="increase verbosity",
         action="store_true",
     )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        help="enable debug messages",
+        action="store_true",
+    )
     args = parser.parse_args()
     if args.version:
         print(f"Carcassonne: version {__version__}")
