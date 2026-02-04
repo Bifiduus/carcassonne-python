@@ -1,16 +1,26 @@
 """Main file of the program"""
 import argparse
+import sys
 
 from carcassonne import __version__
 from carcassonne.Presentation.Interface import GameCLI
 from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+
+class _ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):  # pylint: disable=arguments-differ
+        # Print error + help to stderr and exit with code 1.
+        self.print_usage(sys.stderr)
+        print(f"error: {message}", file=sys.stderr)
+        self.print_help(sys.stderr)
+        raise SystemExit(1)
+
 
 def main():
     # pylint: disable=docstring-first-line-empty
     """
     Starting point of the program.
     """
-    parser = argparse.ArgumentParser()
+    parser = _ArgumentParser()
     parser.add_argument(
         "-V",
         "--version",
