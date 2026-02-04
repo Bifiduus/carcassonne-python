@@ -47,6 +47,7 @@ def main():
         print("Verbose mode enabled.")
 
     # Call a function to start the game
+    game_data = GameData()  # Assuming GameData is defined elsewhere
     game_service = RulesEngine()
     game_cli = GameCLI(game_service)
     game_cli.run()
