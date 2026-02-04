@@ -1,9 +1,9 @@
 """Main file of the program"""
 import argparse
 
-from src import __version__
-from Presentation.Interface import GameCLI
-from BusinessLogic.RulesEngine import RulesEngine
+from carcassonne import __version__
+from carcassonne.Presentation.Interface import GameCLI
+from carcassonne.BusinessLogic.RulesEngine import RulesEngine
 
 def main():
     # pylint: disable=docstring-first-line-empty

@@ -13,7 +13,6 @@ authors = [
   {name = "Anthony BEAUVIEUX", email = "anthony.beauvieux@etu.u-bordeaux.fr"},
   {name = "Tony HUANG", email = "tony.huang@etu.u-bordeaux.fr"},
 ]
-
 license = "BSD-2-Clause"
 license-files = ["LICENSE.md"]
 readme = "README.md"
@@ -25,22 +24,16 @@ dependencies = [
   "sphinx_rtd_theme", # ReadTheDocs theme for Sphinx
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [tool.setuptools.dynamic]
-version = {attr = "__version__"} # Get version from package dynamically
+version = {attr = "carcassonne.__version__"} # Get version from package dynamically
 
 [tool.pytest.ini_options]
 addopts = [ # Add options for pytest
-  "--cov",
+  "--cov=carcassonne",
   "--cov-report=html",
   "--cov-report=term",
   "--cov-branch",
 ]
 
 [project.scripts]
-carcassonne = "__main__:main"
+carcassonne = "carcassonne.__main__:main"

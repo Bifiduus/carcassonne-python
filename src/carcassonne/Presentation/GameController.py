@@ -1,4 +1,4 @@
-from carcassonne.IGameService import IGameService
+from carcassonne import IGameService
 
 class GameLoop():
     

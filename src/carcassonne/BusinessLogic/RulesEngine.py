@@ -1,7 +1,7 @@
-import IGameService
+from carcassonne.IGameService import IGameService
 
 
-class RulesEngine(IGameService.IGameService):
+class RulesEngine(IGameService):
     
     def __init__(self):
         self.tiles_dict = {

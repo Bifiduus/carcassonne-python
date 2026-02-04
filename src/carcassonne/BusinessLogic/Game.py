@@ -1,4 +1,4 @@
-from Données import playHistory, undoHistory
+"""from carcassonne.Datas import playHistory, undoHistory
 from RulesEngine import currentPlayerIsHuman
 
 def undo():
@@ -34,4 +34,4 @@ def printUndoHistory():
     print('not implemented')
 
 def clearUndoHistory():
-    undoHistory.clear()
+    undoHistory.clear()*"""

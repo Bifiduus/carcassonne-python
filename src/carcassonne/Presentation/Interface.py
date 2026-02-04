@@ -1,5 +1,5 @@
-from IGameService import IGameService
-from Presentation import CommandsHandler
+from carcassonne.IGameService import IGameService
+from carcassonne.Presentation import CommandsHandler
 
 import readline
 import os
