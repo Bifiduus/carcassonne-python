@@ -1,7 +1,7 @@
-from carcassonne.IGameService import IGameService
+import IGameService
 
 
-class RulesEngine(IGameService):
+class RulesEngine(IGameService.IGameService):
     
     def __init__(self):
         self.tiles_dict = {
@@ -39,12 +39,12 @@ class RulesEngine(IGameService):
         #assert(gamestate.isLegalMove(move), "the move isn't valid")
         #jouer le move dans les structures
     
-    def getGameStates():
+    def getGameStates(self):
         pass
     
-    def placeMeeple():
+    def placeMeeple(self, move):
         pass
         
-    def playAI():
+    def playAI(self):
         pass
     

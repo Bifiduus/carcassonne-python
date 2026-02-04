@@ -1,12 +1,9 @@
 """Main file of the program"""
 import argparse
 
-from carcassonne import __version__
-from carcassonne.Présentation.Interface import GameCLI
-
-from carcassonne.Présentation.GameController import GameLoop
-from carcassonne.LogiqueMétier.RulesEngine import RulesEngine
-
+from src import __version__
+from Presentation.Interface import GameCLI
+from BusinessLogic.RulesEngine import RulesEngine
 
 def main():
     # pylint: disable=docstring-first-line-empty
@@ -25,7 +22,8 @@ def main():
         print(f"Carcassonne: version {__version__}")
 
     # Call a function to start the game
-    game_cli = GameCLI(None)
+    game_service = RulesEngine()
+    game_cli = GameCLI(game_service)
     game_cli.run()
 
     return 0

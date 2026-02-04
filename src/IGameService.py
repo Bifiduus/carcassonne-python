@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 class IGameService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def placeTile(self):
+    def placeTile(self, move):
         pass
 
     @abstractmethod
-    def placeMeeple(self):
+    def placeMeeple(self, move):
         pass
 
     @abstractmethod

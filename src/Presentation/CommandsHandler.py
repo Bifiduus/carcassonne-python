@@ -1,27 +1,74 @@
-class GameCLI:
-    def __init__(self, game, player):
-        self.game = game
-        self.player = player
-        self.running = True
+def new_game(self, args):
+        #self.game.startNewGame()
+        print("Nouvelle partie commencée.")
 
-    def handle_command(self, command, player):
-        
-        if command == "help":
-            self.show_help()
-        elif command == "status":
-            self.show_status(player)
-        elif command.startswith("place "):
-            self.p(command[6:], player)
-        elif command.startswith("meeple "):
-            self.place_meeple(command[7:], player)
-        elif command == "end":
-            self.end_turn(player)
-        else:
-            print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
-        def show_help(self):
-            print("Commandes disponibles:")
-            print("  help          - Affiche cette aide")
-            print("  status        - Affiche le statut actuel du jeu")
-            print("  place <args>  - Place une tuile avec les arguments spécifiés")
-            print("  meeple <args> - Place un meeple avec les arguments spécifiés")
-            print("  end           - Termine le tour actuel")
+def help(self):
+    print("Commandes disponibles:")
+    print("  new <args>         - Démarre une nouvelle partie")
+    print("  help               - Affiche cette aide")
+    print("  quit               - Quitte le jeu")
+    print("  load <file>        - Charge une partie depuis un fichier")
+    print("  save <file>        - Sauvegarde la partie dans un fichier")
+    print("  shuffle            - Mélange les tuiles de la pioche")
+    print("  hint               - Donne un indice pour le placement de la tuile")
+    print("  undo [N]           - Annule le dernier coup ou les N derniers coups")
+    print("  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés")
+    print("  show hand          - Affiche la main du joueur courant")
+    print("  show score         - Affiche le score des joueurs")
+    print("  show history       - Affiche l'historique des coups joués")
+    print("  show configuration - Affiche la configuration actuelle du jeu")
+    print("  set (PARAM=VALUE)  - Définit un paramètre de configuration")
+
+def quit(self):
+        print("Quitte le jeu. À bientôt!")
+        self.running = False
+
+def load(self, filename):
+        #self.game.loadGameFromFile(filename)
+        print(f"Partie chargée depuis {filename}.")
+
+def save(self, filename):
+        #self.game.saveGameToFile(filename)
+        print(f"Partie sauvegardée dans {filename}.")
+
+def shuffle(self):
+        #self.game.shuffleDeck()
+        print("Pioche mélangée.")
+    
+def hint(self):
+        #hint = self.game.getPlacementHint()
+        print(f"Indice pour le placement de la tuile: ")
+
+def undo(self, N):
+        #self.game.undoLastMove()
+        print(f"Derniers {N} coups annulés.")
+
+def redo(self, N):
+        #self.game.redoLastMove()
+        print(f"Derniers {N} coups rétablis.")
+
+def show_hand(self):
+        #hand = self.game.getCurrentPlayerHand()
+        print("Main du joueur courant:")
+
+def show_score(self):
+        #scores = self.game.getPlayerScores()
+        print("Scores des joueurs:")
+        #for player, score in scores.items():
+        #    print(f"  {player}: {score}")
+
+def show_history(self):
+        #history = self.game.getGameHistory()
+        print("Historique des coups joués:")
+        #for move in history:
+        #    print(f"  {move}")
+
+def show_configuration(self):
+        #config = self.game.getGameConfiguration()
+        print("Configuration actuelle du jeu:")
+        #for key, value in config.items():
+        #    print(f"  {key}: {value}")
+    
+def set_parameter(self, param, value):
+        #self.game.setGameParameter(param, value)
+        print(f"Paramètre '{param}' défini à '{value}'.")
