@@ -7,8 +7,24 @@ import atexit
 from pathlib import Path
 
 
+COMMANDS = [
+    "new", "help", "quit", "load", "save",
+    "shuffle", "hint", "undo", "redo",
+    "show hand", "show score", "show history", "show configuration",
+    "set"
+    ]
 
+def completer(texte, state):
+
+        # filtrer les commandes qui commencent par text
+        matches = [cmd for cmd in COMMANDS if cmd.startswith(texte)]
+        if state < len(matches):
+            return matches[state]
+        else:
+            return None
 class GameCLI:
+    
+    
     def __init__(self, game : IGameService):
         self.game = game
         self.running = True
@@ -22,6 +38,12 @@ class GameCLI:
             print("No previous history file found.")
 
         atexit.register(readline.write_history_file, HISTORY_FILE)"""
+
+        
+        readline.set_completer(completer)
+        readline.parse_and_bind("tab: complete") 
+
+        readline.parse_and_bind("set show-all-if-ambiguous on")
 
     def run(self):
         print("Bienvenue dans Carcassonne")
@@ -80,3 +102,5 @@ class GameCLI:
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
+
+    
