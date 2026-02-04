@@ -1,6 +1,45 @@
+# Virtual envs
 .venv/
-.pytest_cache/
-##.coverage
-##htmlcov/
+venv/
+env/
+
+# Python bytecode
 __pycache__/
-##carcassonne.egg-info/
+*.py[cod]
+*$py.class
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.egg
+
+# Sphinx / docs
+docs/_build/
+
+# LaTeX build files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.pygtex
+_minted*/
+_minted-*/
+
+# IDEs / editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
