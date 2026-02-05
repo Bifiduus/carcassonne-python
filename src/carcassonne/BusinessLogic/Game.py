@@ -46,14 +46,15 @@ class Game(IGameService):
             target_list.append(source_list.pop())
             "same for board"
 
-
     def print_history(self) -> List[Any]:
         """Return a shallow copy of current play history."""
         return list(self.play_history)
-
 
     def clear_undo_history(self) -> None:
         self.undo_history.clear()
     
     def is_undo_history_empty(self) -> bool:
+        return len(self.undo_history) == 0
+
+    def is_undo_history_empty(self):
         return len(self.undo_history) == 0
