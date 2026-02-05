@@ -1,4 +1,6 @@
 from carcassonne.IGameService import IGameService
+from carcassonne.Datas.GraphData import GraphData
+from carcassonne.Datas.TilesCount import TilesCount
 
 
 class RulesEngine(IGameService):
@@ -16,6 +18,8 @@ class RulesEngine(IGameService):
         self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
         
         self.data = data
+        
+        self.tilesCount = TilesCount()
 
     def areEqualSides(self, tile1, tile2_details):
         """
@@ -35,7 +39,8 @@ class RulesEngine(IGameService):
         orientation_tile1 = self.direction_list[(self.direction_dict[orientation_tile2] + 2) % 4]
             
         rotation_tile1 = int(tile2_details[2])
-        rotation_tile2 = game.getTileRotation(int(tile2_details[0]))
+        tile2 =  self.data.get_verticies()[(int(tile2_details[0]))]
+        rotation_tile2 = tile2.get_orientation()
 
         # direction index between 0 and 3 (0 being North, 3 being West) on tile1 that will face the orientation before rotation (which side of the tile we want to place is concerned)
         dir_idx = self.direction_dict[orientation_tile1]
@@ -46,11 +51,11 @@ class RulesEngine(IGameService):
         side1 = tile1[index_tile1]
 
         # same with tile2
-        side2 = game.getTile(tile2_details[0])[self.direction_dict[orientation_tile2] - rotation_tile2 % 4]
+        side2 = tile2.get_name()[self.direction_dict[orientation_tile2] - rotation_tile2 % 4]
         
         return side1 == side2
     
-    def isLegalMove(self, move_parts, game):
+    def isLegalMove(self, move_parts):
         
         """
         Checks if the given move is legal in the current game state.
@@ -59,28 +64,36 @@ class RulesEngine(IGameService):
         """
         counter = 0
         
-        if not self.data.isTileLeft(move_parts[counter], game):
-            return False
-        
         counter += 1
         if len(move_parts[counter]) == 1:
-            counter += 1
-            
-        if not game.isTileSideAttachable(move_parts[counter][0], move_parts[counter][1], game):
-            return False
-        
-        if self.areEqualSides(move_parts[0], move_parts[counter]):
-            return False
-        
-        # Verify meeple placement if applicable
-        counter += 1
-        if len(move_parts) == counter - 1:
-            if not game.canPlaceMeepleOnTileSide(move_parts[0], move_parts[counter], game):
+            if not self.tilesCount.is_tile_left(move_parts[counter - 1] + '/' + move_parts[counter]):
+                print("no tiles left of that type with that center")
                 return False
+            counter += 1   
+        else :
+            if not self.tilesCount.is_tile_left(move_parts[counter - 1]):
+                print("no tiles left of that type without center")
+                return False 
+            
+        if not self.data.get_verticies()[int(move_parts[counter][0])].is_neighbor_free(self.direction_dict[move_parts[counter][1]]):
+            print("the tile you try to attach yours to already has a neighbor on that side")
+            return False
+        
+        if not self.areEqualSides(move_parts[0], move_parts[counter]):
+            print("the tile you try to place doesn't match the tile you try to attach yours to")
+            return False
+        
+        # Verify meeple placement if applicable 
+        #TODO : can_place_meeple_on_tile_side(move_parts[0] : str, move_parts[counter] str, game : IGameService) -> bool
+        '''counter += 1
+        if len(move_parts) == counter - 1:
+            if not self.data.canPlaceMeepleOnTileSide(move_parts[0], move_parts[counter], game):
+                print("you can't place a meeple on that side of the tile you try to place")
+                return False'''
         
         return True
     
-    def placeTile(self, move, game): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
+    def placeTile(self, move): #ça marche pas encore sachant qu'il faut d'autres trucs implémentés mais voilà l'idée
         
         """
         Tries to place a tile according to the computed move :
@@ -115,7 +128,8 @@ class RulesEngine(IGameService):
                 print("the tile you try to place needs a center")
                 return
             
-        if int(move_parts[counter][0]) >= game.getTurnNumber():
+        #REGARDER COMMENT PRENDRE LE NOMBRE ENTIER ET PAS JUSTE LE PREMIER CHIFFRE (marche avec 7, mais pas avec 12 par exemple)
+        if int(move_parts[counter][0]) >= self.data.get_turn_number():
             print("the tile you try to attach yours to has an invalid number")
             return
         if move_parts[counter][1] not in self.direction_list:   
@@ -130,11 +144,18 @@ class RulesEngine(IGameService):
             if move_parts[counter] not in (self.direction_list + ['C']):
                 print("the tile's side you try to place a meeple on must be N, S, W, E or C")
                 return
-        if not self.isLegalMove(move_parts, game):
+            
+        if not self.isLegalMove(move_parts):
             print("the move isn't valid")
             return
         
         #jouer le move dans les structures
+        self.data.add_vertex(vertex_id=self.data.turn, name=move_parts[0], orientation=int(move_parts[counter - 1][2]))  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        
+        #enlever la tuile des tuiles disponibles
+        tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
+        self.tilesCount.remove_tile(tile_name)
+        
         print(move + " placed successfully.")
     
     def getGameStates(self):

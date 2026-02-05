@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-EAST_DIR = 0
-SOUTH_DIR = 1
-WEST_DIR = 2
-NORTH_DIR = 3
+NORTH_DIR = 0
+EAST_DIR = 1
+SOUTH_DIR = 2
+WEST_DIR = 3
 
 ORIENTATIONS = 4
 
@@ -14,6 +14,12 @@ class Vertex:
     name: str
     orientation: int = 0
     neighbors: Dict[int, int] = field(default_factory=dict)
+    
+    def __init__(self, id: int, name: str, orientation: int = 0):
+        self.id = id
+        self.name = name
+        self.orientation = orientation % ORIENTATIONS
+        self.neighbors = {} 
 
     def set_neighbor(self, position: int, neighbor_id: int) -> None:
         if position not in range(ORIENTATIONS):
@@ -26,18 +32,35 @@ class Vertex:
 
     def rotate(self, k: int = 1) -> None:
         self.orientation = (self.orientation + k) % ORIENTATIONS
+        
+    def get_id(self) -> int:
+        return self.id
+    
+    def get_name(self) -> str:  
+        return self.name
+    
+    def get_orientation(self) -> int:
+        return self.orientation
+    
+    def get_neighbors(self) -> Dict[int, int]:
+        return dict(self.neighbors)
+    
+    def is_neighbor_free(self, position: int) -> bool:
+        return position not in self.neighbors
 
 
 class GraphData:
     def __init__(self):
         self.vertices: Dict[int, Vertex] = {}
+        self.turn = 0
+        self.add_vertex(vertex_id=0, name='CRFR', orientation=0)  # Adding the starting tile (CRFR) as a vertex in the graph
 
-    def add_vertex(self, vertex_id: int, name: str, orientation: int = 0) -> Vertex:
+    def add_vertex(self, vertex_id: int, name: str, orientation: int):
         if vertex_id in self.vertices:
             raise ValueError(f"Vertex ID already exists : {vertex_id}")
         vertex = Vertex(id=vertex_id, name=name, orientation=orientation % ORIENTATIONS)
         self.vertices[vertex_id] = vertex
-        return vertex
+        self.turn += 1
 
     def remove_vertex(self, vertex_id: int) -> None:
         if vertex_id not in self.vertices:
@@ -62,4 +85,10 @@ class GraphData:
     def get_neighbors(self, vertex_id: int) -> Dict[int, int]:
         if vertex_id not in self.vertices:
             return {}
-        return dict(self.vertices[vertex_id].neighbors)
+        return self.vertices[vertex_id].get_neighbors()
+    
+    def get_turn_number(self) -> int:
+        return self.turn    
+    
+    def get_verticies(self) -> Dict[int, Vertex]:
+        return dict(self.vertices)  

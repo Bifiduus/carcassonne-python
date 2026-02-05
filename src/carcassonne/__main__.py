@@ -5,6 +5,7 @@ import sys
 from carcassonne import __version__
 from carcassonne.Presentation.Interface import GameCLI
 from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+from carcassonne.Datas.GraphData import GraphData
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):  # pylint: disable=arguments-differ
@@ -47,8 +48,8 @@ def main():
         print("Verbose mode enabled.")
 
     # Call a function to start the game
-    game_data = GameData()  # Assuming GameData is defined elsewhere
-    game_service = RulesEngine()
+    game_data = GraphData()  # Assuming GraphData is defined elsewhere
+    game_service = RulesEngine(game_data)
     game_cli = GameCLI(game_service)
     game_cli.run()
 
