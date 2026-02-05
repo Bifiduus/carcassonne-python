@@ -6,7 +6,6 @@ import os
 import atexit
 from pathlib import Path
 
-
 COMMANDS = [
     "new", "help", "quit", "load", "save",
     "shuffle", "hint", "undo", "redo",
