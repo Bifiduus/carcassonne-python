@@ -47,4 +47,7 @@ class RulesEngine(IGameService):
         
     def playAI(self):
         pass
+
+    def current_player_is_human(self):
+        return True
     
