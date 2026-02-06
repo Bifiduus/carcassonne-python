@@ -1,6 +1,8 @@
 from carcassonne.IGameService import IGameService
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.TilesCount import TilesCount
+from carcassonne.Datas.History import History, MoveRecord
+from carcassonne.Datas.Serializer import parse_move, build_str
 
 
 class RulesEngine(IGameService):
@@ -20,6 +22,7 @@ class RulesEngine(IGameService):
         self.data = data
         
         self.tilesCount = TilesCount()
+        self.history = History()
 
     def areEqualSides(self, tile1, tile2_details):
         """
@@ -155,11 +158,31 @@ class RulesEngine(IGameService):
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         self.tilesCount.remove_tile(tile_name)
+
+        try:
+            parsed = parse_move(move)
+            record = MoveRecord(
+                move_str="",
+                player_id=1,
+                tile_sides=parsed["tile_sides"],
+                target_id=parsed["target_id"],
+                target_side=parsed["target_side"],
+                rotation=parsed["rotation"],
+                meeple=parsed["meeple"],
+            )
+            record.move_str = build_str(record)
+            self.history.push_past(record)
+            self.history.clear_future()
+        except ValueError:
+            pass
         
         print(move + " placed successfully.")
     
     def getGameStates(self):
         pass
+
+    def getGameHistory(self):
+        return self.history.list_history()
     
     def placeMeeple(self, move):
         pass
