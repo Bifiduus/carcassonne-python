@@ -14,4 +14,10 @@ class History:
         self.past_moves = []
         self.future_moves = []
 
+    def push_past(self, record: MoveRecord) -> None:
+        self.past_moves.append(record)
+
+    def push_future(self, record: MoveRecord) -> None:
+        self.past_moves.append(record)
+
 
