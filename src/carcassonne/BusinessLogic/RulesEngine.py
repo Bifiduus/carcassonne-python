@@ -1,6 +1,6 @@
 from carcassonne.IGameService import IGameService
 from carcassonne.Datas.GraphData import GraphData
-from carcassonne.Datas.TilesCount import TilesCount
+from carcassonne.Datas.TilesInfo import TilesInfo
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.Datas.Serializer import parse_move, build_str
 
@@ -21,7 +21,7 @@ class RulesEngine(IGameService):
         
         self.data = data
         
-        self.tilesCount = TilesCount()
+        self.TilesInfo = TilesInfo()
         self.history = History()
 
     def areEqualSides(self, tile1, tile2_details):
@@ -69,12 +69,12 @@ class RulesEngine(IGameService):
         
         counter += 1
         if len(move_parts[counter]) == 1:
-            if not self.tilesCount.is_tile_left(move_parts[counter - 1] + '/' + move_parts[counter]):
+            if not self.TilesInfo.is_tile_left(move_parts[counter - 1] + '/' + move_parts[counter]):
                 print("no tiles left of that type with that center")
                 return False
             counter += 1   
         else :
-            if not self.tilesCount.is_tile_left(move_parts[counter - 1]):
+            if not self.TilesInfo.is_tile_left(move_parts[counter - 1]):
                 print("no tiles left of that type without center")
                 return False 
             
@@ -158,7 +158,7 @@ class RulesEngine(IGameService):
         
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
-        self.tilesCount.remove_tile(tile_name)
+        self.TilesInfo.remove_tile(tile_name)
 
         try:
             parsed = parse_move(move)
