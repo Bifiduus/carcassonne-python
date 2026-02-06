@@ -20,4 +20,9 @@ class History:
     def push_future(self, record: MoveRecord) -> None:
         self.past_moves.append(record)
 
+    def pop_past(self) -> MoveRecord:
+        return self.past_moves.pop()
+    
+    def pop_future(self) -> MoveRecord:
+        return self.future_moves.pop()
 
