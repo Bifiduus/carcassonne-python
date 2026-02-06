@@ -61,10 +61,10 @@ def show_score(self):
         #    print(f"  {player}: {score}")
 
 def show_history(self):
-        #history = self.game.getGameHistory()
+        history = self.game.getGameHistory()
         print("Historique des coups joués:")
-        #for move in history:
-        #    print(f"  {move}")
+        for move in history:
+            print(f"  {move}")
 
 def show_configuration(self):
         #config = self.game.getGameConfiguration()
