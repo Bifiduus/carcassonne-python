@@ -131,6 +131,10 @@ class RulesEngine(IGameService):
                 print("the tile you try to place needs a center")
                 return
             
+        if len(move_parts) <= counter:
+            print("the move misses the tile placement details")
+            return
+            
         #REGARDER COMMENT PRENDRE LE NOMBRE ENTIER ET PAS JUSTE LE PREMIER CHIFFRE (marche avec 7, mais pas avec 12 par exemple)
         if int(move_parts[counter][0]) >= self.data.get_turn_number():
             print("the tile you try to attach yours to has an invalid number")

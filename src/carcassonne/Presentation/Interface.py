@@ -1,6 +1,6 @@
 from carcassonne.IGameService import IGameService
 from carcassonne.Presentation import CommandsHandler
-from carcassonne.BusinessLogic.Game import is_undo_history_empty, clear_undo_history
+from carcassonne.BusinessLogic.Game import Game
 
 import readline
 import os
@@ -28,6 +28,7 @@ class GameCLI:
     def __init__(self, game : IGameService):
         self.game = game
         self.running = True
+        self.game_instance = Game(game.data)
         """HISTORY_FILE = os.path.expanduser("~/.carcassonne_history")
 
         try:
@@ -101,8 +102,8 @@ class GameCLI:
         elif command.startswith("play"):
             move = command[5:].strip()
             CommandsHandler.play(self, move, game=self.game)  
-            if not is_undo_history_empty():
-                clear_undo_history()
+            if not self.game_instance.is_undo_history_empty():
+                self.game_instance.clear_undo_history()
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")

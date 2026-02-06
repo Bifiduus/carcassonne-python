@@ -10,7 +10,7 @@ from carcassonne.IGameService import IGameService
 from carcassonne.Datas.History import History  
 from .AIModel import is_ai_player
 
-class Game(IGameService):
+class Game():
 
     def __init__(self, data: Any) -> None:
         self.data: Any = data
