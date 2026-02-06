@@ -153,7 +153,8 @@ class RulesEngine(IGameService):
             return
         
         #jouer le move dans les structures
-        self.data.add_vertex(vertex_id=self.data.turn, name=move_parts[0], orientation=int(move_parts[counter - 1][2]))  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        tile_pos = self.data.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=self.direction_dict[move_parts[counter - 1][1]])
+        self.data.add_vertex(vertex_id=self.data.turn, name=move_parts[0], orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
