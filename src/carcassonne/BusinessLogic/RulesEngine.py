@@ -191,4 +191,8 @@ class RulesEngine(IGameService):
         
     def playAI(self):
         pass
+
+    def current_player_is_human(self) -> bool:
+        #TODO : is_human_player(game : IGameService) -> bool
+        return True
     

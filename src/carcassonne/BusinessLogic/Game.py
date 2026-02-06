@@ -7,51 +7,48 @@ from carcassonne.BusinessLogic.RulesEngine import RulesEngine
 from carcassonne.Datas.GameRepository import GameRepository
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.IGameService import IGameService
+from carcassonne.Datas.History import History  
 from .AIModel import is_ai_player
 
 class Game(IGameService):
+
     def __init__(self, data: Any) -> None:
         self.data: Any = data
         self.rules_engine: RulesEngine = RulesEngine(data)
         self.game_repository: GameRepository = GameRepository()
         self.graph: GraphData = GraphData()
-        self.play_history: List[Any] = self.game_repository.play_history
-        self.undo_history: List[Any] = self.game_repository.undo_history
+        self.history: History = History()
 
-    def start_new_game(self):
-        self.play_history.clear()
-        self.undo_history.clear()
+    def start_new_game(self) -> None:
+        """Start a new game by clearing the play history, undo history, 
+        and resetting the graph and game repository.
+        """
+        self.history.clear_future()
         self.graph = GraphData()
         self.game_repository = GameRepository()
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
-        if self.rules_engine.current_player_is_human() and self.play_history:
-            previous_play = self.play_history.pop()
-            self.undo_history.append(previous_play)
-            "same for board"
-            self.pop_ai_moves_onto(self.play_history, self.undo_history)
+        if self.rules_engine.current_player_is_human() and self.history.past_moves:
+            previous_play = self.history.pop_past()
+            self.history.push_future(previous_play)
+            while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
+                self.history.push_future(self.history.pop_past())
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
-        if self.rules_engine.current_player_is_human() and self.undo_history:
-            last_unplayed_move = self.undo_history.pop()
-            self.play_history.append(last_unplayed_move)
-            "same for board"
-            self.pop_ai_moves_onto(self.undo_history, self.play_history)
-            
-    def pop_ai_moves_onto(self, source_list: List[Any], target_list: List[Any]) -> None:
-        """Move trailing AI moves from source_list onto target_list."""
-        while source_list and is_ai_player(source_list[-1]):
-            target_list.append(source_list.pop())
-            "same for board"
+        if self.rules_engine.current_player_is_human() and self.history.future_moves:
+            last_unplayed_move = self.history.pop_future()
+            self.history.push_past(last_unplayed_move)
+            while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
+                self.history.push_past(self.history.pop_future())
 
     def print_history(self) -> List[Any]:
         """Return a shallow copy of current play history."""
-        return list(self.play_history)
+        return list(self.history.past_moves)
 
     def clear_undo_history(self) -> None:
-        self.undo_history.clear()
+        self.history.clear_future()
     
     def is_undo_history_empty(self) -> bool:
-        return len(self.undo_history) == 0
+        return len(self.history.future_moves) == 0
