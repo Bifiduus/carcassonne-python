@@ -55,6 +55,3 @@ class Game(IGameService):
     
     def is_undo_history_empty(self) -> bool:
         return len(self.undo_history) == 0
-
-    def is_undo_history_empty(self):
-        return len(self.undo_history) == 0
