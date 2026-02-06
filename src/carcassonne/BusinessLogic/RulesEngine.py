@@ -169,6 +169,7 @@ class RulesEngine(IGameService):
                 target_side=parsed["target_side"],
                 rotation=parsed["rotation"],
                 meeple=parsed["meeple"],
+                center=parsed.get("center"),
             )
             record.move_str = build_str(record)
             self.history.push_past(record)

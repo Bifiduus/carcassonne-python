@@ -1,5 +1,5 @@
 class MoveRecord:
-    def __init__(self, move_str, player_id, tile_sides, target_id, target_side, rotation, meeple=None):
+    def __init__(self, move_str, player_id, tile_sides, target_id, target_side, rotation, meeple=None, center=None):
         self.move_str = move_str
         self.player_id = player_id
         self.tile_sides = tile_sides
@@ -7,6 +7,7 @@ class MoveRecord:
         self.target_side = target_side
         self.rotation = rotation
         self.meeple = meeple
+        self.center = center
 
 
 class History:
@@ -31,4 +32,3 @@ class History:
 
     def list_history(self):
         return [record.move_str for record in self.past_moves]
-
