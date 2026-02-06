@@ -49,3 +49,9 @@ def parse_move(move):
         "meeple": meeple,
     }
 
+
+def build_str(record):
+    placement = f"{record.target_id}{record.target_side}{record.rotation}"
+    if record.meeple:
+        return f"{record.player_id}:{record.tile_sides}/{placement}/{record.meeple};"
+    return f"{record.player_id}:{record.tile_sides}/{placement};"
