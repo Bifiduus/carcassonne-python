@@ -3,20 +3,21 @@ The Game class is responsible for managing the game state, including the play hi
 """
 from typing import Any, List
 
-from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.Datas.GameRepository import GameRepository
 from carcassonne.Datas.GraphData import GraphData
-from carcassonne.IGameService import IGameService
+from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Datas.History import History  
 from .AIModel import is_ai_player
 
-class Game():
+class Game(IGameService):
 
-    def __init__(self, data: Any) -> None:
-        self.data: Any = data
-        self.rules_engine: RulesEngine = RulesEngine(data)
+    def __init__(self, graphData: IGraphData) -> None:
+    
         self.game_repository: GameRepository = GameRepository()
-        self.graph: GraphData = GraphData()
+        self.graph: IGraphData = graphData
+        self.rules_engine: RulesManager = RulesManager(self)
         self.history: History = History()
 
     def start_new_game(self) -> None:
@@ -24,7 +25,7 @@ class Game():
         and resetting the graph and game repository.
         """
         self.history.clear_future()
-        self.graph = GraphData()
+        self.graph.reset_graph()
         self.game_repository = GameRepository()
 
     def undo(self) -> None:
@@ -52,3 +53,20 @@ class Game():
     
     def is_undo_history_empty(self) -> bool:
         return len(self.history.future_moves) == 0
+
+
+
+    def play_move(self, move):
+        self.history.push_past(move)
+
+
+    def get_game_configuration(self) -> dict :
+        grid = {}
+        for vertex in self.graph.get_verticies().values():
+            pos = vertex.get_position()
+            grid[pos] = {
+                "name": vertex.get_name(),
+                "orientation": vertex.get_orientation(),
+                "neighbors": vertex.get_neighbors()
+            }
+        return grid

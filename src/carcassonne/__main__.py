@@ -3,8 +3,9 @@ import argparse
 import sys
 
 from carcassonne import __version__
-from carcassonne.Presentation.Interface import GameCLI
-from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+from carcassonne.BusinessLogic.Game import Game
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.Presentation.Cli import GameCLI
 from carcassonne.Datas.GraphData import GraphData
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -48,9 +49,9 @@ def main():
         print("Verbose mode enabled.")
 
     # Call a function to start the game
-    game_data = GraphData()  # Assuming GraphData is defined elsewhere
-    game_service = RulesEngine(game_data)
-    game_cli = GameCLI(game_service)
+    game_data :IGraphData = GraphData()
+    game = Game(game_data)
+    game_cli = GameCLI(game)
     game_cli.run()
 
     return 0

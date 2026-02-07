@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+
 NORTH_DIR = 0
 EAST_DIR = 1
 SOUTH_DIR = 2
@@ -61,7 +63,7 @@ class Vertex:
         return position not in self.neighbors
 
 
-class GraphData:
+class GraphData(IGraphData):
     def __init__(self):
         self.vertices: Dict[int, Vertex] = {}
         self.turn = 0
@@ -139,3 +141,8 @@ class GraphData:
             return (x - 1, y)
         else:
             raise ValueError(f"Invalid side: {side}")
+        
+    def reset_graph(self):
+        self.vertices.clear()
+        self.turn = 0
+        self.add_vertex(vertex_id=0, name='CRFR', orientation=0, position=(0, 0))  # Resetting the graph with the starting tile (CRFR) as a vertex in the graph

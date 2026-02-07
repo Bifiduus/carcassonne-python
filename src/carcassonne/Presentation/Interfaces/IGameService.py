@@ -1,20 +1,18 @@
 """Module providing an interface between Présentation and Logique Métier"""
 from abc import ABC, abstractmethod
 
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+
 class IGameService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def placeTile(self, move):
+    def start_new_game(self):
         pass
 
     @abstractmethod
-    def placeMeeple(self, move):
+    def play_move(self, move):
         pass
 
     @abstractmethod
-    def getGameStates(self):
-        pass
-
-    @abstractmethod
-    def playAI(self):
+    def get_game_configuration(self) -> dict :
         pass

@@ -1,4 +1,6 @@
-from carcassonne.BusinessLogic.RulesEngine import RulesEngine
+
+from carcassonne.Presentation.Interfaces.IGameService import IGameService
+
 
 def new_game(self, args):
         #self.game.startNewGame()
@@ -67,10 +69,12 @@ def show_history(self):
             print(f"  {move}")
 
 def show_configuration(self):
-        #config = self.game.getGameConfiguration()
+        grid = self.game.get_game_configuration()
         print("Configuration actuelle du jeu:")
-        #for key, value in config.items():
-        #    print(f"  {key}: {value}")
+        # Affichez la configuration du jeu (par exemple, les tuiles sur le plateau)
+        for pos, tile in grid.items():
+            print(f"  Position {pos}: {tile['name']} (orientation: {tile['orientation']}, neighbors: {tile['neighbors']})")
+
     
 def set_parameter(self, param, value):
         #self.game.setGameParameter(param, value)

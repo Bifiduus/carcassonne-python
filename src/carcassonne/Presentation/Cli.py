@@ -1,4 +1,4 @@
-from carcassonne.IGameService import IGameService
+from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Presentation import CommandsHandler
 from carcassonne.BusinessLogic.Game import Game
 
@@ -25,10 +25,9 @@ def completer(texte, state):
 class GameCLI:
     
     
-    def __init__(self, game : IGameService):
-        self.game = game
+    def __init__(self, game_service: IGameService):
+        self.game = game_service
         self.running = True
-        self.game_instance = Game(game.data)
         """HISTORY_FILE = os.path.expanduser("~/.carcassonne_history")
 
         try:
@@ -101,9 +100,8 @@ class GameCLI:
             CommandsHandler.set_parameter(self, param, value)
         elif command.startswith("play"):
             move = command[5:].strip()
-            CommandsHandler.play(self, move, game=self.game)  
-            if not self.game_instance.is_undo_history_empty():
-                self.game_instance.clear_undo_history()
+            #CommandsHandler.play(self, move, game=self.game)  
+
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
