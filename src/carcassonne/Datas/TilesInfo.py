@@ -1,5 +1,19 @@
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
+class Tile:
+    code : str
+    
+    matrix : list[list[str]]
+    
+    direction_matrix = [['NW', 'N', 'NE'], 
+                        ['W', 'C', 'E'], 
+                        ['SW', 'S', 'SE']]
+    
+    def __init__(self, code: str):
+        self.code = code
+        
+        self.matrix = TilesInfo.tiles_sides[code]
+
 class TilesInfo(ITilesInfo):
     def __init__(self):
         self.tiles_dict = {
@@ -21,14 +35,139 @@ class TilesInfo(ITilesInfo):
             'CSRS': 1,'RSRS': 1, 'RRSS': 1
         }
         
-        self.tiles_center = {
-            'FFFF/m': 'm', 'FFFR/m': 'm', 'CFFF': 'F', 'FCFC/f': 'F', 'CFCF/c': 'C', 'CFCF/b': 'C',
-            'CCCC/b': 'C', 'FFCC': 'F', 'CCFF': 'F', 'CCFF/b': 'F', 'CCCF': 'C', 'CCCF/b': 'C', 'CCCR': 'C', 'CCCR/b': 'C', 'FRFR': 'R',
-            'FFRR': 'F', 'CRFR': 'R', 'CFRR': 'F', 'CRRF': 'F', 'CCRR': 'F', 'CCRR/b': 'F', 'FRRR': 'R', 'CRRR': 'R',
-            'RRRR': 'R', 'FSRS/m': 'm', 'FFSF': 'S', 'FSFS': 'S', 'FFSS': 'F', 'CSCS': 'S', 'CCSS': 'F',
-            'CSRS': 'R','RSRS': 'R', 'RRSS': 'F'
-        }
-        
+        self.tiles_sides = {
+            'FFFF/m': [['F', 'F', 'F'],
+                       ['F', 'm', 'F'],
+                       ['F', 'F', 'F']], 
+            
+            'FFFR/m': [['F', 'F', 'F'],
+                       ['R', 'm', 'F'],
+                       ['F', 'F', 'F']], 
+            
+            'CFFF':   [['F', 'C', 'F'],
+                       ['F', 'F', 'F'],
+                       ['F', 'F', 'F']], 
+            
+            'FCFC/f': [['F', 'F', 'F'],
+                       ['C', 'F', 'C'],
+                       ['F', 'F', 'F']], 
+            
+            'CFCF/c': [['C', 'C', 'C'],
+                       ['F', 'C', 'F'],
+                       ['C', 'C', 'C']], 
+            
+            'CFCF/b': [['C', 'C', 'C'],
+                       ['F', 'C', 'F'],
+                       ['C', 'C', 'C']],
+            
+            'CCCC/b': [['C', 'C', 'C'],
+                       ['C', 'C', 'C'],
+                       ['C', 'C', 'C']], 
+            
+            'FFCC':   [['F', 'F', 'F'],
+                       ['C', 'F', 'F'],
+                       ['F', 'C', 'F']], 
+            
+            'CCFF':   [['F', 'C', 'C'],
+                       ['F', 'F', 'C'],
+                       ['F', 'F', 'F']],
+            
+            'CCFF/b': [['F', 'C', 'C'],
+                       ['F', 'F', 'C'],
+                       ['F', 'F', 'F']],
+            
+            'CCCF':   [['C', 'C', 'C'],
+                       ['F', 'C', 'C'],
+                       ['C', 'C', 'C']], 
+            
+            'CCCF/b': [['C', 'C', 'C'],
+                       ['F', 'C', 'C'],
+                       ['C', 'C', 'C']], 
+            
+            'CCCR':   [['C', 'C', 'C'],
+                       ['R', 'C', 'C'],
+                       ['C', 'C', 'C']], 
+            
+            'CCCR/b': [['C', 'C', 'C'],
+                       ['R', 'C', 'C'],
+                       ['C', 'C', 'C']],
+             
+            'FRFR':   [['F', 'F', 'F'],
+                       ['R', 'R', 'R'],
+                       ['F', 'F', 'F']],
+            
+            'FFRR':   [['F', 'F', 'F'],
+                       ['R', 'F', 'F'],
+                       ['F', 'R', 'F']], 
+            
+            'CRFR':   [['F', 'C', 'F'],
+                       ['R', 'R', 'R'],
+                       ['F', 'F', 'F']], 
+            
+            'CFRR':   [['F', 'C', 'F'],
+                       ['R', 'F', 'F'],
+                       ['F', 'R', 'F']], 
+            
+            'CRRF':   [['F', 'C', 'F'],
+                       ['F', 'F', 'R'],
+                       ['F', 'R', 'F']], 
+            
+            'CCRR':   [['F', 'C', 'C'],
+                       ['R', 'F', 'C'],
+                       ['F', 'R', 'F']], 
+            
+            'CCRR/b': [['F', 'C', 'C'],
+                       ['R', 'F', 'C'],
+                       ['F', 'R', 'F']], 
+            
+            'FRRR':   [['F', 'F', 'F'],
+                       ['R', 'R', 'R'],
+                       ['F', 'R', 'F']], 
+            
+            'CRRR':   [['F', 'C', 'F'],
+                       ['R', 'R', 'R'],
+                       ['F', 'R', 'F']],
+            
+            'RRRR':   [['F', 'R', 'F'],
+                       ['R', 'R', 'R'],
+                       ['F', 'R', 'F']], 
+            
+            'FSRS/m': [['F', 'F', 'F'],
+                       ['S', 'm', 'S'],
+                       ['F', 'R', 'F']], 
+            
+            'FFSF':   [['F', 'F', 'F'],
+                       ['F', 'S', 'F'],
+                       ['F', 'S', 'F']], 
+            
+            'FSFS':   [['F', 'F', 'F'],
+                       ['S', 'S', 'S'],
+                       ['F', 'F', 'F']], 
+            
+            'FFSS':   [['F', 'F', 'F'],
+                       ['S', 'F', 'F'],
+                       ['F', 'S', 'F']], 
+            
+            'CSCS':   [['F', 'C', 'F'],
+                       ['S', 'S', 'S'],
+                       ['F', 'C', 'F']], 
+            
+            'CCSS':   [['F', 'C', 'C'],
+                       ['S', 'F', 'C'],
+                       ['F', 'S', 'F']],
+            
+            'CSRS':   [['F', 'C', 'F'],
+                       ['S', 'R', 'S'],
+                       ['F', 'R', 'F']],
+            
+            'RSRS':   [['F', 'R', 'F'],
+                       ['S', 'R', 'S'],
+                       ['F', 'R', 'F']], 
+            
+            'RRSS':   [['F', 'R', 'F'],
+                       ['S', 'F', 'R'],
+                       ['F', 'S', 'F']]
+        }  
         
         self.tiles_connections = {
             'FFFF/m': {'F' : [[0,1,2,3]]}, 'FFFR/m': {'F' : [[0,1,2]], 'R' : [[3]]}, 'CFFF': {'C' : [[0]], 'F' : [[1,2,3,4]]}, 

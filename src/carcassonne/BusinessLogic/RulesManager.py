@@ -1,8 +1,5 @@
-from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
-from carcassonne.Datas.TilesInfo import TilesInfo
-from carcassonne.Datas.History import History, MoveRecord
 
 
 class RulesManager():
