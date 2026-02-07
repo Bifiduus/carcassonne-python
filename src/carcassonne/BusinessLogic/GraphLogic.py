@@ -1,10 +1,11 @@
 from collections import deque
 from typing import List, Optional, Set
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from src.carcassonne.Datas.GraphData import GraphData
 
 class GraphLogic:
     @staticmethod
-    def shortest_path(graph: GraphData, start_id: int, end_id: int) -> Optional[List[int]]:
+    def shortest_path(graph: IGraphData, start_id: int, end_id: int) -> Optional[List[int]]:
         if start_id not in graph.vertices or end_id not in graph.vertices:
             return None
         queue = deque([[start_id]])
@@ -21,7 +22,7 @@ class GraphLogic:
         return None
 
     @staticmethod
-    def connected_components(graph: GraphData) -> List[Set[int]]:
+    def connected_components(graph: IGraphData) -> List[Set[int]]:
         visited: Set[int] = set()
         components: List[Set[int]] = []
         for vertex_id in graph.vertices:
@@ -40,3 +41,7 @@ class GraphLogic:
                         queue.append(neighbor_id)
             components.append(comp)
         return components
+    
+    def add_tile_to_graph(self, move, graph: IGraphData):
+        #TODO : add_tile_to_graph(move : str, graph : GraphData) -> None
+        pass

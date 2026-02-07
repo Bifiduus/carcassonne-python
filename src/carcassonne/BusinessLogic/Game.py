@@ -5,10 +5,13 @@ from typing import Any, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.RulesManager import RulesManager
+from carcassonne.BusinessLogic.Board import Board
 from carcassonne.Datas.GameRepository import GameRepository
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Datas.History import History  
+from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
+from carcassonne.Datas.TilesInfo import TilesInfo
 from .AIModel import is_ai_player
 
 class Game(IGameService):
@@ -17,8 +20,10 @@ class Game(IGameService):
     
         self.game_repository: GameRepository = GameRepository()
         self.graph: IGraphData = graphData
-        self.rules_engine: RulesManager = RulesManager(self)
+        self.tiles_info: ITilesInfo = TilesInfo()
+        self.rules_manager: RulesManager = RulesManager(self.tiles_info)
         self.history: History = History()
+        self.board: Board = Board()
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -30,7 +35,7 @@ class Game(IGameService):
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
-        if self.rules_engine.current_player_is_human() and self.history.past_moves:
+        if self.rules_manager.current_player_is_human() and self.history.past_moves:
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
             while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
@@ -38,7 +43,7 @@ class Game(IGameService):
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
-        if self.rules_engine.current_player_is_human() and self.history.future_moves:
+        if self.rules_manager.current_player_is_human() and self.history.future_moves:
             last_unplayed_move = self.history.pop_future()
             self.history.push_past(last_unplayed_move)
             while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
@@ -55,11 +60,21 @@ class Game(IGameService):
         return len(self.history.future_moves) == 0
 
 
-
     def play_move(self, move):
-        self.history.push_past(move)
-
-
+        """
+        Tries to place a tile according to the computed move :
+        - Checks if the move is a string.
+        - Splits the move into parts.
+        - Validates each part of the move.
+        - Tests if the move is legal in the current game state.
+        - If all checks pass, places the tile in the game structures.
+        """
+        
+        ok = self.rules_manager.check_move(move, self.graph)
+        if ok:
+            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
+            print(move + " placed successfully.")
+        
     def get_game_configuration(self) -> dict :
         grid = {}
         for vertex in self.graph.get_verticies().values():

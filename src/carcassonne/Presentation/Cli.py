@@ -100,7 +100,7 @@ class GameCLI:
             CommandsHandler.set_parameter(self, param, value)
         elif command.startswith("play"):
             move = command[5:].strip()
-            #CommandsHandler.play(self, move, game=self.game)  
+            CommandsHandler.play(self, move, game=self.game)  
 
 
         else:

@@ -3,6 +3,7 @@ import argparse
 import sys
 
 from carcassonne import __version__
+from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Presentation.Cli import GameCLI
@@ -50,7 +51,7 @@ def main():
 
     # Call a function to start the game
     game_data :IGraphData = GraphData()
-    game = Game(game_data)
+    game :IGameService = Game(game_data)
     game_cli = GameCLI(game)
     game_cli.run()
 

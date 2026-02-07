@@ -1,6 +1,18 @@
+from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
-class TilesInfo:
+class TilesInfo(ITilesInfo):
     def __init__(self):
+        self.tiles_dict = {
+            'FFFF': ['m'], 'FFFR': ['m'], 'CFFF': ['void'], 'FCFC': ['f'], 'CFCF': ['c', 'b'],
+            'CCCC': ['b'], 'FFCC': ['void'], 'CCFF': ['void', 'b'], 'CCCF': ['void', 'b'], 'CCCR': ['void', 'b'], 'FRFR': ['void'],
+            'FFRR': ['void'], 'CRFR': ['void'], 'CFRR': ['void'], 'CRRF': ['void'], 'CCRR': ['void', 'b'], 'FRRR': ['void'], 'CRRR': ['void'],
+            'RRRR': ['void'], 'FSRS': ['m'], 'FFSF': ['void'], 'FSFS': ['void'], 'FFSS': ['void'], 'CSCS': ['void'], 'CCSS': ['void'],
+            'CSRS': ['void'],'RSRS': ['void'], 'RRSS': ['void']
+        }
+
+        self.direction_list = ['N', 'E', 'S', 'W']
+        self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
+        
         self.tiles_count = {
             'FFFF/m': 4, 'FFFR/m': 2, 'CFFF': 5, 'FCFC/f': 3, 'CFCF/c': 1, 'CFCF/b': 2,
             'CCCC/b': 1, 'FFCC': 2, 'CCFF': 3, 'CCFF/b': 2, 'CCCF': 3, 'CCCF/b': 1, 'CCCR': 1, 'CCCR/b': 2, 'FRFR': 8,
@@ -16,6 +28,7 @@ class TilesInfo:
             'RRRR': 'R', 'FSRS/m': 'm', 'FFSF': 'S', 'FSFS': 'S', 'FFSS': 'F', 'CSCS': 'S', 'CCSS': 'F',
             'CSRS': 'R','RSRS': 'R', 'RRSS': 'F'
         }
+        
         
         self.tiles_connections = {
             'FFFF/m': {'F' : [[0,1,2,3]]}, 'FFFR/m': {'F' : [[0,1,2]], 'R' : [[3]]}, 'CFFF': {'C' : [[0]], 'F' : [[1,2,3,4]]}, 

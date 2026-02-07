@@ -62,14 +62,14 @@ def show_score(self):
         #for player, score in scores.items():
         #    print(f"  {player}: {score}")
 
-def show_history(self):
-        history = self.game.getGameHistory()
+def show_history(self, game):
+        history = game.getGameHistory()
         print("Historique des coups joués:")
         for move in history:
             print(f"  {move}")
 
-def show_configuration(self):
-        grid = self.game.get_game_configuration()
+def show_configuration(self, game):
+        grid = game.get_game_configuration()
         print("Configuration actuelle du jeu:")
         # Affichez la configuration du jeu (par exemple, les tuiles sur le plateau)
         for pos, tile in grid.items():
@@ -81,4 +81,4 @@ def set_parameter(self, param, value):
         print(f"Paramètre '{param}' défini à '{value}'.")
         
 def play(self, move, game):
-        game.placeTile(move)
+        game.play_move(move)
