@@ -14,5 +14,17 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def get_history(self) -> list:
+        pass
+
+    @abstractmethod
     def get_game_configuration(self) -> dict :
+        pass
+
+    @abstractmethod
+    def is_undo_history_empty(self) -> bool:
+        pass
+
+    @abstractmethod
+    def clear_undo_history(self) -> None:
         pass

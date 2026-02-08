@@ -85,9 +85,9 @@ class GameCLI:
         elif command == "show score":
             CommandsHandler.show_score(self)
         elif command == "show history":
-            CommandsHandler.show_history(self)
+            CommandsHandler.show_history(self, game=self.game)
         elif command == "show configuration":
-            CommandsHandler.show_configuration(self)
+            CommandsHandler.show_configuration(self, game=self.game)
         elif command.startswith("set "):
             content = command[4:].strip()
             if "=" in content:
@@ -100,7 +100,7 @@ class GameCLI:
             CommandsHandler.set_parameter(self, param, value)
         elif command.startswith("play"):
             move = command[5:].strip()
-            CommandsHandler.play(self, move, game=self.game)  
+            CommandsHandler.play(self, move, game=self.game)
 
 
         else:

@@ -37,3 +37,17 @@ class Board:
             history.clear_future()
         except ValueError:
             pass
+
+    def remove_tile_from_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History) -> None:
+
+        move_parts = move.split(':')[1].split('/')
+        counter = 3 if len(move_parts[1]) == 1 else 2
+        tile_pos = graph.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=tiles_info.direction_dict[move_parts[counter - 1][1]])
+        if(tile_pos is None):
+            print("Error in getting position")
+            return
+        graph.remove_vertex(vertex_id=graph.get_turn_number()-1)  # example of removing the tile as a vertex in the graph
+        
+        #rajouter la tuile des tuiles disponibles
+        tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
+        tiles_info.add_tile(tile_name)

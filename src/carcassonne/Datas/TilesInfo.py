@@ -207,3 +207,11 @@ class TilesInfo(ITilesInfo):
         if self.tiles_count.get(tile_code, 0) <= 0:
             raise ValueError(f"No tiles left of type: {tile_code}")
         self.tiles_count[tile_code] -= 1
+
+    def add_tile(self, tile_code: str) -> None:
+        """
+        Increases the count of the specified tile type by one.
+        """
+        if tile_code not in self.tiles_count:
+            raise ValueError(f"Invalid tile code: {tile_code}")
+        self.tiles_count[tile_code] += 1

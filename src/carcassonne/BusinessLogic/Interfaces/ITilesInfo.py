@@ -9,3 +9,7 @@ class ITilesInfo(ABC):
     @abstractmethod
     def remove_tile(self, tile_code: str) -> None:
         pass
+
+    @abstractmethod
+    def add_tile(self, tile_code: str) -> None:
+        pass

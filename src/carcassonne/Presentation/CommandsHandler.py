@@ -45,11 +45,11 @@ def hint(self):
         print(f"Indice pour le placement de la tuile: ")
 
 def undo(self, N):
-        #self.game.undoLastMove()
+        self.game.undo()
         print(f"Derniers {N} coups annulés.")
 
 def redo(self, N):
-        #self.game.redoLastMove()
+        self.game.redo()
         print(f"Derniers {N} coups rétablis.")
 
 def show_hand(self):
@@ -63,10 +63,10 @@ def show_score(self):
         #    print(f"  {player}: {score}")
 
 def show_history(self, game):
-        history = game.getGameHistory()
+        history = game.get_history()
         print("Historique des coups joués:")
         for move in history:
-            print(f"  {move}")
+            print(f"  {move.move_str}")
 
 def show_configuration(self, game):
         grid = game.get_game_configuration()
@@ -82,3 +82,5 @@ def set_parameter(self, param, value):
         
 def play(self, move, game):
         game.play_move(move)
+        if not game.is_undo_history_empty():
+                game.clear_undo_history()
