@@ -158,7 +158,7 @@ class RulesManager():
             return False
         
         return True  
-
+    
     def getGameHistory(self):
         return self.history.list_history()
 

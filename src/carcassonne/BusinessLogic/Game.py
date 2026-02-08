@@ -7,6 +7,7 @@ from carcassonne.Datas.Deck import Deck
 from carcassonne.Datas.Seed import Seed
 from carcassonne.Datas.Serializer import parse_move, build_str
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
 from carcassonne.Datas.GameRepository import GameRepository
@@ -31,6 +32,7 @@ class Game(IGameService):
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
+        self.players : list[Player] = []
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -97,7 +99,7 @@ class Game(IGameService):
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
-            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
+            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players)   
             print(move + " placed successfully.")
             self.current_hand = None
         
