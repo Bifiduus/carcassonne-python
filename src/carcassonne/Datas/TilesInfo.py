@@ -149,6 +149,28 @@ class TilesInfo(ITilesInfo):
         
         return rotated
     
+    def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
+        """
+        Rotates a matrix 90 degrees clockwise.
+        
+        Args:
+            matrix: A 2D list to rotate
+            
+        Returns:
+            A new matrix rotated 90 degrees clockwise
+        """
+        n = len(matrix)
+        m = len(matrix[0]) if matrix else 0
+        
+        # Create new matrix with swapped dimensions
+        rotated = [['' for _ in range(n)] for _ in range(m)]
+        
+        for i in range(n):
+            for j in range(m):
+                rotated[j][n - 1 - i] = matrix[i][j]
+        
+        return rotated
+    
     def is_tile_left(self, tile_code: str) -> bool:
         """
         Checks if there are tiles left of the specified type in the game.
