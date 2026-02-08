@@ -46,6 +46,7 @@ class Board:
             players[turn % len(players)].remove_meeple()
     
         try:
+            parsed = parse_move(move)
             record = MoveRecord(
                 move_str=move,
                 player_id=1
