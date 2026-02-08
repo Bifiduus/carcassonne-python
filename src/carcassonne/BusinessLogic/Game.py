@@ -34,6 +34,7 @@ class Game(IGameService):
         self.current_hand = None
         self.save_file = None
         self.players : list[Player] = []
+        self.players : list[Player] = []
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
