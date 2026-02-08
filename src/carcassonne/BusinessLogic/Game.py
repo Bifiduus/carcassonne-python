@@ -4,6 +4,7 @@ The Game class is responsible for managing the game state, including the play hi
 from typing import Any, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
 from carcassonne.Datas.GameRepository import GameRepository
@@ -24,6 +25,7 @@ class Game(IGameService):
         self.rules_manager: RulesManager = RulesManager(self.tiles_info)
         self.history: History = History()
         self.board: Board = Board()
+        self.players : list[Player] = []
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -72,7 +74,7 @@ class Game(IGameService):
         
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
-            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
+            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players)   
             print(move + " placed successfully.")
         
     def get_game_configuration(self) -> dict :

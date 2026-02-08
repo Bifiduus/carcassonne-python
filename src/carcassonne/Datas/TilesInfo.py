@@ -24,8 +24,15 @@ class TilesInfo(ITilesInfo):
             'CSRS': ['void'],'RSRS': ['void'], 'RRSS': ['void']
         }
 
+        self.tiles_parts_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
         self.direction_list = ['N', 'E', 'S', 'W']
         self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
+        
+        self.direction_matrix = [['NW', 'N', 'NE'], 
+                                 ['W', 'C', 'E'], 
+                                 ['SW', 'S', 'SE']]
+        
+        self.matrix_coordinates = {'NW' : (0,0), 'N' : (0,1), 'NE' : (0,2), 'E' : (1,2), 'SE' : (2,2), 'S' : (2,1), 'SW' : (2,0), 'W' : (1,0), 'C' : (1,1)}
         
         self.tiles_count = {
             'FFFF/m': 4, 'FFFR/m': 2, 'CFFF': 5, 'FCFC/f': 3, 'CFCF/c': 1, 'CFCF/b': 2,
@@ -187,6 +194,28 @@ class TilesInfo(ITilesInfo):
             'CSRS': {'C' : [['N']], 'S' : [['E','W']], 'R' : [['W','C']]},'RSRS': {'R' : [['N','S']], 'S' : [['E','W']]}, 
             'RRSS': {'R' : [['N','E']], 'S' : [['S','W']], 'F' : [['NW','SE','S','NW'], ['NE','NE'], ['SW','SW']]}
         }
+    
+    def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
+        """
+        Rotates a matrix 90 degrees clockwise.
+        
+        Args:
+            matrix: A 2D list to rotate
+            
+        Returns:
+            A new matrix rotated 90 degrees clockwise
+        """
+        n = len(matrix)
+        m = len(matrix[0]) if matrix else 0
+        
+        # Create new matrix with swapped dimensions
+        rotated = [['' for _ in range(n)] for _ in range(m)]
+        
+        for i in range(n):
+            for j in range(m):
+                rotated[j][n - 1 - i] = matrix[i][j]
+        
+        return rotated
     
     def is_tile_left(self, tile_code: str) -> bool:
         """

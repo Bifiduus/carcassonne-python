@@ -6,7 +6,7 @@ from carcassonne.Datas.Serializer import parse_move, build_str
 
 class Board:
     
-    def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History) -> None:
+    def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History, players) -> None:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
@@ -14,12 +14,33 @@ class Board:
         if(tile_pos is None):
             print("Error in getting position")
             return
-        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        turn = graph.get_turn_number()
+        graph.add_vertex(turn, name=move_parts[0], orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
 
+        potential_meeple = move.split('/')[-1]
+        if potential_meeple in self.tiles_info.tiles_parts_list:
+            orientation=int(move_parts[counter - 1][2])
+            direction_matrix_to_rotate = tiles_info.direction_matrix
+            for i in range(orientation):
+                direction_matrix_to_rotate = tiles_info.rotate_matrix_90(direction_matrix_to_rotate)
+            matrix_coordinates = tiles_info.matrix_coordinates[potential_meeple]
+            rotated_matrix_coordinates = direction_matrix_to_rotate[matrix_coordinates[0]][matrix_coordinates[1]]
+            terrain_type = 'void'
+            for dict in tiles_info.tiles_connections[tile_name]:
+                for set in dict.values():
+                    if potential_meeple in set:
+                        terrain_type = dict.keys()
+            if terrain_type == 'void':
+                print("Error in getting terrain type for meeple placement")
+                return
+            #TODO
+            #graph.add_meeple(turn, terrain_type=terrain_type, potential_meeple=potential_meeple) 
+            players[turn % len(players)].remove_meeple()
+    
         try:
             parsed = parse_move(move)
             record = MoveRecord(
