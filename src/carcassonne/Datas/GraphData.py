@@ -13,24 +13,24 @@ ORIENTATIONS = 4
 @dataclass
 class Vertex:
     id: int
-    
+
     name: str
-    
+
     # Position of the vertex around the first vertex at (0,0)
     position: tuple[int, int]
-    
+
     orientation: int = 0
-    
+
     # Couples of (key = direction, value = neighbor vertex id)
     neighbors: Dict[int, int] = field(default_factory=dict)
-    
-    
+
+
     def __init__(self, id: int, name: str, orientation: int = 0, position: tuple[int, int] = (0, 0)):
         self.id = id
         self.name = name
         self.position = position
         self.orientation = orientation % ORIENTATIONS
-        self.neighbors = {} 
+        self.neighbors = {}
 
     def set_neighbor(self, orientation: int, neighbor_id: int) -> None:
         if orientation not in range(ORIENTATIONS):
@@ -43,22 +43,22 @@ class Vertex:
 
     def rotate(self, k: int = 1) -> None:
         self.orientation = (self.orientation + k) % ORIENTATIONS
-        
+
     def get_id(self) -> int:
         return self.id
-    
-    def get_name(self) -> str:  
+
+    def get_name(self) -> str:
         return self.name
-    
+
     def get_orientation(self) -> int:
         return self.orientation
-    
+
     def get_neighbors(self) -> Dict[int, int]:
         return dict(self.neighbors)
-    
+
     def get_position(self) -> tuple[int, int]:
         return self.position
-    
+
     def is_neighbor_free(self, position: int) -> bool:
         return position not in self.neighbors
 
@@ -67,27 +67,28 @@ class GraphData(IGraphData):
     def __init__(self):
         self.vertices: Dict[int, Vertex] = {}
         self.turn = 0
-        self.add_vertex(vertex_id=0, name='CRFR', orientation=0, position=(0, 0))  # Adding the starting tile (CRFR) as a vertex in the graph
+        # Adding the starting tile (CRFR) as a vertex in the graph
+        self.add_vertex(vertex_id=0, name='CRFR', orientation=0, position=(0, 0))
 
     def add_vertex(self, vertex_id: int, name: str, orientation: int, position: tuple[int,int]) -> None:
         if vertex_id in self.vertices:
             raise ValueError(f"Vertex ID already exists : {vertex_id}")
-        
+
         if position is None:
             return ValueError("Error in getting position")
-        
+
         vertex = Vertex(id=vertex_id, name=name, orientation=orientation % ORIENTATIONS, position=position)
         self.vertices[vertex_id] = vertex
-        
+
         self.turn += 1
-        
+
         self.compute_neighbors(vertex_id)
-    
+
     def compute_neighbors(self, vertex_id: int) -> None:
         vertex = self.get_vertex(vertex_id)
         if vertex is None:
             raise ValueError(f"Vertex ID not found : {vertex_id}")
-        
+
         for side in range(ORIENTATIONS):
             potential_neighbor_pos = self.get_position(vertex_id, side)
             for other_vertex in self.vertices.values():
@@ -119,13 +120,13 @@ class GraphData(IGraphData):
         if vertex_id not in self.vertices:
             return {}
         return self.vertices[vertex_id].get_neighbors()
-    
+
     def get_turn_number(self) -> int:
-        return self.turn    
-    
+        return self.turn
+
     def get_verticies(self) -> Dict[int, Vertex]:
-        return dict(self.vertices)  
-    
+        return dict(self.vertices)
+
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
         vertex = self.get_vertex(vertex_id)
         if vertex is None:
@@ -141,8 +142,9 @@ class GraphData(IGraphData):
             return (x - 1, y)
         else:
             raise ValueError(f"Invalid side: {side}")
-        
+
     def reset_graph(self):
         self.vertices.clear()
         self.turn = 0
-        self.add_vertex(vertex_id=0, name='CRFR', orientation=0, position=(0, 0))  # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
+        # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
+        self.add_vertex(vertex_id=0, name='CRFR', orientation=0, position=(0, 0))

@@ -41,7 +41,7 @@ class GraphLogic:
                         queue.append(neighbor_id)
             components.append(comp)
         return components
-    
+
     def add_tile_to_graph(self, move, graph: IGraphData):
         #TODO : add_tile_to_graph(move : str, graph : GraphData) -> None
         pass
