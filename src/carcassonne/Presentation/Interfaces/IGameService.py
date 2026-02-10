@@ -28,3 +28,7 @@ class IGameService(ABC):
     @abstractmethod
     def clear_undo_history(self) -> None:
         pass
+
+    @abstractmethod
+    def get_board(self) -> None:
+        pass

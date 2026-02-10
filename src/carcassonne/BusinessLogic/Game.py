@@ -88,3 +88,68 @@ class Game(IGameService):
                 "neighbors": vertex.get_neighbors()
             }
         return grid
+
+        
+    
+    def rotate_dirs(self, dirs, rotation):
+        rotation = rotation % 4
+        return dirs[-rotation:] + dirs[:-rotation]
+
+    def generate_tile_ascii(self, vertex):
+        dirs = list(vertex.get_name())  # [N, E, S, W]
+        rotation = self.graph.get_vertex_orientation(vertex.get_id())  # 0 à 3
+
+        n, e, s, w = self.rotate_dirs(dirs, rotation)
+        m = "{:^3}".format(vertex.get_id())
+        if vertex.get_middle() != "":
+            m = "{:^5}".format("[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]")
+        space=3*" "
+
+        return [
+            space +"{:^5}".format(n) + space,
+            "{:^3}".format(w) +"{:^5}".format(m) + "{:^3}".format(e),
+            space + "{:^5}".format(s) + space,
+        ]
+
+    def get_board(self):
+        vertices = list(self.graph.get_verticies().values())
+
+        if not vertices:
+            print("No vertices.")
+            return
+
+        positions = [v.get_position() for v in vertices]
+
+        min_x = min(x for x, y in positions)
+        min_y = min(y for x, y in positions)
+        max_x = max(x for x, y in positions)
+        max_y = max(y for x, y in positions)
+
+        width = max_x - min_x + 1
+        height = max_y - min_y + 1
+
+        board = [[None for _ in range(width)]
+                        for _ in range(height)]
+
+        for v in vertices:
+            x, y = v.get_position()
+            nx = x - min_x
+            ny = y - min_y
+            board[ny][nx] = self.generate_tile_ascii(v)
+
+        self.print_board(board)
+
+    def print_board(self, board):
+        TILE_HEIGHT = 3
+        EMPTY_TILE = [" " * 9] * TILE_HEIGHT
+
+        for row in board:               # chaque ligne de tuiles
+            for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
+                line = []
+                for tile in row:
+                    if tile is None:
+                        line.append(EMPTY_TILE[i])
+                    else:
+                        line.append(tile[i])
+                print("   ".join(line))
+            print()  # espace entre lignes de tuiles

@@ -84,3 +84,8 @@ def play(self, move, game):
         game.play_move(move)
         if not game.is_undo_history_empty():
                 game.clear_undo_history()
+
+
+def show_board(self, game):
+        game.get_board()
+

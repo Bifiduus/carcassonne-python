@@ -15,3 +15,6 @@ class GameService():
 
     def playAI(self):
         self._game.playAI()
+
+    def get_board(self):
+        return self._game.get_board()

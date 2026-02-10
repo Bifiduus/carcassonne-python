@@ -101,6 +101,8 @@ class GameCLI:
         elif command.startswith("play"):
             move = command[5:].strip()
             CommandsHandler.play(self, move, game=self.game)
+        elif command.startswith("board"):
+            CommandsHandler.show_board(self, game=self.game)
 
 
         else:

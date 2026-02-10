@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 class IGraphData(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def add_vertex(self, vertex_id: int, name: str, orientation: int, position: tuple[int,int]) -> None:
+    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int,int]) -> None:
         pass
 
     @abstractmethod
@@ -44,4 +44,12 @@ class IGraphData(ABC):
 
     @abstractmethod
     def reset_graph(self):
+        pass
+
+    @abstractmethod
+    def get_vertex_id(self, vertex) -> int:
+        pass
+
+    @abstractmethod
+    def get_vertex_orientation(self, vertex_id: int) -> int:
         pass
