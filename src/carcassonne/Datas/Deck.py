@@ -36,3 +36,8 @@ class Deck:
             "RRSS",
         ]
         
+    def draw(self):
+        if not self.tiles:
+            print("Deck is empty, cannot draw a tile.")
+            return None
+        return self.tiles.pop()
