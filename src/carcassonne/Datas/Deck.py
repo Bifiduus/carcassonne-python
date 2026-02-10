@@ -41,3 +41,6 @@ class Deck:
             print("Deck is empty, cannot draw a tile.")
             return None
         return self.tiles.pop()
+
+    def len(self):
+        return len(self.tiles)
