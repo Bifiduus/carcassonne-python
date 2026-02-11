@@ -1,3 +1,7 @@
+"""This module defines the History class, which is responsible for managing the history of moves made during a game of Carcassonne. 
+The History class maintains two lists: one for past moves and one for future moves (used for undo functionality). 
+It provides methods to push and pop moves from these lists, as well as to clear the future moves when a new move is made.
+"""
 class MoveRecord:
     def __init__(self, move_str, player_id, tile_sides, target_id, target_side, rotation, meeple=None, center=None):
         self.move_str = move_str

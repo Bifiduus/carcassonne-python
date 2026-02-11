@@ -1,3 +1,7 @@
+"""This module defines the RulesManager class, which is responsible for managing the rules of the Carcassonne game. 
+It provides methods to check the legality of moves, to determine if the current player is human, and to retrieve the game history. 
+The RulesManager interacts with the graph data structure that represents the game state and the tiles information to enforce the game rules.
+"""
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 

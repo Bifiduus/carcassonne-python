@@ -1,3 +1,7 @@
+"""This module defines the Board class, which is responsible for managing the game board in Carcassonne. 
+It provides methods to add and remove tiles from the board, as well as to update the game state accordingly. 
+The Board class interacts with the graph data structure that represents the game state, the tiles information, and the history of moves made during the game.
+"""
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
