@@ -19,6 +19,7 @@ def help(self):
     print("  load <file>        - Charge une partie depuis un fichier")
     print("  save <file>        - Sauvegarde la partie dans un fichier")
     print("  shuffle            - Mélange les tuiles de la pioche")
+    print("  draw               - Pioche une tuile")
     print("  hint               - Donne un indice pour le placement de la tuile")
     print("  undo [N]           - Annule le dernier coup ou les N derniers coups")
     print("  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés")
@@ -54,6 +55,16 @@ def save(self, filename):
 def shuffle(self):
         seed = self.game.shuffle_deck()
         print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+
+def draw(self):
+        already_had_tile = self.game.current_tile is not None
+        tile = self.game.draw_tile()
+        if tile is None:
+            print("La pioche est vide!")
+        elif already_had_tile:
+            print("Vous avez déjà une tuile en main.")
+        else:
+            print(f"Tuile piochée: {tile}")
 
     
 def hint(self):
@@ -101,4 +112,3 @@ def play(self, move, game):
 
 def show_board(self, game):
         game.get_board()
-

@@ -15,7 +15,7 @@ from pathlib import Path
 
 COMMANDS = [
     "new", "help", "quit", "load", "save",
-    "shuffle", "hint", "undo", "redo",
+    "shuffle", "draw", "hint", "undo", "redo",
     "show hand", "show score", "show history", "show configuration",
     "set"
     ]
@@ -70,6 +70,8 @@ class GameCLI:
             filename = command[5:].strip()
             CommandsHandler.save(self, filename)
         elif command == "shuffle":
+            CommandsHandler.draw(self)
+        elif command == "draw":
             CommandsHandler.shuffle(self)
         elif command == "hint":
             CommandsHandler.hint(self)

@@ -108,16 +108,13 @@ class Game(IGameService):
 
     def draw_tile(self):
         if self.current_tile is not None:
-            print("Vous avez déjà une tuile en main.")
             return self.current_tile
 
         tile = self.deck.draw()
         if tile is None:
-            print("La pioche est vide!")
             return None
 
         self.current_tile = tile
-        print(f"Tuile prioché: {tile}")
         return tile
     
     def saveGameToFile(self, filename: str) -> None:
