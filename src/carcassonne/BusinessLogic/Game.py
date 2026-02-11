@@ -30,7 +30,7 @@ class Game(IGameService):
         self.seed = None
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
-        self.current_tile = None
+        self.current_hand = None
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -80,20 +80,20 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
-        if self.current_tile is None:
+        if self.current_hand is None:
             print("Vous devez piocher une tuile avant de jouer.")
             return
 
         tile_code = self.extract_tile_code(move)
-        if tile_code is not None and tile_code != self.current_tile:
-            print(f"Vous devez jouer la tuile en main: {self.current_tile}")
+        if tile_code is not None and tile_code != self.current_hand:
+            print(f"Vous devez jouer la tuile en main: {self.current_hand}")
             return
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
             self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
             print(move + " placed successfully.")
-            self.current_tile = None
+            self.current_hand = None
         
     def get_game_configuration(self) -> dict :
         grid = {}
@@ -107,14 +107,14 @@ class Game(IGameService):
         return grid
 
     def draw_tile(self):
-        if self.current_tile is not None:
-            return self.current_tile
+        if self.current_hand is not None:
+            return self.current_hand
 
         tile = self.deck.draw()
         if tile is None:
             return None
 
-        self.current_tile = tile
+        self.current_hand = tile
         return tile
     
     def saveGameToFile(self, filename: str) -> None:

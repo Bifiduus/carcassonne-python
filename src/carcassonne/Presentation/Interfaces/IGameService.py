@@ -36,3 +36,7 @@ class IGameService(ABC):
     @abstractmethod
     def shuffle_deck(self, algo=None, seed=None) -> int:
         pass
+
+    @abstractmethod
+    def draw_tile(self):
+        pass

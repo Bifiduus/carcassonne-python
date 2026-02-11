@@ -57,7 +57,7 @@ def shuffle(self):
         print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
 
 def draw(self):
-        already_had_tile = self.game.current_tile is not None
+        already_had_tile = self.game.current_hand is not None
         tile = self.game.draw_tile()
         if tile is None:
             print("La pioche est vide!")
@@ -80,8 +80,10 @@ def redo(self, N):
         print(f"Derniers {N} coups rétablis.")
 
 def show_hand(self):
-        #hand = self.game.getCurrentPlayerHand()
-        print("Main du joueur courant:")
+        if self.game.current_hand is None:
+            print("Aucune tuile en main.")
+        else:
+            print(f"Tuile en main: {self.game.current_hand}")
 
 def show_score(self):
         #scores = self.game.getPlayerScores()
