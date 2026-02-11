@@ -1,4 +1,9 @@
-
+"""This module defines the command handler functions for the Carcassonne game.
+Each function corresponds to a specific command that can be entered by the player in the command-line interface. 
+The functions interact with the game service and the game state to perform actions such as starting a new game, loading and saving game states, 
+shuffling the tiles, providing hints, undoing and redoing moves, and displaying game information. 
+The command handler functions are designed to be called from the GameCLI class when the corresponding commands are entered by the player.
+"""
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 
 

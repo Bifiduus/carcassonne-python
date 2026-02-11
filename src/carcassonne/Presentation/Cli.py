@@ -1,3 +1,8 @@
+"""This module defines the GameCLI class, which provides a command-line interface for interacting with the Carcassonne game.
+The GameCLI class allows players to enter commands to perform various actions such as starting a new game, 
+loading and saving game states, shuffling the tiles, getting hints, undoing and redoing moves, 
+and displaying game information such as the player's hand, scores, history, and configuration.
+"""
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Presentation import CommandsHandler
 from carcassonne.BusinessLogic.Game import Game

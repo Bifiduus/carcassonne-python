@@ -1,3 +1,7 @@
+"""This module defines the GraphData class, which implements the IGraphData interface to represent the game state of Carcassonne as a graph. 
+The GraphData class manages the vertices of the graph, which correspond to the tiles placed on the board and their connections. 
+It provides methods to add and remove vertices, set neighbors, and retrieve vertex information.
+"""
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 

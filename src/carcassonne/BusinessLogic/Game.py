@@ -88,3 +88,58 @@ class Game(IGameService):
                 "neighbors": vertex.get_neighbors()
             }
         return grid
+    
+    def saveGameToFile(self, filename: str) -> None:
+        file = open(filename, 'w')
+        file.write("[Settings]\n")
+
+        file.write("\n")
+        file.write("[GameState]\n")
+        ## + who is the current player, scores, etc.
+        file.write(str(self.get_game_configuration()))
+        file.write("\n")
+        file.write("[History]\n")
+        moves_history = self.history.past_moves.copy()
+        while moves_history:
+            move = moves_history.pop()
+            file.write(move.move_str + "\n")
+        file.write("\n")
+
+    def loadGameFromFile(self, filename: str) -> None:
+        file = open(filename, 'r')
+        lines = file.readlines()
+        settings_section = False
+        game_state_section = False
+        history_section = False
+        for line in lines:
+            line = line.strip()
+            if line == "[Settings]":
+                settings_section = True
+                game_state_section = False
+                history_section = False
+                continue
+            elif line == "[GameState]":
+                settings_section = False
+                game_state_section = True
+                history_section = False
+                continue
+            elif line == "[History]":
+                settings_section = False
+                game_state_section = False
+                history_section = True
+                continue
+            elif line == "":
+                continue  # Skip empty lines
+            
+            if settings_section:
+                # Here you would parse the settings and set up the game accordingly.
+                # This is a placeholder for demonstration purposes.
+                print("Parsing settings: ", line)
+            elif game_state_section:
+                # Here you would parse the game state and set up the board and graph accordingly.
+                # This is a placeholder for demonstration purposes.
+                print("Parsing game state: ", line)
+            elif history_section:
+                self.play_move(line.split(':')[1])  # Assuming line is in the format "player_id:details"
+
+        

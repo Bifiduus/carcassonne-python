@@ -1,3 +1,7 @@
+"""This module defines the GraphLogic class, which provides methods for graph-related operations in the Carcassonne game.
+The GraphLogic class includes methods for finding the shortest path between two vertices and for identifying connected components in the graph. 
+It interacts with the IGraphData interface to access the graph data structure representing the game state.
+"""
 from collections import deque
 from typing import List, Optional, Set
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData

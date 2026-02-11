@@ -1,3 +1,7 @@
+"""This module defines the TilesInfo class, which provides information about the different types of tiles in the Carcassonne game.
+The TilesInfo class includes methods to check if a tile type is still available, to remove a tile from the available count, and to add a tile back to the available count. 
+It also contains data structures that represent the sides of each tile type and the connections between those sides, which are essential for determining how tiles can be placed on the board and how they interact with each other.
+"""
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
 class Tile:
