@@ -95,7 +95,7 @@ class Game(IGameService):
     
     def shuffle_deck(self, algo="fisher-yates", seed=None):
         if seed is None:
-            seed = Seed().value
+            seed = Seed().seed
         if algo == "naive":
             self.deck.shuffle_naive(seed)
         else:
