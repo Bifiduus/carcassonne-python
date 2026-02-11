@@ -43,8 +43,9 @@ def save(self, filename):
         print(f"Partie sauvegardée dans {filename}.")
 
 def shuffle(self):
-        #self.game.shuffleDeck()
-        print("Pioche mélangée.")
+        seed = self.game.shuffle_deck()
+        print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+
     
 def hint(self):
         #hint = self.game.getPlacementHint()

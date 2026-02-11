@@ -32,3 +32,7 @@ class IGameService(ABC):
     @abstractmethod
     def get_board(self) -> None:
         pass
+
+    @abstractmethod
+    def shuffle_deck(self, algo=None, seed=None):
+        pass

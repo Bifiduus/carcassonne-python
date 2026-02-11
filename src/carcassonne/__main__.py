@@ -41,6 +41,20 @@ def main():
         help="enable debug messages",
         action="store_true",
     )
+    parser.add_argument(
+        "-x",
+        "--shuffle",
+        metavar="SHUFFLE",
+        help="algorithme de mélange (fisher-yates|naive)",
+        choices=["fisher-yates", "naive"],
+        default="fisher-yates",
+    )
+    parser.add_argument(
+        "-s",
+        "--seed",
+        help="seed for shuffle randomness",
+        type=int,
+    )
     args = parser.parse_args()
     if args.version:
         print(f"Carcassonne: version {__version__}")
@@ -52,6 +66,8 @@ def main():
     # Call a function to start the game
     game_data :IGraphData = GraphData()
     game :IGameService = Game(game_data)
+    game.shuffle_algo = args.shuffle
+    game.default_seed = args.seed
     game_cli = GameCLI(game)
     game_cli.run()
 

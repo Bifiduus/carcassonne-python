@@ -3,6 +3,8 @@ The Game class is responsible for managing the game state, including the play hi
 """
 from typing import Any, List
 
+from carcassonne.Datas.Deck import Deck
+from carcassonne.Datas.Seed import Seed
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
@@ -23,6 +25,10 @@ class Game(IGameService):
         self.rules_manager: RulesManager = RulesManager(self.tiles_info)
         self.history: History = History()
         self.board: Board = Board()
+        self.deck = Deck()
+        self.seed = None
+        self.default_seed = None
+        self.shuffle_algo = "fisher-yates"
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -155,3 +161,18 @@ class Game(IGameService):
                         line.append(tile[i])
                 print("   ".join(line))
             print()  # espace entre lignes de tuiles
+    
+    def shuffle_deck(self, algo=None, seed=None):
+        if algo is None:
+            algo = self.shuffle_algo
+        if seed is None:
+            if self.default_seed is not None:
+                seed = self.default_seed
+            else:
+                seed = Seed().seed
+        if algo == "naive":
+            self.deck.shuffle_naive(seed)
+        else:
+            self.deck.shuffle_fisher_yates(seed)
+        self.seed = seed
+        return seed
