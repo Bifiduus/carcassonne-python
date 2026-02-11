@@ -92,3 +92,13 @@ class Game(IGameService):
                 "neighbors": vertex.get_neighbors()
             }
         return grid
+    
+    def shuffle_deck(self, algo="fisher-yates", seed=None):
+        if seed is None:
+            seed = Seed().value
+        if algo == "naive":
+            self.deck.shuffle_naive(seed)
+        else:
+            self.deck.shuffle_fisher_yates(seed)
+        self.seed = seed
+        return seed
