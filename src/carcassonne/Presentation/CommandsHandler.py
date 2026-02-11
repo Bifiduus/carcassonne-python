@@ -85,6 +85,7 @@ def set_parameter(self, param, value):
         
 def play(self, move, game):
         game.play_move(move)
+        game.get_board()
         if not game.is_undo_history_empty():
                 game.clear_undo_history()
 
