@@ -41,11 +41,11 @@ def quit(self):
         self.running = False
 
 def load(self, filename):
-        #self.game.loadGameFromFile(filename)
+        self.game.loadGameFromFile(filename)
         print(f"Partie chargée depuis {filename}.")
 
 def save(self, filename):
-        #self.game.saveGameToFile(filename)
+        self.game.saveGameToFile(filename)
         print(f"Partie sauvegardée dans {filename}.")
 
 def shuffle(self):

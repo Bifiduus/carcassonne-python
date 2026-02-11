@@ -176,22 +176,26 @@ class Game(IGameService):
         return seed
     
     def saveGameToFile(self, filename: str) -> None:
-        file = open(filename, 'w')
-        file.write("[Settings]\n")
-
-        file.write("\n")
-        file.write("[GameState]\n")
-        ## + who is the current player, scores, etc.
-        file.write(str(self.get_game_configuration()))
-        file.write("\n")
-        file.write("[History]\n")
-        moves_history = self.history.past_moves.copy()
-        while moves_history:
-            move = moves_history.pop()
-            file.write(move.move_str + "\n")
-        file.write("\n")
+        if not filename.endswith('.txt'):
+            filename += '.txt'
+        with open(filename, 'w') as file:
+            file.write("[Settings]\n")
+            file.write(self.get_game_configuration().__str__())
+            file.write("\n")
+            file.write("[GameState]\n")
+            ## + who is the current player, scores, etc.
+            #file.write(f"Current Player: {self.get_current_player().get_id()}\n")
+            #file.write(f"Scores: {self.get_scores()}\n")
+            file.write("\n")
+            file.write("[History]\n")
+            moves_history = self.history.past_moves.copy()
+            while moves_history:
+                move = moves_history.pop()
+                file.write(move.move_str + "\n")
+            file.write("\n")
 
     def loadGameFromFile(self, filename: str) -> None:
+        self.start_new_game()  # Clear current game state before loading new one
         file = open(filename, 'r')
         lines = file.readlines()
         settings_section = False
@@ -227,5 +231,6 @@ class Game(IGameService):
                 print("Parsing game state: ", line)
             elif history_section:
                 self.play_move(line.split(':')[1])  # Assuming line is in the format "player_id:details"
+                self.history.push_past(line)  # Assuming line is in the format "player_id:details"
 
         
