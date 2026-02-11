@@ -3,6 +3,8 @@ The Game class is responsible for managing the game state, including the play hi
 """
 from typing import Any, List
 
+from carcassonne.Datas.Deck import Deck
+from carcassonne.Datas.Seed import Seed
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
@@ -23,6 +25,8 @@ class Game(IGameService):
         self.rules_manager: RulesManager = RulesManager(self.tiles_info)
         self.history: History = History()
         self.board: Board = Board()
+        self.deck = Deck()
+        self.seed = None
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
