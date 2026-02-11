@@ -5,6 +5,7 @@ from typing import Any, List
 
 from carcassonne.Datas.Deck import Deck
 from carcassonne.Datas.Seed import Seed
+from carcassonne.Datas.Serializer import parse_move
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
@@ -29,6 +30,7 @@ class Game(IGameService):
         self.seed = None
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
+        self.current_tile = None
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -78,7 +80,7 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
-        
+
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
             self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
@@ -94,6 +96,20 @@ class Game(IGameService):
                 "neighbors": vertex.get_neighbors()
             }
         return grid
+
+    def draw_tile(self):
+        if self.current_tile is not None:
+            print("Vous avez déjà une tuile en main.")
+            return self.current_tile
+
+        tile = self.deck.draw()
+        if tile is None:
+            print("La pioche est vide!")
+            return None
+
+        self.current_tile = tile
+        print(f"Tuile prioché: {tile}")
+        return tile
     
     def saveGameToFile(self, filename: str) -> None:
         file = open(filename, 'w')
@@ -230,4 +246,6 @@ class Game(IGameService):
         else:
             self.deck.shuffle_fisher_yates(seed)
         self.seed = seed
-        return seed   
+        return seed
+
+
