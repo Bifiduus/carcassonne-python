@@ -248,4 +248,13 @@ class Game(IGameService):
         self.seed = seed
         return seed
 
+    def extract_tile_code(self, move):
+        try:
+            parsed = parse_move(move)
+        except ValueError:
+            return None
 
+        tile_code = parsed["tile_sides"]
+        if parsed.get("center"):
+            tile_code = f"{tile_code}/{parsed['center']}"
+        return tile_code
