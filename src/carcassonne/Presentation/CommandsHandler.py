@@ -34,15 +34,20 @@ def quit(self):
                 confirm = input("Save the game before quitting?[y/N] ")
                 if confirm != 'y':
                         print("Abandon de la commande de quitter.")
-                        return
+                        self.running = False
+                else:
+                        filename = input("Nom du fichier de sauvegarde: ")
+                        save(self, filename)
         print("Quitte le jeu. À bientôt!")
         self.running = False
 
 def load(self, filename):
-        self.game.loadGameFromFile(filename)
+        self.game.loadGameFromFile(filename)        
         print(f"Partie chargée depuis {filename}.")
 
 def save(self, filename):
+        if not filename.endswith(".txt"):
+            filename += ".txt"
         self.game.saveGameToFile(filename)
         print(f"Partie sauvegardée dans {filename}.")
 
