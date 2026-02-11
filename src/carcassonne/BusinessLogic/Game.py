@@ -28,7 +28,7 @@ class Game(IGameService):
         """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
-        self.history.clear_future()
+        self.history.clear_history()
         self.graph.reset_graph()
         self.game_repository = GameRepository()
 
@@ -103,6 +103,8 @@ class Game(IGameService):
         m = "{:^3}".format(vertex.get_id())
         if vertex.get_middle() != "":
             m = "{:^5}".format("[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]")
+        else : 
+            m = "{:^5}".format("[" + str(vertex.get_id()) + "]")
         space=3*" "
 
         return [

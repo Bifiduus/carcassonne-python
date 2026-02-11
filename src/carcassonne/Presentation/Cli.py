@@ -1,3 +1,4 @@
+from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Presentation import CommandsHandler
 from carcassonne.BusinessLogic.Game import Game
@@ -27,17 +28,8 @@ class GameCLI:
     
     def __init__(self, game_service: IGameService):
         self.game = game_service
+        self.settings = GameConfiguration().settings
         self.running = True
-        """HISTORY_FILE = os.path.expanduser("~/.carcassonne_history")
-
-        try:
-            readline.read_history_file(HISTORY_FILE)
-            print(HISTORY_FILE)
-            print("Previous command history loaded.")
-        except FileNotFoundError:
-            print("No previous history file found.")
-
-        atexit.register(readline.write_history_file, HISTORY_FILE)"""
 
         
         readline.set_completer(completer)
@@ -59,7 +51,7 @@ class GameCLI:
 
     def handle_command(self, command):
 
-        if command.startswith("new "):
+        if command.startswith("new"):
             args = command[4:].strip()
             CommandsHandler.new_game(self, args)
         elif command == "help":
@@ -88,8 +80,8 @@ class GameCLI:
             CommandsHandler.show_history(self, game=self.game)
         elif command == "show configuration":
             CommandsHandler.show_configuration(self, game=self.game)
-        elif command.startswith("set "):
-            content = command[4:].strip()
+        elif command.startswith("set"):
+            content = command[3:].strip()
             if "=" in content:
                 param, value = content.split("=", 1)
                 param = param.strip()

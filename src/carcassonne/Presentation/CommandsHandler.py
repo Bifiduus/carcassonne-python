@@ -1,9 +1,10 @@
 
+from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 
 
 def new_game(self, args):
-        #self.game.startNewGame()
+        self.game.start_new_game()
         print("Nouvelle partie commencée.")
 
 def help(self):
@@ -25,6 +26,11 @@ def help(self):
     print("  play <move>        - Joue le coup spécifié par <move>")
 
 def quit(self):
+        if True:
+                confirm = input("Save the game before quitting?[y/N] ")
+                if confirm != 'y':
+                        print("Abandon de la commande de quitter.")
+                        return
         print("Quitte le jeu. À bientôt!")
         self.running = False
 
@@ -69,11 +75,7 @@ def show_history(self, game):
             print(f"  {move.move_str}")
 
 def show_configuration(self, game):
-        grid = game.get_game_configuration()
-        print("Configuration actuelle du jeu:")
-        # Affichez la configuration du jeu (par exemple, les tuiles sur le plateau)
-        for pos, tile in grid.items():
-            print(f"  Position {pos}: {tile['name']} (orientation: {tile['orientation']}, neighbors: {tile['neighbors']})")
+        GameConfiguration().show_config()
 
     
 def set_parameter(self, param, value):

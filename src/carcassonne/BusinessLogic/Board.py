@@ -14,7 +14,7 @@ class Board:
         if(tile_pos is None):
             print("Error in getting position")
             return
-        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], middle=move_parts[1], orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]

@@ -30,5 +30,9 @@ class History:
     def clear_future(self) -> None:
         self.future_moves.clear()
 
+    def clear_history(self) -> None:
+        self.past_moves.clear()
+        self.future_moves.clear()
+
     def list_history(self):
         return [record.move_str for record in self.past_moves]
