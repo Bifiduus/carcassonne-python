@@ -70,9 +70,9 @@ class GameCLI:
             filename = command[5:].strip()
             CommandsHandler.save(self, filename)
         elif command == "shuffle":
-            CommandsHandler.draw(self)
-        elif command == "draw":
             CommandsHandler.shuffle(self)
+        elif command == "draw":
+            CommandsHandler.draw(self)
         elif command == "hint":
             CommandsHandler.hint(self)
         elif command == "undo":
