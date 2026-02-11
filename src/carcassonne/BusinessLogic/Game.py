@@ -80,11 +80,20 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
+        if self.current_tile is None:
+            print("Vous devez piocher une tuile avant de jouer.")
+            return
+
+        tile_code = self._extract_tile_code(move)
+        if tile_code is not None and tile_code != self.current_tile:
+            print(f"Vous devez jouer la tuile en main: {self.current_tile}")
+            return
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
             self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history)   
             print(move + " placed successfully.")
+            self.current_tile = None
         
     def get_game_configuration(self) -> dict :
         grid = {}
