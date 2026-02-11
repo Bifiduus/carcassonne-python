@@ -27,6 +27,8 @@ class Game(IGameService):
         self.board: Board = Board()
         self.deck = Deck()
         self.seed = None
+        self.default_seed = None
+        self.shuffle_algo = "fisher-yates"
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -93,9 +95,14 @@ class Game(IGameService):
             }
         return grid
     
-    def shuffle_deck(self, algo="fisher-yates", seed=None):
+    def shuffle_deck(self, algo=None, seed=None):
+        if algo is None:
+            algo = self.shuffle_algo
         if seed is None:
-            seed = Seed().seed
+            if self.default_seed is not None:
+                seed = self.default_seed
+            else:
+                seed = Seed().seed
         if algo == "naive":
             self.deck.shuffle_naive(seed)
         else:

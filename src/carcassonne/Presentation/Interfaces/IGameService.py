@@ -30,5 +30,5 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def shuffle_deck(self, algo="fisher-yates", seed=None):
+    def shuffle_deck(self, algo=None, seed=None):
         pass
