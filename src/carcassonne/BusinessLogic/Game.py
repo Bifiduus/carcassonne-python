@@ -84,7 +84,7 @@ class Game(IGameService):
             print("Vous devez piocher une tuile avant de jouer.")
             return
 
-        tile_code = self._extract_tile_code(move)
+        tile_code = self.extract_tile_code(move)
         if tile_code is not None and tile_code != self.current_tile:
             print(f"Vous devez jouer la tuile en main: {self.current_tile}")
             return
