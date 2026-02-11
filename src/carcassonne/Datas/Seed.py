@@ -11,5 +11,5 @@ class Seed:
     @staticmethod
     def generate_seed():
         pid = os.getpid()
-        t = int(time.time() * 10000) % 10000
-        return (t * pid) * 12345 % 100000000
+        t = int(time.time() * 1000) % 10000
+        return (t * pid) * 123 % 100000000
