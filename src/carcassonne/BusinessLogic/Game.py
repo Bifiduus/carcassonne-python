@@ -71,7 +71,7 @@ class Game(IGameService):
         return len(self.history.future_moves) == 0
 
 
-    def play_move(self, move):
+    def play_move(self, move) -> None:
         """
         Tries to place a tile according to the computed move :
         - Checks if the move is a string.
@@ -106,7 +106,7 @@ class Game(IGameService):
             }
         return grid
 
-    def draw_tile(self):
+    def draw_tile(self) -> str | None:
         if self.current_hand is not None:
             return self.current_hand
 

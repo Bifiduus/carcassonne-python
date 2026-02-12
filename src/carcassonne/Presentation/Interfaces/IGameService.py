@@ -38,5 +38,5 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def draw_tile(self):
+    def draw_tile(self) -> str | None:
         pass
