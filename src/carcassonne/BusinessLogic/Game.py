@@ -127,7 +127,7 @@ class Game(IGameService):
         file.write(str(self.get_game_configuration()))
         file.write("\n")
         file.write("[History]\n")
-        moves_history = self.history.past_moves.copy()
+        moves_history = self.get_history()
         while moves_history:
             move = moves_history.pop()
             file.write(move.move_str + "\n")
@@ -169,7 +169,9 @@ class Game(IGameService):
                 # This is a placeholder for demonstration purposes.
                 print("Parsing game state: ", line)
             elif history_section:
-                self.play_move(line.split(':')[1])  # Assuming line is in the format "player_id:details"
+                move = line.split(':')[1]
+                self.current_hand = move
+                self.play_move(move)  # Assuming line is in the format "player_id:details"
 
         
 

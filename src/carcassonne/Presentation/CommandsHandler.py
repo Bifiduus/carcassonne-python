@@ -43,6 +43,8 @@ def quit(self):
         self.running = False
 
 def load(self, filename):
+        if not filename.endswith(".txt"):
+               filename += ".txt"
         self.game.loadGameFromFile(filename)        
         print(f"Partie chargée depuis {filename}.")
 
