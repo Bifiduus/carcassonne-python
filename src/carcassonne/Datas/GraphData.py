@@ -1,11 +1,12 @@
-"""This module defines the GraphData class, which implements the IGraphData interface to represent the game state of Carcassonne as a graph. 
-The GraphData class manages the vertices of the graph, which correspond to the tiles placed on the board and their connections. 
+"""This module defines the GraphData class, which implements the IGraphData interface to represent the game state of Carcassonne as a graph.
+The GraphData class manages the vertices of the graph, which correspond to the tiles placed on the board and their connections.
 It provides methods to add and remove vertices, set neighbors, and retrieve vertex information.
 """
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from src.carcassonne.Datas.MeepleData import Meeple
 
 NORTH_DIR = 0
 EAST_DIR = 1
@@ -80,9 +81,11 @@ class GraphData(IGraphData):
     def __init__(self):
         self.vertices: Dict[int, Vertex] = {}
         self.turn = 0
-        # Lands components structure: {terrain_type: {set_name: [(tile_id, [directions]), ...]}}
+        # Lands components structure: {land_type: {set_name: [(tile_id, [directions]), ...]}}
         self.lands_components: Dict[str, Dict[str, list]] = {}
-        self.next_set_id: Dict[str, int] = {}  # Track next ID per terrain type
+        self.next_set_id: Dict[str, int] = {}  # Track next ID per land type
+        # List of meeples placed on the board
+        self.meeples: List[Meeple] = []
         # Adding the starting tile (CRFR) as a vertex in the graph
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
 
@@ -188,6 +191,7 @@ class GraphData(IGraphData):
         self.vertices.clear()
         self.lands_components.clear()
         self.next_set_id.clear()
+        self.meeples.clear()
         self.turn = 0
         # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
