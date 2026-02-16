@@ -6,7 +6,6 @@ from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
 class Tile:
     code : str
-
     matrix : list[list[str]]
 
     # Direction matrices indexed by orientation (0, 1, 2, 3)
@@ -29,10 +28,15 @@ class Tile:
          ['NW', 'W', 'SW']]
     ]
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, connections: dict = None):
         self.code = code
+        try:
+            self.matrix = TilesInfo.tiles_sides[code]
+        except Exception:
+            self.matrix = None
+        # tiles_lands is the terrain definitions for this tile
+        self.tiles_lands = connections if connections is not None else {}
 
-        self.matrix = TilesInfo.tiles_sides[code]
 
 class TilesInfo(ITilesInfo):
     def __init__(self):
@@ -64,7 +68,7 @@ class TilesInfo(ITilesInfo):
             'CSRS': 1,'RSRS': 1, 'RRSS': 1
         }
 
-        self.tiles_connections = {
+        self.tiles_lands = {
             # Basic Tiles
             'FFFF/m': {'M' : [['C']], 'F' : [['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']]},
             'FFFR/m': {'M' : [['C']], 'F' : [['N', 'NE', 'E', 'SE', 'S', 'SW', 'NW']], 'R' : [['W']]},
@@ -107,6 +111,15 @@ class TilesInfo(ITilesInfo):
             'RRSS': {'F' : [['NE'], ['SE', 'NW', 'C'], ['SW']], 'R' : [['N', 'E']], 'S' : [['S', 'W']]}
         }
 
+        # Initialize Tile objects indexed by base code, with their connections
+        self.tiles = {}
+        seen_base_codes = set()
+        for tile_code in sorted(self.tiles_lands.keys()):
+            base_code = tile_code.split('/')[0]
+            if base_code not in seen_base_codes:
+                self.tiles[base_code] = Tile(base_code, self.tiles_lands[tile_code])
+                seen_base_codes.add(base_code)
+
     def is_tile_left(self, tile_code: str) -> bool:
         """
         Checks if there are tiles left of the specified type in the game.
@@ -117,6 +130,14 @@ class TilesInfo(ITilesInfo):
             return True
         return False
 
+    def add_tile(self, tile_code: str) -> None:
+        """
+        Increases the count of the specified tile type by one.
+        """
+        if tile_code not in self.tiles_count:
+            raise ValueError(f"Invalid tile code: {tile_code}")
+        self.tiles_count[tile_code] += 1
+
     def remove_tile(self, tile_code: str) -> None:
         """
         Decreases the count of the specified tile type by one.
@@ -126,11 +147,3 @@ class TilesInfo(ITilesInfo):
         if self.tiles_count.get(tile_code, 0) <= 0:
             raise ValueError(f"No tiles left of type: {tile_code}")
         self.tiles_count[tile_code] -= 1
-
-    def add_tile(self, tile_code: str) -> None:
-        """
-        Increases the count of the specified tile type by one.
-        """
-        if tile_code not in self.tiles_count:
-            raise ValueError(f"Invalid tile code: {tile_code}")
-        self.tiles_count[tile_code] += 1
