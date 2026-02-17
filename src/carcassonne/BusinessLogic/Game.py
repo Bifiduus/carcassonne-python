@@ -98,11 +98,12 @@ class Game(IGameService):
     def saveGameToFile(self, filename: str) -> None:
         file = open(filename, 'w')
         file.write("[Settings]\n")
+        file.write(str(self.get_game_configuration()) + "\n")
 
         file.write("\n")
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
-        file.write(str(self.get_game_configuration()))
+        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_points()}" for player in self.game_repository.get_players()]) + "]\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.history.past_moves.copy()
@@ -111,29 +112,70 @@ class Game(IGameService):
             file.write(move.move_str + "\n")
         file.write("\n")
 
-    def loadGameFromFile(self, filename: str) -> None:
+    def loadGameFromFile(self, filename: str) -> int:
+        if filename is None or filename.strip() == "":
+            print("Error: Invalid filename.")
+            return -1
+        try:
+            file = open(filename, 'r')
+        except OSError:
+            print(f"Error: Could not open file {filename}")
+            return -1
         self.start_new_game()  # Clear current game state before loading new one
-        file = open(filename, 'r')
+
         lines = file.readlines()
         settings_section = False
         game_state_section = False
         history_section = False
+        settings_parsed = False
+        game_state_parsed = False
+        history_parsed = False
+        commentary = False
+        sections_parsed = 0
         for line in lines:
-            line = line.strip()
+            # Remove comments and strip whitespace
+            line = line.strip().split("#")[0]
+
+            # Handle cases where comments are inline with data
+            if line.find("{") != -1 and line.find("}") == -1:
+                line1 = line.split("{")[0]
+                line2 = line.split("{")[1] 
+                line = line1 + line2
+
+            if line.find("{") != -1:
+                line = line.split("{")[0]
+                commentary = True
+                continue
+            if line.find("}") != -1:
+                line = line.split("}")[1]
+                commentary = False
+            if commentary:
+                continue
+
             if line == "[Settings]":
+                sections_parsed += 1
                 settings_section = True
                 game_state_section = False
                 history_section = False
+                settings_parsed = True
                 continue
             elif line == "[GameState]":
+                if not settings_section:
+                    print("Warning: [Settings] section not found before [GameState].")
+                sections_parsed += 1
                 settings_section = False
                 game_state_section = True
                 history_section = False
+                game_state_parsed = True
                 continue
             elif line == "[History]":
+                if not game_state_section:
+                    print("Warning: [GameState] section not found before [History].")
+                sections_parsed += 1
                 settings_section = False
                 game_state_section = False
                 history_section = True
+                history_parsed = True
                 continue
             elif line == "":
                 continue  # Skip empty lines
@@ -141,15 +183,43 @@ class Game(IGameService):
             if settings_section:
                 # Here you would parse the settings and set up the game accordingly.
                 # This is a placeholder for demonstration purposes.
+                # Configuration of the game, shuffle algorithm and seed.
                 print("Parsing settings: ", line)
             elif game_state_section:
                 # Here you would parse the game state and set up the board and graph accordingly.
                 # This is a placeholder for demonstration purposes.
+                # Game scores and player order.
                 print("Parsing game state: ", line)
-            elif history_section:
-                self.play_move(line.split(':')[1])  # Assuming line is in the format "player_id:details"
 
-        
+                game_score = False
+                if line.startswith("GameScore:"):
+                    line = line.split("GameScore:")[1].strip() # Assuming the format is "GameScore: [Player1ID: 10, Player2ID: 20]"
+                    if line == "":
+                        print("Warning: No score yet.")
+                        continue
+                    line = line.split("[")[1].strip("]")
+                    scores = line.split(",")
+                    for score in scores:       
+                        playerID, points = score.split(":")
+                        # player.setPoints(int(points.strip()))
+                        # player.setOrder(order)
+                        print(f"Player number {self.game_repository.get_player_by_id(int(playerID.strip())).get_order()} ({self.game_repository.get_player_by_id(int(playerID.strip())).get_username().strip()}) has {points.strip()} points.")
+                        game_score = True
+                if not game_score:
+                    print("Warning: no game score found in [GameState] section.")
+            elif history_section:
+                move = line.split(':')[1]
+                self.current_hand = move
+                self.play_move(move)  # Assuming line is in the format "player_id:details"
+        if sections_parsed < 3:
+            print("Warning: Not all sections were found in the file.")
+            if not settings_parsed:
+                print("Warning: [Settings] section missing.")
+            if not game_state_parsed:
+                print("Warning: [GameState] section missing.")
+            if not history_parsed:
+                print("Warning: [History] section missing.")
+        return 0       
 
 
     def rotate_dirs(self, dirs, rotation):
