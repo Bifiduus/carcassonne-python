@@ -6,8 +6,8 @@ from typing import List, Optional, Dict, Tuple
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 
-from src.carcassonne.Datas.GraphData import NORTH_DIR, EAST_DIR, SOUTH_DIR, WEST_DIR
-from src.carcassonne.Datas.TilesInfo import TilesInfo
+from carcassonne.Datas.GraphData import NORTH_DIR, EAST_DIR, SOUTH_DIR, WEST_DIR
+from carcassonne.Datas.TilesInfo import TilesInfo
 
 class GraphLogic:
     @staticmethod

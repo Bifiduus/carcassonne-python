@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
-from src.carcassonne.Datas.MeepleData import Meeple
+from carcassonne.Datas.MeepleData import Meeple
 
 NORTH_DIR = 0
 EAST_DIR = 1
@@ -23,8 +23,7 @@ class Vertex:
     orientation: int = 0
 
     # Position of the vertex around the first vertex at (0, 0)
-    position: tuple[int, int]
-
+    position: tuple[int, int] = (0, 0)
     # Couples of (key = direction, value = neighbor vertex id)
     neighbors: Dict[int, int] = field(default_factory=dict)
 
