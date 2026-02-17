@@ -2,6 +2,7 @@
 It provides methods to add and remove tiles from the board, as well as to update the game state accordingly. 
 The Board class interacts with the graph data structure that represents the game state, the tiles information, and the history of moves made during the game.
 """
+import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
@@ -14,7 +15,9 @@ class Board:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
-        tile_pos = graph.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=tiles_info.direction_dict[move_parts[counter - 1][1]])
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
+        tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return
@@ -59,7 +62,9 @@ class Board:
 
         move_parts = move.split(':')[1].split('/')
         counter = 3 if len(move_parts[1]) == 1 else 2
-        tile_pos = graph.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=tiles_info.direction_dict[move_parts[counter - 1][1]])
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
+        tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return
