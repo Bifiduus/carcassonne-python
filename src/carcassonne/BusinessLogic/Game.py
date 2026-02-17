@@ -295,7 +295,6 @@ class Game(IGameService):
                     print("Warning: no game score found in [GameState] section.")
             elif history_section:
                 move = line.split(':')[1]
-                print("Playing move from history: ", move)
                 self.current_hand = move
                 self.play_move(move)  # Assuming line is in the format "player_id:details"
         if sections_parsed < 3:
