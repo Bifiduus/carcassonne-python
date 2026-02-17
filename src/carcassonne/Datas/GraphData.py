@@ -98,7 +98,14 @@ class GraphData(IGraphData):
     def initialize_starting_tile(self):
         # Define the lands components for each tile type, including the starting tile
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
-        '''tile = self.tiles_connections['CRFR']
+        tile = self.tiles_connections['CRFR']
+        print(tile.tiles_lands)
+        for land in tile.tiles_lands.keys():
+            land_id = land + str(self.next_set_id[land])
+            self.lands_components[land][land_id] = tile.tiles_lands[land]
+            self.next_set_id[land] += 1
+        print(self.lands_components)
+        '''
         for type, components in tile.items():
             
             for component in components:
