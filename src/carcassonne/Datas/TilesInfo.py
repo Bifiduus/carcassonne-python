@@ -6,7 +6,6 @@ from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
 class Tile:
     code : str
-    matrix : list[list[str]]
 
     # Direction matrices indexed by orientation (0, 1, 2, 3)
     direction_matrix = [
@@ -28,14 +27,11 @@ class Tile:
          ['NW', 'W', 'SW']]
     ]
 
-    def __init__(self, code: str, connections: dict = None):
+    def __init__(self, code: str, connections: dict = None, connect_to: dict = None):
         self.code = code
-        try:
-            self.matrix = TilesInfo.tiles_sides[code]
-        except Exception:
-            self.matrix = None
         # tiles_lands is the terrain definitions for this tile
         self.tiles_lands = connections if connections is not None else {}
+        self.connect_to = connect_to if connect_to is not None else {}
 
 
 class TilesInfo(ITilesInfo):
@@ -110,6 +106,49 @@ class TilesInfo(ITilesInfo):
             'RSRS': {'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R' : [['N', 'S', 'C']], 'S' : [['E', 'W']],},
             'RRSS': {'F' : [['NE'], ['SE', 'NW', 'C'], ['SW']], 'R' : [['N', 'E']], 'S' : [['S', 'W']]}
         }
+        
+        self.connects_to = {
+            # Basic Tiles
+            'FFFF/m': {},
+            'FFFR/m': {},
+            'CFFF': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'FCFC/f': {'NW' : ['F','C'], 'NE' : ['F','C'], 'SW' : ['F','C'], 'SE' : ['F','C']},
+            'CFCF/c': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
+            'CFCF/b': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
+
+            'CCCC/b': {},
+            'FFCC': {'NW' : ['F','C'], 'SW' : ['C','C'], 'SE' : ['C','F']},
+            'CCFF': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'CCFF/b': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'CCCF': {'NW' : ['C','F'], 'SW' : ['C','F']},
+            'CCCF/b': {'NW' : ['C','F'], 'SW' : ['C','F']},
+
+            'CCCR': {'NW' : ['C','F'], 'SW' : ['C','F']},
+            'CCCR/b': {'NW' : ['C','F'], 'SW' : ['C','F']},
+            'FRFR': {},
+            'FFRR': {},
+            'CRFR': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'CFRR': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'CRRF': {'NW' : ['C','F'], 'NE' : ['C','F']},
+
+            'CCRR': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'CCRR/b': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'FRRR': {},
+            'CRRR': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'RRRR': {},
+
+            # 'The River' Expansion
+            'FSRS/m': {},
+            'FFSF': {},
+            'FSFS': {},
+            'FFSS': {},
+            'CSCS': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
+            'CCSS': {'NW' : ['C','F'], 'SE' : ['F','C']},
+
+            'CSRS': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'RSRS': {},
+            'RRSS': {}
+        }
 
         # Initialize Tile objects indexed by base code, with their connections
         self.tiles = {}
@@ -117,7 +156,7 @@ class TilesInfo(ITilesInfo):
         for tile_code in sorted(self.tiles_lands.keys()):
             base_code = tile_code.split('/')[0]
             if base_code not in seen_base_codes:
-                self.tiles[base_code] = Tile(base_code, self.tiles_lands[tile_code])
+                self.tiles[base_code] = Tile(base_code, self.tiles_lands[tile_code], self.connects_to[tile_code])
                 seen_base_codes.add(base_code)
 
     def is_tile_left(self, tile_code: str) -> bool:
