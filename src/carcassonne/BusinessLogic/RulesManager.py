@@ -2,6 +2,7 @@
 It provides methods to check the legality of moves, to determine if the current player is human, and to retrieve the game history. 
 The RulesManager interacts with the graph data structure that represents the game state and the tiles information to enforce the game rules.
 """
+import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
@@ -12,7 +13,7 @@ class RulesManager():
         
         self.tiles_info = tiles_info
 
-    def areEqualSides(self, tile1, tile2_details, graph: IGraphData):
+    def areEqualSides(self, tile1, numbers_tile2, orientation_tile2, graph: IGraphData):
         """
         Checks if the sides of two tiles from the computed move are equal.
 
@@ -26,11 +27,10 @@ class RulesManager():
         Returns True if the sides are equal, False otherwise.
         """
         
-        orientation_tile2 = tile2_details[1]
         orientation_tile1 = self.tiles_info.direction_list[(self.tiles_info.direction_dict[orientation_tile2] + 2) % 4]
             
-        rotation_tile1 = int(tile2_details[2])
-        tile2 =  graph.get_verticies()[(int(tile2_details[0]))]
+        rotation_tile1 = numbers_tile2[1]
+        tile2 =  graph.get_verticies()[numbers_tile2[0]]
         rotation_tile2 = tile2.get_orientation()
 
         # direction index between 0 and 3 (0 being North, 3 being West) on tile1 that will face the orientation before rotation (which side of the tile we want to place is concerned)
@@ -66,11 +66,14 @@ class RulesManager():
                 print("no tiles left of that type without center")
                 return False 
             
-        if not graph.get_verticies()[int(move_parts[counter][0])].is_neighbor_free(self.tiles_info.direction_dict[move_parts[counter][1]]):
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]  
+        attach_direction = ''.join(c for c in move_parts[counter] if c.isalpha())
+        
+        if not graph.get_verticies()[integers_placement[0]].is_neighbor_free(self.tiles_info.direction_dict[attach_direction]):
             print("the tile you try to attach yours to already has a neighbor on that side")
             return False
         
-        if not self.areEqualSides(move_parts[0], move_parts[counter], graph):
+        if not self.areEqualSides(move_parts[0], integers_placement, attach_direction, graph):
             print("the tile you try to place doesn't match the tile you try to attach yours to")
             return False
         
@@ -127,13 +130,21 @@ class RulesManager():
             return
             
         #REGARDER COMMENT PRENDRE LE NOMBRE ENTIER ET PAS JUSTE LE PREMIER CHIFFRE (marche avec 7, mais pas avec 12 par exemple)
-        if int(move_parts[counter][0]) >= graph.get_turn_number():
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]
+        if len(integers_placement) != 2:
+            print("the tile placement details are invalid, need 2 integers : tile id and rotation")
+            return
+        if integers_placement[0] >= graph.get_turn_number():
             print("the tile you try to attach yours to has an invalid number")
             return
-        if move_parts[counter][1] not in self.tiles_info.direction_list:   
+        attach_direction = ''.join(c for c in move_parts[counter] if c.isalpha())
+        if len(attach_direction) != 1:
+            print("the tile placement details are invalid, only 1 char is needed for direction")
+            return
+        if attach_direction not in self.tiles_info.direction_list:   
             print("the tile's side you try to attach yours on must be N, S, W or E")
             return      
-        if not (0 <= int(move_parts[counter][2]) <= 3): 
+        if not (0 <= integers_placement[1] <= 3): 
             print("the rotation you apply to your tile must be between 0 and 3")
             return  
         
