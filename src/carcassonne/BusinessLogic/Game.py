@@ -68,11 +68,10 @@ class Game(IGameService):
         """Redo the last undone human move and subsequent AI moves."""
         if self.rules_manager.current_player_is_human() and self.history.future_moves:
             last_unplayed_move = self.history.pop_future()
-            self.current_hand = last_unplayed_move.move_str
-            self.history.push_past(last_unplayed_move)
-            self.play_move(build_str(last_unplayed_move))  # Assuming move_str is in the format "player_id:details"
+            self.current_hand = last_unplayed_move.move_str.split('/')[0]
+            self.play_move(last_unplayed_move.move_str) 
             while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
-                self.play_move(build_str(self.history.future_moves[-1]))  # Assuming move_str is in the format "player_id:details"
+                self.play_move(self.history.future_moves[-1].move_str) 
                 self.history.push_past(self.history.pop_future())
 
     def get_history(self) -> List[MoveRecord]:
@@ -150,7 +149,7 @@ class Game(IGameService):
         moves_history = self.get_history()
         while moves_history:
             move = moves_history.pop()
-            file.write(move.move_str + "\n")
+            file.write(move + "\n")
         file.write("\n")
         return 0
 
