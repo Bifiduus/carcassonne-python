@@ -97,7 +97,7 @@ def show_history(self, game):
         history = game.get_history()
         print("Historique des coups joués:")
         for move in history:
-            print(f"  {move.move_str}")
+            print(f"  {move}")
 
 def show_configuration(self, game):
         GameConfiguration().show_config()
