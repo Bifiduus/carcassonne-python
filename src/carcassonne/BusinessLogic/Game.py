@@ -47,6 +47,12 @@ class Game(IGameService):
         self.history.clear_history()
         self.graph.reset_graph()
         self.game_repository = GameRepository()
+        self.board = Board()
+        self.deck = Deck()
+        self.current_hand = None
+        self.seed = None
+        self.tiles_info= TilesInfo()
+        self.rules_manager = RulesManager(self.tiles_info)
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -62,6 +68,7 @@ class Game(IGameService):
         """Redo the last undone human move and subsequent AI moves."""
         if self.rules_manager.current_player_is_human() and self.history.future_moves:
             last_unplayed_move = self.history.pop_future()
+            self.current_hand = last_unplayed_move.move_str
             self.history.push_past(last_unplayed_move)
             self.play_move(last_unplayed_move.move_str.split(':')[1])  # Assuming move_str is in the format "player_id:details"
             while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
@@ -121,18 +128,23 @@ class Game(IGameService):
         tile = self.deck.draw()
         if tile is None:
             return None
-
         self.current_hand = tile
         return tile
     
-    def saveGameToFile(self, filename: str) -> None:
+    def saveGameToFile(self, filename: str) -> int:
+        if filename is None or filename.strip() == "":
+            print("Error: Invalid filename.")
+            return -1
+        if not filename.endswith(".txt"):
+            filename += ".txt"
         file = open(filename, 'w')
+
         file.write("[Settings]\n")
 
         file.write("\n")
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
-        file.write(str(self.get_game_configuration()))
+        file.write("Work in progress...\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.get_history()
@@ -140,16 +152,42 @@ class Game(IGameService):
             move = moves_history.pop()
             file.write(move.move_str + "\n")
         file.write("\n")
+        return 0
 
-    def loadGameFromFile(self, filename: str) -> None:
+    def loadGameFromFile(self, filename: str) -> int:
+        if filename is None or filename.strip() == "":
+            print("Error: Invalid filename.")
+            return -1
+        try:
+            file = open(filename, 'r')
+        except OSError:
+            print(f"Error: Could not open file {filename}")
+            return -1
         self.start_new_game()  # Clear current game state before loading new one
-        file = open(filename, 'r')
+
         lines = file.readlines()
         settings_section = False
         game_state_section = False
         history_section = False
+        commentary = False
         for line in lines:
-            line = line.strip()
+            line = line.strip().split("#")[0]
+
+            if line.find("{") != -1 and line.find("}") == -1:
+                line1 = line.split("{")[0]
+                line2 = line.split("{")[1] 
+                line = line1 + line2
+
+            if line.find("{") != -1:
+                line = line.split("{")[0]
+                commentary = True
+                continue
+            if line.find("}") != -1:
+                line = line.split("}")[1]
+                commentary = False
+            if commentary:
+                continue
+
             if line == "[Settings]":
                 settings_section = True
                 game_state_section = False
@@ -180,6 +218,7 @@ class Game(IGameService):
                 move = line.split(':')[1]
                 self.current_hand = move
                 self.play_move(move)  # Assuming line is in the format "player_id:details"
+        return 0
 
         
 
