@@ -5,7 +5,7 @@ from typing import Any, List
 
 from carcassonne.Datas.Deck import Deck
 from carcassonne.Datas.Seed import Seed
-from carcassonne.Datas.Serializer import parse_move
+from carcassonne.Datas.Serializer import parse_move, build_str
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
@@ -51,9 +51,9 @@ class Game(IGameService):
         if self.rules_manager.current_player_is_human() and self.history.past_moves:
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
-            self.board.remove_tile_from_board(previous_play.move_str, self.graph, self.tiles_info, self.history)
+            self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
             while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
-                self.board.remove_tile_from_board(self.history.past_moves[-1].move_str, self.graph, self.tiles_info, self.history)
+                self.board.remove_tile_from_board(build_str(self.history.past_moves[-1]), self.graph, self.tiles_info, self.history)
                 self.history.push_future(self.history.pop_past())
 
     def redo(self) -> None:
@@ -62,14 +62,14 @@ class Game(IGameService):
             last_unplayed_move = self.history.pop_future()
             self.current_hand = last_unplayed_move.move_str
             self.history.push_past(last_unplayed_move)
-            self.play_move(last_unplayed_move.move_str.split(':')[1])  # Assuming move_str is in the format "player_id:details"
+            self.play_move(build_str(last_unplayed_move))  # Assuming move_str is in the format "player_id:details"
             while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
-                self.play_move(self.history.future_moves[-1].move_str.split(':')[1])  # Assuming move_str is in the format "player_id:details"
+                self.play_move(build_str(self.history.future_moves[-1]))  # Assuming move_str is in the format "player_id:details"
                 self.history.push_past(self.history.pop_future())
 
     def get_history(self) -> List[MoveRecord]:
-        """Return a shallow copy of current play history."""
-        return self.history.past_moves.copy()
+        """Return the current play history."""
+        return self.history.list_history()
 
     def clear_undo_history(self) -> None:
         self.history.clear_future()
