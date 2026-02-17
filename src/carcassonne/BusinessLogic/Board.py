@@ -2,6 +2,7 @@
 It provides methods to add and remove tiles from the board, as well as to update the game state accordingly. 
 The Board class interacts with the graph data structure that represents the game state, the tiles information, and the history of moves made during the game.
 """
+import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
@@ -14,11 +15,13 @@ class Board:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
-        tile_pos = graph.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=tiles_info.direction_dict[move_parts[counter - 1][1]])
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
+        tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return
-        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=int(move_parts[counter - 1][2]), position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
@@ -46,7 +49,9 @@ class Board:
 
         move_parts = move.split(':')[1].split('/')
         counter = 3 if len(move_parts[1]) == 1 else 2
-        tile_pos = graph.get_position(vertex_id=(int)(move_parts[counter - 1][0]), side=tiles_info.direction_dict[move_parts[counter - 1][1]])
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
+        tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return
