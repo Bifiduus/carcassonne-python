@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.MeepleData import Meeple
+from carcassonne.Datas.TilesInfo import TilesInfo
 
 NORTH_DIR = 0
 EAST_DIR = 1
@@ -78,9 +79,36 @@ class GraphData(IGraphData):
         self.next_set_id: Dict[str, int] = {}  # Track next ID per land type
         # List of meeples placed on the board
         self.meeples: List[Meeple] = []
+        self.tiles_connections = TilesInfo().tiles
         # Adding the starting tile (CRFR) as a vertex in the graph
-        self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
+        self.initialize_land_components()
+        self.initialize_starting_tile()
 
+    def initialize_land_components(self):
+        # Initialize land components for the starting tile (CRFR)
+        self.lands_components['C'] = {}
+        self.lands_components['R'] = {}
+        self.lands_components['F'] = {}
+        self.lands_components['M'] = {}
+        self.next_set_id['C'] = 1  # Next set ID for cities
+        self.next_set_id['R'] = 1  # Next set ID for roads
+        self.next_set_id['F'] = 1  # Next set ID for fields
+        self.next_set_id['M'] = 1  # Next set ID for monasteries
+    
+    def initialize_starting_tile(self):
+        # Define the lands components for each tile type, including the starting tile
+        self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
+        '''tile = self.tiles_connections['CRFR']
+        for type, components in tile.items():
+            
+            for component in components:
+                set_name = f"{type}{self.next_set_id[type]}"
+                self.lands_components[type][set_name] = [(0, component)]
+                self.next_set_id[type] += 1
+        self.lands_components['F'] = {'F1': [(0, ['NE', 'NW'])], 'F2': [(0, ['SE', 'S', 'SW'])]}
+        self.lands_components.append({})
+        self.next_set_id.append({})'''
+    
     def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int,int]) -> None:
         if vertex_id in self.vertices:
             raise ValueError(f"Vertex ID already exists : {vertex_id}")
@@ -94,6 +122,9 @@ class GraphData(IGraphData):
         self.turn += 1
 
         self.compute_neighbors(vertex_id)
+        
+    def add_meeple(self, meeple: Meeple) -> None:
+        self.meeples.append(meeple)
 
     def compute_neighbors(self, vertex_id: int) -> None:
         vertex = self.get_vertex(vertex_id)
