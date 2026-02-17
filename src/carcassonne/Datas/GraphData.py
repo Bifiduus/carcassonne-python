@@ -122,6 +122,7 @@ class GraphData(IGraphData):
             for ori, id in list(vertex.neighbors.items()):
                 if id == vertex_id:
                     vertex.remove_neighbor(ori)
+                    self.turn -= 1
         del self.vertices[vertex_id]
 
     def get_vertex(self, vertex_id: int) -> Optional[Vertex]:

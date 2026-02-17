@@ -31,28 +31,28 @@ def help(self):
     print("  play <move>        - Joue le coup spécifié par <move>")
 
 def quit(self):
-        if True:
+        saved = -1
+        while saved == -1:
                 confirm = input("Save the game before quitting?[y/N] ")
                 if confirm != 'y':
                         print("Abandon de la commande de quitter.")
                         self.running = False
+                        saved = 0
                 else:
                         filename = input("Nom du fichier de sauvegarde: ")
-                        save(self, filename)
+                        saved = save(self, filename)
         print("Quitte le jeu. À bientôt!")
         self.running = False
 
 def load(self, filename):
-        if not filename.endswith(".txt"):
-               filename += ".txt"
-        self.game.loadGameFromFile(filename)        
-        print(f"Partie chargée depuis {filename}.")
+        if self.game.loadGameFromFile(filename) == 0:
+            print(f"Partie chargée depuis {filename}.")
+        else:
+            print(f"Erreur lors du chargement de la partie depuis {filename}.")
 
 def save(self, filename):
-        if not filename.endswith(".txt"):
-            filename += ".txt"
-        self.game.saveGameToFile(filename)
-        print(f"Partie sauvegardée dans {filename}.")
+        if self.game.saveGameToFile(filename) == 0:
+            print(f"Partie sauvegardée dans {filename}.")
 
 def shuffle(self):
         seed = self.game.shuffle_deck()
