@@ -6,7 +6,7 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
-from carcassonne.Datas.Serializer import parse_move, build_str
+from carcassonne.Datas.Serializer import build_str
 
 class Board:
     
@@ -25,18 +25,10 @@ class Board:
         tiles_info.remove_tile(tile_name)
 
         try:
-            parsed = parse_move(move)
             record = MoveRecord(
-                move_str="",
-                player_id=1,
-                tile_sides=parsed["tile_sides"],
-                target_id=parsed["target_id"],
-                target_side=parsed["target_side"],
-                rotation=parsed["rotation"],
-                meeple=parsed["meeple"],
-                center=parsed.get("center"),
+                move_str=move,
+                player_id=1
             )
-            record.move_str = build_str(record)
             history.push_past(record)
             history.clear_future()
         except ValueError:
