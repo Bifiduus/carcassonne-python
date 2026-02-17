@@ -2,6 +2,8 @@
 The History class maintains two lists: one for past moves and one for future moves (used for undo functionality). 
 It provides methods to push and pop moves from these lists, as well as to clear the future moves when a new move is made.
 """
+from carcassonne.Datas.Serializer import build_str
+
 class MoveRecord:
     def __init__(self, move_str, player_id=1):
         self.move_str = move_str
@@ -33,4 +35,4 @@ class History:
         self.future_moves.clear()
 
     def list_history(self):
-        return [record.move_str for record in self.past_moves]
+        return [build_str(record) for record in self.past_moves]
