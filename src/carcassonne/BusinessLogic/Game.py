@@ -74,7 +74,7 @@ class Game(IGameService):
                 self.play_move(self.history.future_moves[-1].move_str) 
                 self.history.push_past(self.history.pop_future())
 
-    def get_history(self) -> List[MoveRecord]:
+    def get_history(self) -> List[str]:
         """Return the current play history."""
         return self.history.list_history()
 
