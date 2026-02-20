@@ -8,6 +8,7 @@ from typing import Dict, Optional, List
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.MeepleData import Meeple
 from carcassonne.Datas.TilesInfo import TilesInfo
+from carcassonne.Datas.TilesInfo import Tile
 
 NORTH_DIR = 0
 EAST_DIR = 1
@@ -21,6 +22,8 @@ class Vertex:
     id: int
     name: str
     middle: str
+    matrix: list[list]
+    tile_dict: Dict[str, list]
     orientation: int = 0
 
     # Position of the vertex around the first vertex at (0, 0)
@@ -28,13 +31,17 @@ class Vertex:
     # Couples of (key = direction, value = neighbor vertex id)
     neighbors: Dict[int, int] = field(default_factory=dict)
 
-    def __init__(self, id: int, name: str, middle: str, orientation: int = 0, position: tuple[int, int] = (0, 0)):
+    def __init__(self, id: int, name: str, middle: str, tile_dict: Dict[str, list], orientation: int = 0, position: tuple[int, int] = (0, 0)):
         self.id = id
         self.name = name
         self.middle = middle
         self.position = position
         self.orientation = orientation % ORIENTATIONS
         self.neighbors = {}
+        self.tile_dict = tile_dict
+        # Initialize a 4x4 matrix for the vertex before building it
+        self.matrix = [["" for _ in range(3)] for _ in range(3)]
+        self.build_matrix()
 
     def set_neighbor(self, orientation: int, neighbor_id: int) -> None:
         if orientation not in range(ORIENTATIONS):
@@ -50,6 +57,21 @@ class Vertex:
 
     def rotate(self, k: int = 1) -> None:
         self.orientation = (self.orientation + k) % ORIENTATIONS
+        
+    def build_matrix(self) -> None:
+        dir_matrix = Tile.direction_matrix[self.orientation]
+        for i in range(3):
+            for j in range(3):
+                dir = dir_matrix[i][j]
+                for land in self.tile_dict.keys():
+                    matched = False
+                    for set in self.tile_dict[land]:
+                        if dir in set:
+                            self.matrix[i][j] = land
+                            matched = True      
+                            break 
+                    if matched:
+                        break
 
     def get_id(self) -> int:
         return self.id
@@ -68,6 +90,9 @@ class Vertex:
 
     def get_neighbors(self) -> Dict[int, int]:
         return dict(self.neighbors)
+    
+    def get_matrix(self) -> list[list]:
+        return self.matrix
 
 
 class GraphData(IGraphData):
@@ -79,7 +104,7 @@ class GraphData(IGraphData):
         self.next_set_id: Dict[str, int] = {}  # Track next ID per land type
         # List of meeples placed on the board
         self.meeples: List[Meeple] = []
-        self.tiles_connections = TilesInfo().tiles
+        self.tiles_dict = TilesInfo().tiles
         # Adding the starting tile (CRFR) as a vertex in the graph
         self.initialize_land_components()
         self.initialize_starting_tile()
@@ -98,12 +123,13 @@ class GraphData(IGraphData):
     def initialize_starting_tile(self):
         # Define the lands components for each tile type, including the starting tile
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
-        tile = self.tiles_connections['CRFR']
+        tile = self.tiles_dict['CRFR']
         print(tile.tiles_lands)
         for land in tile.tiles_lands.keys():
-            land_id = land + str(self.next_set_id[land])
-            self.lands_components[land][land_id] = tile.tiles_lands[land]
-            self.next_set_id[land] += 1
+            for connected in tile.tiles_lands[land] :
+                land_id = land + str(self.next_set_id[land])
+                self.lands_components[land][land_id] = 0, connected
+                self.next_set_id[land] += 1
         print(self.lands_components)
         '''
         for type, components in tile.items():
@@ -123,12 +149,14 @@ class GraphData(IGraphData):
         if position is None:
             return ValueError("Error in getting position")
 
-        vertex = Vertex(id=vertex_id, name=name, middle=middle, orientation=orientation % ORIENTATIONS, position=position)
+        vertex = Vertex(id=vertex_id, name=name, middle=middle, tile_dict=self.tiles_dict[name].tiles_lands, orientation=orientation % ORIENTATIONS, position=position)
         self.vertices[vertex_id] = vertex
 
         self.turn += 1
 
         self.compute_neighbors(vertex_id)
+        
+        self.update_connected_fields(vertex_id)
         
     def add_meeple(self, meeple: Meeple) -> None:
         self.meeples.append(meeple)
@@ -193,6 +221,19 @@ class GraphData(IGraphData):
             return (x - 1, y)
         else:
             raise ValueError(f"Invalid side: {side}")
+        
+    def get_position_by_pos(self, position: tuple[int, int], side: int) -> Optional[tuple[int, int]]:
+        x, y = position
+        if side == SOUTH_DIR:
+            return (x, y + 1)
+        elif side == EAST_DIR:
+            return (x + 1, y)
+        elif side == NORTH_DIR:
+            return (x, y - 1)
+        elif side == WEST_DIR:
+            return (x - 1, y)
+        else:
+            raise ValueError(f"Invalid side: {side}")
 
     def get_neighbors(self, vertex_id: int) -> Dict[int, int]:
         if vertex_id not in self.vertices:
@@ -201,6 +242,16 @@ class GraphData(IGraphData):
 
     def get_turn_number(self) -> int:
         return self.turn
+    
+    def update_connected_fields(self, vertex_id: int) -> None:
+        tiles_sides_left = ['NW', 'N', 'NE', 'W', 'C', 'E', 'SW', 'S', 'SE']
+        neighbors = self.vertices[vertex_id].get_neighbors()
+        orientation = self.vertices[vertex_id].get_orientation()
+        name = self.vertices[vertex_id].get_name()
+        for direction in neighbors.keys():
+            field_type = name[(direction - orientation) % 4]
+            neighbor_id = neighbors[direction]
+        pass
 
     def reset_graph(self):
         self.vertices.clear()
