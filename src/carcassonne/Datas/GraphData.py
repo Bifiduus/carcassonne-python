@@ -174,6 +174,8 @@ class GraphData(IGraphData):
 
         self.compute_neighbors(vertex_id)
         
+        self.update_connected_fields(vertex_id)
+        
     def add_meeple(self, meeple: Meeple) -> None:
         self.meeples.append(meeple)
 
