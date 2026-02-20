@@ -6,6 +6,10 @@ import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
+NORTH_MATRIX = (0, 1)
+EAST_MATRIX = (1, 2)
+SOUTH_MATRIX = (2, 1)
+WEST_MATRIX = (1, 0)
 
 class RulesManager():
     
@@ -13,7 +17,7 @@ class RulesManager():
         
         self.tiles_info = tiles_info
 
-    def areEqualSides(self, tile1, numbers_tile2, orientation_tile2, graph: IGraphData):
+    def areEqualSides(self, tile1, tile1pos, orientation, graph: IGraphData):
         """
         Checks if the sides of two tiles from the computed move are equal.
 
@@ -27,24 +31,28 @@ class RulesManager():
         Returns True if the sides are equal, False otherwise.
         """
         
-        orientation_tile1 = self.tiles_info.direction_list[(self.tiles_info.direction_dict[orientation_tile2] + 2) % 4]
+        for dir in range(4):
+            next_pos = graph.get_position_by_pos(tile1pos, dir)
+            for _, vertex in graph.get_verticies().items():
+                if vertex.get_position() == next_pos:
+                    tile2 = vertex.get_matrix()
+                    land1 = tile1[(dir - orientation) % 4]
+                    if dir == 0:
+                        tile2_coord = SOUTH_MATRIX
+                    elif dir == 1:
+                        tile2_coord = WEST_MATRIX
+                    elif dir == 2:
+                        tile2_coord = NORTH_MATRIX
+                    elif dir == 3:
+                        tile2_coord = EAST_MATRIX
+                        
+                    land2 = tile2[tile2_coord[0]][tile2_coord[1]]
+                    print(f"Comparing land1: {land1} with land2: {land2} for direction {dir} with orientation {orientation}")
+                    print(f"Tile1: {tile1}, Tile2: {tile2}, Tile2 Coord: {vertex.get_position()}")
+                    if land1 != land2:
+                        return False
             
-        rotation_tile1 = numbers_tile2[1]
-        tile2 =  graph.get_verticies()[numbers_tile2[0]]
-        rotation_tile2 = tile2.get_orientation()
-
-        # direction index between 0 and 3 (0 being North, 3 being West) on tile1 that will face the orientation before rotation (which side of the tile we want to place is concerned)
-        dir_idx = self.tiles_info.direction_dict[orientation_tile1]
-
-        # compute the index on tile1 that will face the orientation after rotation
-        # using modulo to wrap negatives (e.g. (2 - 3) % 4 == 3)
-        index_tile1 = (dir_idx - rotation_tile1) % 4
-        side1 = tile1[index_tile1]
-
-        # same with tile2
-        side2 = tile2.get_name()[self.tiles_info.direction_dict[orientation_tile2] - rotation_tile2 % 4]
-        
-        return side1 == side2
+        return True
     
     def is_legal_move(self, move_parts, graph: IGraphData):
         
@@ -73,8 +81,9 @@ class RulesManager():
             print("the tile you try to attach yours to already has a neighbor on that side")
             return False
         
-        if not self.areEqualSides(move_parts[0], integers_placement, attach_direction, graph):
-            print("the tile you try to place doesn't match the tile you try to attach yours to")
+        tile_pos = graph.get_position(integers_placement[0], self.tiles_info.direction_dict[attach_direction])
+        if not self.areEqualSides(move_parts[0], tile_pos, integers_placement[1], graph):
+            print("the tile you try to place doesn't match the tiles you try to attach yours to")
             return False
         
         # Verify meeple placement if applicable 
