@@ -33,6 +33,7 @@ class Game(IGameService):
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
         self.players : list[Player] = []
+        self.players_order: list[int] = []
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -124,6 +125,18 @@ class Game(IGameService):
         self.current_hand = tile
         return tile
     
+    def maximum_number_of_players(self) -> int:
+        return 5
+    
+    def minimum_number_of_players(self) -> int:
+        return 2
+    
+    def set_number_of_ai_players(self, num_players: int) -> None:
+        self.number_of_ai_players = num_players
+
+    def get_current_player(self) -> int:
+        return self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
+    
     def saveGameToFile(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
@@ -138,9 +151,9 @@ class Game(IGameService):
         file.write("\n")
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
-        file.write("NumberOfPlayers: " + str(self.game_repository.get_number_of_players()) + ", " + str(self.game_repository.get_number_of_ai_players()) + "\n")
-        file.write("CurrentPlayer: " + str(self.game_repository.get_current_player().get_id()) + "\n")
-        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_points()}" for player in self.game_repository.get_players()]) + "]\n")
+        file.write("NumberOfPlayers: " + str(len(self.players)) + ", 0\n") # str(self.game_repository.get_number_of_ai_players()) 
+        file.write("PlayersOrder: " + str(self.players_order) + "\n")
+        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.players]) + "]\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.get_history()
@@ -237,22 +250,19 @@ class Game(IGameService):
                         continue
                     number_of_players, number_of_ai_players = line.split(",") if "," in line else (line, "0")
                     print(f"Total number of players specified: {int(number_of_ai_players.strip()) + int(number_of_players.strip())}.")
-                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > maximum_number_of_players():
-                        print(f"Warning: Number of players should be between {minimum_number_of_players()} and {maximum_number_of_players()}.")
+                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > self.maximum_number_of_players():
+                        print(f"Warning: Number of players should be between {self.minimum_number_of_players()} and {self.maximum_number_of_players()}.")
                         continue
-                    num_players = int(number_of_players)
-                    self.set_number_of_players(num_players)
                     self.set_number_of_ai_players(int(number_of_ai_players.strip()))
-                    print(f"Number of players set to {num_players}.")
+                    print(f"Number of players set to {int(number_of_players.strip()) + int(number_of_ai_players.strip())}.")
 
-                if line.startswith("CurrentPlayer:"):
-                    line = line.split("CurrentPlayer:")[1].strip()
+                if line.startswith("PlayersOrder:"):
+                    line = line.split("PlayersOrder:")[1].strip()
                     if line == "":
-                        print("Warning: Current player ID not specified.")
+                        print("Warning: Players order not specified.")
                         continue
-                    current_player_id = int(line)
-                    self.game_repository.set_current_player(current_player_id)
-                    print(f"Current player set to ID {current_player_id}.")
+                    self.players_order = [int(player_id.strip()) for player_id in line.strip("[]").split(",")]
+                    print(f"Players order set to {self.players_order}.")
 
                 game_score = False
                 if line.startswith("GameScore:"):
@@ -262,13 +272,14 @@ class Game(IGameService):
                         continue
                     line = line.split("[")[1].strip("]")
                     scores = line.split(",")
-                    if len(scores) > self.get_number_of_players():
+                    if len(scores) > len(self.players):
                         print("Warning: More scores than players.")
                     for score in scores:       
                         playerID, points = score.split(":")
-                        # player.setPoints(int(points.strip()))
-                        # player.setOrder(order)
-                        print(f"Player number {self.game_repository.get_player_by_id(int(playerID.strip())).get_order()} ({self.game_repository.get_player_by_id(int(playerID.strip())).get_username().strip()}) has {points.strip()} points.")
+                        for player in self.players:
+                            if player.get_id() == int(playerID.strip()):
+                                player.score.setPoints(int(points.strip()))
+                                print(f"Player number {self.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
                         game_score = True
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")

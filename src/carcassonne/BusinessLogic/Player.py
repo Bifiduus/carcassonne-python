@@ -27,3 +27,15 @@ class Player():
             
     def add_meeple(self) -> None:
         self.meeples += 1
+
+    def get_id(self) -> int:
+        return self.id
+    
+    def get_username(self) -> str:
+        return self.name
+    
+    def get_score(self) -> PlayerScore:
+        return self.score
+    
+    def get_color(self) -> str:
+        return self.color
