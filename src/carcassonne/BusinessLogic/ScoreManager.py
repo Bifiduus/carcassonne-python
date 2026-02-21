@@ -9,6 +9,9 @@ class PlayerScore():
     def add_score(self, score: int) -> None:
         self.score += score
 
+    def setPoints(self, points: int) -> None:
+        self.score = points
+
 class ScoreManager():
     def __init__(self):
         pass
