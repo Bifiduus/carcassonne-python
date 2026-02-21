@@ -1,7 +1,9 @@
 class PlayerScore():
+    id: int
     score: int
     
-    def __init__(self):
+    def __init__(self, id: int):
+        self.id = id
         self.score = 0
         
     def add_score(self, score: int) -> None:
