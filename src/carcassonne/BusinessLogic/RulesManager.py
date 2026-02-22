@@ -6,10 +6,15 @@ import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
+NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)
-EAST_MATRIX = (1, 2)
-SOUTH_MATRIX = (2, 1)
+NORTHEAST_MATRIX = (0, 2)
 WEST_MATRIX = (1, 0)
+CENTER_MATRIX = (1, 1)
+EAST_MATRIX = (1, 2)
+SOUTHWEST_MATRIX = (2, 0)
+SOUTH_MATRIX = (2, 1)
+SOUTHEAST_MATRIX = (2, 2)
 
 class RulesManager():
     
@@ -47,10 +52,9 @@ class RulesManager():
                         tile2_coord = EAST_MATRIX
                         
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
-                    print(f"Comparing land1: {land1} with land2: {land2} for direction {dir} with orientation {orientation}")
-                    print(f"Tile1: {tile1}, Tile2: {tile2}, Tile2 Coord: {vertex.get_position()}")
                     if land1 != land2:
                         return False
+                    break
             
         return True
     

@@ -17,6 +17,16 @@ WEST_DIR = 3
 
 ORIENTATIONS = 4
 
+NORTHWEST_MATRIX = (0, 0)
+NORTH_MATRIX = (0, 1)
+NORTHEAST_MATRIX = (0, 2)
+WEST_MATRIX = (1, 0)
+CENTER_MATRIX = (1, 1)
+EAST_MATRIX = (1, 2)
+SOUTHWEST_MATRIX = (2, 0)
+SOUTH_MATRIX = (2, 1)
+SOUTHEAST_MATRIX = (2, 2)
+
 @dataclass
 class Vertex:
     id: int
@@ -124,11 +134,10 @@ class GraphData(IGraphData):
         # Define the lands components for each tile type, including the starting tile
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
         tile = self.tiles_dict['CRFR']
-        print(tile.tiles_lands)
         for land in tile.tiles_lands.keys():
             for connected in tile.tiles_lands[land] :
                 land_id = land + str(self.next_set_id[land])
-                self.lands_components[land][land_id] = 0, connected
+                self.lands_components[land][land_id] = [(0, connected)]
                 self.next_set_id[land] += 1
         print(self.lands_components)
         '''
@@ -155,8 +164,6 @@ class GraphData(IGraphData):
         self.turn += 1
 
         self.compute_neighbors(vertex_id)
-        
-        self.update_connected_fields(vertex_id)
         
     def add_meeple(self, meeple: Meeple) -> None:
         self.meeples.append(meeple)
@@ -244,13 +251,28 @@ class GraphData(IGraphData):
     
     def update_connected_fields(self, vertex_id: int) -> None:
         tiles_sides_left = ['NW', 'N', 'NE', 'W', 'C', 'E', 'SW', 'S', 'SE']
-        neighbors = self.vertices[vertex_id].get_neighbors()
-        orientation = self.vertices[vertex_id].get_orientation()
-        name = self.vertices[vertex_id].get_name()
-        for direction in neighbors.keys():
-            field_type = name[(direction - orientation) % 4]
-            neighbor_id = neighbors[direction]
-        pass
+        direction_list = ['N', 'E', 'S', 'W']
+        vertex = self.get_vertex(vertex_id)
+        neighbors = vertex.get_neighbors()
+        tile_matrix = vertex.get_matrix()
+        name = vertex.get_name()
+        for dir, neighbor_id in neighbors.items():
+            if direction_list[dir] in tiles_sides_left:
+                field_type = name[(dir - vertex.get_orientation()) % 4]
+                next_neighbor = self.get_vertex(neighbor_id)
+                if dir == 0:
+                    tile2_coord = SOUTH_MATRIX
+                elif dir == 1:
+                    tile2_coord = WEST_MATRIX
+                elif dir == 2:
+                    tile2_coord = NORTH_MATRIX
+                elif dir == 3:
+                    tile2_coord = EAST_MATRIX
+                for fields in self.lands_components[field_type].values():
+                    for tile_id, sides in fields:
+                        if tile_id == neighbor_id and next_neighbor.matrix[tile2_coord] in sides:
+                            fields.append((vertex_id, [tiles_sides_left[dir]]))
+                            break
 
     def reset_graph(self):
         self.vertices.clear()

@@ -7,6 +7,7 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
+from carcassonne.BusinessLogic.GraphLogic import GraphLogic
 from carcassonne.Datas.Serializer import parse_move, build_str
 
 class Board:
@@ -21,8 +22,15 @@ class Board:
         if(tile_pos is None):
             print("Error in getting position")
             return
-        graph.add_vertex(vertex_id=graph.get_turn_number(), name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
+        turn = graph.get_turn_number()
+        graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
+        GraphLogic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
+        
+        print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
+        if counter == len(move_parts) - 1:
+            #meeple
+            pass
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
