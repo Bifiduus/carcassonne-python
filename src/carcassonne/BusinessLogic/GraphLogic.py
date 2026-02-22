@@ -9,6 +9,16 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Datas.GraphData import NORTH_DIR, EAST_DIR, SOUTH_DIR, WEST_DIR
 from carcassonne.Datas.TilesInfo import TilesInfo
 
+NORTHWEST_MATRIX = (0, 0)
+NORTH_MATRIX = (0, 1)
+NORTHEAST_MATRIX = (0, 2)
+WEST_MATRIX = (1, 0)
+CENTER_MATRIX = (1, 1)
+EAST_MATRIX = (1, 2)
+SOUTHWEST_MATRIX = (2, 0)
+SOUTH_MATRIX = (2, 1)
+SOUTHEAST_MATRIX = (2, 2)
+
 class GraphLogic:
     @staticmethod
     def add_lands_components(tile_id: int, graph: IGraphData, tiles_info: TilesInfo) -> None:
@@ -28,6 +38,29 @@ class GraphLogic:
             return
 
         tile_orientation = vertex.orientation
+        
+        tiles_sides_left = ['NW', 'N', 'NE', 'W', 'C', 'E', 'SW', 'S', 'SE']
+        corners = ['NW', 'NE', 'SW', 'SE']
+        match_corners = {
+            'NW': [0, 3],
+            'NE': [0, 1],
+            'SW': [2, 3],
+            'SE': [2, 1]
+        }
+        
+        cardinals = ['N', 'E', 'S', 'W']
+        
+        match_matrix = {
+            'NW': NORTHWEST_MATRIX,
+            'N': NORTH_MATRIX,
+            'NE': NORTHEAST_MATRIX,
+            'W': WEST_MATRIX,
+            'C': CENTER_MATRIX,
+            'E': EAST_MATRIX,
+            'SW': SOUTHWEST_MATRIX,
+            'S': SOUTH_MATRIX,
+            'SE': SOUTHEAST_MATRIX 
+        }
 
         # Direction constants and mappings
         opposite_dir = {NORTH_DIR: SOUTH_DIR, EAST_DIR: WEST_DIR, SOUTH_DIR: NORTH_DIR, WEST_DIR: EAST_DIR}
@@ -44,6 +77,24 @@ class GraphLogic:
             SOUTH_DIR: (2, 2, 2, 0),   # SE and SW
             WEST_DIR: (2, 0, 0, 0)     # SW and NW
         }
+        
+        neighbors = vertex.get_neighbors()
+        
+        while tiles_sides_left != []:
+            next_side_0 = tiles_sides_left.pop(0)
+            next_side = tile_def.direction_matrix[tile_orientation][match_matrix[next_side_0][0]][match_matrix[next_side_0][1]]
+            if next_side in corners:
+                next_neighbor_id = neighbors[match_corners[next_side_0][0]]
+                if next_neighbor_id is not None:
+                    special_corner = tile_def.connect_to.get(next_side)
+                    # Special corner is for example : NW Field with Field connection to the West and City connection to the North.
+                    # So we can't just take the land type of the corner.
+                    if special_corner is not None:
+                        GraphLogic.handle_special_corner_connection(
+                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, tile_def, graph, tiles_info, special_corner
+                        )
+                if neighbors[match_corners[next_side_0][1]] is not None:
+                    
 
         # Process each land type in the tile
         for land_type, direction_groups in tile_def.tiles_lands.items():
@@ -192,6 +243,48 @@ class GraphLogic:
                         (tile_id, field_group),
                         (neighbor_id, opp_field_group)
                     ]
+
+    @staticmethod
+    def handle_special_corner_connection(tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, tile_def, graph: IGraphData, tiles_info, special_corner) -> None:
+        # Find the special land type in the corner
+        special_land = special_corner[0] if tile_orientation % 2 == 0 else special_corner[1]
+
+        neighbor_vertex = graph.vertices[neighbor_id]
+        neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
+        
+        #TODO
+        # Get the opposite corner on neighbor tile
+        opposite_corner = GraphLogic.get_opposite_corner(corner)
+        if not opposite_corner:
+            return
+
+        # Find the corresponding land type on neighbor tile
+        opp_special_land = tiles_info[neighbor_id].connect_to.get(opposite_corner)
+        if not opp_special_land:
+            return
+
+        # If both are of same type, merge them
+        if special_land == opp_special_land:
+            existing_set = GraphLogic._find_lands_set(special_land, neighbor_id, [corner], graph)
+            if existing_set:
+                existing_set.append((tile_id, [corner]))
+            else:
+                set_name = GraphLogic._get_next_set_name(special_land, graph)
+                graph.lands_components[special_land][set_name] = [
+                    (tile_id, [corner]),
+                    (neighbor_id, [opposite_corner])
+                ]
+
+    @staticmethod
+    def get_opposite_corner(corner: str) -> str:
+        """Return the opposite corner of a given corner."""
+        opposite_corners = {
+            'NW': 'SE',
+            'NE': 'SW',
+            'SW': 'NE',
+            'SE': 'NW'
+        }
+        return opposite_corners.get(corner)
 
     def add_tile_to_graph(self, move, graph: IGraphData):
         #TODO : add_tile_to_graph(move : str, graph : GraphData) -> None
