@@ -85,6 +85,11 @@ class GraphLogic:
         tile_def = tiles_info.tiles.get(vertex.name.split('/')[0])
         if tile_def is None or not tile_def.tiles_lands:
             return
+        
+        groups_left = {}
+        for land_type, direction_groups in tile_def.tiles_lands.items():
+            for drg in direction_groups:
+                groups_left[drg] = False
 
         tile_orientation = vertex.orientation
         
@@ -101,11 +106,12 @@ class GraphLogic:
                     # So we can't just take the land type of the corner.
                     if special_corner is not None:
                         GraphLogic.handle_special_corner_connection(
-                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, tiles_sides_left,0
+                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, tiles_sides_left,0, groups_left
                         )
                     else :
-                        #TODO
-                        pass
+                        GraphLogic.handle_corner_connection(
+                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, tiles_sides_left, 0, groups_left
+                        )
 
                 next_neighbor_id = neighbors[self.match_corners[next_side_0][1]]
                 if next_neighbor_id is not None:
@@ -114,12 +120,20 @@ class GraphLogic:
                     # So we can't just take the land type of the corner.
                     if special_corner is not None:
                         GraphLogic.handle_special_corner_connection(
-                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, tiles_sides_left, 1
+                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, tiles_sides_left, 1, groups_left
                         )
                     else :
-                        #TODO
-                        pass
-                    
+                        GraphLogic.handle_corner_connection(
+                            tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, tiles_sides_left, 1, groups_left
+                        )
+            elif next_side in self.cardinals:
+                #TODO
+                pass
+        
+        for grp, bool in groups_left.items():
+            if bool == False:
+                #TODO
+                pass
 
         # Process each land type in the tile
         for land_type, direction_groups in tile_def.tiles_lands.items():
@@ -270,9 +284,8 @@ class GraphLogic:
                     ]
 
     @staticmethod
-    def handle_special_corner_connection(self, tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, special_corner, tsl, corner_number) -> None:
+    def handle_special_corner_connection(self, tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, special_corner, tsl, corner_number, groups_left) -> None:
         # Find the special land type in the corner
-        vertex = graph.get_vertex(tile_id)
         land = None
         corner_grp = None
         for land_type, direction_groups in tile_def.tiles_lands.items():
@@ -314,19 +327,53 @@ class GraphLogic:
         else:
             existing_set = GraphLogic._find_lands_set(special_land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, corner_grp))
+            groups_left[corner_grp] = True
             for c in corner_grp:
-                tsl.remove(c)
+                if c in tsl:
+                    tsl.remove(c)
 
-    @staticmethod
-    def get_opposite_corner(corner: str) -> str:
-        """Return the opposite corner of a given corner."""
-        opposite_corners = {
-            'NW': 'SE',
-            'NE': 'SW',
-            'SW': 'NE',
-            'SE': 'NW'
-        }
-        return opposite_corners.get(corner)
+        @staticmethod
+        def handle_corner_connection(self, tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, tsl, corner_number, groups_left):
+            # Find the land type in the corner
+            land = None
+            corner_grp = None
+            for land_type, direction_groups in tile_def.tiles_lands.items():
+                for drg in direction_groups:
+                    if corner in drg:
+                        land = land_type
+                        corner_grp = drg
+
+            if corner_number == 0:
+                neigh_initial_corner = self.opposite_corners.get(initial_corner)[0]
+
+            elif corner_number == 1:
+                neigh_initial_corner = self.opposite_corners.get(initial_corner)[1]
+
+            neighbor_vertex = graph.get_vertex(neighbor_id)
+            neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
+            
+            # Get the opposite corner on neighbor tile
+            neigh_orientation = neighbor_vertex.get_orientation()
+            nx,ny = self.match_matrix.get(neigh_initial_corner)
+            neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
+
+            # Find if neighbor has a direction group containing the opposite position
+            neighbor_dir_group = None
+            for ndg in neighbor_def.tiles_lands[land]:
+                if neigh_corner in ndg:
+                    neighbor_dir_group = ndg
+                    break
+            
+            if neighbor_dir_group == None:
+                return
+            # Means we have the same land for the two tiles
+            else:
+                existing_set = GraphLogic._find_lands_set(land, neighbor_id, neighbor_dir_group, graph)
+                existing_set.append((tile_id, corner_grp))
+                groups_left[corner_grp] = True
+                for c in corner_grp:
+                    if c in tsl:
+                        tsl.remove(c)
 
     def add_tile_to_graph(self, move, graph: IGraphData):
         #TODO : add_tile_to_graph(move : str, graph : GraphData) -> None
