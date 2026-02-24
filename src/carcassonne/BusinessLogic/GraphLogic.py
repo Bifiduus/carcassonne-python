@@ -130,11 +130,22 @@ class GraphLogic:
                 #TODO
                 pass
         
+        # Every grp that isn't at True means that it was added to no already existing set, so we need new ones for them
         for grp, bool in groups_left.items():
             if bool == False:
-                #TODO
-                pass
-
+                # Create new land set
+                for land_type, direction_groups in tile_def.tiles_lands.items():
+                    for drg in direction_groups:
+                        if drg == grp:
+                            land = land_type
+                set_name = GraphLogic._get_next_set_name(land, graph)
+                graph.lands_components[land][set_name] = [
+                    (tile_id, direction_group)
+                ]
+                groups_left[grp] = True
+                
+        #END OF PROG
+        
         # Process each land type in the tile
         for land_type, direction_groups in tile_def.tiles_lands.items():
             if land_type == 'M':  # Monastery
