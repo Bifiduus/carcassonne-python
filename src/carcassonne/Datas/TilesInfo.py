@@ -50,6 +50,8 @@ class TilesInfo(ITilesInfo):
 
         self.tiles_parts_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
         self.direction_list = ['N', 'E', 'S', 'W']
+        
+        self.meeple_placement_list = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']
 
         self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
         
