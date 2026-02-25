@@ -48,10 +48,9 @@ class Board:
             set_name_to_place = None
             for land_type in graph.lands_components:
                 for set_name, sets in graph.lands_components.get(land_type).items():
-                    for set in sets:
-                        for tileid, directions in set:
-                            if tileid == tile_id and land_pos in directions:
-                                set_name_to_place = set_name
+                    for tileid, directions in sets:
+                        if tileid == tile_id and land_pos in directions:
+                            set_name_to_place = set_name
             meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
