@@ -8,7 +8,19 @@ from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.BusinessLogic.GraphLogic import GraphLogic
+from carcassonne.Datas.MeepleData import Meeple
+from carcassonne.Datas.TilesInfo import Tile
 from carcassonne.Datas.Serializer import parse_move, build_str
+
+NORTHWEST_MATRIX = (0, 0)
+NORTH_MATRIX = (0, 1)
+NORTHEAST_MATRIX = (0, 2)
+WEST_MATRIX = (1, 0)
+CENTER_MATRIX = (1, 1)
+EAST_MATRIX = (1, 2)
+SOUTHWEST_MATRIX = (2, 0)
+SOUTH_MATRIX = (2, 1)
+SOUTHEAST_MATRIX = (2, 2)
 
 class Board:
     
@@ -23,14 +35,26 @@ class Board:
             print("Error in getting position")
             return
         turn = graph.get_turn_number()
+        tile_id = turn
         graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
-        GraphLogic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
+        graph_logic = GraphLogic()
+        graph_logic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
         
         print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
         if counter == len(move_parts) - 1:
             #meeple
-            pass
+            land_pos = Tile.direction_matrix[integers_placement[1]][GraphLogic.match_matrix[move_parts[counter]][0]][GraphLogic.match_matrix[move_parts[counter]][1]]
+            set_name_to_place = None
+            for land_type in graph.lands_components:
+                for set_name, sets in graph.lands_components.get(land_type).items():
+                    for set in sets:
+                        for tileid, directions in set:
+                            if tileid == tile_id and land_pos in directions:
+                                set_name_to_place = set_name
+            meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
+            graph.add_meeple(meeple)
+        print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
@@ -63,7 +87,10 @@ class Board:
         if(tile_pos is None):
             print("Error in getting position")
             return
-        graph.remove_vertex(vertex_id=graph.get_turn_number()-1)  # example of removing the tile as a vertex in the graph
+        
+        tile_id = graph.get_turn_number()-1
+        graph.remove_vertex(vertex_id=tile_id)  # example of removing the tile as a vertex in the graph
+        graph.remove_meeple(tile_id)
         
         #rajouter la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]

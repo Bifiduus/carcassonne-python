@@ -103,6 +103,9 @@ class Vertex:
     
     def get_matrix(self) -> list[list]:
         return self.matrix
+    
+    def get_tile_dict(self) -> Dict[str, list]:
+        return self.tile_dict
 
 
 class GraphData(IGraphData):
@@ -249,30 +252,14 @@ class GraphData(IGraphData):
     def get_turn_number(self) -> int:
         return self.turn
     
-    def update_connected_fields(self, vertex_id: int) -> None:
-        tiles_sides_left = ['NW', 'N', 'NE', 'W', 'C', 'E', 'SW', 'S', 'SE']
-        direction_list = ['N', 'E', 'S', 'W']
-        vertex = self.get_vertex(vertex_id)
-        neighbors = vertex.get_neighbors()
-        tile_matrix = vertex.get_matrix()
-        name = vertex.get_name()
-        for dir, neighbor_id in neighbors.items():
-            if direction_list[dir] in tiles_sides_left:
-                field_type = name[(dir - vertex.get_orientation()) % 4]
-                next_neighbor = self.get_vertex(neighbor_id)
-                if dir == 0:
-                    tile2_coord = SOUTH_MATRIX
-                elif dir == 1:
-                    tile2_coord = WEST_MATRIX
-                elif dir == 2:
-                    tile2_coord = NORTH_MATRIX
-                elif dir == 3:
-                    tile2_coord = EAST_MATRIX
-                for fields in self.lands_components[field_type].values():
-                    for tile_id, sides in fields:
-                        if tile_id == neighbor_id and next_neighbor.matrix[tile2_coord] in sides:
-                            fields.append((vertex_id, [tiles_sides_left[dir]]))
-                            break
+    def get_meeples(self) -> List[Meeple]:
+        return self.meeples
+    
+    def remove_meeple(self, tile_id: int) -> None:
+        for meeple in self.meeples:
+            if meeple.tile_id == tile_id:
+                self.meeples.remove(meeple)
+                break
 
     def reset_graph(self):
         self.vertices.clear()

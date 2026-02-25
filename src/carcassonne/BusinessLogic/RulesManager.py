@@ -5,6 +5,9 @@ The RulesManager interacts with the graph data structure that represents the gam
 import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
+from carcassonne.BusinessLogic.GraphLogic import GraphLogic
+from carcassonne.Datas.MeepleData import Meeple
+from carcassonne.Datas.TilesInfo import Tile
 
 NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)
@@ -18,10 +21,57 @@ SOUTHEAST_MATRIX = (2, 2)
 
 class RulesManager():
     
+    match_matrix = {
+        'NW': NORTHWEST_MATRIX,
+        'N': NORTH_MATRIX,
+        'NE': NORTHEAST_MATRIX,
+        'W': WEST_MATRIX,
+        'C': CENTER_MATRIX,
+        'E': EAST_MATRIX,
+        'SW': SOUTHWEST_MATRIX,
+        'S': SOUTH_MATRIX,
+        'SE': SOUTHEAST_MATRIX 
+    }
+    
     def __init__(self, tiles_info: ITilesInfo):
         
         self.tiles_info = tiles_info
 
+    def can_place_meeple_on_tile_side(self, move_parts, counter, graph: IGraphData) -> bool:
+        tile_code = move_parts[0]
+        side_placement = move_parts[counter]
+        placement_info = move_parts[counter - 1]
+        graph_copy = graph.copy()
+        integers_placement = [int(x) for x in re.findall(r'\d+', placement_info)]  
+        attach_direction = ''.join(c for c in placement_info if c.isalpha())
+        tile_pos = graph_copy.get_position(vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
+        if(tile_pos is None):
+            print("Error in getting position")
+            return False
+        turn = graph_copy.get_turn_number()
+        tile_id = turn
+        graph_copy.add_vertex(vertex_id=turn, name=tile_code, middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)
+        graph_logic = GraphLogic()
+        graph_logic.add_lands_components(tile_id=tile_id, graph=graph_copy, tiles_info=self.tiles_info)
+        vertex = graph_copy.get_vertex(tile_id)
+        land_matrix = vertex.get_matrix()
+        land_type = land_matrix[self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
+        land_pos = Tile.direction_matrix[integers_placement[1]][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
+        set_name_to_place = None
+        for set_name, sets in graph_copy.lands_components.get(land_type).items():
+            for set in sets:
+                for tileid, directions in set:
+                    if tileid == tile_id and land_pos in directions:
+                        set_name_to_place = set_name
+        if set_name_to_place is None:
+            print("Error in finding the land component to place the meeple on")
+            return False
+        for meeple in graph_copy.get_meeples():
+            if meeple.lands_components == set_name_to_place:
+                print("you can't place a meeple on that land component because there's already a meeple on it")
+                return False
+        return True
+    
     def areEqualSides(self, tile1, tile1pos, orientation, graph: IGraphData):
         """
         Checks if the sides of two tiles from the computed move are equal.
@@ -92,11 +142,11 @@ class RulesManager():
         
         # Verify meeple placement if applicable 
         #TODO : can_place_meeple_on_tile_side(move_parts[0] : str, move_parts[counter] str, game : IGameService) -> bool
-        '''counter += 1
-        if len(move_parts) == counter - 1:
-            if not graph.canPlaceMeepleOnTileSide(move_parts[0], move_parts[counter], game):
+        counter += 1
+        if len(move_parts) - 1 == counter:
+            if not self.can_place_meeple_on_tile_side(move_parts, counter, graph):
                 print("you can't place a meeple on that side of the tile you try to place")
-                return False'''
+                return False
         
         return True
     
@@ -142,7 +192,6 @@ class RulesManager():
             print("the move misses the tile placement details")
             return
             
-        #REGARDER COMMENT PRENDRE LE NOMBRE ENTIER ET PAS JUSTE LE PREMIER CHIFFRE (marche avec 7, mais pas avec 12 par exemple)
         integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]
         if len(integers_placement) != 2:
             print("the tile placement details are invalid, need 2 integers : tile id and rotation")
@@ -163,8 +212,8 @@ class RulesManager():
         
         counter += 1
         if (len(move_parts) == counter - 1):
-            if move_parts[counter] not in (self.tiles_info.direction_list + ['C']):
-                print("the tile's side you try to place a meeple on must be N, S, W, E or C")
+            if move_parts[counter] not in (self.tiles_info.meeple_placement_list):
+                print("the tile's side you try to place a meeple on must be NE, N, NW, SE, S, SW, W, E or C")
                 return
             
         return True
