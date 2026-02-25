@@ -34,4 +34,4 @@ class Meeple:
 
     def __repr__(self) -> str:
         pos_label = self.get_position_label()
-        return f"Meeple(player={self.player_name}, tile={self.tile_id}, pos={pos_label}, lands_components={self.lands_components})"
+        return f"Meeple(player={self.player_id}, tile={self.tile_id}, pos={pos_label}, lands_components={self.lands_components})"

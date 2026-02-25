@@ -162,7 +162,7 @@ class GraphLogic:
                             break
                 set_name = self._get_next_set_name(land, graph)
                 graph.lands_components[land][set_name] = [
-                    (tile_id, grp)
+                    (tile_id, list(grp))
                 ]
                 groups_left[grp] = True
             
