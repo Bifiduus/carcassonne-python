@@ -2,6 +2,7 @@
 It provides methods to check the legality of moves, to determine if the current player is human, and to retrieve the game history. 
 The RulesManager interacts with the graph data structure that represents the game state and the tiles information to enforce the game rules.
 """
+import copy
 import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
@@ -41,7 +42,7 @@ class RulesManager():
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
-        graph_copy = graph.copy()
+        graph_copy = copy.deepcopy(graph)
         integers_placement = [int(x) for x in re.findall(r'\d+', placement_info)]  
         attach_direction = ''.join(c for c in placement_info if c.isalpha())
         tile_pos = graph_copy.get_position(vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
@@ -59,10 +60,9 @@ class RulesManager():
         land_pos = Tile.direction_matrix[integers_placement[1]][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         set_name_to_place = None
         for set_name, sets in graph_copy.lands_components.get(land_type).items():
-            for set in sets:
-                for tileid, directions in set:
-                    if tileid == tile_id and land_pos in directions:
-                        set_name_to_place = set_name
+            for tileid, directions in sets:
+                if tileid == tile_id and land_pos in directions:
+                    set_name_to_place = set_name
         if set_name_to_place is None:
             print("Error in finding the land component to place the meeple on")
             return False
