@@ -14,6 +14,13 @@ WEST_DIR = 3
 
 ORIENTATIONS = 4
 
+OPPOSITE = {
+    "N": "S",
+    "S": "N",
+    "E": "W",
+    "W": "E"
+}
+
 @dataclass
 class Vertex:
     id: int
@@ -135,6 +142,22 @@ class GraphData(IGraphData):
 
     def get_verticies(self) -> Dict[int, Vertex]:
         return dict(self.vertices)
+    
+    def get_vertices_data(self) -> dict[int, dict]:
+        """
+        Retourne toutes les informations nécessaires pour l'affichage GUI.
+        """
+        return {
+            vertex_id: {
+                "id": vertex.get_id(),
+                "x": vertex.get_position()[0],
+                "y": vertex.get_position()[1],
+                "name": vertex.get_name(),
+                "middle": vertex.get_middle(),
+                "orientation": vertex.get_orientation(),
+            }
+            for vertex_id, vertex in self.vertices.items()
+        }
 
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
         vertex = self.get_vertex(vertex_id)
@@ -166,3 +189,29 @@ class GraphData(IGraphData):
         if vertex is None:
             raise ValueError(f"Vertex ID not found : {vertex_id}")
         return vertex.get_orientation()
+    
+    def find_neighbor_at(self, x: int, y: int) -> tuple[Optional[int], Optional[int]]:
+        """
+        Cherche une tuile voisine autour de (x, y).
+
+        Retourne un tuple (vertex_id, side_relative_to_new_tile)
+        side_relative_to_new_tile : côté de la nouvelle tuile où est collé le voisin
+        """
+        # Mapping direction → offset
+        neighbors_offset = {
+            NORTH_DIR: (0, -1),
+            EAST_DIR: (1, 0),
+            SOUTH_DIR: (0, 1),
+            WEST_DIR: (-1, 0)
+        }
+
+        for side, (dx, dy) in neighbors_offset.items():
+            nx, ny = x + dx, y + dy
+            for vertex in self.vertices.values():
+                vx, vy = vertex.get_position()
+                if (vx, vy) == (nx, ny):
+                    # side représente le côté de la nouvelle tuile où ce voisin est collé
+                    opposite_side = (side + 2) % 4
+                    return vertex.get_id(), opposite_side
+
+        return None, None

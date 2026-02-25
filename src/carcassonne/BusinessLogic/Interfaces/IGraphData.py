@@ -39,6 +39,10 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
+    def get_vertices_data(self) -> dict[int, dict]:
+        pass
+
+    @abstractmethod
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
         pass
 
@@ -52,4 +56,8 @@ class IGraphData(ABC):
 
     @abstractmethod
     def get_vertex_orientation(self, vertex_id: int) -> int:
+        pass
+
+    @abstractmethod
+    def find_neighbor_at(self, x: int, y: int) -> tuple[Optional[int], Optional[int]]:
         pass
