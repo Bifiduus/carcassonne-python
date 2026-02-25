@@ -32,6 +32,12 @@ EAST_MATRIX = (1, 2)
 SOUTHWEST_MATRIX = (2, 0)
 SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
+OPPOSITE = {
+    "N": "S",
+    "S": "N",
+    "E": "W",
+    "W": "E"
+}
 
 @dataclass
 class Vertex:

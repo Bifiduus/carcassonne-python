@@ -91,13 +91,35 @@ def main():
         game_cli.run()
 
 
-    # Call a function to start the game
+    parser.add_argument(
+        "-g",
+        "--gui",
+        help="enable GUI mode",
+        action="store_true",
+    )
+
+    args = parser.parse_args()
     game_data :IGraphData = GraphData()
     game :IGameService = Game(game_data)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     game.load_game_from_file(args.file) if args.file else None
-    game_cli = GameCLI(game)
-    game_cli.run()
+    if args.version:
+        print(f"Carcassonne: version {__version__}")
+    if args.debug:
+        print("Debug mode enabled.", file=sys.stderr)
+    if args.verbose:
+        print("Verbose mode enabled.")
+    if args.gui:
+        print("GUI mode enabled.")
+        GameGUI(game).run()
+    else:
+        game_cli = GameCLI(game)
+        game_cli.run()
+
+
+    # Call a function to start the game
+    
+    
 
     return 0
