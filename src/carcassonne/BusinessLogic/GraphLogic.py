@@ -99,9 +99,11 @@ class GraphLogic:
             return
         
         groups_left = {}
+        groups_apparition = {}
         for land_type, direction_groups in tile_def.tiles_lands.items():
             for drg in direction_groups:
                 groups_left[drg] = False
+                groups_apparition[drg] = 0
 
         tile_orientation = vertex.orientation
         
@@ -113,7 +115,7 @@ class GraphLogic:
             next_neighbor_id = neighbors[self.match_cardinals[next_side_0]]
             if next_neighbor_id is not None:
                 GraphLogic.handle_cardinal_connection(
-                    self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, groups_left
+                    self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, groups_left, groups_apparition
                 )
                 
         for corner in self.corners:
@@ -126,11 +128,11 @@ class GraphLogic:
                 # So we can't just take the land type of the corner.
                 if special_corner is not None:
                     GraphLogic.handle_special_corner_connection(
-                        self,tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 0, groups_left
+                        self,tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 0, groups_left, groups_apparition
                     )
                 else :
                     GraphLogic.handle_corner_connection(
-                        self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 0, groups_left
+                        self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 0, groups_left, groups_apparition
                     )
 
             next_neighbor_id = neighbors[self.match_corners[next_side_0][1]]
@@ -140,11 +142,11 @@ class GraphLogic:
                 # So we can't just take the land type of the corner.
                 if special_corner is not None:
                     GraphLogic.handle_special_corner_connection(
-                        self, tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 1, groups_left
+                        self, tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 1, groups_left, groups_apparition
                     )
                 else :
                     GraphLogic.handle_corner_connection(
-                        self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 1, groups_left
+                        self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 1, groups_left, groups_apparition
                     )
         
         # Every grp that isn't at True means that it was added to no already existing set, so we need new ones for them
@@ -161,10 +163,22 @@ class GraphLogic:
                 ]
                 groups_left[grp] = True
             
-        # Merge the sets that are connected thanks to the tile
-        
-        #END OF PROG
-        
+        # Merge the sets that are connected thanks to the tile we just placed 
+        for grp, apparition in groups_apparition.items():
+            if apparition > 1:
+                # We need to merge the sets that have the same grp
+                sets_to_merge = []
+                for land_type, sets in graph.lands_components.items():
+                    for set_name, set_list in sets.items():
+                        for tid, drg in set_list:
+                            if drg == grp:
+                                sets_to_merge.append((land_type, set_name))
+                                break
+                # Merge all sets in sets_to_merge into the first one
+                main_set = sets_to_merge[0]
+                for other_set in sets_to_merge[1:]:
+                    graph.lands_components[main_set[0]][main_set[1]].extend(graph.lands_components[other_set[0]][other_set[1]])
+                    del graph.lands_components[other_set[0]][other_set[1]]
 
     @staticmethod
     def _get_next_set_name(land_type: str, graph: IGraphData) -> str:
@@ -191,7 +205,7 @@ class GraphLogic:
         return None
 
     @staticmethod
-    def handle_special_corner_connection(self, tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, special_corner, corner_number, groups_left) -> None:
+    def handle_special_corner_connection(self, tile_id: int, tile_orientation: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, special_corner, corner_number, groups_left, groups_apparition) -> None:
         # Find the special land type in the corner
         land = None
         corner_grp = None
@@ -235,9 +249,10 @@ class GraphLogic:
             existing_set = GraphLogic._find_lands_set(special_land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, corner_grp))
             groups_left[corner_grp] = True
+            groups_apparition[corner_grp] += 1
 
     @staticmethod
-    def handle_corner_connection(self, tile_id: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, corner_number, groups_left):
+    def handle_corner_connection(self, tile_id: int, neighbor_id: int, initial_corner: str, corner: str, graph: IGraphData, tile_def, tiles_info, corner_number, groups_left, groups_apparition):
         # Find the land type in the corner
         land = None
         corner_grp = None
@@ -275,9 +290,10 @@ class GraphLogic:
             existing_set = GraphLogic._find_lands_set(land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, corner_grp))
             groups_left[corner_grp] = True
+            groups_apparition[corner_grp] += 1
 
     @staticmethod
-    def handle_cardinal_connection(self, tile_id: int, neighbor_id: int, initial_corner: str, cardinal: str, graph: IGraphData, tile_def, tiles_info, groups_left):
+    def handle_cardinal_connection(self, tile_id: int, neighbor_id: int, initial_corner: str, cardinal: str, graph: IGraphData, tile_def, tiles_info, groups_left, groups_apparition):
         # Find the land type of the cardinal
         land = None
         card_grp = None
@@ -287,9 +303,7 @@ class GraphLogic:
                     land = land_type
                     card_grp = drg
 
-        
         neigh_initial_corner = self.opposite_cardinal.get(initial_corner)
-
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
@@ -313,3 +327,4 @@ class GraphLogic:
             existing_set = GraphLogic._find_lands_set(land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, card_grp))
             groups_left[card_grp] = True
+            groups_apparition[card_grp] += 1
