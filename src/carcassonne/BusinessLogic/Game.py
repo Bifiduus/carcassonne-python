@@ -11,8 +11,9 @@ from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
 from carcassonne.Datas.GameRepository import GameRepository
+from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
-from carcassonne.Datas.History import History, MoveRecord 
+from carcassonne.Datas.History import History 
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.Datas.TilesInfo import TilesInfo
 from .AIModel import is_ai_player
@@ -20,7 +21,7 @@ from .AIModel import is_ai_player
 class Game(IGameService):
 
     def __init__(self, graphData: IGraphData) -> None:
-    
+        self.game_configuration = GameConfiguration()
         self.game_repository: GameRepository = GameRepository()
         self.graph: IGraphData = graphData
         self.tiles_info: ITilesInfo = TilesInfo()
@@ -33,8 +34,7 @@ class Game(IGameService):
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
         self.save_file = None
-        self.players : list[Player] = []
-        self.players : list[Player] = []
+        self.players : list[Player] = [Player(1, "Player 1", "green")]
         self.players_order: list[int] = []
 
     def start_new_game(self) -> None:
@@ -50,6 +50,7 @@ class Game(IGameService):
         self.seed = None
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
+        self.shuffle_players_order()
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -106,16 +107,8 @@ class Game(IGameService):
             print(move + " placed successfully.")
             self.current_hand = None
         
-    def get_game_configuration(self) -> dict :
-        grid = {}
-        for vertex in self.graph.get_verticies().values():
-            pos = vertex.get_position()
-            grid[pos] = {
-                "name": vertex.get_name(),
-                "orientation": vertex.get_orientation(),
-                "neighbors": vertex.get_neighbors()
-            }
-        return grid
+    def get_game_configuration(self) :
+        return self.game_configuration.get_setting()
 
     def draw_tile(self) -> str | None:
         if self.current_hand is not None:
@@ -133,6 +126,9 @@ class Game(IGameService):
     def minimum_number_of_players(self) -> int:
         return 2
     
+    def get_number_of_players(self) -> int:
+        return len(self.players)
+    
     def set_number_of_ai_players(self, num_players: int) -> None:
         self.number_of_ai_players = num_players
 
@@ -148,7 +144,8 @@ class Game(IGameService):
         file = open(filename, 'w')
 
         file.write("[Settings]\n")
-        file.write(str(self.get_game_configuration()) + "\n")
+        for key, value in self.get_game_configuration().items():
+            file.write(f"{key}: {value}\n")
 
         file.write("\n")
         file.write("[GameState]\n")
@@ -159,9 +156,10 @@ class Game(IGameService):
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.get_history()
-        while moves_history:
-            move = moves_history.pop()
-            file.write(move + "\n")
+        while moves_history is not None and len(moves_history) > 0:
+            for player in range(self.get_number_of_players()):
+                move = moves_history.pop()
+                file.write(move + " ")
         file.write("\n")
         return 0
 
@@ -286,10 +284,10 @@ class Game(IGameService):
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
             elif history_section:
-                move = line.split(':')[1]
-                print("Playing move from history: ", move)
-                self.current_hand = move
-                self.play_move(move)  # Assuming line is in the format "player_id:details"
+                for player_move in line.strip(" ").split(" "):
+                    move = player_move.split(":")[1] if ":" in player_move else player_move
+                    self.current_hand = move
+                    self.play_move(move)  # Assuming line is in the format "player_id:details"
         if sections_parsed < 3:
             print("Warning: Not all sections were found in the file.")
             if not settings_parsed:
@@ -380,6 +378,10 @@ class Game(IGameService):
             self.deck.shuffle_fisher_yates(seed)
         self.seed = seed
         return seed
+    
+    def shuffle_players_order(self) -> None:
+        self.players_order = sorted([player.get_id() for player in self.players])  # Default order based on player IDs
+        
 
     def extract_tile_code(self, move):
         try:
