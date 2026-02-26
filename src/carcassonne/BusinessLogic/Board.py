@@ -26,7 +26,7 @@ class Board:
         tiles_info.remove_tile(tile_name)
 
         potential_meeple = move.split('/')[-1]
-        if potential_meeple in self.tiles_info.tiles_parts_list:
+        if potential_meeple in tiles_info.tiles_parts_list:
             orientation=int(move_parts[counter - 1][2])
             direction_matrix_to_rotate = tiles_info.direction_matrix
             for i in range(orientation):
@@ -46,7 +46,6 @@ class Board:
             players[turn % len(players)].remove_meeple()
     
         try:
-            parsed = parse_move(move)
             record = MoveRecord(
                 move_str=move,
                 player_id=1

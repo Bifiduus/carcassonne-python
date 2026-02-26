@@ -100,7 +100,10 @@ def show_history(self, game):
             print(f" {move}")
 
 def show_configuration(self, game):
-        GameConfiguration().show_config()
+        config = game.get_game_configuration()
+        print("Configuration actuelle du jeu:")
+        for key, value in config.items():
+            print(f"  {key}: {value}")
 
     
 def set_parameter(self, param, value):
