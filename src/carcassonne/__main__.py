@@ -64,6 +64,12 @@ def main():
         action="store_true",
     )
 
+    parser.add_argument(
+        "-f",
+        "--file",
+        help="name of the file to load a game",
+        type=str,
+    )
     args = parser.parse_args()
     game_data :IGraphData = GraphData()
     game :IGameService = Game(game_data)
@@ -73,6 +79,8 @@ def main():
         print(f"Carcassonne: version {__version__}")
     if args.debug:
         print("Debug mode enabled.", file=sys.stderr)
+    if args.file:
+        print(f"Loading game from file: {args.file}")
     if args.verbose:
         print("Verbose mode enabled.")
     if args.gui:
@@ -84,7 +92,12 @@ def main():
 
 
     # Call a function to start the game
-    
-    
+    game_data :IGraphData = GraphData()
+    game :IGameService = Game(game_data)
+    game.shuffle_algo = args.shuffle
+    game.default_seed = args.seed
+    game.load_game_from_file(args.file) if args.file else None
+    game_cli = GameCLI(game)
+    game_cli.run()
 
     return 0

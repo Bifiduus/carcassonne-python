@@ -56,4 +56,4 @@ def parse_move(move):
     }
 
 def build_str(record):
-    return f"{record.player_id}:{record.move_str};"
+    return f"{record.player_id}:{record.move_str.strip(';')};"

@@ -45,13 +45,13 @@ def quit(self):
         self.running = False
 
 def load(self, filename):
-        if self.game.loadGameFromFile(filename) == 0:
+        if self.game.load_game_from_file(filename) == 0:
             print(f"Partie chargée depuis {filename}.")
         else:
             print(f"Erreur lors du chargement de la partie depuis {filename}.")
 
 def save(self, filename):
-        if self.game.saveGameToFile(filename) == 0:
+        if self.game.save_game_to_file(filename) == 0:
             print(f"Partie sauvegardée dans {filename}.")
 
 def shuffle(self):
@@ -97,7 +97,7 @@ def show_history(self, game):
         history = game.get_history()
         print("Historique des coups joués:")
         for move in history:
-            print(f"  {move}")
+            print(f" {move}")
 
 def show_configuration(self, game):
         GameConfiguration().show_config()
