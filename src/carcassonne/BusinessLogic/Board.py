@@ -53,7 +53,6 @@ class Board:
                             set_name_to_place = set_name
             meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
-            players[turn % len(players)].remove_meeple()
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
