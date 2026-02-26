@@ -55,3 +55,6 @@ class GameConfiguration:
         print("Configuration actuelle du jeu:")
         for key, value in self.settings.items():
             print(f"  {key}: {value}")
+
+    def get_setting(self):
+        return self.settings.copy()
