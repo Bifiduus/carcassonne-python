@@ -38,22 +38,21 @@ class BoardView(Gtk.DrawingArea):
         self.set_focusable(True)
         self.grab_focus()
 
-        drop_target = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
+        """drop_target = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
         drop_target.connect("drop", self.on_drop)
+         self.add_controller(drop_target)"""
 
         click = Gtk.GestureClick()
+        click.set_button(1)
         click.connect("released", self.on_mouse_release)
+        click.connect("pressed", self.on_click)
         self.add_controller(click)
 
-        self.add_controller(drop_target)
+       
 
         key_controller = Gtk.EventControllerKey()
         key_controller.connect("key-pressed", self.on_key_press)
         self.add_controller(key_controller)
-
-        click = Gtk.GestureClick()
-        click.connect("pressed", self.on_click)
-        self.add_controller(click)
             
     def load_textures(self):
             # chemin absolu vers le dossier Images
@@ -151,7 +150,7 @@ class BoardView(Gtk.DrawingArea):
         cr.save()
 
         # Make semi transparent
-        cr.set_source_rgba(1, 1, 1, 0.6)
+        #cr.set_source_rgba(1, 1, 1, 0.6)
 
         angle = orientation * 90
 
@@ -356,9 +355,11 @@ class BoardView(Gtk.DrawingArea):
             move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
             self.game.play_move(move_str)
 
-        # Stop dragging
+            # Clear tile only if placement succeeded
+            self.game_gui.current_tile = None
+
+        # Stop ghost
         self.is_dragging = False
-        self.game_gui.current_tile = None
         self.ghost_x = None
         self.ghost_y = None
 

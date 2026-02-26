@@ -122,11 +122,11 @@ class GameGUI(Gtk.Application):
 
         click = Gtk.GestureClick()
         click.connect("pressed", self.on_preview_pressed)
-        click.connect("released", self.on_preview_released)
+        #click.connect("released", self.on_preview_released)
         self.tile_preview.add_controller(click)
 
-        """drag_source = Gtk.DragSource()
-        drag_source.set_actions(Gdk.DragAction.MOVE)
+        drag_source = Gtk.DragSource()
+        """drag_source.set_actions(Gdk.DragAction.MOVE)
 
         drag_source.connect("prepare", self.on_drag_prepare)
         #drag_source.connect("drag-begin", self.on_drag_begin)
@@ -158,8 +158,15 @@ class GameGUI(Gtk.Application):
             return
 
         self.board_view.is_dragging = True
-        self.board_view.ghost_x = x
-        self.board_view.ghost_y = y
+
+        # Start ghost at center of board
+        width = self.board_view.get_allocated_width()
+        height = self.board_view.get_allocated_height()
+
+        self.board_view.ghost_x = width // 2
+        self.board_view.ghost_y = height // 2
+
+        self.board_view.grab_focus()
         self.board_view.queue_draw()
 
     def on_preview_released(self, gesture, n_press, x, y):
