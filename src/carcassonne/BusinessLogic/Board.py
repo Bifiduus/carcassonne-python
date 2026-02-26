@@ -53,30 +53,11 @@ class Board:
                             set_name_to_place = set_name
             meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
+            players[turn % len(players)].remove_meeple()
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
-
-        potential_meeple = move.split('/')[-1]
-        if potential_meeple in tiles_info.tiles_parts_list:
-            orientation=int(move_parts[counter - 1][2])
-            direction_matrix_to_rotate = tiles_info.direction_matrix
-            for i in range(orientation):
-                direction_matrix_to_rotate = tiles_info.rotate_matrix_90(direction_matrix_to_rotate)
-            matrix_coordinates = tiles_info.matrix_coordinates[potential_meeple]
-            rotated_matrix_coordinates = direction_matrix_to_rotate[matrix_coordinates[0]][matrix_coordinates[1]]
-            terrain_type = 'void'
-            for dict in tiles_info.tiles_connections[tile_name]:
-                for set in dict.values():
-                    if potential_meeple in set:
-                        terrain_type = dict.keys()
-            if terrain_type == 'void':
-                print("Error in getting terrain type for meeple placement")
-                return
-            #TODO
-            #graph.add_meeple(turn, terrain_type=terrain_type, potential_meeple=potential_meeple) 
-            players[turn % len(players)].remove_meeple()
     
         try:
             record = MoveRecord(
