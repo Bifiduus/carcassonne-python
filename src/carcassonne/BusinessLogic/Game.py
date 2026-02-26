@@ -31,6 +31,7 @@ class Game(IGameService):
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
+        self.save_file = None
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -122,7 +123,7 @@ class Game(IGameService):
         self.current_hand = tile
         return tile
     
-    def saveGameToFile(self, filename: str) -> int:
+    def save_game_to_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
             return -1
@@ -145,7 +146,7 @@ class Game(IGameService):
         file.write("\n")
         return 0
 
-    def loadGameFromFile(self, filename: str) -> int:
+    def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
             return -1
@@ -207,6 +208,7 @@ class Game(IGameService):
                 print("Parsing game state: ", line)
             elif history_section:
                 move = line.split(':')[1]
+                print("Playing move from history: ", move)
                 self.current_hand = move
                 self.play_move(move)  # Assuming line is in the format "player_id:details"
         return 0
