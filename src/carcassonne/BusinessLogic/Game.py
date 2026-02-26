@@ -183,6 +183,7 @@ class Game(IGameService):
         game_state_parsed = False
         history_parsed = False
         commentary = False
+        game_score = False
         sections_parsed = 0
         for line in lines:
             # Remove comments and strip whitespace
@@ -264,7 +265,6 @@ class Game(IGameService):
                     self.players_order = [int(player_id.strip()) for player_id in line.strip("[]").split(",")]
                     print(f"Players order set to {self.players_order}.")
 
-                game_score = False
                 if line.startswith("GameScore:"):
                     line = line.split("GameScore:")[1].strip() # Assuming the format is "GameScore: [Player1ID: 10, Player2ID: 20]"
                     if line == "" or line == "[]":
@@ -280,10 +280,11 @@ class Game(IGameService):
                             if player.get_id() == int(playerID.strip()):
                                 player.score.setPoints(int(points.strip()))
                                 print(f"Player number {self.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
-                        game_score = True
+                    game_score = True
+
+            elif history_section:
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
-            elif history_section:
                 for player_move in line.strip(" ").split(" "):
                     move = player_move.split(":")[1] if ":" in player_move else player_move
                     self.current_hand = move
