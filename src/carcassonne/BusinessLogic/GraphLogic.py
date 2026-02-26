@@ -121,7 +121,7 @@ class GraphLogic:
         for corner in self.corners:
             next_side_0 = corner
             next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0][0]][self.match_matrix[next_side_0][1]]
-            next_dir = self.match_cardinals.get(next_side_0)
+            next_dir = self.match_corners.get(next_side_0[0])
             if next_dir in neighbors.keys():
                 next_neighbor_id = neighbors[next_dir]
                 special_corner = tile_def.connect_to.get(next_side)
@@ -136,7 +136,7 @@ class GraphLogic:
                         self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 0, groups_left, groups_apparition
                     )
 
-            next_dir = self.match_cardinals.get(next_side_0)
+            next_dir = self.match_cardinals.get(next_side_0[1])
             if next_dir in neighbors.keys():
                 next_neighbor_id = neighbors[next_dir]
                 special_corner = tile_def.connect_to.get(next_side)
