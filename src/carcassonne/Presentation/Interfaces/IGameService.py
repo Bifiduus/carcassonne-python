@@ -1,5 +1,6 @@
 """Module providing an interface between Présentation and Logique Métier"""
 from abc import ABC, abstractmethod
+from typing import Any
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 
@@ -30,7 +31,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_board(self) -> None:
+    def get_board(self) -> list[Any] | None:
         pass
 
     @abstractmethod
@@ -39,4 +40,12 @@ class IGameService(ABC):
 
     @abstractmethod
     def draw_tile(self) -> str | None:
+        pass
+
+    @abstractmethod
+    def get_board_data(self) -> list[dict] | None:
+        pass
+
+    @abstractmethod
+    def get_close_neighbors(self, x: int, y: int) -> tuple[int | None, int | None]:
         pass

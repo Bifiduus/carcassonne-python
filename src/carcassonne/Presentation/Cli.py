@@ -5,7 +5,7 @@ and displaying game information such as the player's hand, scores, history, and 
 """
 from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
-from carcassonne.Presentation import CommandsHandler
+from carcassonne.Presentation import CommandsHandlerCli
 from carcassonne.BusinessLogic.Game import Game
 
 import readline
@@ -58,35 +58,35 @@ class GameCLI:
 
         if command.startswith("new"):
             args = command[4:].strip()
-            CommandsHandler.new_game(self, args)
+            CommandsHandlerCli.new_game(self, args)
         elif command == "help":
-            CommandsHandler.help(self)
+            CommandsHandlerCli.help(self)
         elif command == "quit":
-            CommandsHandler.quit(self)
+            CommandsHandlerCli.quit(self)
         elif command.startswith("load "):   
             filename = command[5:].strip()
-            CommandsHandler.load(self, filename)
+            CommandsHandlerCli.load(self, filename)
         elif command.startswith("save "):
             filename = command[5:].strip()
-            CommandsHandler.save(self, filename)
+            CommandsHandlerCli.save(self, filename)
         elif command == "shuffle":
-            CommandsHandler.shuffle(self)
+            CommandsHandlerCli.shuffle(self)
         elif command == "draw":
-            CommandsHandler.draw(self)
+            CommandsHandlerCli.draw(self)
         elif command == "hint":
-            CommandsHandler.hint(self)
+            CommandsHandlerCli.hint(self)
         elif command == "undo":
-            CommandsHandler.undo(self, 1)
+            CommandsHandlerCli.undo(self, 1)
         elif command == "redo":
-            CommandsHandler.redo(self, 1)
+            CommandsHandlerCli.redo(self, 1)
         elif command == "show hand":
-            CommandsHandler.show_hand(self)
+            CommandsHandlerCli.show_hand(self)
         elif command == "show score":
-            CommandsHandler.show_score(self)
+            CommandsHandlerCli.show_score(self)
         elif command == "show history":
-            CommandsHandler.show_history(self, game=self.game)
+            CommandsHandlerCli.show_history(self, game=self.game)
         elif command == "show configuration":
-            CommandsHandler.show_configuration(self, game=self.game)
+            CommandsHandlerCli.show_configuration(self, game=self.game)
         elif command.startswith("set"):
             content = command[3:].strip()
             if "=" in content:
@@ -96,12 +96,12 @@ class GameCLI:
             else:
                 param = content
                 value = None
-            CommandsHandler.set_parameter(self, param, value)
+            CommandsHandlerCli.set_parameter(self, param, value)
         elif command.startswith("play"):
             move = command[5:].strip()
-            CommandsHandler.play(self, move, game=self.game)
+            CommandsHandlerCli.play(self, move, game=self.game)
         elif command.startswith("board"):
-            CommandsHandler.show_board(self, game=self.game)
+            CommandsHandlerCli.show_board(self, game=self.game)
 
 
         else:

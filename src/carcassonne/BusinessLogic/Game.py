@@ -18,7 +18,15 @@ from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.Datas.TilesInfo import TilesInfo
 from .AIModel import is_ai_player
 
+OPPOSITE = {
+    "N": "S",
+    "S": "N",
+    "E": "W",
+    "W": "E"
+}
+
 class Game(IGameService):
+
 
     def __init__(self, graphData: IGraphData) -> None:
         self.game_configuration = GameConfiguration()
@@ -349,6 +357,15 @@ class Game(IGameService):
             board[ny][nx] = self.generate_tile_ascii(v)
 
         self.print_board(board)
+        return vertices
+    
+    def get_board_data(self) -> list[dict]:
+        """
+        Retourne une liste exploitable directement par la GUI.
+        """
+        vertices = self.graph.get_vertices_data()
+
+        return list(vertices.values())
 
     def print_board(self, board):
         TILE_HEIGHT = 3
@@ -364,6 +381,9 @@ class Game(IGameService):
                         line.append(tile[i])
                 print("   ".join(line))
             print()  # espace entre lignes de tuiles
+
+    def get_close_neighbors(self, x: int, y: int) -> tuple[int | None, int | None]:
+        return self.graph.find_neighbor_at(x, y)
     
     def shuffle_deck(self, algo=None, seed=None):
         if algo is None:

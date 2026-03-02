@@ -3,6 +3,7 @@ import argparse
 import sys
 
 from carcassonne import __version__
+from carcassonne.Presentation.Gui import GameGUI
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
@@ -55,6 +56,14 @@ def main():
         help="seed for shuffle randomness",
         type=int,
     )
+
+    parser.add_argument(
+        "-g",
+        "--gui",
+        help="enable GUI mode",
+        action="store_true",
+    )
+
     parser.add_argument(
         "-f",
         "--file",
@@ -62,22 +71,28 @@ def main():
         type=str,
     )
     args = parser.parse_args()
+    game_data :IGraphData = GraphData()
+    game :IGameService = Game(game_data)
+    game.shuffle_algo = args.shuffle
+    game.default_seed = args.seed
     if args.version:
         print(f"Carcassonne: version {__version__}")
     if args.debug:
         print("Debug mode enabled.", file=sys.stderr)
     if args.file:
         print(f"Loading game from file: {args.file}")
-    elif args.verbose:
+    if args.verbose:
         print("Verbose mode enabled.")
+    if args.gui:
+        print("GUI mode enabled.")
+        GameGUI(game).run()
+    else:
+        game_cli = GameCLI(game)
+        game_cli.run()
+
 
     # Call a function to start the game
-    game_data :IGraphData = GraphData()
-    game :IGameService = Game(game_data)
-    game.shuffle_algo = args.shuffle
-    game.default_seed = args.seed
-    game.load_game_from_file(args.file) if args.file else None
-    game_cli = GameCLI(game)
-    game_cli.run()
+    
+    
 
     return 0
