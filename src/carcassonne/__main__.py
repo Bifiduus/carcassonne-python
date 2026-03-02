@@ -70,13 +70,6 @@ def main():
         help="name of the file to load a game",
         type=str,
     )
-
-    parser.add_argument(
-        "-g",
-        "--gui",
-        help="enable GUI mode",
-        action="store_true",
-    )
     args = parser.parse_args()
     game_data :IGraphData = GraphData()
     game :IGameService = Game(game_data)
@@ -88,28 +81,6 @@ def main():
         print("Debug mode enabled.", file=sys.stderr)
     if args.file:
         print(f"Loading game from file: {args.file}")
-    if args.verbose:
-        print("Verbose mode enabled.")
-    if args.gui:
-        print("GUI mode enabled.")
-        GameGUI(game).run()
-    else:
-        game_cli = GameCLI(game)
-        game_cli.run()
-
-
-    
-
-    args = parser.parse_args()
-    game_data :IGraphData = GraphData()
-    game :IGameService = Game(game_data)
-    game.shuffle_algo = args.shuffle
-    game.default_seed = args.seed
-    game.load_game_from_file(args.file) if args.file else None
-    if args.version:
-        print(f"Carcassonne: version {__version__}")
-    if args.debug:
-        print("Debug mode enabled.", file=sys.stderr)
     if args.verbose:
         print("Verbose mode enabled.")
     if args.gui:
