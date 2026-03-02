@@ -53,25 +53,37 @@ class BoardView(Gtk.DrawingArea):
         key_controller = Gtk.EventControllerKey()
         key_controller.connect("key-pressed", self.on_key_press)
         self.add_controller(key_controller)
+    
+    def get_tile_image_path(self, name):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        images_dir = os.path.join(base_dir, "Images")
+        if(name.find("/") != -1):
+            name = name.split("/")
+            return os.path.join(images_dir, f"{name[0]}{name[1]}.png")
+        return os.path.join(images_dir, f"{name}.png")
             
     def load_textures(self):
-            # chemin absolu vers le dossier Images
-            base_dir = os.path.dirname(os.path.abspath(__file__))  # dossier actuel
-            images_dir = os.path.join(base_dir, "Images")  # remonte jusqu'à la racine
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        images_dir = os.path.join(base_dir, "Images")
+        images_dir = os.path.normpath(images_dir)
 
-            images_dir = os.path.normpath(images_dir)
+        if not os.path.exists(images_dir):
+            print(f"Images folder not found: {images_dir}")
+            return
 
-            if not os.path.exists(images_dir):
-                print(f"Images folder not found: {images_dir}")
-                return
+        for file in os.listdir(images_dir):
+            if file.endswith(".png"):
 
-            for file in os.listdir(images_dir):
-                if file.endswith(".png"):
-                    name = file[:-4]  # enlever .png
-                    path = os.path.join(images_dir, file)
-                    self.textures[name] = GdkPixbuf.Pixbuf.new_from_file(path)
-            print(images_dir)
-            print(base_dir)
+                # garde exactement le nom du fichier sans l'extension
+                name = os.path.splitext(file)[0]  
+                full_path = os.path.join(images_dir, file)
+
+                print(f"Loading texture: {name} from {full_path}")
+
+                self.textures[name] = GdkPixbuf.Pixbuf.new_from_file(full_path)
+
+        print("Images directory:", images_dir)
+
 
     # =========================
     # 🎨 DRAW
@@ -98,15 +110,14 @@ class BoardView(Gtk.DrawingArea):
         board_width = (max_x - min_x + 1) * tile
         board_height = (max_y - min_y + 1) * tile
 
-        offset_x = (width - board_width) // 2
-        offset_y = (height - board_height) // 2
+        offset_x, offset_y, min_x, min_y = self.get_board_offsets()
 
         for tile_data in tiles:
             grid_x = tile_data["x"]
             grid_y = tile_data["y"]
 
-            x = offset_x + (grid_x - min_x) * tile + self.offset_x
-            y = offset_y + (grid_y - min_y) * tile + self.offset_y
+            x = offset_x + (grid_x - min_x) * tile
+            y = offset_y + (grid_y - min_y) * tile
 
             self.draw_tile(cr, x, y, tile, tile_data)
         # Draw ghost tile
@@ -116,7 +127,9 @@ class BoardView(Gtk.DrawingArea):
     def draw_ghost_tile(self, cr):
         name = self.game_gui.current_tile
         orientation = self.game_gui.current_orientation
-
+        if name.find("/") != -1:
+            name = name.split("/")
+            name = f"{name[0]}{name[1]}"
         pixbuf = self.textures.get(name)
         if not pixbuf:
             return
@@ -127,22 +140,7 @@ class BoardView(Gtk.DrawingArea):
         grid_x, grid_y = self.pixel_to_grid(self.ghost_x, self.ghost_y)
 
         # Convert back to pixel position (snap to grid)
-        tiles = self.game.get_board_data()
-        if not tiles:
-            return
-
-        positions = [(t["x"], t["y"]) for t in tiles]
-        min_x = min(x for x, y in positions)
-        min_y = min(y for x, y in positions)
-
-        width = self.get_allocated_width()
-        height = self.get_allocated_height()
-
-        board_width = (max(x for x, _ in positions) - min_x + 1) * tile
-        board_height = (max(y for _, y in positions) - min_y + 1) * tile
-
-        offset_x = (width - board_width) // 2 + self.offset_x
-        offset_y = (height - board_height) // 2 + self.offset_y
+        offset_x, offset_y, min_x, min_y = self.get_board_offsets()
 
         x = offset_x + (grid_x - min_x) * tile
         y = offset_y + (grid_y - min_y) * tile
@@ -177,7 +175,7 @@ class BoardView(Gtk.DrawingArea):
     # 🧩 DRAW ONE TILE
     # =========================
     def draw_tile(self, cr, x, y, size, tile_data):
-        name = tile_data["name"]
+        name = tile_data["name"]+tile_data["middle"] if tile_data["middle"] else tile_data["name"]
         orientation = tile_data["orientation"]
         #print(f"Drawing tile {name} at ({x}, {y}) with orientation {orientation}")
 
@@ -219,30 +217,7 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     def on_click(self, gesture, n_press, mouse_x, mouse_y):
         
-        tiles = self.game.get_board_data()
-        if not tiles:
-            return
-
-        positions = [(t["x"], t["y"]) for t in tiles]
-
-        min_x = min(x for x, y in positions)
-        min_y = min(y for x, y in positions)
-        max_x = max(x for x, y in positions)
-        max_y = max(y for x, y in positions)
-
-        tile = self.tile_size
-
-        width = self.get_allocated_width()
-        height = self.get_allocated_height()
-
-        board_width = (max_x - min_x + 1) * tile
-        board_height = (max_y - min_y + 1) * tile
-
-        offset_x = (width - board_width) // 2
-        offset_y = (height - board_height) // 2
-
-        grid_x = int((mouse_x - offset_x) // tile) + min_x
-        grid_y = int((mouse_y - offset_y) // tile) + min_y 
+        grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
 
         print(f"Clicked grid position: {grid_x}, {grid_y}")
 
@@ -252,6 +227,7 @@ class BoardView(Gtk.DrawingArea):
             if vertex_id is not None and side is not None:
                 orientation = self.game_gui.current_orientation
                 move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
+                print(f"Attempting to play move: {move_str}")
                 self.game.play_move(move_str)
 
                 self.game_gui.current_tile = None
@@ -288,41 +264,56 @@ class BoardView(Gtk.DrawingArea):
     def on_key_press(self, controller, keyval, keycode, state):
         step = 20  # pixels de déplacement
         if keyval == Gdk.KEY_z:      # haut
-            self.offset_y -= step
-        elif keyval == Gdk.KEY_s:    # bas
             self.offset_y += step
+        elif keyval == Gdk.KEY_s:    # bas
+            self.offset_y -= step
         elif keyval == Gdk.KEY_q:    # gauche
-            self.offset_x -= step
-        elif keyval == Gdk.KEY_d:    # droite
             self.offset_x += step
+        elif keyval == Gdk.KEY_d:    # droite
+            self.offset_x -= step
         elif keyval == Gdk.KEY_r:
             self.game_gui.rotate_current_tile()
 
         self.queue_draw()
         return True  # signal consommé
-
-    def pixel_to_grid(self, mouse_x, mouse_y):
-        mouse_x += -self.offset_x
-        mouse_y += -self.offset_y
+    
+    def get_board_offsets(self):
         tiles = self.game.get_board_data()
         if not tiles:
-            return 0, 0
+            return 0, 0, 0, 0
 
         positions = [(t["x"], t["y"]) for t in tiles]
 
         min_x = min(x for x, y in positions)
         min_y = min(y for x, y in positions)
+        max_x = max(x for x, y in positions)
+        max_y = max(y for x, y in positions)
+
+        tile = self.tile_size
 
         width = self.get_allocated_width()
         height = self.get_allocated_height()
 
+        board_width = (max_x - min_x + 1) * tile
+        board_height = (max_y - min_y + 1) * tile
+
+        base_offset_x = (width - board_width) // 2
+        base_offset_y = (height - board_height) // 2
+
+        # 👇 OFFSET GLOBAL (centrage + déplacement utilisateur)
+        final_offset_x = base_offset_x + self.offset_x
+        final_offset_y = base_offset_y + self.offset_y
+
+        return final_offset_x, final_offset_y, min_x, min_y
+
+    def pixel_to_grid(self, mouse_x, mouse_y):
+        tiles = self.game.get_board_data()
+        if not tiles:
+            return 0, 0
+
+        offset_x, offset_y, min_x, min_y = self.get_board_offsets()
+
         tile = self.tile_size
-
-        board_width = (max(x for x, _ in positions) - min_x + 1) * tile
-        board_height = (max(y for _, y in positions) - min_y + 1) * tile
-
-        offset_x = (width - board_width) // 2
-        offset_y = (height - board_height) // 2
 
         grid_x = int((mouse_x - offset_x) // tile) + min_x
         grid_y = int((mouse_y - offset_y) // tile) + min_y

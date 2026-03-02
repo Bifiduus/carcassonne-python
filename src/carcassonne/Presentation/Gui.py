@@ -28,7 +28,11 @@ class GameGUI(Gtk.Application):
         self.button_draw.connect("clicked", self.button_clicked_draw)
         
 
-        
+    def reset(self):
+        self.current_tile = None
+        self.current_orientation = 0
+        self.tile_preview.set_filename("")  # Clear preview
+        self.board_view.refresh()
 
     def do_activate(self):
         window = Gtk.ApplicationWindow(application=self)
@@ -82,7 +86,8 @@ class GameGUI(Gtk.Application):
 
         def new_game_action(action, parameter):
             CommandsHandlerGui.on_new(self.game)
-            BoardView.refresh(self.board_view)
+            self.reset()
+
         self.create_action("new", new_game_action)
         self.create_action("load", lambda a, p: CommandsHandlerGui.on_load())
         self.create_action("save", lambda a, p: CommandsHandlerGui.on_save())
@@ -214,9 +219,11 @@ class GameGUI(Gtk.Application):
     def on_draw(self, action, param):
         tile = self.game.draw_tile()
         self.current_orientation = 0  # reset rotation
-        print(f"Tuile piochée: {tile}")
+        
         self.current_tile = tile
+
         image_path = self.get_tile_image_path(tile)
+        print(f"Drew tile: {tile} → image path: {image_path}")
         self.tile_preview.set_filename(image_path)
         self.board_view.refresh()
     
@@ -311,6 +318,9 @@ class GameGUI(Gtk.Application):
     def get_tile_image_path(self, name):
         base_dir = os.path.dirname(os.path.abspath(__file__))
         images_dir = os.path.join(base_dir, "Images")
+        if(name.find("/") != -1):
+            name = name.split("/")
+            return os.path.join(images_dir, f"{name[0]}{name[1]}.png")
         return os.path.join(images_dir, f"{name}.png")
 
     def set_tile_preview(self, tile_name):

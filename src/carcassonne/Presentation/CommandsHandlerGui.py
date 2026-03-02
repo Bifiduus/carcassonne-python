@@ -10,6 +10,8 @@ def on_new(game):
     game.start_new_game()
     game.shuffle_deck()
 
+
+
 def on_load():
     print("to add load")
 
