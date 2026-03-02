@@ -33,7 +33,6 @@ class Game(IGameService):
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
-        self.save_file = None
         self.players : list[Player] = [Player(1, "Player 1", "green")]
         self.players_order: list[int] = []
 
