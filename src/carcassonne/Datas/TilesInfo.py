@@ -4,8 +4,9 @@ It also contains data structures that represent the sides of each tile type and 
 """
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 
+
 class Tile:
-    code : str
+    code: str
 
     # Direction matrices indexed by orientation (0, 1, 2, 3)
     direction_matrix = [
@@ -45,22 +46,25 @@ class TilesInfo(ITilesInfo):
 
             # 'The River' Expansion
             'FSRS': ['m'], 'FFSF': ['void'], 'FSFS': ['void'], 'FFSS': ['void'], 'CSCS': ['void'], 'CCSS': ['void'],
-            'CSRS': ['void'],'RSRS': ['void'], 'RRSS': ['void']
+            'CSRS': ['void'], 'RSRS': ['void'], 'RRSS': ['void']
         }
 
-        self.tiles_parts_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
+        self.tiles_parts_list = ['NW', 'N',
+                                 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
         self.direction_list = ['N', 'E', 'S', 'W']
-        
-        self.meeple_placement_list = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']
+
+        self.meeple_placement_list = ['N', 'NE',
+                                      'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']
 
         self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
-        
-        self.direction_matrix = [['NW', 'N', 'NE'], 
-                                 ['W', 'C', 'E'], 
+
+        self.direction_matrix = [['NW', 'N', 'NE'],
+                                 ['W', 'C', 'E'],
                                  ['SW', 'S', 'SE']]
-        
-        self.matrix_coordinates = {'NW' : (0,0), 'N' : (0,1), 'NE' : (0,2), 'E' : (1,2), 'SE' : (2,2), 'S' : (2,1), 'SW' : (2,0), 'W' : (1,0), 'C' : (1,1)}
-        
+
+        self.matrix_coordinates = {'NW': (0, 0), 'N': (0, 1), 'NE': (0, 2), 'E': (
+            1, 2), 'SE': (2, 2), 'S': (2, 1), 'SW': (2, 0), 'W': (1, 0), 'C': (1, 1)}
+
         self.tiles_count = {
             # Basic Tiles
             'FFFF/m': 4, 'FFFR/m': 2, 'CFFF': 5, 'FCFC/f': 3, 'CFCF/c': 1, 'CFCF/b': 2,
@@ -70,80 +74,80 @@ class TilesInfo(ITilesInfo):
 
             # 'The River' Expansion
             'FSRS/m': 1, 'FFSF': 2, 'FSFS': 2, 'FFSS': 2, 'CSCS': 1, 'CCSS': 1,
-            'CSRS': 1,'RSRS': 1, 'RRSS': 1
+            'CSRS': 1, 'RSRS': 1, 'RRSS': 1
         }
 
         self.tiles_lands = {
             # Basic Tiles
-            'FFFF/m': {'M' : [['C']], 'F' : [['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']]},
-            'FFFR/m': {'M' : [['C']], 'F' : [['N', 'NE', 'E', 'SE', 'S', 'SW', 'NW']], 'R' : [['W']]},
-            'CFFF': {'C' : [['N']], 'F' : [['NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']]},
-            'FCFC/f': {'C' : [['E'], ['W']], 'F' : [['N', 'NE', 'SE', 'S', 'SW', 'NW', 'C']]},
-            'CFCF/c': { 'C' : [['N', 'S', 'C']], 'F' : [['NE', 'E', 'SE'], ['SW', 'W', 'NW']]},
-            'CFCF/b': { 'C' : [['N', 'S', 'C']], 'F' : [['NE', 'E', 'SE'], ['SW', 'W', 'NW']]},
+            'FFFF/m': {'M': [['C']], 'F': [['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']]},
+            'FFFR/m': {'M': [['C']], 'F': [['N', 'NE', 'E', 'SE', 'S', 'SW', 'NW']], 'R': [['W']]},
+            'CFFF': {'C': [['N']], 'F': [['NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']]},
+            'FCFC/f': {'C': [['E'], ['W']], 'F': [['N', 'NE', 'SE', 'S', 'SW', 'NW', 'C']]},
+            'CFCF/c': {'C': [['N', 'S', 'C']], 'F': [['NE', 'E', 'SE'], ['SW', 'W', 'NW']]},
+            'CFCF/b': {'C': [['N', 'S', 'C']], 'F': [['NE', 'E', 'SE'], ['SW', 'W', 'NW']]},
 
-            'CCCC/b': {'C' : [['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']]},
-            'FFCC': {'C' : [['S'], ['W']], 'F' : [['N', 'NE', 'E', 'SW', 'SE', 'C']]},
-            'CCFF': {'C' : [['N', 'NE', 'E']], 'F' : [['SE', 'S', 'SW', 'W', 'NW', 'C']]},
-            'CCFF/b': {'C' : [['N', 'NE', 'E']], 'F' : [['SE', 'S', 'SW', 'W', 'NW', 'C']]},
-            'CCCF': {'C' : [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F' : [['SW', 'W', 'NW']]},
-            'CCCF/b': {'C' : [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F' : [['SW', 'W', 'NW']]},
+            'CCCC/b': {'C': [['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']]},
+            'FFCC': {'C': [['S'], ['W']], 'F': [['N', 'NE', 'E', 'SW', 'SE', 'C']]},
+            'CCFF': {'C': [['N', 'NE', 'E']], 'F': [['SE', 'S', 'SW', 'W', 'NW', 'C']]},
+            'CCFF/b': {'C': [['N', 'NE', 'E']], 'F': [['SE', 'S', 'SW', 'W', 'NW', 'C']]},
+            'CCCF': {'C': [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F': [['SW', 'W', 'NW']]},
+            'CCCF/b': {'C': [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F': [['SW', 'W', 'NW']]},
 
-            'CCCR': {'C' : [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F' : [['SW'], ['NW']], 'R' : [['W']]},
-            'CCCR/b': {'C' : [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F' : [['SW'], ['NW']], 'R' : [['W']]},
-            'FRFR': {'F' : [['N', 'NE', 'NW'], ['SE', 'S', 'SW']], 'R' : [['E', 'W', 'C']]},
-            'FFRR': {'F' : [['N', 'NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
-            'CRFR': {'C' : [['N']], 'F' : [['NE', 'NW'], ['SE', 'S', 'SW']], 'R' : [['E', 'W', 'C']]},
-            'CFRR': {'C' : [['N']], 'F' : [['NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
-            'CRRF': {'C' : [['N']], 'F' : [['NE', 'SW', 'W', 'NW', 'C'], ['SE']], 'R' : [['E', 'S']]},
+            'CCCR': {'C': [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F': [['SW'], ['NW']], 'R': [['W']]},
+            'CCCR/b': {'C': [['N', 'NE', 'E', 'SE', 'S', 'C']], 'F': [['SW'], ['NW']], 'R': [['W']]},
+            'FRFR': {'F': [['N', 'NE', 'NW'], ['SE', 'S', 'SW']], 'R': [['E', 'W', 'C']]},
+            'FFRR': {'F': [['N', 'NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'R': [['S', 'W']]},
+            'CRFR': {'C': [['N']], 'F': [['NE', 'NW'], ['SE', 'S', 'SW']], 'R': [['E', 'W', 'C']]},
+            'CFRR': {'C': [['N']], 'F': [['NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'R': [['S', 'W']]},
+            'CRRF': {'C': [['N']], 'F': [['NE', 'SW', 'W', 'NW', 'C'], ['SE']], 'R': [['E', 'S']]},
 
-            'CCRR': {'C' : [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
-            'CCRR/b': {'C' : [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
-            'FRRR': {'F' : [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R' : [['E', 'S', 'W', 'C']]},
-            'CRRR': {'C' : [['N']], 'F' : [['NE', 'NW'], ['SE'], ['SW']], 'R' : [['E', 'S', 'W', 'C']]},
-            'RRRR': {'F' : [['NE'], ['NW'], ['SE'], ['SW']], 'R' : [['N', 'E', 'S', 'W', 'C']]},
+            'CCRR': {'C': [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R': [['S', 'W']]},
+            'CCRR/b': {'C': [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R': [['S', 'W']]},
+            'FRRR': {'F': [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R': [['E', 'S', 'W', 'C']]},
+            'CRRR': {'C': [['N']], 'F': [['NE', 'NW'], ['SE'], ['SW']], 'R': [['E', 'S', 'W', 'C']]},
+            'RRRR': {'F': [['NE'], ['NW'], ['SE'], ['SW']], 'R': [['N', 'E', 'S', 'W', 'C']]},
 
             # 'The River' Expansion
-            'FSRS/m': {'M' : [['C']], 'F' : [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R': [['S']], 'S' : [['E', 'W']]},
-            'FFSF': {'F' : [['N', 'NE', 'E', 'SE', 'SW', 'W', 'NW']], 'S' : [['S', 'C']]},
-            'FSFS': {'F' : [['N', 'NE', 'NW'], ['SE', 'S', 'SW']], 'S' : [['E', 'W', 'C']]},
-            'FFSS': {'F' : [['N', 'NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'S' : [['S', 'W']]},
-            'CSCS': {'C' : [['N'], ['S']], 'F': [['NE', 'NW'], ['SE', 'SW']], 'S' : [['E', 'W', 'C']]},
-            'CCSS': {'C' : [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'S' : [['S', 'W']]},
+            'FSRS/m': {'M': [['C']], 'F': [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R': [['S']], 'S': [['E', 'W']]},
+            'FFSF': {'F': [['N', 'NE', 'E', 'SE', 'SW', 'W', 'NW']], 'S': [['S', 'C']]},
+            'FSFS': {'F': [['N', 'NE', 'NW'], ['SE', 'S', 'SW']], 'S': [['E', 'W', 'C']]},
+            'FFSS': {'F': [['N', 'NE', 'E', 'SE', 'NW', 'C'], ['SW']], 'S': [['S', 'W']]},
+            'CSCS': {'C': [['N'], ['S']], 'F': [['NE', 'NW'], ['SE', 'SW']], 'S': [['E', 'W', 'C']]},
+            'CCSS': {'C': [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'S': [['S', 'W']]},
 
-            'CSRS': {'C' : [['N']], 'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R' : [['S', 'C']], 'S' : [['E', 'W']],},
-            'RSRS': {'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R' : [['N', 'S', 'C']], 'S' : [['E', 'W']],},
-            'RRSS': {'F' : [['NE'], ['SE', 'NW', 'C'], ['SW']], 'R' : [['N', 'E']], 'S' : [['S', 'W']]}
+            'CSRS': {'C': [['N']], 'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R': [['S', 'C']], 'S': [['E', 'W']], },
+            'RSRS': {'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R': [['N', 'S', 'C']], 'S': [['E', 'W']], },
+            'RRSS': {'F': [['NE'], ['SE', 'NW', 'C'], ['SW']], 'R': [['N', 'E']], 'S': [['S', 'W']]}
         }
-        
+
         self.connects_to = {
             # Basic Tiles
             'FFFF/m': {},
             'FFFR/m': {},
-            'CFFF': {'NW' : ['C','F'], 'NE' : ['C','F']},
-            'FCFC/f': {'NW' : ['F','C'], 'NE' : ['F','C'], 'SW' : ['F','C'], 'SE' : ['F','C']},
-            'CFCF/c': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
-            'CFCF/b': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
+            'CFFF': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
+            'FCFC/f': {'NW': ['F', 'C'], 'NE': ['F', 'C'], 'SW': ['F', 'C'], 'SE': ['F', 'C']},
+            'CFCF/c': {'NW': ['C', 'F'], 'NE': ['C', 'F'], 'SW': ['C', 'F'], 'SE': ['C', 'F']},
+            'CFCF/b': {'NW': ['C', 'F'], 'NE': ['C', 'F'], 'SW': ['C', 'F'], 'SE': ['C', 'F']},
 
             'CCCC/b': {},
-            'FFCC': {'NW' : ['F','C'], 'SW' : ['C','C'], 'SE' : ['C','F']},
-            'CCFF': {'NW' : ['C','F'], 'SE' : ['F','C']},
-            'CCFF/b': {'NW' : ['C','F'], 'SE' : ['F','C']},
-            'CCCF': {'NW' : ['C','F'], 'SW' : ['C','F']},
-            'CCCF/b': {'NW' : ['C','F'], 'SW' : ['C','F']},
+            'FFCC': {'NW': ['F', 'C'], 'SW': ['C', 'C'], 'SE': ['C', 'F']},
+            'CCFF': {'NW': ['C', 'F'], 'SE': ['F', 'C']},
+            'CCFF/b': {'NW': ['C', 'F'], 'SE': ['F', 'C']},
+            'CCCF': {'NW': ['C', 'F'], 'SW': ['C', 'F']},
+            'CCCF/b': {'NW': ['C', 'F'], 'SW': ['C', 'F']},
 
-            'CCCR': {'NW' : ['C','F'], 'SW' : ['C','F']},
-            'CCCR/b': {'NW' : ['C','F'], 'SW' : ['C','F']},
+            'CCCR': {'NW': ['C', 'F'], 'SW': ['C', 'F']},
+            'CCCR/b': {'NW': ['C', 'F'], 'SW': ['C', 'F']},
             'FRFR': {},
             'FFRR': {},
-            'CRFR': {'NW' : ['C','F'], 'NE' : ['C','F']},
-            'CFRR': {'NW' : ['C','F'], 'NE' : ['C','F']},
-            'CRRF': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'CRFR': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
+            'CFRR': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
+            'CRRF': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
 
-            'CCRR': {'NW' : ['C','F'], 'SE' : ['F','C']},
-            'CCRR/b': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'CCRR': {'NW': ['C', 'F'], 'SE': ['F', 'C']},
+            'CCRR/b': {'NW': ['C', 'F'], 'SE': ['F', 'C']},
             'FRRR': {},
-            'CRRR': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'CRRR': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
             'RRRR': {},
 
             # 'The River' Expansion
@@ -151,10 +155,10 @@ class TilesInfo(ITilesInfo):
             'FFSF': {},
             'FSFS': {},
             'FFSS': {},
-            'CSCS': {'NW' : ['C','F'], 'NE' : ['C','F'], 'SW' : ['C','F'], 'SE' : ['C','F']},
-            'CCSS': {'NW' : ['C','F'], 'SE' : ['F','C']},
+            'CSCS': {'NW': ['C', 'F'], 'NE': ['C', 'F'], 'SW': ['C', 'F'], 'SE': ['C', 'F']},
+            'CCSS': {'NW': ['C', 'F'], 'SE': ['F', 'C']},
 
-            'CSRS': {'NW' : ['C','F'], 'NE' : ['C','F']},
+            'CSRS': {'NW': ['C', 'F'], 'NE': ['C', 'F']},
             'RSRS': {},
             'RRSS': {}
         }
@@ -165,53 +169,32 @@ class TilesInfo(ITilesInfo):
         for tile_code in sorted(self.tiles_lands.keys()):
             base_code = tile_code.split('/')[0]
             if base_code not in seen_base_codes:
-                self.tiles[base_code] = Tile(base_code, self.tiles_lands[tile_code], self.connects_to[tile_code])
+                self.tiles[base_code] = Tile(
+                    base_code, self.tiles_lands[tile_code], self.connects_to[tile_code])
                 seen_base_codes.add(base_code)
-    
+
     def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
         """
         Rotates a matrix 90 degrees clockwise.
-        
+
         Args:
             matrix: A 2D list to rotate
-            
+
         Returns:
             A new matrix rotated 90 degrees clockwise
         """
         n = len(matrix)
         m = len(matrix[0]) if matrix else 0
-        
+
         # Create new matrix with swapped dimensions
         rotated = [['' for _ in range(n)] for _ in range(m)]
-        
+
         for i in range(n):
             for j in range(m):
                 rotated[j][n - 1 - i] = matrix[i][j]
-        
+
         return rotated
-    
-    def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
-        """
-        Rotates a matrix 90 degrees clockwise.
-        
-        Args:
-            matrix: A 2D list to rotate
-            
-        Returns:
-            A new matrix rotated 90 degrees clockwise
-        """
-        n = len(matrix)
-        m = len(matrix[0]) if matrix else 0
-        
-        # Create new matrix with swapped dimensions
-        rotated = [['' for _ in range(n)] for _ in range(m)]
-        
-        for i in range(n):
-            for j in range(m):
-                rotated[j][n - 1 - i] = matrix[i][j]
-        
-        return rotated
-    
+
     def is_tile_left(self, tile_code: str) -> bool:
         """
         Checks if there are tiles left of the specified type in the game.
