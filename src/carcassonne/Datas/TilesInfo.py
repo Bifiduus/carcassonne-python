@@ -27,11 +27,11 @@ class Tile:
          ['NW', 'W', 'SW']]
     ]
 
-    def __init__(self, code: str, connections: dict = None, connect_to: dict = None):
+    def __init__(self, code: str, connections: dict = {}, connect_to: dict = {}):
         self.code = code
         # tiles_lands is the terrain definitions for this tile
-        self.tiles_lands = connections if connections is not None else {}
-        self.connect_to = connect_to if connect_to is not None else {}
+        self.tiles_lands = connections if connections is not {} else {}
+        self.connect_to = connect_to if connect_to is not {} else {}
 
 
 class TilesInfo(ITilesInfo):
@@ -167,28 +167,6 @@ class TilesInfo(ITilesInfo):
             if base_code not in seen_base_codes:
                 self.tiles[base_code] = Tile(base_code, self.tiles_lands[tile_code], self.connects_to[tile_code])
                 seen_base_codes.add(base_code)
-
-    def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
-        """
-        Rotates a matrix 90 degrees clockwise.
-        
-        Args:
-            matrix: A 2D list to rotate
-            
-        Returns:
-            A new matrix rotated 90 degrees clockwise
-        """
-        n = len(matrix)
-        m = len(matrix[0]) if matrix else 0
-        
-        # Create new matrix with swapped dimensions
-        rotated = [['' for _ in range(n)] for _ in range(m)]
-        
-        for i in range(n):
-            for j in range(m):
-                rotated[j][n - 1 - i] = matrix[i][j]
-        
-        return rotated
     
     def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
         """
