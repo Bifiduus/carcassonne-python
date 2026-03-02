@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+
+from carcassonne.Datas.MeepleData import Meeple
 
 class IGraphData(ABC):
     # pylint: disable=missing-class-docstring
@@ -60,4 +62,8 @@ class IGraphData(ABC):
 
     @abstractmethod
     def find_neighbor_at(self, x: int, y: int) -> tuple[Optional[int], Optional[int]]:
+        pass
+
+    @abstractmethod
+    def get_meeples(self) -> List[Meeple]:
         pass

@@ -315,10 +315,24 @@ class Game(IGameService):
     def generate_tile_ascii(self, vertex):
         dirs = list(vertex.get_name())  # [N, E, S, W]
         rotation = self.graph.get_vertex_orientation(vertex.get_id())  # 0 à 3
+        meeples = self.graph.get_meeples()
+        for meeple in meeples:
+            if meeple.tile_id == vertex.get_id():
+                pos_label = meeple.get_position_label()
+                if pos_label in ['N', 'E', 'S', 'W']:
+                    idx = ['N', 'E', 'S', 'W'].index(pos_label)
+                    dirs[idx] += f"{meeple.player_id}"
+                elif pos_label in ['NW', 'NE', 'SE', 'SW']:
+                    idx = ['NW', 'NE', 'SE', 'SW'].index(pos_label)
+                    dirs[idx-1] += f"/{meeple.player_id}"
+                else:
+                    vertex.middle += f"{meeple.player_id}"
+                
 
         n, e, s, w = self.rotate_dirs(dirs, rotation)
         m = "{:^3}".format(vertex.get_id())
         if vertex.get_middle() != "":
+            
             m = "{:^5}".format("[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]")
         else : 
             m = "{:^5}".format("[" + str(vertex.get_id()) + "]")
@@ -366,6 +380,14 @@ class Game(IGameService):
         vertices = self.graph.get_vertices_data()
 
         return list(vertices.values())
+    
+    def get_meeples_data(self) -> list[dict]:
+        """
+        Retourne une liste exploitable directement par la GUI.
+        """
+        meeples = self.graph.get_meeples()
+
+        return [vars(meeple) for meeple in meeples]
 
     def print_board(self, board):
         TILE_HEIGHT = 3
