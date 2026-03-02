@@ -70,6 +70,13 @@ def main():
         help="name of the file to load a game",
         type=str,
     )
+
+    parser.add_argument(
+        "-g",
+        "--gui",
+        help="enable GUI mode",
+        action="store_true",
+    )
     args = parser.parse_args()
     game_data :IGraphData = GraphData()
     game :IGameService = Game(game_data)
@@ -91,12 +98,7 @@ def main():
         game_cli.run()
 
 
-    parser.add_argument(
-        "-g",
-        "--gui",
-        help="enable GUI mode",
-        action="store_true",
-    )
+    
 
     args = parser.parse_args()
     game_data :IGraphData = GraphData()
