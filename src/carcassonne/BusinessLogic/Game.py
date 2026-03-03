@@ -49,7 +49,6 @@ class Game(IGameService):
         """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
-        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
         self.history.clear_history()
         self.graph.reset_graph()
         self.game_repository = GameRepository()
@@ -60,8 +59,6 @@ class Game(IGameService):
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.shuffle_players_order()
-        self.save_handler = SaveHandler(self)
-
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -150,11 +147,13 @@ class Game(IGameService):
         return self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
     
     def save_game_to_file(self, filename: str) -> int:
-        return self.save_handler.save_game_to_file(filename)
+        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
+        return SaveHandler(self).save_game_to_file(filename)
 
     def load_game_from_file(self, filename: str) -> int:
-        return self.save_handler.load_game_from_file(filename)
-
+        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
+        return SaveHandler(self).load_game_from_file(filename)
+    
     def rotate_dirs(self, dirs, rotation):
         rotation = rotation % 4
         return dirs[-rotation:] + dirs[:-rotation]
