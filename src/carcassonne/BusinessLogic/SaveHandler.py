@@ -1,10 +1,13 @@
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from carcassonne.BusinessLogic.Game import Game
+if TYPE_CHECKING:
+    from carcassonne.BusinessLogic.Game import Game
 
 
 class SaveHandler:
-    def __init__(self, game: Game):
+    def __init__(self, game: "Game"):
         self.game = game
 
 
@@ -24,7 +27,7 @@ class SaveHandler:
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
         file.write("NumberOfPlayers: " + str(len(self.game.players)) + ", 0\n") # str(self.game_repository.get_number_of_ai_players()) 
-        file.write("PlayersOrder: " + str(self.players_order) + "\n")
+        file.write("PlayersOrder: " + str(self.game.players_order) + "\n")
         file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.game.players]) + "]\n")
         file.write("\n")
         file.write("[History]\n")
@@ -34,6 +37,7 @@ class SaveHandler:
                 move = moves_history.pop()
                 file.write(move + " ")
         file.write("\n")
+        file.close()
         return 0
 
     def load_game_from_file(self, filename: str) -> int:
@@ -135,8 +139,8 @@ class SaveHandler:
                     if line == "":
                         print("Warning: Players order not specified.")
                         continue
-                    self.players_order = [int(player_id.strip()) for player_id in line.strip("[]").split(",")]
-                    print(f"Players order set to {self.players_order}.")
+                    self.game.players_order = [int(player_id.strip()) for player_id in line.strip("[]").split(",")]
+                    print(f"Players order set to {self.game.players_order}.")
 
                 if line.startswith("GameScore:"):
                     line = line.split("GameScore:")[1].strip() # Assuming the format is "GameScore: [Player1ID: 10, Player2ID: 20]"
@@ -152,7 +156,7 @@ class SaveHandler:
                         for player in self.game.players:
                             if player.get_id() == int(playerID.strip()):
                                 player.score.setPoints(int(points.strip()))
-                                print(f"Player number {self.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
+                                print(f"Player number {self.game.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
                     game_score = True
 
             elif history_section:
@@ -160,7 +164,7 @@ class SaveHandler:
                     print("Warning: no game score found in [GameState] section.")
                 for player_move in line.strip(" ").split(" "):
                     move = player_move.split(":")[1] if ":" in player_move else player_move
-                    self.current_hand = move
+                    self.game.current_hand = move
                     self.game.play_move(move)  # Assuming line is in the format "player_id:details"
         if sections_parsed < 3:
             print("Warning: Not all sections were found in the file.")
@@ -170,4 +174,5 @@ class SaveHandler:
                 print("Warning: [GameState] section missing.")
             if not history_parsed:
                 print("Warning: [History] section missing.")
+        file.close()
         return 0   
