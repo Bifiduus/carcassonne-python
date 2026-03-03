@@ -1,9 +1,11 @@
 """
-This module implements the AI player using the Alpha-Beta pruning algorithm.
+This module implements the AI player using the Expectimax pruning algorithm.
 It provides intelligent move selection for the AI player in Carcassonne.
 """
 
 from typing import List, Tuple, Optional
+
+from numpy import tile
 from carcassonne.Datas.History import MoveRecord
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
@@ -40,14 +42,14 @@ def STAR2_5(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
     return score_diff + board_control + potential * 0.9
 
 
-class AlphaBetaPlayer:
+class ExpectimaxPlayer:
     """
-    AI player using Alpha-Beta pruning algorithm for intelligent move selection.
+    AI player using Expectimax pruning algorithm for intelligent move selection.
     """
     
     def __init__(self, depth: int = 4, is_maximizing: bool = True, eval_name: str = "STAR1", eval_fn=None):
         """
-        Initialize the Alpha-Beta AI player.
+        Initialize the Expectimax AI player.
         
         Args:
             depth: Maximum depth for the search tree (default: 4)
@@ -163,12 +165,84 @@ class AlphaBetaPlayer:
         
         return potential
     
-    def alpha_beta(self, graph: IGraphData, tiles_info: ITilesInfo, 
+    def search(self, graph: IGraphData, tiles_info: ITilesInfo, rules_manager: RulesManager, depth: int, alpha: float, beta: float, player: int, next_player: int) -> float:
+        """Recursive search function for Expectimax algorithm. Adapt between Max and Min nodes based on the player parameter."""
+        if self.terminal(tiles_info, graph) or depth == 0:
+            return self.evaluate_state(graph, 0, 0)
+        if player == next_player:  # Max node
+            max_eval = float('-inf')
+            possible_moves = self.get_possible_moves(graph, tiles_info, rules_manager)
+            for move in possible_moves:
+                new_graph = self.apply_move(graph, move)
+                eval_score = self.Expectimax(new_graph, tiles_info, rules_manager, depth - 1, alpha, beta, player, (next_player + 1) % self.nb_players)
+                max_eval = max(max_eval, eval_score)
+                alpha = max(alpha, eval_score)
+                if beta <= alpha:
+                    break
+            return max_eval
+        else:  # Min node (opponent's turn)
+            min_eval = float('inf')
+            possible_moves = self.get_possible_moves(graph, tiles_info, rules_manager)
+            for move in possible_moves:
+                new_graph = self.apply_move(graph, move)
+                eval_score = self.Expectimax(new_graph, tiles_info, rules_manager, depth - 1, alpha, beta, player, (next_player + 1) % self.nb_players)
+                min_eval = min(min_eval, eval_score)
+                beta = min(beta, eval_score)
+                if beta <= alpha:
+                    break
+            return min_eval
+    
+    def eventProb(self, graph: IGraphData, tile: str, N: dict) -> float:
+        """Calculate the probability of a chance event (e.g., drawing a specific tile)."""
+        total_tiles_left = sum(N.values())
+        if total_tiles_left == 0:
+            return 0.0
+        return N.get(tile) / total_tiles_left
+    
+    def applyChanceEvent(self, graph: IGraphData, tile: str) -> IGraphData: 
+        """Apply a chance event (e.g., drawing a tile) to the game state and return the new state."""
+        new_graph = graph.copy()  # Assuming you have a method to copy the graph
+        
+        # TODO: Make the next tile to draw the tile parameter
+        
+        return new_graph
+    
+    def numChanceEvents(self, tiles_info: ITilesInfo, graph: IGraphData) -> int:
+        """Return the number of possible chance events (e.g., tile draws) from this state."""
+        N = {}
+        for tile, tile_nb in tiles_info.tiles_count.items():
+            if tile_nb > 0:
+                N[tile] = tile_nb
+        return N
+    
+    def terminal(self, tiles_info: ITilesInfo, graph: IGraphData) -> bool:
+        """Check if the game is in a terminal state (no more moves)."""
+        # This is a simplified check - you should implement this based on your game rules
+        
+        # If no more tiles are available, the game is terminal
+        total_tiles = sum(tiles_info.tiles_count.values())
+        if total_tiles == 0:
+            return True
+        
+        return False
+    
+    def Expectimax(self, board, tiles_info, graph: IGraphData, depth: int, player : int):
+        if self.terminal(tiles_info, graph) or depth == 0:
+            return self.evaluate_state(graph, 0, 0)
+        N = self.numChanceEvents(tiles_info, graph)
+        sum = 0
+        for tile, count in N.items():
+            #Make a copy of the game state and apply the chance event (playing the tile)
+            succ = self.applyChanceEvent(graph, tile)
+            sum += self.eventProb(graph, tile, N) * self.search(succ, tiles_info, graph, depth - 1, player, (player + 1) % nb_players)
+        return sum
+    
+    def expectimax(self, graph: IGraphData, tiles_info: ITilesInfo, 
                    rules_manager: RulesManager, depth: int, alpha: float, 
                    beta: float, is_maximizing: bool, 
                    current_player_score: int, opponent_score: int) -> Tuple[float, Optional[str]]:
         """
-        Alpha-Beta pruning algorithm for game tree search.
+        Expectimax algorithm for game tree search.
         
         Args:
             graph: The game board graph
@@ -210,7 +284,7 @@ class AlphaBetaPlayer:
                 # (You'll need to implement game state copy if not already available)
                 
                 # Simulate the move
-                # eval_score, _ = self.alpha_beta(graph_copy, tiles_info, rules_manager, 
+                # eval_score, _ = self.expectimax(graph_copy, tiles_info, rules_manager, 
                 #                                  depth - 1, alpha, beta, False, 
                 #                                  updated_ai_score, opponent_score)
                 
@@ -235,7 +309,7 @@ class AlphaBetaPlayer:
             
             for move in possible_moves:
                 # Simulate the move
-                # eval_score, _ = self.alpha_beta(graph_copy, tiles_info, rules_manager,
+                # eval_score, _ = self.expectimax(graph_copy, tiles_info, rules_manager,
                 #                                  depth - 1, alpha, beta, True,
                 #                                  current_player_score, updated_opponent_score)
                 
@@ -264,15 +338,15 @@ class AIModelManager:
         Initialize the AI Model Manager.
         
         Args:
-            depth: Maximum search depth for Alpha-Beta algorithm
+            depth: Maximum search depth for Expectimax algorithm
         """
-        self.player = AlphaBetaPlayer(depth=depth, eval_name=eval_name)
+        self.player = ExpectimaxPlayer(depth=depth, eval_name=eval_name)
     
     def choose_best_move(self, graph: IGraphData, tiles_info: ITilesInfo,
                         rules_manager: RulesManager, ai_score: int,
                         opponent_score: int) -> Optional[str]:
         """
-        Choose the best move for the AI using Alpha-Beta pruning.
+        Choose the best move for the AI using Expectimax pruning.
         
         Args:
             graph: The game board graph
@@ -286,7 +360,7 @@ class AIModelManager:
         """
         self.player.nodes_explored = 0
         
-        _, best_move = self.player.alpha_beta(
+        _, best_move = self.player.expectimax(
             graph=graph,
             tiles_info=tiles_info,
             rules_manager=rules_manager,
@@ -325,7 +399,7 @@ def initialize_ai(depth: int = 4, eval_name: str = "STAR1") -> None:
     Initialize the global AI manager.
     
     Args:
-        depth: Maximum search depth for Alpha-Beta algorithm
+        depth: Maximum search depth for Expectimax algorithm
     """
     global _ai_manager
     _ai_manager = AIModelManager(depth=depth, eval_name=eval_name)
