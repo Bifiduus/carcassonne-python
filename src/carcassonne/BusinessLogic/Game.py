@@ -49,6 +49,7 @@ class Game(IGameService):
         """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
+        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
         self.history.clear_history()
         self.graph.reset_graph()
         self.game_repository = GameRepository()
@@ -59,6 +60,8 @@ class Game(IGameService):
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.shuffle_players_order()
+        self.save_handler = SaveHandler(self)
+
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -147,169 +150,10 @@ class Game(IGameService):
         return self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
     
     def save_game_to_file(self, filename: str) -> int:
-        if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.")
-            return -1
-        if not filename.endswith(".txt"):
-            filename += ".txt"
-        file = open(filename, 'w')
-
-        file.write("[Settings]\n")
-        for key, value in self.get_game_configuration().items():
-            file.write(f"{key}: {value}\n")
-
-        file.write("\n")
-        file.write("[GameState]\n")
-        ## + who is the current player, scores, etc.
-        file.write("NumberOfPlayers: " + str(len(self.players)) + ", 0\n") # str(self.game_repository.get_number_of_ai_players()) 
-        file.write("PlayersOrder: " + str(self.players_order) + "\n")
-        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.players]) + "]\n")
-        file.write("\n")
-        file.write("[History]\n")
-        moves_history = self.get_history()
-        while moves_history is not None and len(moves_history) > 0:
-            for player in range(self.get_number_of_players()):
-                move = moves_history.pop()
-                file.write(move + " ")
-        file.write("\n")
-        return 0
+        return self.save_handler.save_game_to_file(filename)
 
     def load_game_from_file(self, filename: str) -> int:
-        if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.")
-            return -1
-        try:
-            file = open(filename, 'r')
-        except OSError:
-            print(f"Error: Could not open file {filename}")
-            return -1
-        self.start_new_game()  # Clear current game state before loading new one
-
-        lines = file.readlines()
-        settings_section = False
-        game_state_section = False
-        history_section = False
-        commentary = False
-        settings_parsed = False
-        game_state_parsed = False
-        history_parsed = False
-        commentary = False
-        game_score = False
-        sections_parsed = 0
-        for line in lines:
-            # Remove comments and strip whitespace
-            line = line.strip().split("#")[0]
-
-            # Handle cases where comments are inline with data
-            if line.find("{") != -1 and line.find("}") == -1:
-                line1 = line.split("{")[0]
-                line2 = line.split("{")[1] 
-                line = line1 + line2
-
-            if line.find("{") != -1:
-                line = line.split("{")[0]
-                commentary = True
-                continue
-            if line.find("}") != -1:
-                line = line.split("}")[1]
-                commentary = False
-            if commentary:
-                continue
-
-            if line == "[Settings]":
-                sections_parsed += 1
-                settings_section = True
-                game_state_section = False
-                history_section = False
-                settings_parsed = True
-                continue
-            elif line == "[GameState]":
-                if not settings_section:
-                    print("Warning: [Settings] section not found before [GameState].")
-                sections_parsed += 1
-                settings_section = False
-                game_state_section = True
-                history_section = False
-                game_state_parsed = True
-                continue
-            elif line == "[History]":
-                if not game_state_section:
-                    print("Warning: [GameState] section not found before [History].")
-                sections_parsed += 1
-                settings_section = False
-                game_state_section = False
-                history_section = True
-                history_parsed = True
-                continue
-            elif line == "":
-                continue  # Skip empty lines
-            
-            if settings_section:
-                # Here you would parse the settings and set up the game accordingly.
-                # This is a placeholder for demonstration purposes.
-                # Configuration of the game, shuffle algorithm and seed.
-                print("Parsing settings: ", line)
-            elif game_state_section:
-                # Here you would parse the game state.
-                # This is a placeholder for demonstration purposes.
-                # Game scores and player order.
-                print("Parsing game state: ", line)
-
-                if line.startswith("NumberOfPlayers:"):
-                    line = line.split("NumberOfPlayers:")[1].strip()
-                    if line == "":
-                        print("Warning: Number of players not specified.")
-                        continue
-                    number_of_players, number_of_ai_players = line.split(",") if "," in line else (line, "0")
-                    print(f"Total number of players specified: {int(number_of_ai_players.strip()) + int(number_of_players.strip())}.")
-                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > self.maximum_number_of_players():
-                        print(f"Warning: Number of players should be between {self.minimum_number_of_players()} and {self.maximum_number_of_players()}.")
-                        continue
-                    self.set_number_of_ai_players(int(number_of_ai_players.strip()))
-                    print(f"Number of players set to {int(number_of_players.strip()) + int(number_of_ai_players.strip())}.")
-
-                if line.startswith("PlayersOrder:"):
-                    line = line.split("PlayersOrder:")[1].strip()
-                    if line == "":
-                        print("Warning: Players order not specified.")
-                        continue
-                    self.players_order = [int(player_id.strip()) for player_id in line.strip("[]").split(",")]
-                    print(f"Players order set to {self.players_order}.")
-
-                if line.startswith("GameScore:"):
-                    line = line.split("GameScore:")[1].strip() # Assuming the format is "GameScore: [Player1ID: 10, Player2ID: 20]"
-                    if line == "" or line == "[]":
-                        print("Warning: No score yet.")
-                        continue
-                    line = line.split("[")[1].strip("]")
-                    scores = line.split(",")
-                    if len(scores) > len(self.players):
-                        print("Warning: More scores than players.")
-                    for score in scores:       
-                        playerID, points = score.split(":")
-                        for player in self.players:
-                            if player.get_id() == int(playerID.strip()):
-                                player.score.setPoints(int(points.strip()))
-                                print(f"Player number {self.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
-                    game_score = True
-
-            elif history_section:
-                if not game_score:
-                    print("Warning: no game score found in [GameState] section.")
-                for player_move in line.strip(" ").split(" "):
-                    move = player_move.split(":")[1] if ":" in player_move else player_move
-                    self.current_hand = move
-                    self.play_move(move)  # Assuming line is in the format "player_id:details"
-        if sections_parsed < 3:
-            print("Warning: Not all sections were found in the file.")
-            if not settings_parsed:
-                print("Warning: [Settings] section missing.")
-            if not game_state_parsed:
-                print("Warning: [GameState] section missing.")
-            if not history_parsed:
-                print("Warning: [History] section missing.")
-        return 0       
-
+        return self.save_handler.load_game_from_file(filename)
 
     def rotate_dirs(self, dirs, rotation):
         rotation = rotation % 4
