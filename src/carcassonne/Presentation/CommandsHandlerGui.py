@@ -32,10 +32,12 @@ def on_quit(self):
 Game menu commands:
 """
 
-def on_undo():
+def on_undo(game):
+    game.undo()
     print("to add undo")
 
-def on_redo():
+def on_redo(game):
+    game.redo()
     print("to add redo")
 
 def on_pause():

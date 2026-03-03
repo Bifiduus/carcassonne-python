@@ -15,6 +15,14 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def undo(self):
+        pass
+
+    @abstractmethod
+    def redo(self):
+        pass
+
+    @abstractmethod
     def get_history(self) -> list:
         pass
 

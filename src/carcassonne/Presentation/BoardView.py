@@ -30,6 +30,8 @@ class BoardView(Gtk.DrawingArea):
         self.offset_x = 0
         self.offset_y = 0
 
+        self.selected_zone = []
+
         self.ghost_x = None
         self.ghost_y = None
 
@@ -238,8 +240,58 @@ class BoardView(Gtk.DrawingArea):
             cr.restore()
         if self.game_gui.current_move_x==tile_data["x"] and self.game_gui.current_move_y==tile_data["y"] and self.game_gui.current_move!=None:
             cr.set_source_rgb(0, 1, 0)  # vert
+            # ----- GRILLE 3x3 -----
+            cr.set_source_rgb(0, 1, 0)
+            cr.set_line_width(1)
+
+            cell = size / 3
+
+            # lignes verticales
+            cr.move_to(x + cell, y)
+            cr.line_to(x + cell, y + size)
+
+            cr.move_to(x + 2*cell, y)
+            cr.line_to(x + 2*cell, y + size)
+
+            # lignes horizontales
+            cr.move_to(x, y + cell)
+            cr.line_to(x + size, y + cell)
+
+            cr.move_to(x, y + 2*cell)
+            cr.line_to(x + size, y + 2*cell)
+
         else:
             cr.set_source_rgb(0, 0, 0)  # noir
+        
+        meeples = self.game.get_meeples_data()
+        print(meeples)
+
+        for m in meeples:
+            for m in meeples:
+                if m["tile_id"] == tile_data["id"]:
+                    position_map = {
+                        7: (0,0), 0: (0,1), 1: (0,2),
+                        6: (1,0), 8: (1,1), 2: (1,2),
+                        5: (2,0), 4: (2,1), 3: (2,2)
+                    }
+                    row, col = position_map.get(m["position"], (1,1))  # centre par défaut
+
+                    cell = size / 3
+                    cx = x + col * cell
+                    cy = y + row * cell
+                    padding = cell * 0.2
+
+                    cr.set_source_rgb(1, 0, 0)  # rouge
+                    cr.set_line_width(3)
+
+                    # diagonales de la croix
+                    cr.move_to(cx + padding, cy + padding)
+                    cr.line_to(cx + cell - padding, cy + cell - padding)
+
+                    cr.move_to(cx + cell - padding, cy + padding)
+                    cr.line_to(cx + padding, cy + cell - padding)
+
+                    cr.stroke()
 
         cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
@@ -275,6 +327,36 @@ class BoardView(Gtk.DrawingArea):
                 self.ghost_y = None
 
                 self.queue_draw()
+                return
+        
+        if self.game_gui.current_move:
+            offset_x, offset_y, min_x, min_y = self.get_board_offsets()
+            tile = self.tile_size
+
+            lx = self.game_gui.current_move_x
+            ly = self.game_gui.current_move_y
+
+            tile_px = offset_x + (lx - min_x) * tile
+            tile_py = offset_y + (ly - min_y) * tile
+
+            if tile_px <= mouse_x <= tile_px + tile and \
+            tile_py <= mouse_y <= tile_py + tile:
+
+                cell = tile / 3
+
+                col = int((mouse_x - tile_px) // cell)
+                row = int((mouse_y - tile_py) // cell)
+
+                positions = [
+                    ["NW", "N", "NE"],
+                    ["W",  "C", "E"],
+                    ["SW", "S", "SE"]
+                ]
+
+                result = positions[row][col]
+                print("Zone cliquée :", result)
+                self.game_gui.current_move = self.game_gui.current_move + "/"+result
+
                 return
 
     

@@ -96,14 +96,23 @@ class GameGUI(Gtk.Application):
             CommandsHandlerGui.on_new(self.game)
             self.reset()
 
+        def undo_action(action, parameter):
+            CommandsHandlerGui.on_undo(self.game)
+            self.board_view.refresh()
+        
+        def redo_action(action, parameter):
+            CommandsHandlerGui.on_redo(self.game)
+            self.board_view.refresh()
+   
+
         self.create_action("new", new_game_action)
         self.create_action("load", lambda a, p: CommandsHandlerGui.on_load())
         self.create_action("save", lambda a, p: CommandsHandlerGui.on_save())
         self.create_action("config", lambda a, p: CommandsHandlerGui.on_config())
         self.create_action("info", lambda a, p: CommandsHandlerGui.on_info())
         self.create_action("quit", lambda a, p: CommandsHandlerGui.on_quit(self))
-        self.create_action("undo", lambda a, p: CommandsHandlerGui.on_undo())
-        self.create_action("redo", lambda a, p: CommandsHandlerGui.on_redo())
+        self.create_action("undo", undo_action)
+        self.create_action("redo", redo_action)
         self.create_action("pause", lambda a, p: CommandsHandlerGui.on_pause())
         self.create_action("hint", lambda a, p: CommandsHandlerGui.on_hint())
 
@@ -138,7 +147,8 @@ class GameGUI(Gtk.Application):
         corner_box.add_css_class("corner-panel")
     
         self.tile_preview = Gtk.Picture()
-        self.tile_preview.set_content_fit(Gtk.ContentFit.COVER)
+        self.tile_preview.set_can_shrink(True)
+        self.tile_preview.set_keep_aspect_ratio(True)
         self.tile_preview.set_size_request(100, 100)
         self.tile_preview.set_hexpand(False)
         self.tile_preview.set_vexpand(False)
