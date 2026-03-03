@@ -60,7 +60,6 @@ class Game(IGameService):
         """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
-        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
         self.history.clear_history()
         self.graph.reset_graph()
         self.game_repository = GameRepository()
