@@ -20,16 +20,24 @@ class GameGUI(Gtk.Application):
         self.settings = GameConfiguration().settings
         self.running = True
         self.current_tile = None
+        self.current_move = None
+        self.current_move_x = 0
+        self.current_move_y = 0
+        self.nb_tiles = 1
         self.current_orientation = 0  # 0,1,2,3 → 0°, 90°, 180°, 270°
 
         self.load_css()
 
         self.button_draw = Gtk.Button(label="Draw Tile (t)")
         self.button_draw.connect("clicked", self.button_clicked_draw)
+
+        self.button_end_turn = Gtk.Button(label="End Turn (space)")
+        self.button_end_turn.connect("clicked", self.button_clicked_end_turn)
         
 
     def reset(self):
         self.current_tile = None
+        self.current_move = None
         self.current_orientation = 0
         self.tile_preview.set_filename("")  # Clear preview
         self.board_view.refresh()
@@ -110,6 +118,16 @@ class GameGUI(Gtk.Application):
         self.board_view = BoardView(self.game, self)
         overlay.set_child(self.board_view)
 
+        end_turn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        end_turn_box.set_margin_bottom(40)
+        end_turn_box.set_halign(Gtk.Align.CENTER)
+        end_turn_box.set_valign(Gtk.Align.END)
+
+        end_turn_box.add_css_class("end-turn-panel")
+
+        end_turn_box.append(self.button_end_turn)
+
         corner_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         corner_box.set_margin_end(15)
         corner_box.set_margin_bottom(15)
@@ -142,11 +160,14 @@ class GameGUI(Gtk.Application):
         corner_box.append(self.button_draw)
 
         overlay.add_overlay(corner_box)
+        overlay.add_overlay(end_turn_box)
 
         self.create_action("draw", self.on_draw)
         self.set_accels_for_action("app.draw", ["t"])
         self.create_action("rotate", self.on_rotate)
         self.set_accels_for_action("app.rotate", ["r"])
+        self.create_action("end_turn", self.on_end_turn)
+        self.set_accels_for_action("app.end_turn", ["space"])
 
         self.stack.add_named(overlay, "game")
 
@@ -154,6 +175,10 @@ class GameGUI(Gtk.Application):
         self.stack.set_visible_child_name("menu")
 
         window.present()
+
+    def on_end_turn(self, action, param):
+        self.game.play_move(self.current_move)
+        self.reset()
 
     def on_rotate(self, action, param):
         self.rotate_current_tile()
@@ -315,6 +340,10 @@ class GameGUI(Gtk.Application):
     def button_clicked_draw(self, button):
         self.on_draw(None, None)
 
+    def button_clicked_end_turn(self, button):
+        self.game.play_move(self.current_move)
+        self.reset()
+
     def get_tile_image_path(self, name):
         base_dir = os.path.dirname(os.path.abspath(__file__))
         images_dir = os.path.join(base_dir, "Images")
@@ -348,6 +377,12 @@ class GameGUI(Gtk.Application):
             border: 3px solid white;
             border-radius: 12px;
             padding: 12px;
+        }
+        .end-turn-panel {
+            background-color: rgba(255, 125, 0, 0.6);
+            border: 3px solid white;
+            border-radius: 4px;
+            padding: 4px;
         }
         """
 

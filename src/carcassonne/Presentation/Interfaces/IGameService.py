@@ -47,5 +47,13 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def get_tile_data(self, tile):
+        pass
+
+    @abstractmethod
     def get_close_neighbors(self, x: int, y: int) -> tuple[int | None, int | None]:
+        pass
+
+    @abstractmethod
+    def get_meeples_data(self) -> list[dict]:
         pass

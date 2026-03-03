@@ -231,6 +231,22 @@ class GraphData(IGraphData):
             }
             for vertex_id, vertex in self.vertices.items()
         }
+    
+    def get_vertice_data(self, vertex) -> dict[int, dict]:
+        """
+        Retourne toutes les informations nécessaires pour l'affichage GUI.
+        """
+        return {
+            self.get_vertex_id(vertex): {
+                "id": vertex.get_id(),
+                "x": vertex.get_position()[0],
+                "y": vertex.get_position()[1],
+                "name": vertex.get_name(),
+                "middle": vertex.get_middle(),
+                "orientation": vertex.get_orientation(),
+            }
+             
+        }
 
     def get_vertex_orientation(self, vertex_id: int) -> int:
         vertex = self.get_vertex(vertex_id)

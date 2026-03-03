@@ -45,6 +45,10 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
+    def get_vertice_data(self, vertex) -> dict[int, dict]:
+        pass
+
+    @abstractmethod
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
         pass
 

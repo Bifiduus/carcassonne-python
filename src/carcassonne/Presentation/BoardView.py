@@ -6,6 +6,11 @@ import os
 import math
 
 
+import re
+
+PLACEMENT_RE = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
+MEEPLE_SET = {"N", "E", "S", "W"}
+
 class BoardView(Gtk.DrawingArea):
     def __init__(self, game_service, game_gui, tile_size=100):
         super().__init__()
@@ -96,6 +101,12 @@ class BoardView(Gtk.DrawingArea):
         tiles = self.game.get_board_data()
         if not tiles:
             return
+        
+        if self.game_gui.current_move:
+            temp_tile = self.parse_move(self.game_gui.current_move, self.game_gui.current_move_x, self.game_gui.current_move_y)
+            if temp_tile:
+                tiles = tiles + [temp_tile]
+
 
         positions = [(t["x"], t["y"]) for t in tiles]
 
@@ -105,7 +116,6 @@ class BoardView(Gtk.DrawingArea):
         max_y = max(y for x, y in positions)
 
         tile = self.tile_size
-
         
         board_width = (max_x - min_x + 1) * tile
         board_height = (max_y - min_y + 1) * tile
@@ -123,6 +133,26 @@ class BoardView(Gtk.DrawingArea):
         # Draw ghost tile
         if self.is_dragging and self.game_gui.current_tile and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
+
+    def parse_move(self, move, x, y):
+        if move.count('/')==1:
+            name, rest = move.split("/")
+            orientation = int(rest[-1])
+            middle = ""
+        else:
+            name, middle, rest = move.split("/")
+            orientation = int(rest[-1])
+
+
+        return {
+            "id":self.game_gui.nb_tiles,
+            "x": x,
+            "y": y,
+            "name": name,
+            "middle": middle,
+            "orientation": orientation
+            
+        }
 
     def draw_ghost_tile(self, cr):
         name = self.game_gui.current_tile
@@ -177,7 +207,7 @@ class BoardView(Gtk.DrawingArea):
     def draw_tile(self, cr, x, y, size, tile_data):
         name = tile_data["name"]+tile_data["middle"] if tile_data["middle"] else tile_data["name"]
         orientation = tile_data["orientation"]
-        #print(f"Drawing tile {name} at ({x}, {y}) with orientation {orientation}")
+        print(f"Drawing tile {name} at ({x}, {y}) with orientation {orientation}")
 
         pixbuf = self.textures.get(name)
 
@@ -206,9 +236,12 @@ class BoardView(Gtk.DrawingArea):
 
             cr.paint()
             cr.restore()
+        if self.game_gui.current_move_x==tile_data["x"] and self.game_gui.current_move_y==tile_data["y"] and self.game_gui.current_move!=None:
+            cr.set_source_rgb(0, 1, 0)  # vert
+        else:
+            cr.set_source_rgb(0, 0, 0)  # noir
 
-        # Bordure
-        cr.set_source_rgb(0, 0, 0)
+        cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
         cr.stroke()
 
@@ -228,7 +261,13 @@ class BoardView(Gtk.DrawingArea):
                 orientation = self.game_gui.current_orientation
                 move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
                 print(f"Attempting to play move: {move_str}")
-                self.game.play_move(move_str)
+                
+                self.game_gui.current_move = move_str
+                self.game_gui.current_move_x = grid_x
+                self.game_gui.current_move_y = grid_y
+                self.game_gui.nb_tiles=self.game_gui.nb_tiles+1
+                
+                print(self.game_gui.current_move)
 
                 self.game_gui.current_tile = None
                 self.is_dragging = False
@@ -256,7 +295,8 @@ class BoardView(Gtk.DrawingArea):
         if vertex_id is not None and side is not None:
             orientation = self.game_gui.current_orientation
             move_str = f"{tile_name}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
-            self.game.play_move(move_str)
+            self.game_gui.current_move=move_str
+            #self.game.play_move(move_str)
 
         self.queue_draw()
         return True
@@ -344,7 +384,8 @@ class BoardView(Gtk.DrawingArea):
         if vertex_id is not None and side is not None:
             orientation = self.game_gui.current_orientation
             move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
-            self.game.play_move(move_str)
+            self.game_gui.current_move=move_str
+            #self.game.play_move(move_str)
 
             # Clear tile only if placement succeeded
             self.game_gui.current_tile = None

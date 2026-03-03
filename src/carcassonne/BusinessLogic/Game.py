@@ -381,6 +381,14 @@ class Game(IGameService):
 
         return list(vertices.values())
     
+    def get_tile_data(self, tile):
+        """
+        Retourne une liste exploitable directement par la GUI.
+        """
+        vertice = self.graph.get_vertice_data(tile)
+
+        return vertice
+    
     def get_meeples_data(self) -> list[dict]:
         """
         Retourne une liste exploitable directement par la GUI.
