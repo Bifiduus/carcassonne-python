@@ -65,9 +65,12 @@ class Game(IGameService):
         if self.rules_manager.current_player_is_human() and self.history.past_moves:
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
+            self.deck.tiles.append(previous_play.move_str.split('/')[0])
             self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
             while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
-                self.board.remove_tile_from_board(build_str(self.history.past_moves[-1]), self.graph, self.tiles_info, self.history)
+                previous_play = self.history.pop_past()
+                self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
+                self.deck.tiles.append(previous_play.move_str.split('/')[0])
                 self.history.push_future(self.history.pop_past())
 
     def redo(self) -> None:
