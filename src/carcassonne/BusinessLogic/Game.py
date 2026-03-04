@@ -17,6 +17,7 @@ from carcassonne.Datas.History import History
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.Datas.TilesInfo import TilesInfo
 from carcassonne.BusinessLogic.SaveHandler import SaveHandler
+from carcassonne.BusinessLogic.AIModel import RandomPlayer
 from .AIModel import is_ai_player
 
 OPPOSITE = {
@@ -45,6 +46,7 @@ class Game(IGameService):
         self.save_file = None
         self.players : list[Player] = [Player(1, "Player 1", "green")]
         self.players_order: list[int] = []
+        self.shuffle_players_order()
         self.save_handler = SaveHandler(self)
 
     def start_new_game(self) -> None:
@@ -107,18 +109,29 @@ class Game(IGameService):
         """
         if self.current_hand is None:
             print("Vous devez piocher une tuile avant de jouer.")
-            return
+            return False
 
         tile_code = self.extract_tile_code(move)
         if tile_code is not None and tile_code != self.current_hand:
             print(f"Vous devez jouer la tuile en main: {self.current_hand}")
-            return
+            return False
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
             self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players)   
             print(move + " placed successfully.")
             self.current_hand = None
+            return True
+        
+        return False
+        
+    def play_ai_turn(self) -> None:
+        ai_player = self.get_current_player()
+        print(f"AI Player {ai_player.get_username()} is thinking...")
+        tile = self.draw_tile()
+        model = RandomPlayer()
+        move = model.random_move(tile, self.graph, self.tiles_info, self.rules_manager)
+        self.play_move(move)
         
     def get_game_configuration(self) :
         return self.game_configuration.get_setting()
@@ -277,7 +290,7 @@ class Game(IGameService):
         return seed
     
     def shuffle_players_order(self) -> None:
-        self.players_order = sorted([player.get_id() for player in self.players])  # Default order based on player IDs
+        self.players_order = sorted([player for player in self.players])  # Default order based on player IDs
         
 
     def extract_tile_code(self, move):
