@@ -313,7 +313,8 @@ class GraphData(IGraphData):
         self.meeples.clear()
         self.turn = 0
         # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
-        self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
+        self.initialize_land_components()
+        self.initialize_starting_tile()
 
     def get_vertex_id(self, vertex) -> int:
         return vertex.get_id()
