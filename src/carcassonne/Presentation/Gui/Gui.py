@@ -1,9 +1,10 @@
 import os
 
-from carcassonne.Presentation import CommandsHandlerGui
-from carcassonne.Presentation.BoardView import BoardView
+from carcassonne.Presentation.Gui import CommandsHandlerGui
+from carcassonne.Presentation.Gui.BoardView import BoardView
 from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
+from carcassonne.Presentation.Gui.GameDataGui import GameDataGui
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -12,19 +13,14 @@ from gi.repository import GLib, Gtk, Gio, Gdk, GdkPixbuf
 
 class GameGUI(Gtk.Application):
     
-    def __init__(self, game_service: IGameService):
+    def __init__(self, game_data):
         super().__init__(application_id="com.example.Carcassonne", flags=0)
         GLib.set_application_name('Carcassonne')
         
-        self.game = game_service
-        self.settings = GameConfiguration().settings
+        self.game_data = game_data
+        #self.settings = GameConfiguration().settings
         self.running = True
-        self.current_tile = None
-        self.current_move = None
-        self.current_move_x = 0
-        self.current_move_y = 0
-        self.nb_tiles = 1
-        self.current_orientation = 0  # 0,1,2,3 → 0°, 90°, 180°, 270°
+        
 
         self.load_css()
 
@@ -35,12 +31,7 @@ class GameGUI(Gtk.Application):
         self.button_end_turn.connect("clicked", self.button_clicked_end_turn)
         
 
-    def reset(self):
-        self.current_tile = None
-        self.current_move = None
-        self.current_orientation = 0
-        self.tile_preview.set_filename("")  # Clear preview
-        self.board_view.refresh()
+    
 
     def do_activate(self):
         window = Gtk.ApplicationWindow(application=self)
@@ -93,16 +84,14 @@ class GameGUI(Gtk.Application):
         header.pack_start(menu_button_game)
 
         def new_game_action(action, parameter):
-            CommandsHandlerGui.on_new(self.game)
-            self.reset()
+            self.game_data.new_game()
+            self.tile_preview.set_filename("")  # Clear preview
 
         def undo_action(action, parameter):
-            CommandsHandlerGui.on_undo(self.game)
-            self.board_view.refresh()
+            self.game_data.undo()
         
         def redo_action(action, parameter):
-            CommandsHandlerGui.on_redo(self.game)
-            self.board_view.refresh()
+            self.game_data.redo()
    
 
         self.create_action("new", new_game_action)
@@ -123,8 +112,8 @@ class GameGUI(Gtk.Application):
 
         overlay = Gtk.Overlay()
 
-        
-        self.board_view = BoardView(self.game, self)
+        self.board_view = BoardView(self.game_data)
+        self.game_data.set_board_view(self.board_view)
         overlay.set_child(self.board_view)
 
         end_turn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -145,7 +134,18 @@ class GameGUI(Gtk.Application):
         corner_box.set_valign(Gtk.Align.END)
 
         corner_box.add_css_class("corner-panel")
-    
+
+        """self.error_label = Gtk.Label(label="")
+        self.error_label.set_halign(Gtk.Align.CENTER)
+        self.error_label.set_valign(Gtk.Align.START)
+        self.error_label.set_name("error_label")  # pour CSS si besoin
+        self.error_label.set_markup("<span foreground='red'></span>")
+
+        # ajoute dans un Gtk.Box vertical
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        vbox.append(self.error_label)
+        overlay.add_overlay(vbox)"""
+            
         self.tile_preview = Gtk.Picture()
         self.tile_preview.set_can_shrink(True)
         self.tile_preview.set_keep_aspect_ratio(True)
@@ -153,17 +153,18 @@ class GameGUI(Gtk.Application):
         self.tile_preview.set_hexpand(False)
         self.tile_preview.set_vexpand(False)
 
+        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         click = Gtk.GestureClick()
         click.connect("pressed", self.on_preview_pressed)
         #click.connect("released", self.on_preview_released)
         self.tile_preview.add_controller(click)
 
         drag_source = Gtk.DragSource()
-        """drag_source.set_actions(Gdk.DragAction.MOVE)
+        drag_source.set_actions(Gdk.DragAction.MOVE)
 
         drag_source.connect("prepare", self.on_drag_prepare)
-        #drag_source.connect("drag-begin", self.on_drag_begin)
-        drag_source.connect("drag-begin", lambda s, d: s.set_icon(None, 0, 0))"""
+        drag_source.connect("drag-begin", self.on_drag_begin)
+        #drag_source.connect("drag-begin", lambda s, d: s.set_icon(None, 0, 0))
         
 
         corner_box.append(self.tile_preview)
@@ -186,18 +187,22 @@ class GameGUI(Gtk.Application):
 
         window.present()
 
+    def show_error(self, message: str):
+        self.error_label.set_markup(f"<span foreground='red'><b>{message}</b></span>")
+
     def on_end_turn(self, action, param):
-        self.game.play_move(self.current_move)
-        self.reset()
+        # delegate to GameDataGui which knows the pending tile and meeple
+        self.game_data.play_move_gui()
 
     def on_rotate(self, action, param):
-        self.rotate_current_tile()
+        self.game_data.rotate_current_tile()
+        self.update_preview_rotation()
 
     def on_preview_pressed(self, gesture, n_press, x, y):
-        if not self.current_tile:
+        if not self.game_data.current_tile:
             return
 
-        self.board_view.is_dragging = True
+        self.game_data.is_dragging = True
 
         # Start ghost at center of board
         width = self.board_view.get_allocated_width()
@@ -208,10 +213,11 @@ class GameGUI(Gtk.Application):
 
         self.board_view.grab_focus()
         self.board_view.queue_draw()
+        
 
     def on_preview_released(self, gesture, n_press, x, y):
-        self.board_view.is_dragging = False
-        self.board_view.queue_draw()
+        self.game_data.is_dragging = False
+        self.game_data.refresh()
 
     def create_main_menu(self):
         box = Gtk.Box(
@@ -252,31 +258,19 @@ class GameGUI(Gtk.Application):
     
 
     def on_draw(self, action, param):
-        tile = self.game.draw_tile()
-        self.current_orientation = 0  # reset rotation
-        
-        self.current_tile = tile
+        tile = self.game_data.draw_tile()
 
         image_path = self.get_tile_image_path(tile)
-        print(f"Drew tile: {tile} → image path: {image_path}")
+        #print(f"Drew tile: {tile} → image path: {image_path}")
         self.tile_preview.set_filename(image_path)
-        self.board_view.refresh()
-    
-    def rotate_current_tile(self):
-        if self.current_tile is None:
-            return
-
-        self.current_orientation = (self.current_orientation + 1) % 4
-        print("Orientation:", self.current_orientation)
-
-        # Rotate preview visually
         self.update_preview_rotation()
-
+    
+    
     def update_preview_rotation(self):
-        if not self.current_tile:
+        if not self.game_data.current_tile:
             return
 
-        image_path = self.get_tile_image_path(self.current_tile)
+        image_path = self.get_tile_image_path(self.game_data.current_tile.current_tile)
 
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
@@ -290,7 +284,7 @@ class GameGUI(Gtk.Application):
             [GdkPixbuf.PixbufRotation.NONE,
             GdkPixbuf.PixbufRotation.CLOCKWISE,
             GdkPixbuf.PixbufRotation.UPSIDEDOWN,
-            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE][self.current_orientation]
+            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE][self.game_data.current_orientation]
         )
 
         texture = Gdk.Texture.new_for_pixbuf(rotated)
@@ -302,14 +296,14 @@ class GameGUI(Gtk.Application):
 
         # Load the pixbuf of the current tile
     # Provide tile name for drop logic
-        return Gdk.ContentProvider.new_for_value(self.current_tile)
+        return Gdk.ContentProvider.new_for_value(self.self.game_data.current_tile.current_tile)
     
     def on_drag_begin(self, drag_source, drag):
 
         if not self.current_tile:
             return
 
-        image_path = self.get_tile_image_path(self.current_tile)
+        image_path = self.get_tile_image_path(self.self.game_data.current_tile.current_tile)
 
         # Load scaled image
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
@@ -326,7 +320,7 @@ class GameGUI(Gtk.Application):
             GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE
         ]
 
-        rotated = pixbuf.rotate_simple(rotations[self.current_orientation])
+        rotated = pixbuf.rotate_simple(rotations[self.self.game_data.current_orientation])
 
         texture = Gdk.Texture.new_for_pixbuf(rotated)
 
@@ -351,8 +345,7 @@ class GameGUI(Gtk.Application):
         self.on_draw(None, None)
 
     def button_clicked_end_turn(self, button):
-        self.game.play_move(self.current_move)
-        self.reset()
+        self.on_end_turn(None, None)
 
     def get_tile_image_path(self, name):
         base_dir = os.path.dirname(os.path.abspath(__file__))

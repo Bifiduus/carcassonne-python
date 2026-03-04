@@ -12,25 +12,21 @@ PLACEMENT_RE = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
 MEEPLE_SET = {"N", "E", "S", "W"}
 
 class BoardView(Gtk.DrawingArea):
-    def __init__(self, game_service, game_gui, tile_size=100):
+    def __init__(self, game_data, tile_size=100):
         super().__init__()
 
-        self.game = game_service
-        self.game_gui = game_gui
-        self.tile_size = tile_size
+        self.game_data = game_data
 
+        self.tile_size = tile_size
         self.set_content_width(900)
         self.set_content_height(700)
         self.set_draw_func(self.on_draw)
 
-    
         self.textures = {}
         self.load_textures()
 
         self.offset_x = 0
         self.offset_y = 0
-
-        self.selected_zone = []
 
         self.ghost_x = None
         self.ghost_y = None
@@ -38,8 +34,7 @@ class BoardView(Gtk.DrawingArea):
         motion = Gtk.EventControllerMotion()
         motion.connect("motion", self.on_mouse_move)
         self.add_controller(motion)
-       # self.tile_preview.add_controller(self.drag_source)
-        self.is_dragging = False
+        self.game_data.is_dragging = False
 
         # permettre à la zone de recevoir le focus pour les touches
         self.set_focusable(True)
@@ -100,12 +95,17 @@ class BoardView(Gtk.DrawingArea):
         cr.set_source_rgb(0.6, 0.6, 0.6)
         cr.paint()
 
-        tiles = self.game.get_board_data()
+        tiles = self.game_data.game.get_board_data()
         if not tiles:
             return
         
-        if self.game_gui.current_move:
-            temp_tile = self.parse_move(self.game_gui.current_move, self.game_gui.current_move_x, self.game_gui.current_move_y)
+        if self.game_data.current_tile and self.game_data.current_tile.move:
+            # use the TilesView helper to build a temporary tile dict for preview
+            temp_tile = self.game_data.current_tile.parse_move(
+                self.game_data.current_tile.move,
+                self.game_data.current_tile.x,
+                self.game_data.current_tile.y,
+            )
             if temp_tile:
                 tiles = tiles + [temp_tile]
 
@@ -133,32 +133,19 @@ class BoardView(Gtk.DrawingArea):
 
             self.draw_tile(cr, x, y, tile, tile_data)
         # Draw ghost tile
-        if self.is_dragging and self.game_gui.current_tile and self.ghost_x is not None:
+        if (
+            self.game_data.is_dragging
+            and self.game_data.current_tile
+            and self.game_data.current_tile.current_tile
+            and self.ghost_x is not None
+        ):
             self.draw_ghost_tile(cr)
 
-    def parse_move(self, move, x, y):
-        if move.count('/')==1:
-            name, rest = move.split("/")
-            orientation = int(rest[-1])
-            middle = ""
-        else:
-            name, middle, rest = move.split("/")
-            orientation = int(rest[-1])
-
-
-        return {
-            "id":self.game_gui.nb_tiles,
-            "x": x,
-            "y": y,
-            "name": name,
-            "middle": middle,
-            "orientation": orientation
-            
-        }
+    
 
     def draw_ghost_tile(self, cr):
-        name = self.game_gui.current_tile
-        orientation = self.game_gui.current_orientation
+        name = self.game_data.current_tile.current_tile
+        orientation = self.game_data.current_orientation if self.game_data.current_tile else 0
         if name.find("/") != -1:
             name = name.split("/")
             name = f"{name[0]}{name[1]}"
@@ -238,7 +225,12 @@ class BoardView(Gtk.DrawingArea):
 
             cr.paint()
             cr.restore()
-        if self.game_gui.current_move_x==tile_data["x"] and self.game_gui.current_move_y==tile_data["y"] and self.game_gui.current_move!=None:
+        if (
+            self.game_data.current_tile
+            and self.game_data.current_tile.x == tile_data["x"]
+            and self.game_data.current_tile.y == tile_data["y"]
+            and self.game_data.current_tile.move != ""
+        ):
             cr.set_source_rgb(0, 1, 0)  # vert
             # ----- GRILLE 3x3 -----
             cr.set_source_rgb(0, 1, 0)
@@ -263,7 +255,7 @@ class BoardView(Gtk.DrawingArea):
         else:
             cr.set_source_rgb(0, 0, 0)  # noir
         
-        meeples = self.game.get_meeples_data()
+        meeples = self.game_data.game.get_meeples_data()
         print(meeples)
 
         for m in meeples:
@@ -306,58 +298,56 @@ class BoardView(Gtk.DrawingArea):
 
         print(f"Clicked grid position: {grid_x}, {grid_y}")
 
-        if self.game_gui.current_tile:
-            vertex_id, side = self.game.get_close_neighbors(grid_x, grid_y)
+        if self.game_data.current_tile:
+            vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
 
             if vertex_id is not None and side is not None:
-                orientation = self.game_gui.current_orientation
-                move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
+                orientation = self.game_data.current_orientation
+                move_str = f"{self.game_data.current_tile.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
                 print(f"Attempting to play move: {move_str}")
-                
-                self.game_gui.current_move = move_str
-                self.game_gui.current_move_x = grid_x
-                self.game_gui.current_move_y = grid_y
-                self.game_gui.nb_tiles=self.game_gui.nb_tiles+1
-                
-                print(self.game_gui.current_move)
 
-                self.game_gui.current_tile = None
-                self.is_dragging = False
+                self.game_data.current_tile.move = move_str
+                self.game_data.current_tile.x = grid_x
+                self.game_data.current_tile.y = grid_y
+
+                # keep the TilesView object until the move is committed
+                # the GUI that triggered placement will clear it later
+                self.game_data.is_dragging = False
                 self.ghost_x = None
                 self.ghost_y = None
 
-                self.queue_draw()
-                return
+                
         
-        if self.game_gui.current_move:
-            offset_x, offset_y, min_x, min_y = self.get_board_offsets()
-            tile = self.tile_size
+                offset_x, offset_y, min_x, min_y = self.get_board_offsets()
+                tile = self.tile_size
 
-            lx = self.game_gui.current_move_x
-            ly = self.game_gui.current_move_y
+                lx = self.game_data.current_tile.x
+                ly = self.game_data.current_tile.y
 
-            tile_px = offset_x + (lx - min_x) * tile
-            tile_py = offset_y + (ly - min_y) * tile
+                tile_px = offset_x + (lx - min_x) * tile
+                tile_py = offset_y + (ly - min_y) * tile
 
-            if tile_px <= mouse_x <= tile_px + tile and \
-            tile_py <= mouse_y <= tile_py + tile:
+                if tile_px <= mouse_x <= tile_px + tile and \
+                tile_py <= mouse_y <= tile_py + tile:
 
-                cell = tile / 3
+                    cell = tile / 3
 
-                col = int((mouse_x - tile_px) // cell)
-                row = int((mouse_y - tile_py) // cell)
+                    col = int((mouse_x - tile_px) // cell)
+                    row = int((mouse_y - tile_py) // cell)
 
-                positions = [
-                    ["NW", "N", "NE"],
-                    ["W",  "C", "E"],
-                    ["SW", "S", "SE"]
-                ]
+                    positions = [
+                        ["NW", "N", "NE"],
+                        ["W",  "C", "E"],
+                        ["SW", "S", "SE"]
+                    ]
 
-                result = positions[row][col]
-                print("Zone cliquée :", result)
-                self.game_gui.current_move = self.game_gui.current_move + "/"+result
-
-                return
+                    result = positions[row][col]
+                    print("Zone cliquée :", result)
+                    if self.game_data.current_tile:
+                        self.game_data.current_tile.meeple_pos = result
+                    
+                    self.queue_draw()
+                    return
 
     
         self.queue_draw()
@@ -373,11 +363,11 @@ class BoardView(Gtk.DrawingArea):
         print("Grid position:", grid_x, grid_y)
 
         # Appeler le game service
-        vertex_id, side = self.game.get_close_neighbors(grid_x, grid_y)
-        if vertex_id is not None and side is not None:
-            orientation = self.game_gui.current_orientation
+        vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
+        if vertex_id is not None and side is not None and self.game_data.current_tile:
+            orientation = self.game_data.current_orientation
             move_str = f"{tile_name}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
-            self.game_gui.current_move=move_str
+            self.game_data.current_tile.move = move_str
             #self.game.play_move(move_str)
 
         self.queue_draw()
@@ -394,13 +384,13 @@ class BoardView(Gtk.DrawingArea):
         elif keyval == Gdk.KEY_d:    # droite
             self.offset_x -= step
         elif keyval == Gdk.KEY_r:
-            self.game_gui.rotate_current_tile()
+            self.game_data.rotate_current_tile()
 
         self.queue_draw()
         return True  # signal consommé
     
     def get_board_offsets(self):
-        tiles = self.game.get_board_data()
+        tiles = self.game_data.game.get_board_data()
         if not tiles:
             return 0, 0, 0, 0
 
@@ -429,7 +419,7 @@ class BoardView(Gtk.DrawingArea):
         return final_offset_x, final_offset_y, min_x, min_y
 
     def pixel_to_grid(self, mouse_x, mouse_y):
-        tiles = self.game.get_board_data()
+        tiles = self.game_data.game.get_board_data()
         if not tiles:
             return 0, 0
 
@@ -450,30 +440,30 @@ class BoardView(Gtk.DrawingArea):
 
 
     def on_mouse_move(self, controller, x, y):
-        if self.is_dragging and self.game_gui.current_tile:
+        if self.game_data.is_dragging and self.game_data.current_tile:
             self.ghost_x = x
             self.ghost_y = y
             self.queue_draw()
 
     def on_mouse_release(self, gesture, n_press, mouse_x, mouse_y):
-        if not self.is_dragging or not self.game_gui.current_tile:
+        if not self.game_data.is_dragging or not self.game_data.current_tile:
             return
 
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
 
-        vertex_id, side = self.game.get_close_neighbors(grid_x, grid_y)
+        vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
 
         if vertex_id is not None and side is not None:
-            orientation = self.game_gui.current_orientation
-            move_str = f"{self.game_gui.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
-            self.game_gui.current_move=move_str
+            orientation = self.game_data.current_orientation
+            move_str = f"{self.game_data.current_tile.current_tile}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
+            self.game_data.current_tile.move = move_str
             #self.game.play_move(move_str)
 
-            # Clear tile only if placement succeeded
-            self.game_gui.current_tile = None
+            # Clear the held tile object once the play is finalised
+            self.game_data.current_tile = None
 
         # Stop ghost
-        self.is_dragging = False
+        self.game_data.is_dragging = False
         self.ghost_x = None
         self.ghost_y = None
 
