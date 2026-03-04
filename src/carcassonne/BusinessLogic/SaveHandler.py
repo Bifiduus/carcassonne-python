@@ -27,7 +27,7 @@ class SaveHandler:
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
         file.write("NumberOfPlayers: " + str(len(self.game.players)) + ", 0\n") # str(self.game_repository.get_number_of_ai_players()) 
-        file.write("PlayersOrder: " + str(self.game.players_order) + "\n")
+        file.write("PlayersOrder: [" + ", ".join([f"{player_id}" for player_id in self.game.players_order]) + "]\n")
         file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.game.players]) + "]\n")
         file.write("\n")
         file.write("[History]\n")
@@ -44,6 +44,8 @@ class SaveHandler:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
             return -1
+        if not filename.endswith(".txt"):
+            filename += ".txt"
         try:
             file = open(filename, 'r')
         except OSError:
