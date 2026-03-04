@@ -16,6 +16,7 @@ from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Datas.History import History 
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.Datas.TilesInfo import TilesInfo
+from carcassonne.BusinessLogic.SaveHandler import SaveHandler
 from .AIModel import is_ai_player
 
 OPPOSITE = {
@@ -44,6 +45,7 @@ class Game(IGameService):
         self.save_file = None
         self.players : list[Player] = [Player(1, "Player 1", "green")]
         self.players_order: list[int] = []
+        self.save_handler = SaveHandler(self)
 
     def start_new_game(self) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -147,12 +149,10 @@ class Game(IGameService):
         return self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
     
     def save_game_to_file(self, filename: str) -> int:
-        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
-        return SaveHandler(self).save_game_to_file(filename)
+        return self.save_handler.save_game_to_file(filename)
 
     def load_game_from_file(self, filename: str) -> int:
-        from carcassonne.BusinessLogic.SaveHandler import SaveHandler
-        return SaveHandler(self).load_game_from_file(filename)
+        return self.save_handler.load_game_from_file(filename)
     
     def rotate_dirs(self, dirs, rotation):
         rotation = rotation % 4
