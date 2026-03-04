@@ -8,6 +8,7 @@ class Player():
     score : PlayerScore
     color: str
     meeples: int
+    is_ai : bool = False
     
     def __init__(self, id: int, name: str, color: str):
         self.id = id
@@ -39,3 +40,6 @@ class Player():
     
     def get_color(self) -> str:
         return self.color
+    
+    def is_ai_player(self) -> bool:
+        return self.is_ai

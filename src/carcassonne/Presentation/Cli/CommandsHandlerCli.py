@@ -111,11 +111,13 @@ def set_parameter(self, param, value):
         print(f"Paramètre '{param}' défini à '{value}'.")
         
 def play(self, move, game):
-        game.play_move(move)
+        result = game.play_move(move)
         game.get_board()
         if not game.is_undo_history_empty():
                 game.clear_undo_history()
-
+        if result:
+                while game.get_current_player().is_ai_player():
+                        game.play_ai_turn()
 
 def show_board(self, game):
         game.get_board()
