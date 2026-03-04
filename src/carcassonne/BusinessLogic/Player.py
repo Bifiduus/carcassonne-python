@@ -8,14 +8,15 @@ class Player():
     score : PlayerScore
     color: str
     meeples: int
-    is_ai : bool = False
+    is_ai : bool
     
-    def __init__(self, id: int, name: str, color: str):
+    def __init__(self, id: int, name: str, color: str, is_ai: bool = False):
         self.id = id
         self.name = name
         self.color = color
         self.score = PlayerScore(id)
         self.meeples = 7
+        self.is_ai = is_ai
 
     def __str__(self):
         return f"{self.name} ({self.color}) - Score: {self.score}, Meeples: {self.meeples}"

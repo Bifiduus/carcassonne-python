@@ -118,6 +118,7 @@ def play(self, move, game):
         if result:
                 while game.get_current_player().is_ai_player():
                         game.play_ai_turn()
+                        game.get_board()
 
 def show_board(self, game):
         game.get_board()
