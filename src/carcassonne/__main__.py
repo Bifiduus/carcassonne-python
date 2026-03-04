@@ -71,9 +71,20 @@ def main():
         help="name of the file to load a game",
         type=str,
     )
+    
+    parser.add_argument(
+        "-p",
+        "--players",
+        help="number of players (default: 2)",
+        type=int,
+    )
+    
     args = parser.parse_args()
     game_data :IGraphData = GraphData()
-    game :IGameService = Game(game_data)
+    if args.players:
+        game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2)
+    else:
+        game :IGameService = Game(game_data, 1)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:

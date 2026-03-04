@@ -1,6 +1,7 @@
 """This module defines the Game class, which implements the IGameService interface. 
 The Game class is responsible for managing the game state, including the play history and undo history. It interacts with the RulesEngine to determine if the current player is human and with the GameRepository to store and retrieve game data.
 """
+import random as r
 from typing import Any, List
 
 from carcassonne.Datas.Deck import Deck
@@ -30,7 +31,7 @@ OPPOSITE = {
 class Game(IGameService):
 
 
-    def __init__(self, graphData: IGraphData) -> None:
+    def __init__(self, graphData: IGraphData, nb_players: int) -> None:
         self.game_configuration = GameConfiguration()
         self.game_repository: GameRepository = GameRepository()
         self.graph: IGraphData = graphData
@@ -45,6 +46,7 @@ class Game(IGameService):
         self.current_hand = None
         self.save_file = None
         self.players : list[Player] = [Player(1, "Player 1", "green")]
+        self.add_players(nb_players - 1)
         self.players_order: list[int] = []
         self.shuffle_players_order()
         self.save_handler = SaveHandler(self)
@@ -290,8 +292,15 @@ class Game(IGameService):
         return seed
     
     def shuffle_players_order(self) -> None:
-        self.players_order = sorted([player for player in self.players])  # Default order based on player IDs
+        first_player = self.players[0]
+        others = [player for player in self.players if player != first_player]
+        r.shuffle(others)
+        self.players_order = [first_player] + others
         
+    def add_players(self, nb_players: int) -> None:
+        colors = ["red", "blue", "yellow", "black", "white"]
+        for i in range(2, nb_players + 2):
+            self.players.append(Player(i, f"Player {i}", colors[(i-2) % len(colors)], True))
 
     def extract_tile_code(self, move):
         try:
