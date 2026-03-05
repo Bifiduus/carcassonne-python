@@ -11,7 +11,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def play_move(self, move):
+    def play_move(self, move) -> bool:
         pass
 
     @abstractmethod
