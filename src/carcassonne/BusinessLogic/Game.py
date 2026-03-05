@@ -43,6 +43,7 @@ class Game(IGameService):
         self.seed = None
         self.maximum_number_of_players = 5
         self.minimum_number_of_players = 2
+        self.number_of_ai_players = 0
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
         self.current_hand = None
@@ -52,7 +53,7 @@ class Game(IGameService):
         self.players_order: list[int] = [0]
         self.add_players(nb_players - 1)
         self.shuffle_players_order()
-        self.current_player = self.players_order[0]
+        self.current_player_order_list = self.players_order[0]
         self.save_handler = SaveHandler(self)
 
     def start_new_game(self) -> None:
@@ -69,10 +70,9 @@ class Game(IGameService):
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.shuffle_players_order()
-        self.current_player = self.players_order[0]
-        print(self.current_player)
+        self.current_player_order_list = 0
         print(self.players_order)
-        if self.get_current_player().is_ai_player():
+        while self.get_current_player().is_ai_player():
             self.play_ai_turn()
 
     def undo(self) -> None:
@@ -82,13 +82,17 @@ class Game(IGameService):
             self.history.push_future(previous_play)
             self.deck.tiles.append(previous_play.move_str.split('/')[0])
             self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
-            self.current_player = self.get_current_player().get_id()
+            self.current_player_order_list = self.get_current_player().get_id()
             while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
                 previous_play = self.history.pop_past()
                 self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
-                self.current_player = self.get_current_player().get_id()
+                self.current_player_order_list = self.get_current_player().get_id()
                 self.deck.tiles.append(previous_play.move_str.split('/')[0])
                 self.history.push_future(previous_play)
+            previous_play = self.history.pop_past()
+            self.history.push_future(previous_play)
+            self.deck.tiles.append(previous_play.move_str.split('/')[0])
+            self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
@@ -97,6 +101,7 @@ class Game(IGameService):
             self.current_hand = last_unplayed_move.move_str.split('/')[0]
             self.draw_tile()
             self.play_move(last_unplayed_move.move_str)
+            print(self.players_order[self.current_player_order_list])
             while self.history.future_moves and is_ai_player(self.history.future_moves[-1]):
                 self.draw_tile()
                 self.play_move(self.history.future_moves[-1].move_str) 
@@ -122,9 +127,11 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
-        if self.current_player != self.get_current_player().get_id():
+        if self.players_order[self.current_player_order_list] != self.get_current_player().get_id():
             print("It is not your turn to play.")
-            print(f"The one: {self.current_player}. You: {self.get_current_player()}")
+            print(f"The one: {self.players_order[self.current_player_order_list]} {self.current_player_order_list}. You: {self.get_current_player()}")
+            print(f"turn:{self.graph.get_turn_number()}")
+            print(self.players_order)
             return False
         if self.current_hand is None:
             print("Vous devez piocher une tuile avant de jouer.")
@@ -140,7 +147,7 @@ class Game(IGameService):
             self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players, self.get_current_player())   
             print(move + " placed successfully.")
             self.current_hand = None
-            self.current_player = (self.current_player+1) % self.get_number_of_players()
+            self.current_player_order_list = (self.current_player_order_list + 1) % self.get_number_of_players()
             return True
         
         return False
@@ -177,7 +184,11 @@ class Game(IGameService):
         return len(self.players)
     
     def set_number_of_ai_players(self, num_players: int) -> None:
+        self.add_players(num_players)
         self.number_of_ai_players = num_players
+
+    def get_number_of_ai_players(self) -> int:
+        return self.number_of_ai_players
 
     def get_current_player(self) -> Player:
         current_player_id = self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
@@ -321,6 +332,7 @@ class Game(IGameService):
         for i in range(1, nb_players + 1):
             self.players[i] = Player(i, f"Player {i}", colors[(i-2) % len(colors)], True)
             self.players_order.append(i)
+            self.number_of_ai_players += 1
 
     def extract_tile_code(self, move):
         try:
