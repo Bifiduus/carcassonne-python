@@ -6,9 +6,12 @@ from carcassonne.Datas.TilesInfo import TilesInfo
 from carcassonne.BusinessLogic.Player import Player
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> 5c81d16 (pytest working thanks to better names for files)
+=======
+>>>>>>> 8a27fa1 (pytest working thanks to better names for files)
 class TestBoard:
     def test_board_initialization(self):
         board = Board()
@@ -19,6 +22,7 @@ class TestBoard:
         graph = GraphData()
         tiles_info = TilesInfo()
         history = History()
+<<<<<<< HEAD
 <<<<<<< HEAD
         players: dict[int, Player] = {}
         players[0] = Player(1, "Bob", "blue")
@@ -34,6 +38,8 @@ class TestBoard:
 
         # Add assertions here to check if the tile was added correctly, lands components were updated, meeples were placed, and the tile was removed from available tiles.
 =======
+=======
+>>>>>>> 8a27fa1 (pytest working thanks to better names for files)
         players = [Player(1,"Bob", "blue"), Player(2,"Alice", "red")]
         move = "RRRR/1E0"
         board.add_tile_to_board(move, graph, tiles_info, history, players)
@@ -42,5 +48,9 @@ class TestBoard:
         assert len(graph.meeples) == 0, "No meeple should be placed if not specified in the move"
         
         
+<<<<<<< HEAD
         # Add assertions here to check if the tile was added correctly, lands components were updated, meeples were placed, and the tile was removed from available tiles.
 >>>>>>> 5c81d16 (pytest working thanks to better names for files)
+=======
+        # Add assertions here to check if the tile was added correctly, lands components were updated, meeples were placed, and the tile was removed from available tiles.
+>>>>>>> 8a27fa1 (pytest working thanks to better names for files)
