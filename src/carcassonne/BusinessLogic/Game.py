@@ -66,7 +66,6 @@ class Game(IGameService):
         self.board = Board()
         self.deck = Deck()
         self.current_hand = None
-        self.seed = None
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.shuffle_players_order()

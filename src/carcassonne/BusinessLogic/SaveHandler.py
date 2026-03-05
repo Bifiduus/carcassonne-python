@@ -30,6 +30,7 @@ class SaveHandler:
         file.write("NumberOfPlayers: " + str(len(self.game.players) - number_of_ai_players) + ","+ str(number_of_ai_players) +"\n")
         file.write("PlayersOrder: [" + ", ".join([f"{player_id}" for player_id in self.game.players_order]) + "]\n")
         file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.game.players.values()]) + "]\n")
+        file.write("Seed: " + str(self.game.seed) + "\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.game.get_history()
@@ -162,14 +163,22 @@ class SaveHandler:
                                 player.score.setPoints(int(points.strip()))
                                 print(f"Player number {self.game.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
                     game_score = True
+                if line.startswith("Seed:"):
+                    line = line.split("Seed:")[1].strip() # Assuming the format is "Seed: the seed"
+                    if line == "":
+                        print("Warning: No seed.")
+                        continue
+                    self.game.seed = int(line)
 
             elif history_section:
+                self.game.shuffle_deck(self.game.seed)
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
                 for player_move in line.strip(" ").split(" "):
                     move = player_move.split(":")[1] if ":" in player_move else player_move
                     self.game.current_hand = move
                     self.game.play_move(move)  # Assuming line is in the format "player_id:details"
+                    
         if sections_parsed < 3:
             print("Warning: Not all sections were found in the file.")
             if not settings_parsed:
