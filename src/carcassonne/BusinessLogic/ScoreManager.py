@@ -147,6 +147,52 @@ class ScoreManager():
         """TODO"""
         return
 
+    @staticmethod
+    def score_end_of_game(graph, players: Dict[int, 'Player']) -> None:
+        """Score at end of game for non-completed R, C, M and all Fields."""
+        # Score incomplete Roads
+        if 'R' in graph.lands_components:
+            for road_name, road_component in graph.lands_components['R'].items():
+                if not ScoreManager.is_component_complete('R', road_name, graph):
+                    ScoreManager._score_road_incomplete(road_component, road_name, graph, players)
+
+        # Score incomplete Cities
+        if 'C' in graph.lands_components:
+            for city_name, city_component in graph.lands_components['C'].items():
+                if not ScoreManager.is_component_complete('C', city_name, graph):
+                    ScoreManager._score_city_incomplete(city_component, city_name, graph, players)
+
+        # Score incomplete Monasteries
+        if 'M' in graph.lands_components:
+            for monastery_name, monastery_component in graph.lands_components['M'].items():
+                if not ScoreManager.is_component_complete('M', monastery_name, graph):
+                    ScoreManager._score_monastery_incomplete(monastery_component, monastery_name, graph, players)
+
+        # Score Fields
+        if 'F' in graph.lands_components:
+            for field_name, field_component in graph.lands_components['F'].items():
+                ScoreManager._score_field(field_component, field_name, graph, players)
+
+    @staticmethod
+    def _score_road_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+        """TODO"""
+        return
+
+    @staticmethod
+    def _score_city_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+        """TODO"""
+        return
+
+    @staticmethod
+    def _score_monastery_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+        """TODO"""
+        return
+
+    @staticmethod
+    def _score_field(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+        """TODO"""
+        return
+
 
 class EndGameScore():
 
