@@ -3,6 +3,7 @@ import pytest
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.Datas.GraphData import GraphData
 
+
 class TestGame:
     def test_init_game(self):
         graphData = GraphData()
@@ -18,8 +19,8 @@ class TestGame:
         assert game.seed is None, "The game must not have a seed right after initialisation"
         assert game.shuffle_algo == "fisher-yates", "The shuffle algorithm at start must be the fisher-yates version"
         assert game.current_hand is None, "The game cannot have a current game at initialisation"
-        assert game.players is not [], "The game must have a player at start" # May change
-    
+        assert game.players is not [], "The game must have a player at start"  # May change
+
     def test_start_new_game(self):
         graphData = GraphData()
         game = Game(graphData, 1)
@@ -30,12 +31,12 @@ class TestGame:
         graph = game.graph
         players_order = game.players_order
         game.start_new_game()
-        assert len(game.get_history()) is 0, "The undo history must be cleared after starting a new game"
-        assert len(game.history.future_moves) is 0, "The redo history must be cleared after starting a new game"
+        assert len(game.get_history(
+        )) is 0, "The undo history must be cleared after starting a new game"
+        assert len(
+            game.history.future_moves) is 0, "The redo history must be cleared after starting a new game"
         new_graph = game.graph
-        assert new_graph.get_verticies()[0] != None, "The vertices of the board must be cleared"
+        assert new_graph.get_verticies(
+        )[0] != None, "The vertices of the board must be cleared"
         assert new_graph.get_turn_number() == 1, "The turn number must be re-initialized"
         assert players_order != [], "There must be a players order when you start a new game"
-
-
-
