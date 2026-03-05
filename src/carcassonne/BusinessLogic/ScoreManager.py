@@ -112,6 +112,16 @@ class ScoreManager():
         return True
 
     @staticmethod
+    def get_meeples_on_component(component_name: str, graph) -> Dict[int, int]:
+        """TODO"""
+        return
+
+    @staticmethod
+    def get_banners_on_tiles(tile_ids: List[int], graph) -> int:
+        """TODO"""
+        return
+
+    @staticmethod
     def score_end_of_turn(graph, players: Dict[int, 'Player']) -> None:
         """Score at end of turn for completed Road, City, and Monastery components."""
         # Score Roads
@@ -134,18 +144,55 @@ class ScoreManager():
 
     @staticmethod
     def _score_road_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score a completed road: 1 point per tile."""
+        tile_ids = [tid for tid, _ in component]
+        points_per_tile = 1
+        total_points = len(tile_ids) * points_per_tile
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        max_count = max(meeple_count.values())
+        winning_players = [player_id for player_id, count in meeple_count.items() if count == max_count]
+
+        for player_id in winning_players:
+            if player_id in players:
+                players[player_id].get_score().add_score(total_points)
 
     @staticmethod
     def _score_city_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score a completed city: 2 points per tile + 2 per banner."""
+        tile_ids = [tid for tid, _ in component]
+        points_per_tile = 2
+        points_per_banner = 2
+
+        banners = ScoreManager.get_banners_on_tiles(tile_ids, graph)
+        total_points = (len(tile_ids) * points_per_tile) + (banners * points_per_banner)
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        max_count = max(meeple_count.values())
+        winning_players = [player_id for player_id, count in meeple_count.items() if count == max_count]
+
+        for player_id in winning_players:
+            if player_id in players:
+                players[player_id].get_score().add_score(total_points)
 
     @staticmethod
     def _score_monastery_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score a completed monastery: 9 points."""
+        points = 9
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        for player_id in meeple_count.keys():
+            if player_id in players:
+                players[player_id].get_score().add_score(points)
 
     @staticmethod
     def score_end_of_game(graph, players: Dict[int, 'Player']) -> None:
@@ -175,21 +222,89 @@ class ScoreManager():
 
     @staticmethod
     def _score_road_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score incomplete road: 1 point per tile."""
+        tile_ids = [tid for tid, _ in component]
+        points_per_tile = 1
+        total_points = len(tile_ids) * points_per_tile
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        max_count = max(meeple_count.values())
+        winning_players = [player_id for player_id, count in meeple_count.items() if count == max_count]
+
+        for player_id in winning_players:
+            if player_id in players:
+                players[player_id].get_score().add_score(total_points)
 
     @staticmethod
     def _score_city_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score incomplete city: 1 point per tile + 1 per banner."""
+        tile_ids = [tid for tid, _ in component]
+        points_per_tile = 1
+        points_per_banner = 1
+
+        banners = ScoreManager.get_banners_on_tiles(tile_ids, graph)
+        total_points = (len(tile_ids) * points_per_tile) + (banners * points_per_banner)
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        max_count = max(meeple_count.values())
+        winning_players = [player_id for player_id, count in meeple_count.items() if count == max_count]
+
+        for player_id in winning_players:
+            if player_id in players:
+                players[player_id].get_score().add_score(total_points)
 
     @staticmethod
     def _score_monastery_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """TODO"""
-        return
+        """Score incomplete monastery: 1 point per adjacent tile."""
+        if not component:
+            return
+
+        tile_id, _ = component[0]
+        vertex = graph.vertices.get(tile_id)
+        if vertex is None:
+            return
+
+        # 1 point per adjacent tile
+        adjacent_tiles = len(vertex.neighbors)
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        for player_id in meeple_count.keys():
+            if player_id in players:
+                players[player_id].get_score().add_score(adjacent_tiles)
 
     @staticmethod
     def _score_field(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+        """Score field: 3 points per component + 3 per adjacent completed city."""
+        points_per_component = 3
+        points_per_adjacent_city = 3
+
+        # Count adjacent completed cities
+        adjacent_completed_cities = ScoreManager._count_adjacent_completed_cities(component, graph)
+
+        total_points = points_per_component + (adjacent_completed_cities * points_per_adjacent_city)
+
+        meeple_count = ScoreManager.get_meeples_on_component(component_name, graph)
+        if not meeple_count:
+            return
+
+        max_count = max(meeple_count.values())
+        winning_players = [player_id for player_id, count in meeple_count.items() if count == max_count]
+
+        for player_id in winning_players:
+            if player_id in players:
+                players[player_id].get_score().add_score(total_points)
+
+    @staticmethod
+    def _count_adjacent_completed_cities(field_component: List[Tuple], graph) -> int:
         """TODO"""
         return
 
