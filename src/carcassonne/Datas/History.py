@@ -5,9 +5,10 @@ It provides methods to push and pop moves from these lists, as well as to clear 
 from carcassonne.Datas.Serializer import build_str
 
 class MoveRecord:
-    def __init__(self, move_str, player_id=1):
+    def __init__(self, move_str, player_id=1, is_ai: bool=False):
         self.move_str = move_str
         self.player_id = player_id
+        self.is_ai_move = is_ai
 
 
 class History:

@@ -4,6 +4,7 @@ The Board class interacts with the graph data structure that represents the game
 """
 import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.BusinessLogic.Player import Player
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
@@ -24,7 +25,7 @@ SOUTHEAST_MATRIX = (2, 2)
 
 class Board:
     
-    def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History, players) -> None:
+    def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History, players: dict[int, Player], current_player: Player) -> None:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
@@ -62,7 +63,8 @@ class Board:
         try:
             record = MoveRecord(
                 move_str=move,
-                player_id=1
+                player_id=current_player.get_id(),
+                is_ai = current_player.is_ai
             )
             history.push_past(record)
             history.clear_future()

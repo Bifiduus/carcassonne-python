@@ -248,18 +248,6 @@ class GraphData(IGraphData):
              
         }
 
-    def get_vertex_orientation(self, vertex_id: int) -> int:
-        vertex = self.get_vertex(vertex_id)
-        if vertex is None:
-            raise ValueError(f"Vertex ID not found : {vertex_id}")
-        return vertex.get_orientation()
-
-    def get_vertex_orientation(self, vertex_id: int) -> int:
-        vertex = self.get_vertex(vertex_id)
-        if vertex is None:
-            raise ValueError(f"Vertex ID not found : {vertex_id}")
-        return vertex.get_orientation()
-
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
         vertex = self.get_vertex(vertex_id)
         if vertex is None:
@@ -315,9 +303,6 @@ class GraphData(IGraphData):
         # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
         self.initialize_land_components()
         self.initialize_starting_tile()
-
-    def get_vertex_id(self, vertex) -> int:
-        return vertex.get_id()
     
     def get_vertex_orientation(self, vertex_id: int) -> int:
         vertex = self.get_vertex(vertex_id)

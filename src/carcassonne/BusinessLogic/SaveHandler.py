@@ -130,8 +130,8 @@ class SaveHandler:
                         continue
                     number_of_players, number_of_ai_players = line.split(",") if "," in line else (line, "0")
                     print(f"Total number of players specified: {int(number_of_ai_players.strip()) + int(number_of_players.strip())}.")
-                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > self.game.maximum_number_of_players():
-                        print(f"Warning: Number of players should be between {self.game.minimum_number_of_players()} and {self.game.maximum_number_of_players()}.")
+                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > self.game.get_maximum_number_of_players():
+                        print(f"Warning: Number of players should be between {self.game.get_minimum_number_of_players()} and {self.game.get_maximum_number_of_players()}.")
                         continue
                     self.game.set_number_of_ai_players(int(number_of_ai_players.strip()))
                     print(f"Number of players set to {int(number_of_players.strip()) + int(number_of_ai_players.strip())}.")
