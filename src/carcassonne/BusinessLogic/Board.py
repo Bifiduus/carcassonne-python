@@ -1,5 +1,5 @@
-"""This module defines the Board class, which is responsible for managing the game board in Carcassonne. 
-It provides methods to add and remove tiles from the board, as well as to update the game state accordingly. 
+"""This module defines the Board class, which is responsible for managing the game board in Carcassonne.
+It provides methods to add and remove tiles from the board, as well as to update the game state accordingly.
 The Board class interacts with the graph data structure that represents the game state, the tiles information, and the history of moves made during the game.
 """
 import re
@@ -8,6 +8,7 @@ from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.BusinessLogic.GraphLogic import GraphLogic
+from carcassonne.BusinessLogic.ScoreManager import ScoreManager
 from carcassonne.Datas.MeepleData import Meeple
 from carcassonne.Datas.TilesInfo import Tile
 from carcassonne.Datas.Serializer import parse_move, build_str
@@ -23,12 +24,12 @@ SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
 
 class Board:
-    
+
     def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History, players) -> None:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
-        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]
         attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
         tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
@@ -37,10 +38,10 @@ class Board:
         turn = graph.get_turn_number()
         tile_id = turn
         graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
-        
+
         graph_logic = GraphLogic()
         graph_logic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
-        
+
         print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
         if counter == len(move_parts) - 1:
             #meeple
@@ -55,10 +56,23 @@ class Board:
             graph.add_meeple(meeple)
             players[turn % len(players)].remove_meeple()
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
+
+        # Score completed components at end of turn
+        # Map player_id (0-based) to Player object
+        players_dict = {idx: player for idx, player in enumerate(players)}
+        ScoreManager.score_end_of_turn(graph, players_dict)
+
+        # affiche les scores actuels dans la console
+        print(f"-- Scores après le tour {turn} --")
+        for idx, player in enumerate(players):
+            # use get_username() since Player has no get_name()
+            print(f"Joueur {idx+1} ({player.get_username()}): {player.get_score().score} pts")
+        print("------------------------------")
+
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
-    
+
         try:
             record = MoveRecord(
                 move_str=move,
@@ -73,17 +87,17 @@ class Board:
 
         move_parts = move.split(':')[1].split('/')
         counter = 3 if len(move_parts[1]) == 1 else 2
-        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]  
+        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter - 1])]
         attach_direction = ''.join(c for c in move_parts[counter - 1] if c.isalpha())
         tile_pos = graph.get_position(vertex_id=integers_placement[0], side=tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return
-        
+
         tile_id = graph.get_turn_number()-1
         graph.remove_vertex(vertex_id=tile_id)  # example of removing the tile as a vertex in the graph
         graph.remove_meeple(tile_id)
-        
+
         #rajouter la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.add_tile(tile_name)
