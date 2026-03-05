@@ -26,16 +26,18 @@ class SaveHandler:
         file.write("\n")
         file.write("[GameState]\n")
         ## + who is the current player, scores, etc.
-        file.write("NumberOfPlayers: " + str(len(self.game.players)) + ", 0\n") # str(self.game_repository.get_number_of_ai_players()) 
+        number_of_ai_players = self.game.get_number_of_ai_players()           
+        file.write("NumberOfPlayers: " + str(len(self.game.players) - number_of_ai_players) + ","+ str(number_of_ai_players) +"\n")
         file.write("PlayersOrder: [" + ", ".join([f"{player_id}" for player_id in self.game.players_order]) + "]\n")
-        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.game.players]) + "]\n")
+        file.write("GameScore: [" + ", ".join([f"{player.get_id()}: {player.get_score().score}" for player in self.game.players.values()]) + "]\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.game.get_history()
         while moves_history is not None and len(moves_history) > 0:
             for player in range(self.game.get_number_of_players()):
-                move = moves_history.pop()
-                file.write(move + " ")
+                if moves_history:
+                    move = moves_history.pop()
+                    file.write(move + " ")
         file.write("\n")
         file.close()
         return 0
@@ -155,7 +157,7 @@ class SaveHandler:
                         print("Warning: More scores than players.")
                     for score in scores:       
                         playerID, points = score.split(":")
-                        for player in self.game.players:
+                        for player in self.game.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.setPoints(int(points.strip()))
                                 print(f"Player number {self.game.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
