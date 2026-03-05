@@ -5,21 +5,21 @@ It provides methods to push and pop moves from these lists, as well as to clear 
 from carcassonne.Datas.Serializer import build_str
 
 class MoveRecord:
-    def __init__(self, move_str, player_id=1, is_ai: bool=False):
-        self.move_str = move_str
-        self.player_id = player_id
-        self.is_ai_move = is_ai
+    def __init__(self, move_str: str, player_id: int = 1, is_ai: bool = False) -> None:
+        self.move_str: str = move_str
+        self.player_id: int = player_id
+        self.is_ai_move: bool = is_ai
 
 
 class History:
-    def __init__(self):
+    def __init__(self) -> None:
         self.past_moves = []
         self.future_moves = []
 
-    def push_past(self, record: MoveRecord):
+    def push_past(self, record: MoveRecord) -> None:
         self.past_moves.append(record)
 
-    def push_future(self, record: MoveRecord):
+    def push_future(self, record: MoveRecord) -> None:
         self.future_moves.append(record)
 
     def pop_past(self) -> MoveRecord:
@@ -28,12 +28,12 @@ class History:
     def pop_future(self) -> MoveRecord:
         return self.future_moves.pop()
     
-    def clear_future(self):
+    def clear_future(self) -> None:
         self.future_moves.clear()
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         self.past_moves.clear()
         self.future_moves.clear()
 
-    def list_history(self):
+    def list_history(self) -> list[str]:
         return [build_str(record) for record in self.past_moves]

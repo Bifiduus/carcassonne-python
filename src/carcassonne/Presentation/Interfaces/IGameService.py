@@ -7,19 +7,19 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 class IGameService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def start_new_game(self):
+    def start_new_game(self) -> None:
         pass
 
     @abstractmethod
-    def play_move(self, move) -> bool:
+    def play_move(self, move: str) -> bool:
         pass
 
     @abstractmethod
-    def undo(self):
+    def undo(self) -> None:
         pass
 
     @abstractmethod
-    def redo(self):
+    def redo(self) -> None:
         pass
 
     @abstractmethod
@@ -43,7 +43,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def shuffle_deck(self, algo=None, seed=None) -> int:
+    def shuffle_deck(self, algo: str | None = None, seed: int | None = None) -> int:
         pass
 
     @abstractmethod
@@ -55,7 +55,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_tile_data(self, tile):
+    def get_tile_data(self, tile: str) -> None:
         pass
 
     @abstractmethod

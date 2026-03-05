@@ -25,7 +25,7 @@ def STAR2_5(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
 
 class RandomPlayer:
     
-    def get_possible_moves(self, tile, graph: IGraphData, tiles_info: ITilesInfo, 
+    def get_possible_moves(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo, 
                           rules_manager: RulesManager) -> List[str]:
         """
         Generate all legal moves from the current game state.
@@ -59,7 +59,7 @@ class RandomPlayer:
                                 possible_moves.append(move)
         return possible_moves
 
-    def random_move(self, tile, graph, tiles_info, rules_manager) -> str:
+    def random_move(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo, rules_manager: RulesManager) -> str | None:
         """Select a random move from the list of possible moves."""
         import random as r
         
@@ -90,7 +90,7 @@ class ExpectimaxPlayer:
         else:
             self.set_evaluation_method(eval_name)
     
-    def set_evaluation_method(self, name_or_fn):
+    def set_evaluation_method(self, name_or_fn) -> None:
         """Set evaluation by name ('STAR1','STAR2','STAR2_5') or by callable.
 
         Accepts a callable(graph, ai_score, opponent_score) or a string name.

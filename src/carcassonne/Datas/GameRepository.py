@@ -7,5 +7,5 @@ class GameRepository:
 
 
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.game_state = None

@@ -47,7 +47,7 @@ class Vertex:
     # Couples of (key = direction, value = neighbor vertex id)
     neighbors: Dict[int, int] = field(default_factory=dict)
 
-    def __init__(self, id: int, name: str, middle: str, tile_dict: Dict[str, list], orientation: int = 0, position: tuple[int, int] = (0, 0)):
+    def __init__(self, id: int, name: str, middle: str, tile_dict: Dict[str, list], orientation: int = 0, position: tuple[int, int] = (0, 0)) -> None:
         self.id = id
         self.name = name
         self.middle = middle
@@ -115,7 +115,7 @@ class Vertex:
 
 
 class GraphData(IGraphData):
-    def __init__(self):
+    def __init__(self) -> None:
         self.vertices: Dict[int, Vertex] = {}
         self.turn = 0
         # Lands components structure: {land_type: {set_name: [(tile_id, [directions]), ...]}}
@@ -128,7 +128,7 @@ class GraphData(IGraphData):
         self.initialize_land_components()
         self.initialize_starting_tile()
 
-    def initialize_land_components(self):
+    def initialize_land_components(self) -> None:
         # Initialize land components for the starting tile (CRFR)
         self.lands_components['C'] = {}
         self.lands_components['R'] = {}
@@ -139,7 +139,7 @@ class GraphData(IGraphData):
         self.next_set_id['F'] = 1  # Next set ID for fields
         self.next_set_id['M'] = 1  # Next set ID for monasteries
     
-    def initialize_starting_tile(self):
+    def initialize_starting_tile(self) -> None:
         # Define the lands components for each tile type, including the starting tile
         self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
         tile = self.tiles_dict['CRFR']
@@ -210,7 +210,7 @@ class GraphData(IGraphData):
     def get_vertex(self, vertex_id: int) -> Optional[Vertex]:
         return self.vertices.get(vertex_id)
 
-    def get_vertex_id(self, vertex) -> int:
+    def get_vertex_id(self, vertex: Vertex) -> int:
         return vertex.get_id()
 
     def get_verticies(self) -> Dict[int, Vertex]:
@@ -232,7 +232,7 @@ class GraphData(IGraphData):
             for vertex_id, vertex in self.vertices.items()
         }
     
-    def get_vertice_data(self, vertex) -> dict[int, dict]:
+    def get_vertice_data(self, vertex: int) -> dict[int, dict]:
         """
         Retourne toutes les informations nécessaires pour l'affichage GUI.
         """

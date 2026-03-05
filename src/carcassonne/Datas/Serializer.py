@@ -3,19 +3,23 @@ The Serializer class includes the parse_move function, which takes a move string
 It also includes the build_str function, which takes a MoveRecord object and constructs a move string that can be used to represent the move in the game history.
 """
 import re
+from typing import TYPE_CHECKING
 
-PLACEMENT_RE = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
-MEEPLE_SET = {"N", "E", "S", "W"}
+if TYPE_CHECKING:
+    from carcassonne.Datas.History import MoveRecord
 
-def parse_move(move):
+PLACEMENT_RE: re.Pattern[str] = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
+MEEPLE_SET: set[str] = {"N", "E", "S", "W"}
+
+def parse_move(move: str) -> dict:
     if not isinstance(move, str):
         raise ValueError("move must be a string")
 
-    parts = move.split("/")
+    parts: list[str] = move.split("/")
     if len(parts) < 2:
         raise ValueError("move must contain at least tile and placement")
 
-    tile_sides = parts[0]
+    tile_sides: str = parts[0]
 
     if len(tile_sides) != 4:
         raise ValueError("tile must have 4 sides")
@@ -23,24 +27,24 @@ def parse_move(move):
     center = None
     placement_index = 1
     if len(parts) >= 3 and len(parts[1]) == 1 and not PLACEMENT_RE.match(parts[1]):
-        center = parts[1]
+        center: str = parts[1]
         placement_index = 2
     if placement_index >= len(parts):
         raise ValueError("invalid placement format")
 
-    placement = parts[placement_index]
-    match = PLACEMENT_RE.match(placement)
+    placement: str = parts[placement_index]
+    match: re.Match[str] | None = PLACEMENT_RE.match(placement)
     if not match:
         raise ValueError("invalid placement format")
 
     target_id = int(match.group("target"))
-    target_side = match.group("side")
+    target_side: str | re.Any = match.group("side")
     rotation = int(match.group("rot"))
     meeple = None
     if placement_index + 1 < len(parts):
-        candidate = parts[placement_index + 1]
+        candidate: str = parts[placement_index + 1]
         if candidate in MEEPLE_SET:
-            meeple = candidate
+            meeple: str = candidate
         else:
             raise ValueError("invalid meeple format")
     if placement_index + 2 < len(parts):
@@ -55,5 +59,5 @@ def parse_move(move):
         "meeple": meeple,
     }
 
-def build_str(record):
+def build_str(record: "MoveRecord") -> str:
     return f"{record.player_id}:{record.move_str.strip(';')};"
