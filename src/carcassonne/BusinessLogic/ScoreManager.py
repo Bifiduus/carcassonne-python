@@ -113,13 +113,29 @@ class ScoreManager():
 
     @staticmethod
     def get_meeples_on_component(component_name: str, graph) -> Dict[int, int]:
-        """TODO"""
-        return
+        """Count meeples per player on a component.
+
+        Returns: {player_id: count}
+        """
+        meeple_count = {}
+
+        for meeple in graph.meeples:
+            if meeple.lands_components == component_name:
+                if meeple.player_id not in meeple_count:
+                    meeple_count[meeple.player_id] = 0
+                meeple_count[meeple.player_id] += 1
+
+        return meeple_count
 
     @staticmethod
     def get_banners_on_tiles(tile_ids: List[int], graph) -> int:
-        """TODO"""
-        return
+        """Count banners on a set of tiles."""
+        banner_count = 0
+        for tile_id in tile_ids:
+            vertex = graph.vertices.get(tile_id)
+            if vertex and '/b' in vertex.name:
+                banner_count += 1
+        return banner_count
 
     @staticmethod
     def score_end_of_turn(graph, players: Dict[int, 'Player']) -> None:
@@ -305,8 +321,45 @@ class ScoreManager():
 
     @staticmethod
     def _count_adjacent_completed_cities(field_component: List[Tuple], graph) -> int:
-        """TODO"""
-        return
+        """Count the number of unique adjacent completed cities to a field."""
+        adjacent_cities = set()
+
+        # For each tile in the field
+        for tile_id, _ in field_component:
+            vertex = graph.vertices.get(tile_id)
+            if vertex is None:
+                continue
+
+            # Check all adjacent tiles (neighbors)
+            for neighbor_id in vertex.neighbors.values():
+                neighbor_vertex = graph.vertices.get(neighbor_id)
+                if neighbor_vertex is None:
+                    continue
+
+                # Find which city component this neighbor belongs to
+                city_name = ScoreManager._find_city_component_for_tile(neighbor_id, graph)
+
+                # If it's part of a city and the city is complete, count it
+                if city_name and ScoreManager.is_component_complete('C', city_name, graph):
+                    adjacent_cities.add(city_name)
+
+        return len(adjacent_cities)
+
+    @staticmethod
+    def _find_city_component_for_tile(tile_id: int, graph) -> Optional[str]:
+        """Find the city component name that a tile belongs to.
+
+        Returns the city component name (e.g., 'C1') or None if tile is not in any city.
+        """
+        if 'C' not in graph.lands_components:
+            return None
+
+        for city_name, city_component in graph.lands_components['C'].items():
+            for component_tile_id, _ in city_component:
+                if component_tile_id == tile_id:
+                    return city_name
+
+        return None
 
 
 class EndGameScore():
