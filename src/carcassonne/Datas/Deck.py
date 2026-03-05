@@ -37,16 +37,16 @@ class Deck:
             #"RRSS",
         ]
         
-    def draw(self):
+    def draw(self) -> str | None:
         if not self.tiles:
             print("Deck is empty, cannot draw a tile.")
             return None
         return self.tiles.pop()
 
-    def len(self):
+    def len(self) -> int:
         return len(self.tiles)
     
-    def shuffle_fisher_yates(self,seed):
+    def shuffle_fisher_yates(self, seed: int | str) -> None:
         seed = [int(s) for s in str(seed)]
         seed_index = 0
         for i in range(len(self.tiles) - 1, 0, -1):
@@ -58,7 +58,7 @@ class Deck:
                 seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
 
-    def shuffle_naive(self, seed):
+    def shuffle_naive(self, seed: int | str) -> None:
         seed = [int(s) for s in str(seed)]
         seed_index = 0
         n = len(self.tiles)

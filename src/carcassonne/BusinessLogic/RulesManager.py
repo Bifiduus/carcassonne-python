@@ -38,7 +38,7 @@ class RulesManager():
         
         self.tiles_info = tiles_info
 
-    def can_place_meeple_on_tile_side(self, move_parts, counter, graph: IGraphData) -> bool:
+    def can_place_meeple_on_tile_side(self, move_parts: list[str], counter: int, graph: IGraphData) -> bool:
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
@@ -72,7 +72,7 @@ class RulesManager():
                 return False
         return True
     
-    def areEqualSides(self, tile1, tile1pos, orientation, graph: IGraphData):
+    def areEqualSides(self, tile1: list[str], tile1pos: tuple[int, int], orientation: int, graph: IGraphData) -> bool:
         """
         Checks if the sides of two tiles from the computed move are equal.
 
@@ -108,7 +108,7 @@ class RulesManager():
             
         return True
     
-    def is_legal_move(self, move_parts, graph: IGraphData):
+    def is_legal_move(self, move_parts: list[str], graph: IGraphData) -> bool:
         
         """
         Checks if the given move is legal in the current game state.
@@ -150,7 +150,7 @@ class RulesManager():
         
         return True
     
-    def is_correctly_formed_move(self, move, graph: IGraphData):
+    def is_correctly_formed_move(self, move: str, graph: IGraphData) -> bool:
         """
         Checks if the given move is correctly formed.
 
@@ -218,7 +218,7 @@ class RulesManager():
             
         return True
         
-    def check_move(self, move, graph: IGraphData):
+    def check_move(self, move: str, graph: IGraphData) -> bool:
         """
         Checks if the given move is valid in the current game state and prints the result.
 
@@ -232,7 +232,7 @@ class RulesManager():
         
         return True  
     
-    def getGameHistory(self):
+    def getGameHistory(self) -> list:
         return self.history.list_history()
 
     def current_player_is_human(self) -> bool:

@@ -1,18 +1,20 @@
+"""This module implements the BoardView class for displaying the game board."""
 import gi
 gi.require_version("Gtk", "4.0")
 
 from gi.repository import Gtk, Gdk, GdkPixbuf
 import os
 import math
-
+from typing import Any
 
 import re
+from carcassonne.Presentation.Interfaces.IGameService import IGameService
 
 PLACEMENT_RE = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
 MEEPLE_SET = {"N", "E", "S", "W"}
 
 class BoardView(Gtk.DrawingArea):
-    def __init__(self, game_service, game_gui, tile_size=100):
+    def __init__(self, game_service: IGameService, game_gui: Any, tile_size: int = 100) -> None:
         super().__init__()
 
         self.game = game_service
@@ -61,7 +63,7 @@ class BoardView(Gtk.DrawingArea):
         key_controller.connect("key-pressed", self.on_key_press)
         self.add_controller(key_controller)
     
-    def get_tile_image_path(self, name):
+    def get_tile_image_path(self, name: str) -> str:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         images_dir = os.path.join(base_dir, "Images")
         if(name.find("/") != -1):
@@ -69,7 +71,7 @@ class BoardView(Gtk.DrawingArea):
             return os.path.join(images_dir, f"{name[0]}{name[1]}.png")
         return os.path.join(images_dir, f"{name}.png")
             
-    def load_textures(self):
+    def load_textures(self) -> None:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         images_dir = os.path.join(base_dir, "Images")
         images_dir = os.path.normpath(images_dir)
@@ -95,7 +97,7 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     # 🎨 DRAW
     # =========================
-    def on_draw(self, area, cr, width, height):
+    def on_draw(self, area: Gtk.DrawingArea, cr: Any, width: int, height: int) -> None:
 
         cr.set_source_rgb(0.6, 0.6, 0.6)
         cr.paint()
@@ -136,7 +138,7 @@ class BoardView(Gtk.DrawingArea):
         if self.is_dragging and self.game_gui.current_tile and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
 
-    def parse_move(self, move, x, y):
+    def parse_move(self, move: str, x: int, y: int) -> dict:
         if move.count('/')==1:
             name, rest = move.split("/")
             orientation = int(rest[-1])
@@ -156,7 +158,7 @@ class BoardView(Gtk.DrawingArea):
             
         }
 
-    def draw_ghost_tile(self, cr):
+    def draw_ghost_tile(self, cr: Any) -> None:
         name = self.game_gui.current_tile
         orientation = self.game_gui.current_orientation
         if name.find("/") != -1:
@@ -206,7 +208,7 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     # 🧩 DRAW ONE TILE
     # =========================
-    def draw_tile(self, cr, x, y, size, tile_data):
+    def draw_tile(self, cr: Any, x: int, y: int, size: int, tile_data: dict) -> None:
         name = tile_data["name"]+tile_data["middle"] if tile_data["middle"] else tile_data["name"]
         orientation = tile_data["orientation"]
         print(f"Drawing tile {name} at ({x}, {y}) with orientation {orientation}")
@@ -300,7 +302,7 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     # 🖱️ CLICK
     # =========================
-    def on_click(self, gesture, n_press, mouse_x, mouse_y):
+    def on_click(self, gesture: Any, n_press: int, mouse_x: int, mouse_y: int) -> None:
         
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
 
@@ -362,7 +364,7 @@ class BoardView(Gtk.DrawingArea):
     
         self.queue_draw()
 
-    def on_drop(self, controller, value, x, y):
+    def on_drop(self, controller: Any, value: str, x: int, y: int) -> bool:
         tile_name = value  # string reçue
 
         print("Dropped tile:", tile_name)
@@ -383,7 +385,7 @@ class BoardView(Gtk.DrawingArea):
         self.queue_draw()
         return True
 
-    def on_key_press(self, controller, keyval, keycode, state):
+    def on_key_press(self, controller: Any, keyval: int, keycode: int, state: Any) -> bool:
         step = 20  # pixels de déplacement
         if keyval == Gdk.KEY_z:      # haut
             self.offset_y += step
@@ -399,7 +401,7 @@ class BoardView(Gtk.DrawingArea):
         self.queue_draw()
         return True  # signal consommé
     
-    def get_board_offsets(self):
+    def get_board_offsets(self) -> tuple[int, int, int, int]:
         tiles = self.game.get_board_data()
         if not tiles:
             return 0, 0, 0, 0
@@ -428,7 +430,7 @@ class BoardView(Gtk.DrawingArea):
 
         return final_offset_x, final_offset_y, min_x, min_y
 
-    def pixel_to_grid(self, mouse_x, mouse_y):
+    def pixel_to_grid(self, mouse_x: int, mouse_y: int) -> tuple[int, int]:
         tiles = self.game.get_board_data()
         if not tiles:
             return 0, 0
@@ -445,17 +447,17 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     # 🔄 REFRESH
     # =========================
-    def refresh(self):
+    def refresh(self) -> None:
         self.queue_draw()
 
 
-    def on_mouse_move(self, controller, x, y):
+    def on_mouse_move(self, controller: Any, x: int, y: int) -> None:
         if self.is_dragging and self.game_gui.current_tile:
             self.ghost_x = x
             self.ghost_y = y
             self.queue_draw()
 
-    def on_mouse_release(self, gesture, n_press, mouse_x, mouse_y):
+    def on_mouse_release(self, gesture: Any, n_press: int, mouse_x: int, mouse_y: int) -> None:
         if not self.is_dragging or not self.game_gui.current_tile:
             return
 

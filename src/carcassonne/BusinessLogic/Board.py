@@ -25,7 +25,7 @@ SOUTHEAST_MATRIX = (2, 2)
 
 class Board:
     
-    def add_tile_to_board(self, move, graph: IGraphData, tiles_info: ITilesInfo, history: History, players: dict[int, Player], current_player: Player) -> None:
+    def add_tile_to_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History, players: dict[int, Player], current_player: Player) -> None:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2

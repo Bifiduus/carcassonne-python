@@ -27,7 +27,7 @@ class Tile:
          ['NW', 'W', 'SW']]
     ]
 
-    def __init__(self, code: str, connections: dict = None, connect_to: dict = None):
+    def __init__(self, code: str, connections: dict | None = None, connect_to: dict | None = None) -> None:
         self.code = code
         # tiles_lands is the terrain definitions for this tile
         self.tiles_lands = connections if connections is not None else {}
@@ -35,7 +35,7 @@ class Tile:
 
 
 class TilesInfo(ITilesInfo):
-    def __init__(self):
+    def __init__(self) -> None:
         self.tiles_dict = {
             # Basic Tiles
             'FFFF': ['m'], 'FFFR': ['m'], 'CFFF': ['void'], 'FCFC': ['f'], 'CFCF': ['c', 'b'],

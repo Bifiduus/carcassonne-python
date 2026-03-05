@@ -11,14 +11,14 @@ from carcassonne.Presentation.Cli import GameCLI
 from carcassonne.Datas.GraphData import GraphData
 
 class ArgumentParser(argparse.ArgumentParser):
-    def error(self, message):  # pylint: disable=arguments-differ
+    def error(self, message: str):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
         print(f"error: {message}", file=sys.stderr)
         self.print_help(sys.stderr)
         raise SystemExit(1)
 
 
-def main():
+def main() -> int:
     # pylint: disable=docstring-first-line-empty
     """
     Starting point of the program.
@@ -78,7 +78,7 @@ def main():
         type=int,
     )
     
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
     game_data :IGraphData = GraphData()
     if args.players:
         game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2)

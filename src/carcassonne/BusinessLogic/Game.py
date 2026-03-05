@@ -117,7 +117,7 @@ class Game(IGameService):
         return len(self.history.future_moves) == 0
 
 
-    def play_move(self, move) -> bool:
+    def play_move(self, move: str) -> bool:
         """
         Tries to place a tile according to the computed move :
         - Checks if the move is a string.
@@ -199,11 +199,11 @@ class Game(IGameService):
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
     
-    def rotate_dirs(self, dirs, rotation):
+    def rotate_dirs(self, dirs: str | list, rotation: int) -> str | list:
         rotation = rotation % 4
         return dirs[-rotation:] + dirs[:-rotation]
 
-    def generate_tile_ascii(self, vertex):
+    def generate_tile_ascii(self, vertex: Any) -> list[str]:
         dirs = list(vertex.get_name())  # [N, E, S, W]
         rotation = self.graph.get_vertex_orientation(vertex.get_id())  # 0 à 3
         meeples = self.graph.get_meeples()
@@ -235,7 +235,7 @@ class Game(IGameService):
             space + "{:^5}".format(s) + space,
         ]
 
-    def get_board(self):
+    def get_board(self) -> list[Any] | None:
         vertices = list(self.graph.get_verticies().values())
 
         if not vertices:
@@ -272,7 +272,7 @@ class Game(IGameService):
 
         return list(vertices.values())
     
-    def get_tile_data(self, tile):
+    def get_tile_data(self, tile: int) -> dict | None:
         """
         Retourne une liste exploitable directement par la GUI.
         """
@@ -288,7 +288,7 @@ class Game(IGameService):
 
         return [vars(meeple) for meeple in meeples]
 
-    def print_board(self, board):
+    def print_board(self, board: list[list]) -> None:
         TILE_HEIGHT = 3
         EMPTY_TILE = [" " * 9] * TILE_HEIGHT
 
