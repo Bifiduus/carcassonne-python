@@ -112,20 +112,17 @@ class Server(IServerService):
             del self.available_servers[name]
         return self.available_servers
 
-    def server_start(self, port: str = "12345"):
+    def server_start(self, port: int = 12345):
         """
         Start the TCP server on the specified port.
         Handles multiple clients concurrently using threading.
         """
-        assert self.repo, "The database should not be None"
-        if self.repo.is_database_closed():
-            self.repo.reopen()
-        if port == "":
-            port = "12345"
+        import threading  # Import here or at top
+
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            self.server.bind(('', int(port)))
+            self.server.bind(('', port))
             self.server.listen(5)  # Allow up to 5 pending connections
             print(f"Server started on port {port}")
         except Exception as e:
