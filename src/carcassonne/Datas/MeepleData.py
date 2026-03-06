@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 
 # Position labels for the 9 positions on a tile (3x3 grid)
-POSITION_LABELS = {
+POSITION_LABELS: dict[int, str] = {
     7: 'NW', 0: 'N', 1: 'NE',
     6: 'W',  8: 'C', 2: 'E',
     5: 'SW', 4: 'S', 3: 'SE'
@@ -17,13 +17,13 @@ class Meeple:
     position: int             # Position on the tile (0-8)
     lands_components: str     # Name of the lands component (e.g., 'C1', 'F2', 'R1')
 
-    def __init__(self, player_id: int, tile_id: int, position: int, lands_components: str):
+    def __init__(self, player_id: int, tile_id: int, position: int, lands_components: str) -> None:
         self.player_id = player_id
         self.tile_id = tile_id
         self.position = position
         self.lands_components = lands_components
         
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate position is within valid range."""
         if not 0 <= self.position <= 8:
             raise ValueError(f"Position must be between 0 and 8, got {self.position}")
@@ -33,5 +33,5 @@ class Meeple:
         return POSITION_LABELS.get(self.position, 'UNKNOWN')
 
     def __repr__(self) -> str:
-        pos_label = self.get_position_label()
+        pos_label: str = self.get_position_label()
         return f"Meeple(player={self.player_id}, tile={self.tile_id}, pos={pos_label}, lands_components={self.lands_components})"
