@@ -2,6 +2,7 @@ import sys
 import time
 import socket
 import select
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
 import threading
 
 <<<<<<< HEAD:carcassonne/business_logic/Server.py
@@ -67,6 +68,20 @@ class Server(IServerService):
         return self.repo.create_online_player(username)
 
     def list_available_servers(self, timeout: float = 5.0) -> list[int]:
+=======
+
+class Server:
+    SERVER_TIMEOUT = 30
+
+    def __init__(self):
+        self.server_name = ""
+        self.client = None
+        self.server = None
+        self.running = False
+        self.available_servers: dict[str, tuple[int, float]] = {}
+
+    def list_available_servers(self, timeout: float = 5.0) -> list[str]:
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
         Returns a list of server names that responded within the timeout.
@@ -82,16 +97,27 @@ class Server(IServerService):
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
                 ready = select.select(
                     [s], [], [], timeout - (time.time() - start_time))
+=======
+                ready = select.select([s], [], [], timeout - (time.time() - start_time))
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
                 if ready[0]:
                     message, addr = s.recvfrom(1500)
                     message_part = message.decode()
                     if ":" in message_part:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
                         ip, port_str = message_part.split(":", 1)
                         try:
                             port = int(port_str)
                             self.available_servers[ip] = (port, time.time())
+=======
+                        name, port_str = message_part.split(":", 1)
+                        try:
+                            port = int(port_str)
+                            self.available_servers[name] = (port, time.time())
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
                         except ValueError:
                             print(f"Invalid port in message: {message_part}")
                     else:
@@ -106,7 +132,11 @@ class Server(IServerService):
 
         s.close()
         self.check_servers_last_time_sent()
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         return list(server[0] for server in self.available_servers.values())
+=======
+        return list(self.available_servers.keys())
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
 
     def check_servers_last_time_sent(self):
         """
@@ -138,6 +168,7 @@ class Server(IServerService):
         except Exception as e:
             print(f"Error starting server: {e}")
             return
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         self.should_stop.set()
         self.server_thread = threading.Thread(
             target=self.server_running, args=(port,))
@@ -190,10 +221,34 @@ class Server(IServerService):
         return self.should_stop.is_set()
 
     def handle_client(self, client_socket: socket.socket):
+=======
+
+        self.running = True
+        while self.running:
+            try:
+                self.server.settimeout(1.0)  # Timeout to check self.running periodically
+                client_socket, addr = self.server.accept()
+                print(f"Accepted connection from {addr}")
+                # Handle client in a new thread
+                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
+                client_thread.start()
+            except socket.timeout:
+                continue  # Check self.running again
+            except Exception as e:
+                if self.running:
+                    print(f"Error accepting connection: {e}")
+                break
+
+        self.server.close()
+        print("Server stopped")
+
+    def handle_client(self, client_socket):
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         """
         Handle communication with a single client.
         """
 
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         try:
             while True:
                 data = client_socket.recv(1500)
@@ -211,10 +266,22 @@ class Server(IServerService):
                 # fonction qui check le statut d'une invitation et l'envoie à l'host
                 answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {response}\n"
                 client_socket.send(answer.encode())
+=======
+        # should have a way to quit the server
+        try:
+            while True:
+                data = client_socket.recv(1500)
+                if len(data) == 0:
+                    break
+                # Process data (e.g., echo back for now; replace with game logic)
+                response = self.process_message(data.decode())
+                client_socket.send(response.encode())
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
             client_socket.close()
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             # Remove client from the list
             with self.clients_lock:
                 if client_socket in self.connected_clients:
@@ -355,11 +422,22 @@ class Server(IServerService):
                 self.repo.send_invitation(invited_player_id, invitee_player_id)
             except Exception as e:
                 print(f"Error sending invitation: {e}")
+=======
+
+    def process_message(self, message: str) -> str:
+        """
+        Process incoming message and return response.
+        Placeholder: currently echoes the message.
+        """
+        # TODO: Integrate with game logic, e.g., handle moves, queries
+        return f"Echo: {message}"
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
 
     def server_stop(self):
         """
         Stop the server gracefully.
         """
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         if self.server_thread is not None:
 
             # Send shutdown message to all connected clients
@@ -386,12 +464,20 @@ class Server(IServerService):
             self.server_thread.join()
 
     def server_quit(self):
+=======
+        self.running = False
+        if self.server:
+            self.server.close()
+
+    def server_quit(self, server_name: str):
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         """
         Quit the server and clean up resources.
         """
         if self.client == None:
             print("Error: no client socket found.")
             return -1
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         data = "quit\n".encode()
         self.client.sendall(data)
         self.server_stop()
@@ -399,6 +485,14 @@ class Server(IServerService):
         # Additional cleanup if needed
 
     def ping(self) -> str:
+=======
+        data = "quit".encode()
+        self.client.sendall(data)
+        self.server_stop()
+        # Additional cleanup if needed
+
+    def ping(self) -> float:
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         """
         Send a ping or check server status.
         Placeholder implementation.
@@ -406,6 +500,7 @@ class Server(IServerService):
         start = time.time()
         self.send_to_server("ping")
         if self.client == None:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
@@ -420,6 +515,18 @@ class Server(IServerService):
         return "No server response"  # Or implement actual ping logic
 
     def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
+=======
+            print("Error: no client socket found.")
+            return -1
+        data = self.client.recv(1500)
+        if data.decode() == "pong":
+            end = time.time()
+            return start - end
+
+        return -1  # Or implement actual ping logic
+    
+    def join_server(self, server_name: str, port: int | None = None, timeout: float = 5.0) -> bool:
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         """
         Connect to a remote server identified by name (and optional port).
 
@@ -431,6 +538,7 @@ class Server(IServerService):
         """
         # refresh discovery cache first
         self.list_available_servers()
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         if ip is (None or ""):
             ip = self.server_name
         if ip not in self.available_servers:
@@ -439,15 +547,29 @@ class Server(IServerService):
 
         server_port, _ = self.available_servers[ip]
         self.connected_to_server_index = ip
+=======
+
+        if server_name not in self.available_servers:
+            print("Error: There is no server with such a name.")
+            return False
+
+        server_port, _ = self.available_servers[server_name]
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         if port is None:
             port = server_port
 
         self.client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.client.settimeout(timeout)
         try:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             self.client.connect((ip, port))
         except Exception as e:
             print(f"Unable to connect to {ip}:{port} -> {e}")
+=======
+            self.client.connect((server_name, port))
+        except Exception as e:
+            print(f"Unable to connect to {server_name}:{port} -> {e}")
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
             self.client.close()
             self.client = None
             return False
@@ -456,10 +578,16 @@ class Server(IServerService):
         self.client.settimeout(None)
 
         # start a listener thread so the caller can interact without blocking
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         self._recv_thread = threading.Thread(
             target=self._receive_loop, daemon=True)
         self._recv_thread.start()
         self.has_joined_server = True
+=======
+        import threading
+        self._recv_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self._recv_thread.start()
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         return True
 
     def _receive_loop(self):
@@ -470,12 +598,19 @@ class Server(IServerService):
         try:
             while self.client:
                 data = self.client.recv(1500)
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
                 if data.decode().endswith("Server Shutdown\n"):
                     print("Server closed the connection")
                     break
                 self.handle_server_message(data.decode())
                 if (not self.has_joined_server):
                     break
+=======
+                if not data or data.decode('utf-8') == "Server Shutdown":
+                    print("Server closed the connection")
+                    break
+                self.handle_server_message(data.decode())
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
         except Exception as e:
             print(f"Error receiving from server: {e}")
         finally:
@@ -486,6 +621,7 @@ class Server(IServerService):
     def handle_server_message(self, message: str):
         """
         Override or extend this method to process messages received from the
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         server.
         """
         assert self.repo is not None, "No games repository."
@@ -519,6 +655,11 @@ class Server(IServerService):
         party_id = int(self.repo.get_game(int(client_id))[0])
         return self.parties_list[party_id][1]
 >>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
+=======
+        server. The default implementation simply prints the message.
+        """
+        print(message, end="")
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
 
     def send_to_server(self, text: str) -> bool:
         """
@@ -529,12 +670,22 @@ class Server(IServerService):
             print("Not connected to any server")
             return False
         try:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             if self.client_id is None:
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
             text = f"{self.client_player}: " + text
+=======
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
             self.client.sendall(text.encode())
             return True
         except Exception as e:
             print(f"Failed to send: {e}")
             return False
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
+=======
+
+
+            
+            
+>>>>>>> 0bff211 (added first implementation of Server.py, no real connections with the game yet):src/carcassonne/BusinessLogic/Server.py
