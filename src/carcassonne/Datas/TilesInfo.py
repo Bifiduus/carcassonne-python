@@ -99,9 +99,9 @@ class TilesInfo(ITilesInfo):
 
             'CCRR': {'C' : [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
             'CCRR/b': {'C' : [['N', 'NE', 'E']], 'F': [['SE', 'NW', 'C'], ['SW']], 'R' : [['S', 'W']]},
-            'FRRR': {'F' : [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R' : [['E', 'S', 'W', 'C']]},
-            'CRRR': {'C' : [['N']], 'F' : [['NE', 'NW'], ['SE'], ['SW']], 'R' : [['E', 'S', 'W', 'C']]},
-            'RRRR': {'F' : [['NE'], ['NW'], ['SE'], ['SW']], 'R' : [['N', 'E', 'S', 'W', 'C']]},
+            'FRRR': {'F' : [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R' : [['E'], ['S'], ['W']]}, #For now Center is nothing because it isn't a land, it splits the roads
+            'CRRR': {'C' : [['N']], 'F' : [['NE', 'NW'], ['SE'], ['SW']], 'R' : [['E'], ['S'], ['W']]}, #For now Center is nothing because it isn't a land, it splits the roads
+            'RRRR': {'F' : [['NE'], ['NW'], ['SE'], ['SW']], 'R' : [['N'], ['E'], ['S'], ['W']]}, #For now Center is nothing because it isn't a land, it splits the roads
 
             # 'The River' Expansion
             'FSRS/m': {'M' : [['C']], 'F' : [['N', 'NE', 'NW'], ['SE'], ['SW']], 'R': [['S']], 'S' : [['E', 'W']]},
