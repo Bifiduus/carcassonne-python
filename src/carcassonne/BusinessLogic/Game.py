@@ -132,7 +132,7 @@ class Game(IGameService):
         print(f"AI Player {ai_player.get_username()} is thinking...")
         tile = self.draw_tile()
         model = RandomPlayer()
-        move = model.random_move(tile, self.graph, self.tiles_info, self.rules_manager)
+        move = model.random_move(tile, self.graph)
         self.play_move(move)
         
     def get_game_configuration(self) :
