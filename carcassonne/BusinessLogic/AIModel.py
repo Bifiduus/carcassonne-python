@@ -2,14 +2,13 @@
 This module implements the AI player using the Expectimax pruning algorithm.
 It provides intelligent move selection for the AI player in Carcassonne.
 """
-
 from typing import List, Tuple, Optional
 
-from numpy import tile
 from carcassonne.Datas.History import MoveRecord
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.BusinessLogic.RulesManager import RulesManager
+from carcassonne.BusinessLogic.Game import Game
 
 
 def star1(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
@@ -29,14 +28,12 @@ class RandomPlayer:
     # Example positions for meeple placement
     meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
 
-    def get_possible_moves(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo,
-                           rules_manager: RulesManager) -> List[str]:
+    def get_possible_moves(self, tile, game: Game) -> List[str]:
         """
         Generate all legal moves from the current game state.
 
         Args:
             graph: The game board graph
-            tiles_info: Information about available tiles
             rules_manager: Manager for game rules
 
         Returns:
@@ -45,14 +42,14 @@ class RandomPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = graph.get_verticies()
+        vertices = game.graph.get_verticies()
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
             # Try each direction (North, South, East, West)
             for direction in ['N', 'S', 'E', 'W']:
                 # Check if this side is free
-                if vertex.is_neighbor_free(tiles_info.direction_dict.get(direction, 0)):
+                if vertex.is_neighbor_free(game.tiles_info.direction_dict.get(direction, 0)):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
@@ -63,17 +60,16 @@ class RandomPlayer:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
                             move_parts = move.split('/')
-                            if rules_manager.is_correctly_formed_move(move, graph):
-                                if rules_manager.is_legal_move(move_parts, graph):
+                            if game.rules_manager.is_correctly_formed_move(move, game.graph):
+                                if game.rules_manager.is_legal_move(move_parts, game.graph):
                                     possible_moves.append(move)
         return possible_moves
 
-    def random_move(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo, rules_manager: RulesManager) -> str | None:
+    def random_move(self, tile, game: Game) -> str:
         """Select a random move from the list of possible moves."""
         import random as r
 
-        possible_moves = self.get_possible_moves(
-            tile, graph, tiles_info, rules_manager)
+        possible_moves = self.get_possible_moves(tile, game)
 
         return r.choice(possible_moves) if possible_moves else None
 
@@ -83,10 +79,13 @@ class ExpectimaxPlayer:
     AI player using Expectimax pruning algorithm for intelligent move selection.
     """
 
+    L = -100  # Should be minimum of evaluation function
+    U = 100  # Should be maximum of evaluation function
+
     # Example positions for meeple placement
     meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
 
-    def __init__(self, depth: int = 4, is_maximizing: bool = True, eval_name: str = "STAR1", eval_fn=None):
+    def __init__(self, game: Game, depth: int = 4, is_maximizing: bool = True, eval_name: str = "STAR1", eval_fn=None):
         """
         Initialize the Expectimax AI player.
 
@@ -94,6 +93,7 @@ class ExpectimaxPlayer:
             depth: Maximum depth for the search tree (default: 4)
             is_maximizing: Whether this player is maximizing (True for AI, False for opponent)
         """
+        self.game = game
         self.depth = depth
         self.is_maximizing = is_maximizing
         self.nodes_explored = 0
@@ -123,8 +123,7 @@ class ExpectimaxPlayer:
         else:
             raise ValueError(f"Unknown evaluation method: {name_or_fn}")
 
-    def get_possible_moves(self, tile, graph: IGraphData, tiles_info: ITilesInfo,
-                           rules_manager: RulesManager) -> List[str]:
+    def get_possible_moves(self, tile: str, game: Game) -> List[str]:
         """
         Generate all legal moves from the current game state.
 
@@ -139,14 +138,14 @@ class ExpectimaxPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = graph.get_verticies()
+        vertices = game.graph.get_verticies()
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
             # Try each direction (North, South, East, West)
             for direction in ['N', 'S', 'E', 'W']:
                 # Check if this side is free
-                if vertex.is_neighbor_free(tiles_info.direction_dict.get(direction, 0)):
+                if vertex.is_neighbor_free(game.tiles_info.direction_dict.get(direction, 0)):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
@@ -157,8 +156,8 @@ class ExpectimaxPlayer:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
                             move_parts = move.split('/')
-                            if rules_manager.is_correctly_formed_move(move, graph):
-                                if rules_manager.is_legal_move(move_parts, graph):
+                            if game.rules_manager.is_correctly_formed_move(move, game.graph):
+                                if game.rules_manager.is_legal_move(move_parts, game.graph):
                                     possible_moves.append(move)
 
         return possible_moves
@@ -207,18 +206,17 @@ class ExpectimaxPlayer:
 
         return potential
 
-    def search(self, graph: IGraphData, tiles_info: ITilesInfo, rules_manager: RulesManager, depth: int, alpha: float, beta: float, player: int, next_player: int, current_hand: str) -> float:
+    def search(self, game: Game, depth: int, alpha: float, beta: float, player_to_max: int, next_player: int) -> float:
         """Recursive search function for Expectimax algorithm. Adapt between Max and Min nodes based on the player parameter."""
-        if self.terminal(tiles_info, graph) or depth == 0:
-            return self.evaluate_state(graph, 0, 0)
-        if player == next_player:  # Max node
+        if self.terminal(game.tiles_info, game.graph) or depth == 0:
+            return self.evaluate_state(game.graph, 0, 0)
+        if player_to_max == next_player:  # Max node
             max_eval = float('-inf')
-            possible_moves = self.get_possible_moves(
-                graph, tiles_info, rules_manager)
+            possible_moves = self.get_possible_moves(game.current_hand, game)
             for move in possible_moves:
-                new_graph = self.apply_move(graph, move)
-                eval_score = self.expectimax(new_graph, current_hand, tiles_info, rules_manager,
-                                             depth - 1, alpha, beta, player, (next_player + 1) % self.nb_players)
+                new_game = self.apply_move(game.graph, move)
+                eval_score = self.Star25(
+                    new_game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % self.nb_players)
                 max_eval = max(max_eval, eval_score)
                 alpha = max(alpha, eval_score)
                 if beta <= alpha:
@@ -226,12 +224,11 @@ class ExpectimaxPlayer:
             return max_eval
         else:  # Min node (opponent's turn)
             min_eval = float('inf')
-            possible_moves = self.get_possible_moves(
-                graph, tiles_info, rules_manager)
+            possible_moves = self.get_possible_moves(game.current_hand, game)
             for move in possible_moves:
-                new_graph = self.apply_move(graph, move)
-                eval_score = self.expectimax(new_graph, current_hand, tiles_info, rules_manager,
-                                             depth - 1, alpha, beta, player, (next_player + 1) % self.nb_players)
+                new_game = self.apply_move(game.graph, move)
+                eval_score = self.Star25(
+                    new_game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % self.nb_players)
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
                 if beta <= alpha:
@@ -245,16 +242,48 @@ class ExpectimaxPlayer:
             return 0.0
         return N.get(tile) / total_tiles_left
 
-    def apply_chance_event(self, graph: IGraphData, tile: str, current_hand: str) -> IGraphData:
+    def nProbe(self, game: Game, alpha: float, beta: float,
+               depth: int, player_to_max: int, next_player: int,
+               probingFactor: int = 5):
+
+        moves = self.get_possible_moves(game.current_hand, game)
+
+        best = alpha
+
+        for i in range(min(probingFactor, len(moves))):
+            move = moves[i]
+
+            new_graph = self.apply_move(game.graph, move)
+            new_game = game.copy()
+            new_game.graph = new_graph
+
+            value = self.search(
+                new_game,
+                depth - 1,
+                best,
+                beta,
+                player_to_max,
+                (next_player + 1) % self.nb_players,
+            )
+
+            if value >= beta:
+                return beta
+
+            if value > best:
+                best = value
+
+        return best
+
+    def applyChanceEvent(self, tile: str) -> IGraphData:
         """Apply a chance event (e.g., drawing a tile) to the game state and return the new state."""
-        new_graph = graph.copy()  # Assuming you have a method to copy the graph
+        game_copy = self.game.copy()
 
         # TODO: Make the next tile to draw the tile parameter
-        current_hand = tile
+        game_copy.current_hand = tile
 
-        return new_graph
+        return game_copy
 
-    def num_chance_events(self, tiles_info: ITilesInfo, graph: IGraphData) -> int:
+    def numSuccesors(self, tiles_info: ITilesInfo) -> int:
         """Return the number of possible chance events (e.g., tile draws) from this state."""
         N = {}
         for tile, tile_nb in tiles_info.tiles_count.items():
@@ -262,7 +291,7 @@ class ExpectimaxPlayer:
                 N[tile] = tile_nb
         return N
 
-    def terminal(self, tiles_info: ITilesInfo, graph: IGraphData) -> bool:
+    def terminal(self, tiles_info: ITilesInfo) -> bool:
         """Check if the game is in a terminal state (no more moves)."""
         # This is a simplified check - you should implement this based on your game rules
 
@@ -273,16 +302,97 @@ class ExpectimaxPlayer:
 
         return False
 
-    def expectimax(self, current_hand, tiles_info, graph: IGraphData, depth: int, player: int):
+    def Star25(self, game: Game, depth: int,
+               alpha: float, beta: float,
+               player_to_max: int, next_player: int):
+
+        if self.terminal(game.tiles_info) or depth == 0:
+            return self.evaluate_state(game.graph, 0, 0)
+
+        successors = self.numSuccesors(game.tiles_info)
+
+        total_tiles = sum(successors.values())
+
+        # probabilités
+        probs = {tile: count / total_tiles for tile,
+                 count in successors.items()}
+        probs = dict(sorted(probs.items(), key=lambda x: -x[1]))
+
+        cur_x = 0
+        cur_y = 1
+        w = {}
+
+        # ---------- PROBING PHASE ----------
+        for tile, prob in probs.items():
+
+            cur_y -= prob
+
+            cur_beta = (beta - self.L * cur_y - cur_x) / prob
+
+            succ_game = self.applyChanceEvent(tile)
+
+            value = self.nProbe(
+                succ_game,
+                tile,
+                alpha,
+                cur_beta,
+                depth - 1,
+                player_to_max,
+                next_player
+            )
+
+            w[tile] = value
+
+            if value >= cur_beta:
+                return beta
+
+            cur_x += prob * value
+
+        # ---------- SEARCH PHASE ----------
+        cur_x = 0
+        cur_y = 1
+
+        for tile, prob in probs.items():
+
+            cur_y -= prob
+
+            cur_alpha = (alpha - cur_x - self.U * cur_y) / prob
+            cur_beta = (beta - cur_x - self.L * cur_y) / prob
+
+            ax = max(self.L, cur_alpha)
+            bx = min(self.U, cur_beta)
+
+            succ_game = self.applyChanceEvent(tile)
+
+            value = self.search(
+                succ_game,
+                depth - 1,
+                ax,
+                bx,
+                player_to_max,
+                next_player
+            )
+
+            if value >= cur_beta:
+                return beta
+
+            if value <= cur_alpha:
+                return alpha
+
+            cur_x += prob * value
+
+        return cur_x
+
+    def Expectimax(self, current_hand, tiles_info, graph: IGraphData, depth: int, player: int):
         if self.terminal(tiles_info, graph) or depth == 0:
             return self.evaluate_state(graph, 0, 0)
-        N = self.num_chance_events(tiles_info, graph)
+        N = self.numSuccesors(tiles_info, graph)
         sum = 0
         for tile, _ in N.items():
             # Make a copy of the game state and apply the chance event (playing the tile)
-            succ = self.apply_chance_event(graph, tile, current_hand)
-            sum += self.event_probability(graph, tile, N) * self.search(
-                succ, tiles_info, graph, depth - 1, player, (player + 1) % nb_players, current_hand)
+            succ = self.applyChanceEvent(tile)
+            sum += self.eventProb(graph, tile, N) * self.search(succ, tiles_info,
+                                                                graph, depth - 1, player, (player + 1) % nb_players, current_hand)
         return sum
 
     def expectimax(self, graph: IGraphData, tiles_info: ITilesInfo,

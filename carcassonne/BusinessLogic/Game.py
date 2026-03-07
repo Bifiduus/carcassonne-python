@@ -158,12 +158,11 @@ class Game(IGameService):
         
     def play_ai_turn(self) -> None:
         ai_player = self.get_current_player()
-        if ai_player.is_ai:
-            print(f"AI Player {ai_player.get_id()} is thinking...")
-            tile = self.draw_tile()
-            model = RandomPlayer()
-            move = model.random_move(tile, self.graph, self.tiles_info, self.rules_manager)
-            self.play_move(move)
+        print(f"AI Player {ai_player.get_username()} is thinking...")
+        tile = self.draw_tile()
+        model = RandomPlayer()
+        move = model.random_move(tile, self.graph)
+        self.play_move(move)
         
     def get_game_configuration(self) :
         return self.game_configuration.get_setting()
