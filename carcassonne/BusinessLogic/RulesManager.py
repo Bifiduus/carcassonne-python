@@ -145,7 +145,7 @@ class RulesManager():
 
         tile_pos = graph.get_position(
             integers_placement[0], self.tiles_info.direction_dict[attach_direction])
-        if not self.areEqualSides(move_parts[0], tile_pos, integers_placement[1], graph):
+        if not self.are_equal_sides(move_parts[0], tile_pos, integers_placement[1], graph):
             # print("the tile you try to place doesn't match the tiles you try to attach yours to")
             return False
 
