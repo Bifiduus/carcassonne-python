@@ -26,6 +26,9 @@ def star2_5(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
 
 class RandomPlayer:
 
+    # Example positions for meeple placement
+    meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
+
     def get_possible_moves(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo,
                            rules_manager: RulesManager) -> List[str]:
         """
@@ -52,12 +55,17 @@ class RandomPlayer:
                 if vertex.is_neighbor_free(tiles_info.direction_dict.get(direction, 0)):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
-                        move = f"{tile}/{vertex_id}{direction}{rotation}"
-                        # Verify the move is legal
-                        move_parts = move.split('/')
-                        if rules_manager.is_correctly_formed_move(move, graph):
-                            if rules_manager.is_legal_move(move_parts, graph):
-                                possible_moves.append(move)
+                        # -1 means no meeple placement
+                        for meeple in range(-1, len(self.meeple_placement_list)):
+                            if meeple == -1:
+                                move = f"{tile}/{vertex_id}{direction}{rotation}"
+                            else:
+                                move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
+                            # Verify the move is legal
+                            move_parts = move.split('/')
+                            if rules_manager.is_correctly_formed_move(move, graph):
+                                if rules_manager.is_legal_move(move_parts, graph):
+                                    possible_moves.append(move)
         return possible_moves
 
     def random_move(self, tile: str, graph: IGraphData, tiles_info: ITilesInfo, rules_manager: RulesManager) -> str | None:
@@ -74,6 +82,9 @@ class ExpectimaxPlayer:
     """
     AI player using Expectimax pruning algorithm for intelligent move selection.
     """
+
+    # Example positions for meeple placement
+    meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
 
     def __init__(self, depth: int = 4, is_maximizing: bool = True, eval_name: str = "STAR1", eval_fn=None):
         """
@@ -138,12 +149,17 @@ class ExpectimaxPlayer:
                 if vertex.is_neighbor_free(tiles_info.direction_dict.get(direction, 0)):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
-                        move = f"{tile}/{vertex_id}{direction}{rotation}"
-                        # Verify the move is legal
-                        move_parts = move.split('/')
-                        if rules_manager.is_correctly_formed_move(move, graph):
-                            if rules_manager.is_legal_move(move_parts, graph):
-                                possible_moves.append(move)
+                        # -1 means no meeple placement
+                        for meeple in range(-1, len(self.meeple_placement_list)):
+                            if meeple == -1:
+                                move = f"{tile}/{vertex_id}{direction}{rotation}"
+                            else:
+                                move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
+                            # Verify the move is legal
+                            move_parts = move.split('/')
+                            if rules_manager.is_correctly_formed_move(move, graph):
+                                if rules_manager.is_legal_move(move_parts, graph):
+                                    possible_moves.append(move)
 
         return possible_moves
 
