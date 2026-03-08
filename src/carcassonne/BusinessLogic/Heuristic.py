@@ -19,12 +19,27 @@ class HeuristicWeights:
 DEFAULT_WEIGHTS = HeuristicWeights()
 
 
-def extract_features(state: Any, player_id: int, opponent_id: int) -> dict[str, float]:
+def _find_player(game_state: Any, player_id: int) -> Any | None:
+    for player in game_state.players:
+        if player.get_id() == player_id:
+            return player
+    return None
+
+
+def _get_player_score(game_state: Any, player_id: int) -> float:
+    player = _find_player(game_state, player_id)
+    if player is None:
+        return 0.0
+
+    return float(player.get_score().score)
+
+
+def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[str, float]:
     """Return heuristic features (player - opponent).
     """
-    _ = (state, player_id, opponent_id)
+    score_diff = _get_player_score(game_state, player_id) - _get_player_score(game_state, opponent_id)
     return {
-        "score_diff": 0.0,
+        "score_diff": score_diff,
         "meeple_diff": 0.0,
         "latent_score_diff": 0.0,
         "incomplete_city_tiles_diff": 0.0,
@@ -32,9 +47,9 @@ def extract_features(state: Any, player_id: int, opponent_id: int) -> dict[str, 
     }
 
 
-def evaluate_state(state: Any, player_id: int, opponent_id: int, weights: HeuristicWeights = DEFAULT_WEIGHTS) -> float:
+def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: HeuristicWeights = DEFAULT_WEIGHTS) -> float:
     """Linear heuristic evaluation based on extracted features."""
-    features = extract_features(state, player_id, opponent_id)
+    features = extract_features(game_state, player_id, opponent_id)
     return (
         weights.score_diff * features["score_diff"]
         + weights.meeple_diff * features["meeple_diff"]
