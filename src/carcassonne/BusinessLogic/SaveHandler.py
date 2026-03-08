@@ -173,7 +173,6 @@ class SaveHandler:
                     print(self.game.deck.tiles)
 
             elif history_section:
-                self.game.shuffle_deck(self.game.seed)
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
                 for player_move in line.strip(" ").split(" "):
