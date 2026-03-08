@@ -2,16 +2,23 @@
 """
 
 from dataclasses import dataclass
+<<<<<<< HEAD:carcassonne/BusinessLogic/Heuristic.py
 import math
+=======
+>>>>>>> fcd0cee (add Heuristic.py):src/carcassonne/BusinessLogic/Heuristic.py
 from typing import Any
 
 
 @dataclass(frozen=True)
 class HeuristicWeights:
+<<<<<<< HEAD:carcassonne/BusinessLogic/Heuristic.py
     """Weights used by the linear evaluation function.
 
     Each field corresponds to one heuristic feature.
     """
+=======
+    """Weights used by the linear evaluation function."""
+>>>>>>> fcd0cee (add Heuristic.py):src/carcassonne/BusinessLogic/Heuristic.py
 
     score_diff: float = 100.0
     meeple_diff: float = 10.0
@@ -21,6 +28,7 @@ class HeuristicWeights:
 
 
 DEFAULT_WEIGHTS = HeuristicWeights()
+<<<<<<< HEAD:carcassonne/BusinessLogic/Heuristic.py
 DEFAULT_COMPRESSION_BIAS = 0.0
 # Larger scale reduces saturation and keeps more mid-game granularity.
 DEFAULT_COMPRESSION_SCALE = 2500.0
@@ -313,10 +321,34 @@ def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: H
     """
     features = extract_features(game_state, player_id, opponent_id)
     raw_value = (
+=======
+
+
+def extract_features(state: Any, player_id: int, opponent_id: int) -> dict[str, float]:
+    """Return heuristic features (player - opponent).
+    """
+    _ = (state, player_id, opponent_id)
+    return {
+        "score_diff": 0.0,
+        "meeple_diff": 0.0,
+        "latent_score_diff": 0.0,
+        "incomplete_city_tiles_diff": 0.0,
+        "risky_fields_lt3_diff": 0.0,
+    }
+
+
+def evaluate_state(state: Any, player_id: int, opponent_id: int, weights: HeuristicWeights = DEFAULT_WEIGHTS) -> float:
+    """Linear heuristic evaluation based on extracted features."""
+    features = extract_features(state, player_id, opponent_id)
+    return (
+>>>>>>> fcd0cee (add Heuristic.py):src/carcassonne/BusinessLogic/Heuristic.py
         weights.score_diff * features["score_diff"]
         + weights.meeple_diff * features["meeple_diff"]
         + weights.latent_score_diff * features["latent_score_diff"]
         + weights.incomplete_city_tiles_diff * features["incomplete_city_tiles_diff"]
         + weights.risky_fields_lt3_diff * features["risky_fields_lt3_diff"]
     )
+<<<<<<< HEAD:carcassonne/BusinessLogic/Heuristic.py
     return _compress_to_star_bounds(raw_value)
+=======
+>>>>>>> fcd0cee (add Heuristic.py):src/carcassonne/BusinessLogic/Heuristic.py
