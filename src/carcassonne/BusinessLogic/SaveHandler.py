@@ -54,7 +54,7 @@ class SaveHandler:
         except OSError:
             print(f"Error: Could not open file {filename}")
             return -1
-        self.game.start_new_game()  # Clear current game state before loading new one
+        self.game.start_load_game()  # Clear current game state before loading new one
 
         lines = file.readlines()
         settings_section = False
@@ -169,14 +169,17 @@ class SaveHandler:
                         print("Warning: No seed.")
                         continue
                     self.game.seed = int(line)
+                    self.game.shuffle_deck("fisher-yates", self.game.seed)
+                    print(self.game.deck.tiles)
 
             elif history_section:
-                self.game.shuffle_deck(self.game.seed)
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
                 for player_move in line.strip(" ").split(" "):
                     move = player_move.split(":")[1] if ":" in player_move else player_move
                     self.game.current_hand = move
+                    if move != self.game.draw_tile():
+                        print("The mode doesn't match the seed !")
                     self.game.play_move(move)  # Assuming line is in the format "player_id:details"
                     
         if sections_parsed < 3:

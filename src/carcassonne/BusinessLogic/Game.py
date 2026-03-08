@@ -56,7 +56,7 @@ class Game(IGameService):
         self.current_player_order_list = self.players_order[0]
         self.save_handler = SaveHandler(self)
 
-    def start_new_game(self) -> None:
+    def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
         """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
@@ -68,9 +68,12 @@ class Game(IGameService):
         self.current_hand = None
         self.tiles_info= TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
-        self.shuffle_players_order()
+        if players_order != None:
+            self.players_order = players_order
+        else:
+            self.shuffle_players_order()
+        self.shuffle_deck(None, seed)
         self.current_player_order_list = 0
-        print(self.players_order)
         while self.get_current_player().is_ai_player():
             self.play_ai_turn()
 
@@ -195,6 +198,17 @@ class Game(IGameService):
     
     def save_game_to_file(self, filename: str) -> int:
         return self.save_handler.save_game_to_file(filename)
+    
+    def start_load_game(self):
+        self.history.clear_history()
+        self.graph.reset_graph()
+        self.game_repository = GameRepository()
+        self.board = Board()
+        self.deck = Deck()
+        self.current_hand = None
+        self.tiles_info= TilesInfo()
+        self.rules_manager = RulesManager(self.tiles_info)
+        self.current_player_order_list = 0
 
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
