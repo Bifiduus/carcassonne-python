@@ -2,9 +2,13 @@ import sys
 import time
 import socket
 import select
+import threading
+from carcassonne.BusinessLogic.Player import Player
+from carcassonne.BusinessLogic.Game import Game
 
 class Server:
     SERVER_TIMEOUT = 30
+    SERVER_DIFFUSION_PERIOD = 10
 
     def __init__(self):
         self.server_name = ""
@@ -12,6 +16,10 @@ class Server:
         self.server = None
         self.running = False
         self.available_servers: dict[str, tuple[int, float]] = {}
+        self.connected_clients: list[socket.socket] = []  # List to track connected client sockets
+        self.clients_lock = threading.Lock()  # Lock for thread-safe access
+        self.party_list: dict[int, tuple[str, Game]] = {}
+        self.scoreboard: dict[socket.socket, Player] = {}
 
     def list_available_servers(self, timeout: float = 5.0) -> list[str]:
         """
@@ -73,7 +81,6 @@ class Server:
         Start the TCP server on the specified port.
         Handles multiple clients concurrently using threading.
         """
-        import threading  # Import here or at top
 
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -86,14 +93,26 @@ class Server:
             return
 
         self.running = True
+        server_last_diffusion = time.time()
         while self.running:
             try:
                 self.server.settimeout(1.0)  # Timeout to check self.running periodically
                 client_socket, addr = self.server.accept()
                 print(f"Accepted connection from {addr}")
+                # Add client to the list
+                with self.clients_lock:
+                    self.connected_clients.append(client_socket)
                 # Handle client in a new thread
                 client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
                 client_thread.start()
+
+                if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
+                    message = f"{self.server_name}:{port}"
+                    socket_message = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    socket_message.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                    broadcast_addr = ('', 12346)
+                    socket_message.sendto(message.encode(), broadcast_addr)
+                    socket_message.close()
             except socket.timeout:
                 continue  # Check self.running again
             except Exception as e:
@@ -104,38 +123,112 @@ class Server:
         self.server.close()
         print("Server stopped")
 
-    def handle_client(self, client_socket):
+    def handle_client(self, client_socket: socket.socket):
         """
         Handle communication with a single client.
         """
 
-        # should have a way to quit the server
         try:
             while True:
                 data = client_socket.recv(1500)
-                if len(data) == 0:
+                if data.decode() == "quit\n":
                     break
                 # Process data (e.g., echo back for now; replace with game logic)
-                response = self.process_message(data.decode())
-                client_socket.send(response.encode())
+                client, message = data.decode().split(":")
+                client_id = client.removeprefix("Client")
+                response = self.process_message(client_id, message)
+                client_socket.send((f"Server -> Client{self.connected_clients.index(client_socket)}: "+ response).encode())
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
             client_socket.close()
+            # Remove client from the list
+            with self.clients_lock:
+                if client_socket in self.connected_clients:
+                    self.connected_clients.remove(client_socket)
 
-    def process_message(self, message: str) -> str:
+    def process_message(self, client_id: str, message: str) -> str:
         """
-        Process incoming message and return response.
-        Placeholder: currently echoes the message.
+        Process incoming message (from a client) and return a response.
         """
         # TODO: Integrate with game logic, e.g., handle moves, queries
-        return f"Echo: {message}"
+        answer = ""
+        if self.server is not None:
+            if message == "ping\n":
+                return f"pong\n"
+            if message == "quit\n":
+                return f"Bye\n"
+            if message == "server status\n":
+                answer = f"Port:{self.server.getsockname()}, Clients:{len(self.connected_clients)}, Current Parties:{len(self.party_list)}\n"
+            if message.startswith("new"):
+                message = message.split("new")[1]
+                party_name = f"Party {len(self.party_list)}"
+                if message.find("-p") != -1:
+                    message, party_name = message.split("-p")
+                clients_list = message.split(" ")
+                clients_list_checked = self.check_clients_list_validity([int(client_id) for client in clients_list]) # Check if the clients exist and are available, remove the ones that cannot be invited
+                self.create_new_party(clients_list_checked, party_name) # Create a new party with a name and players, ask them first
+            if message == "players":
+                if message.split("players")[1] != "\n":
+                    answer = self.check_profile_player(int(message.split("players")[1]))
+                else:
+                    answer = self.current_players() # Return a list of the current players (id, name and status) in the server, not the away players
+            if message == "scoreboard\n":
+                answer = self.print_scoreboard() # Affiche le tableau des scores des
+                                                 # joueurs qui ont joué sur le serveur (nombre de
+                                                 # victoires, défaites, parties jouées) de la db.
+            if message == "accept\n":
+                if self.invitation_received(client_id) != -1:
+                    answer = f"You have no invitation to accept.\n"
+                else:
+                    answer = "" # envoie à {self.invitation_received(client_id)}
+            if message =="decline\n":
+                if self.invitation_received(client_id) != -1:
+                    answer = f"You have no invitation to decline.\n"
+                else:
+                    answer = "" # envoie à {self.invitation_received(client_id)}
+            if message == "cancel\n":
+                if self.invitation_sent_from(client_id):
+                    answer = self.cancel_invitation_from(client_id) # des invitations en attentes, envoie des messages
+                else:
+                    answer = f"No invitations to cancel."
+            if message == "away\n":
+                answer = self.change_status(client_id, "away")
+            if message == "back\n":
+                answer = self.change_status(client_id, "idle")
+        return answer
+    
+    def check_clients_list_validity(self, clients_list: list[int]) -> list[int]:
+        checked_list = []
+        for client in clients_list:
+            sql_request: str = "SELECT username FROM players WHERE id=client;"
+            if sql_request: # met
+                checked_list.append(client)
+        return checked_list
+    
+    def create_new_party(self, clients_list: list[int], party_name: str) -> None:
+        new_party = Game() # to do, with sql stuff
+
+    def check_profile_player(self, player_id: int) -> str:
+        sql_request: str = "SELECT username, status, score, stats_win, stats_lose FROM players WHERE id=player_id;"
+        return ""
 
     def server_stop(self):
         """
         Stop the server gracefully.
         """
         self.running = False
+        # Send shutdown message to all connected clients
+        shutdown_message = "Server Shutdown"
+        with self.clients_lock:
+            for client_socket in self.connected_clients[:]:  # Copy the list to avoid modification during iteration
+                try:
+                    client_socket.sendall(shutdown_message.encode())
+                except Exception as e:
+                    print(f"Error sending shutdown message to client: {e}")
+                finally:
+                    client_socket.close()
+            self.connected_clients.clear()
         if self.server:
             self.server.close()
 
@@ -146,27 +239,27 @@ class Server:
         if self.client == None:
             print("Error: no client socket found.")
             return -1
-        data = "quit".encode()
+        data = "quit\n".encode()
         self.client.sendall(data)
         self.server_stop()
         # Additional cleanup if needed
 
-    def ping(self) -> float:
+    def ping(self) -> str:
         """
         Send a ping or check server status.
         Placeholder implementation.
         """
         start = time.time()
-        self.send_to_server("ping")
+        self.send_to_server("ping\n")
         if self.client == None:
-            print("Error: no client socket found.")
-            return -1
+            return "Error: no client socket found."
         data = self.client.recv(1500)
-        if data.decode() == "pong":
+        message = data.decode()
+        if message.find("pong\n") != -1:
             end = time.time()
-            return start - end
+            return message+f"Time={start - end}ms"
 
-        return -1  # Or implement actual ping logic
+        return "No server response"  # Or implement actual ping logic
     
     def join_server(self, server_name: str, port: int | None = None, timeout: float = 5.0) -> bool:
         """
@@ -203,7 +296,6 @@ class Server:
         self.client.settimeout(None)
 
         # start a listener thread so the caller can interact without blocking
-        import threading
         self._recv_thread = threading.Thread(target=self._receive_loop, daemon=True)
         self._recv_thread.start()
         return True
@@ -216,7 +308,7 @@ class Server:
         try:
             while self.client:
                 data = self.client.recv(1500)
-                if not data or data.decode('utf-8') == "Server Shutdown":
+                if not data or data.decode('utf-8') == "Server Shutdown\n":
                     print("Server closed the connection")
                     break
                 self.handle_server_message(data.decode())
@@ -232,6 +324,19 @@ class Server:
         Override or extend this method to process messages received from the
         server. The default implementation simply prints the message.
         """
+        if self.client: ##### check what you do, if you have the server or if you only receive
+            message = message.removeprefix("Server -> Client")
+            client_id, message = message.split(":")
+            if message.startswith("OPPONENT_MOVE"):
+                move = message.split("OPPONENT_MOVE")
+                self.get_game(client_id).play_move(move) # will check in the database for the game id and 
+                self.client.sendall("board".encode()) # pour afficher le coup
+            if message.startswith("INVITATION_ACCEPTED"):
+                if self.check_all_invitations_resolved(int(client_id)): # accepted or not or timed_out
+                    self.new_game_party(self.party(client_id)) # ajoute la party dans party_list, change ce qu'il faut et lance
+
+
+        
         print(message, end="")
 
     def send_to_server(self, text: str) -> bool:
