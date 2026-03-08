@@ -34,13 +34,22 @@ def _get_player_score(game_state: Any, player_id: int) -> float:
     return float(player.get_score().score)
 
 
+def _get_player_meeples(game_state: Any, player_id: int) -> float:
+    player = _find_player(game_state, player_id)
+    if player is None:
+        return 0.0
+
+    return float(player.meeples)
+
+
 def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[str, float]:
     """Return heuristic features (player - opponent).
     """
     score_diff = _get_player_score(game_state, player_id) - _get_player_score(game_state, opponent_id)
+    meeple_diff = _get_player_meeples(game_state, player_id) - _get_player_meeples(game_state, opponent_id)
     return {
         "score_diff": score_diff,
-        "meeple_diff": 0.0,
+        "meeple_diff": meeple_diff,
         "latent_score_diff": 0.0,
         "incomplete_city_tiles_diff": 0.0,
         "risky_fields_lt3_diff": 0.0,
