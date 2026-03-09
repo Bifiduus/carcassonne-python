@@ -2,6 +2,7 @@
 """
 
 from dataclasses import dataclass
+import math
 from typing import Any
 
 
@@ -20,6 +21,9 @@ class HeuristicWeights:
 
 
 DEFAULT_WEIGHTS = HeuristicWeights()
+DEFAULT_COMPRESSION_BIAS = 0.0
+# Larger scale reduces saturation and keeps more mid-game granularity.
+DEFAULT_COMPRESSION_SCALE = 2500.0
 
 
 def _find_player(game_state: Any, player_id: int) -> Any | None:
@@ -279,6 +283,22 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     }
 
 
+def _compress_to_star_bounds(raw_value: float, bias: float = DEFAULT_COMPRESSION_BIAS, scale: float = DEFAULT_COMPRESSION_SCALE) -> float:
+    """Compress a raw heuristic value into [-100, 100] around a center bias.
+
+    Args:
+        raw_value: Unbounded heuristic value.
+        bias: Center used for zero (raw value equal to bias maps to 0).
+        scale: Compression strength. Larger scale compresses less aggressively.
+
+    Returns:
+        Bounded value in [-100, 100].
+    """
+    if scale <= 0:
+        raise ValueError("Compression scale must be > 0.")
+    return 100.0 * math.tanh((raw_value - bias) / scale)
+
+
 def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: HeuristicWeights = DEFAULT_WEIGHTS) -> float:
     """Compute linear heuristic score for a game state.
 
@@ -289,13 +309,14 @@ def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: H
         weights: Weights applied to each feature.
 
     Returns:
-        Final heuristic value (higher is better for player_id).
+        Final heuristic value in [-100, 100] (higher is better for player_id).
     """
     features = extract_features(game_state, player_id, opponent_id)
-    return (
+    raw_value = (
         weights.score_diff * features["score_diff"]
         + weights.meeple_diff * features["meeple_diff"]
         + weights.latent_score_diff * features["latent_score_diff"]
         + weights.incomplete_city_tiles_diff * features["incomplete_city_tiles_diff"]
         + weights.risky_fields_lt3_diff * features["risky_fields_lt3_diff"]
     )
+    return _compress_to_star_bounds(raw_value)
