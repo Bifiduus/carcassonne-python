@@ -127,6 +127,54 @@ def _component_tile_count(component_entries: list[tuple[int, list[str]]]) -> flo
     return float(len({tile_id for tile_id, _ in component_entries}))
 
 
+def _count_incomplete_city_tiles(game_state: Any, player_id: int) -> float:
+    """Count tiles of incomplete city components controlled by one player.
+
+    Current approximation:
+    - A city component is considered incomplete if at least one edge of one
+      involved tile is open (missing neighbor in graph).
+    - In case of tied control, tile value is shared equally.
+
+    Args:
+        game_state: Current game state object.
+        player_id: Identifier of the player to evaluate.
+
+    Returns:
+        Estimated number of incomplete city tiles controlled by player_id.
+    """
+    counts = _component_meeple_counts(game_state)
+    total = 0.0
+    graph = game_state.graph
+    direction_map = {"N": 0, "E": 1, "S": 2, "W": 3}
+
+    for component_name, entries in graph.lands_components.get("C", {}).items():
+        controllers = _component_controllers(component_name, counts)
+        if player_id not in controllers:
+            continue
+
+        is_incomplete = False
+        for tile_id, directions in entries:
+            vertex = graph.get_vertex(tile_id)
+            if vertex is None:
+                is_incomplete = True
+                break
+            neighbors = vertex.get_neighbors()
+            for direction in directions:
+                if direction in direction_map and direction_map[direction] not in neighbors:
+                    is_incomplete = True
+                    break
+            if is_incomplete:
+                break
+
+        if not is_incomplete:
+            continue
+
+        share = 1.0 / len(controllers)
+        total += share * _component_tile_count(entries)
+
+    return total
+
+
 def _estimate_latent_score(game_state: Any, player_id: int) -> float:
     """Estimate latent value for one player from controlled components.
 
@@ -170,11 +218,12 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     score_diff = _get_player_score(game_state, player_id) - _get_player_score(game_state, opponent_id)
     meeple_diff = _get_player_meeples(game_state, player_id) - _get_player_meeples(game_state, opponent_id)
     latent_score_diff = _estimate_latent_score(game_state, player_id) - _estimate_latent_score(game_state, opponent_id)
+    incomplete_city_tiles_diff = _count_incomplete_city_tiles(game_state, player_id) - _count_incomplete_city_tiles(game_state, opponent_id)
     return {
         "score_diff": score_diff,
         "meeple_diff": meeple_diff,
         "latent_score_diff": latent_score_diff,
-        "incomplete_city_tiles_diff": 0.0,
+        "incomplete_city_tiles_diff": incomplete_city_tiles_diff,
         "risky_fields_lt3_diff": 0.0,
     }
 
