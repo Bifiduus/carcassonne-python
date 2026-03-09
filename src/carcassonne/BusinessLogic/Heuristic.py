@@ -127,6 +127,31 @@ def _component_tile_count(component_entries: list[tuple[int, list[str]]]) -> flo
     return float(len({tile_id for tile_id, _ in component_entries}))
 
 
+def _is_city_component_incomplete(graph: Any, entries: list[tuple[int, list[str]]]) -> bool:
+    """Check whether a city component is incomplete.
+
+    A city is considered incomplete if one required cardinal edge has no
+    neighbor tile.
+
+    Args:
+        graph: Game graph object.
+        entries: Component entries for one city component.
+
+    Returns:
+        True if the city component is incomplete, False otherwise.
+    """
+    direction_map = {"N": 0, "E": 1, "S": 2, "W": 3}
+    for tile_id, directions in entries:
+        vertex = graph.get_vertex(tile_id)
+        if vertex is None:
+            return True
+        neighbors = vertex.get_neighbors()
+        for direction in directions:
+            if direction in direction_map and direction_map[direction] not in neighbors:
+                return True
+    return False
+
+
 def _count_incomplete_city_tiles(game_state: Any, player_id: int) -> float:
     """Count tiles of incomplete city components controlled by one player.
 
@@ -145,34 +170,59 @@ def _count_incomplete_city_tiles(game_state: Any, player_id: int) -> float:
     counts = _component_meeple_counts(game_state)
     total = 0.0
     graph = game_state.graph
-    direction_map = {"N": 0, "E": 1, "S": 2, "W": 3}
-
     for component_name, entries in graph.lands_components.get("C", {}).items():
         controllers = _component_controllers(component_name, counts)
         if player_id not in controllers:
             continue
 
-        is_incomplete = False
-        for tile_id, directions in entries:
-            vertex = graph.get_vertex(tile_id)
-            if vertex is None:
-                is_incomplete = True
-                break
-            neighbors = vertex.get_neighbors()
-            for direction in directions:
-                if direction in direction_map and direction_map[direction] not in neighbors:
-                    is_incomplete = True
-                    break
-            if is_incomplete:
-                break
-
-        if not is_incomplete:
+        if not _is_city_component_incomplete(graph, entries):
             continue
 
         share = 1.0 / len(controllers)
         total += share * _component_tile_count(entries)
 
     return total
+
+
+def _count_risky_fields_lt3_completed_cities(game_state: Any, player_id: int) -> float:
+    """Count controlled field components with fewer than 3 completed cities.
+
+    Current approximation:
+    - "Adjacent completed city" is estimated through tile co-presence:
+      if a field component and a completed city component share at least one
+      tile id, the city is counted as adjacent.
+    - In case of tied field control, value is shared equally.
+
+    Args:
+        game_state: Current game state object.
+        player_id: Identifier of the player to evaluate.
+
+    Returns:
+        Estimated number of risky fields for player_id.
+    """
+    counts = _component_meeple_counts(game_state)
+    graph = game_state.graph
+    risky_total = 0.0
+
+    completed_city_tile_sets: list[set[int]] = []
+    for city_entries in graph.lands_components.get("C", {}).values():
+        if _is_city_component_incomplete(graph, city_entries):
+            continue
+        completed_city_tile_sets.append({tile_id for tile_id, _ in city_entries})
+
+    for field_name, field_entries in graph.lands_components.get("F", {}).items():
+        controllers = _component_controllers(field_name, counts)
+        if player_id not in controllers:
+            continue
+
+        field_tiles = {tile_id for tile_id, _ in field_entries}
+        adjacent_completed_cities = sum(1 for city_tiles in completed_city_tile_sets if field_tiles & city_tiles)
+
+        if adjacent_completed_cities < 3:
+            share = 1.0 / len(controllers)
+            risky_total += share
+
+    return risky_total
 
 
 def _estimate_latent_score(game_state: Any, player_id: int) -> float:
@@ -219,12 +269,13 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     meeple_diff = _get_player_meeples(game_state, player_id) - _get_player_meeples(game_state, opponent_id)
     latent_score_diff = _estimate_latent_score(game_state, player_id) - _estimate_latent_score(game_state, opponent_id)
     incomplete_city_tiles_diff = _count_incomplete_city_tiles(game_state, player_id) - _count_incomplete_city_tiles(game_state, opponent_id)
+    risky_fields_lt3_diff = _count_risky_fields_lt3_completed_cities(game_state, player_id) - _count_risky_fields_lt3_completed_cities(game_state, opponent_id)
     return {
         "score_diff": score_diff,
         "meeple_diff": meeple_diff,
         "latent_score_diff": latent_score_diff,
         "incomplete_city_tiles_diff": incomplete_city_tiles_diff,
-        "risky_fields_lt3_diff": 0.0,
+        "risky_fields_lt3_diff": risky_fields_lt3_diff,
     }
 
 
