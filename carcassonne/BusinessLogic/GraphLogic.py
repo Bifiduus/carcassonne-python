@@ -19,6 +19,7 @@ SOUTHWEST_MATRIX = (2, 0)
 SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
 
+
 class GraphLogic:
 
     corners = ['NW', 'NE', 'SW', 'SE']
@@ -65,7 +66,8 @@ class GraphLogic:
     }
 
     # Direction constants and mappings
-    opposite_dir = {NORTH_DIR: SOUTH_DIR, EAST_DIR: WEST_DIR, SOUTH_DIR: NORTH_DIR, WEST_DIR: EAST_DIR}
+    opposite_dir = {NORTH_DIR: SOUTH_DIR, EAST_DIR: WEST_DIR,
+                    SOUTH_DIR: NORTH_DIR, WEST_DIR: EAST_DIR}
     direction_matrix_indices = {
         NORTH_DIR: (0, 1),
         EAST_DIR: (1, 2),
@@ -110,7 +112,8 @@ class GraphLogic:
 
         for card in self.cardinals:
             next_side_0 = card
-            next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0][0]][self.match_matrix[next_side_0][1]]
+            next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0]
+                                                                    [0]][self.match_matrix[next_side_0][1]]
             next_dir = self.match_cardinals.get(next_side_0)
             if next_dir in neighbors.keys():
                 next_neighbor_id = neighbors[next_dir]
@@ -120,7 +123,8 @@ class GraphLogic:
 
         for corner in self.corners:
             next_side_0 = corner
-            next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0][0]][self.match_matrix[next_side_0][1]]
+            next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0]
+                                                                    [0]][self.match_matrix[next_side_0][1]]
             next_dir = self.match_corners.get(next_side_0)[0]
             if next_dir in neighbors.keys():
                 next_neighbor_id = neighbors[next_dir]
@@ -129,9 +133,9 @@ class GraphLogic:
                 # So we can't just take the land type of the corner.
                 if special_corner is not None:
                     self.handle_special_corner_connection(
-                        self,tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 0, groups_left, groups_apparition
+                        self, tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 0, groups_left, groups_apparition
                     )
-                else :
+                else:
                     self.handle_corner_connection(
                         self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 0, groups_left, groups_apparition
                     )
@@ -146,7 +150,7 @@ class GraphLogic:
                     self.handle_special_corner_connection(
                         self, tile_id, tile_orientation, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, special_corner, 1, groups_left, groups_apparition
                     )
-                else :
+                else:
                     self.handle_corner_connection(
                         self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 1, groups_left, groups_apparition
                     )
@@ -184,7 +188,8 @@ class GraphLogic:
                 # Merge all sets in sets_to_merge into the first one
                 main_set = sets_to_merge[0]
                 for other_set in sets_to_merge[1:]:
-                    graph.lands_components[main_set[0]][main_set[1]].extend(graph.lands_components[other_set[0]][other_set[1]])
+                    graph.lands_components[main_set[0]][main_set[1]].extend(
+                        graph.lands_components[other_set[0]][other_set[1]])
                     for set_name in list(graph.lands_components[other_set[0]].keys()):
                         for meeple in graph.get_meeples():
                             if meeple.lands_components == other_set[1]:
@@ -204,7 +209,7 @@ class GraphLogic:
 
     @staticmethod
     def _find_lands_set(
-        land_type: str, tile_id: int, direction_group: List[str], graph: IGraphData) -> Optional[List[Tuple[int, List[str]]]]:
+            land_type: str, tile_id: int, direction_group: List[str], graph: IGraphData) -> Optional[List[Tuple[int, List[str]]]]:
         """Find a land set that contains the given tile with the given direction group."""
         if land_type not in graph.lands_components:
             return None
@@ -243,7 +248,7 @@ class GraphLogic:
 
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
-        nx,ny = self.match_matrix.get(neigh_initial_corner)
+        nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
         # Find if neighbor has a direction group containing the opposite position
@@ -257,7 +262,8 @@ class GraphLogic:
             return
         # Means we have the same land for the two tiles
         else:
-            existing_set = self._find_lands_set(special_land, neighbor_id, neighbor_dir_group, graph)
+            existing_set = self._find_lands_set(
+                special_land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, corner_grp))
             groups_left[tuple(corner_grp)] = True
             groups_apparition[tuple(corner_grp)] += 1
@@ -284,7 +290,7 @@ class GraphLogic:
 
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
-        nx,ny = self.match_matrix.get(neigh_initial_corner)
+        nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
         # Find if neighbor has a direction group containing the opposite position
@@ -298,7 +304,8 @@ class GraphLogic:
             return
         # Means we have the same land for the two tiles
         else:
-            existing_set = self._find_lands_set(land, neighbor_id, neighbor_dir_group, graph)
+            existing_set = self._find_lands_set(
+                land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, corner_grp))
             groups_left[tuple(corner_grp)] = True
             groups_apparition[tuple(corner_grp)] += 1
@@ -321,7 +328,7 @@ class GraphLogic:
 
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
-        nx,ny = self.match_matrix.get(neigh_initial_corner)
+        nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
         # Find if neighbor has a direction group containing the opposite position
@@ -335,7 +342,8 @@ class GraphLogic:
             return
         # Means we have the same land for the two tiles
         else:
-            existing_set = self._find_lands_set(land, neighbor_id, neighbor_dir_group, graph)
+            existing_set = self._find_lands_set(
+                land, neighbor_id, neighbor_dir_group, graph)
             existing_set.append((tile_id, card_grp))
             groups_left[tuple(card_grp)] = True
             groups_apparition[tuple(card_grp)] += 1

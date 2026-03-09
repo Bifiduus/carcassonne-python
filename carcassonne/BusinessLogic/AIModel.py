@@ -256,7 +256,7 @@ class ExpectimaxPlayer:
                player_to_max: int, next_player: int):
 
         if self.terminal(game.tiles_info) or depth == 0:
-            return self.eval_fn(game.graph, 0, 0)
+            return self.eval_fn(game, player_to_max, next_player)
 
         successors = self.numSuccesors(game.tiles_info)
 

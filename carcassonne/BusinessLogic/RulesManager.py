@@ -66,7 +66,7 @@ class RulesManager():
         land_pos = Tile.direction_matrix[integers_placement[1]
                                          ][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         set_name_to_place = None
-        for set_name, sets in graph_copy.lands_components.get(land_type).items():
+        for set_name, sets in graph_copy.lands_components[land_type].items():
             for tileid, directions in sets:
                 if tileid == tile_id and land_pos in directions:
                     set_name_to_place = set_name
