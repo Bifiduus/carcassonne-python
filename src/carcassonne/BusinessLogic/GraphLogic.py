@@ -174,7 +174,7 @@ class GraphLogic:
                 for land_type, sets in graph.lands_components.items():
                     for set_name, set_list in sets.items():
                         for _, drg in set_list:
-                            if drg == grp:
+                            if tuple(drg) == grp:
                                 sets_to_merge.append((land_type, set_name))
                                 break
                 # Merge all sets in sets_to_merge into the first one
