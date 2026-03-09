@@ -2,31 +2,22 @@
 This module implements the AI player using the Expectimax pruning algorithm.
 It provides intelligent move selection for the AI player in Carcassonne.
 """
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, TYPE_CHECKING
 
 from carcassonne.Datas.History import MoveRecord
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.BusinessLogic.RulesManager import RulesManager
-from carcassonne.BusinessLogic.Game import Game
 
-
-def STAR1(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
-    pass
-
-
-def STAR2(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
-    pass
-
-
-def STAR2_5(graph: IGraphData, ai_score: int, opponent_score: int) -> float:
-    pass
+if TYPE_CHECKING:
+    from .Game import Game
+from carcassonne.BusinessLogic.Heuristic import evaluate_state as heuristic_evaluate_state
 
 class RandomPlayer:
     
     meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']  # Example positions for meeple placement
     
-    def get_possible_moves(self, tile, game : Game) -> List[str]:
+    def get_possible_moves(self, tile, game : 'Game') -> List[str]:
         """
         Generate all legal moves from the current game state.
         
@@ -62,7 +53,7 @@ class RandomPlayer:
                                     possible_moves.append(move)
         return possible_moves
 
-    def random_move(self, tile, game : Game) -> str:
+    def random_move(self, tile, game : 'Game') -> str:
         """Select a random move from the list of possible moves."""
         import random as r
         
@@ -80,7 +71,7 @@ class ExpectimaxPlayer:
     
     meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']  # Example positions for meeple placement
     
-    def __init__(self, game : Game, depth: int = 4, is_maximizing: bool = True, eval_name: str = "STAR1", eval_fn=None):
+    def __init__(self, game : 'Game', depth: int = 4, is_maximizing: bool = True, eval_name: str = "", eval_fn=None):
         """
         Initialize the Expectimax AI player.
         
@@ -93,14 +84,14 @@ class ExpectimaxPlayer:
         self.is_maximizing = is_maximizing
         self.nodes_explored = 0
         # evaluation function (callable(graph, ai_score, opponent_score) -> float)
-        self.eval_fn = None
         if eval_fn is not None:
             self.eval_fn = eval_fn
         else:
             self.set_evaluation_method(eval_name)
+        self.depth_max = depth
     
     def set_evaluation_method(self, name_or_fn) -> None:
-        """Set evaluation by name ('STAR1','STAR2','STAR2_5') or by callable.
+        """Set evaluation by name or by callable.
 
         Accepts a callable(graph, ai_score, opponent_score) or a string name.
         """
@@ -109,16 +100,12 @@ class ExpectimaxPlayer:
             return
 
         name = (name_or_fn or '').upper()
-        if name == 'STAR1':
-            self.eval_fn = STAR1
-        elif name == 'STAR2':
-            self.eval_fn = STAR2
-        elif name in ('STAR2_5', 'STAR2.5', 'STAR25'):
-            self.eval_fn = STAR2_5
+        if name == '':
+            self.eval_fn = heuristic_evaluate_state
         else:
             raise ValueError(f"Unknown evaluation method: {name_or_fn}")
         
-    def get_possible_moves(self, tile : str, game : Game) -> List[str]:
+    def get_possible_moves(self, tile : str, game : 'Game') -> List[str]:
         """
         Generate all legal moves from the current game state.
         
@@ -156,76 +143,39 @@ class ExpectimaxPlayer:
             
         return possible_moves
     
-    def evaluate_state(self, graph: IGraphData, current_player_score: int, 
-                      opponent_score: int) -> float:
-        """
-        Evaluate the current game state for the AI player.
-        This is a heuristic function that estimates the value of a position.
-        
-        Args:
-            graph: The game board graph
-            current_player_score: Current player's score
-            opponent_score: Opponent's score
-            
-        Returns:
-            Evaluation score (higher is better for AI)
-        """
-        if self.eval_fn is None:
-            # fallback to simple heuristic if none selected
-            score_diff = current_player_score - opponent_score
-            board_control = len(graph.get_verticies()) * 5
-            incomplete_features_bonus = self._estimate_potential(graph)
-            return score_diff + board_control + incomplete_features_bonus
-
-        return self.eval_fn(graph, current_player_score, opponent_score)
-    
-    def _estimate_potential(self, graph: IGraphData) -> float:
-        """
-        Estimate the potential future points from incomplete features.
-        
-        Args:
-            graph: The game board graph
-            
-        Returns:
-            Estimated potential points
-        """
-        # This is a simplified heuristic - you can expand this based on your game rules
-        vertices = graph.get_verticies()
-        potential = 0
-        
-        # Count edges (potential for roads, cities, etc.)
-        for vertex in vertices.values():
-            # Estimate potential points based on vertex type and completeness
-            potential += 10  # Base potential per tile
-        
-        return potential
-    
-    def search(self, game : Game, depth: int, alpha: float, beta: float, player_to_max: int, next_player: int) -> float:
-        """Recursive search function for Expectimax algorithm. Adapt between Max and Min nodes based on the player parameter."""
-        if self.terminal(game.tiles_info, game.graph) or depth == 0:
-            return self.evaluate_state(game.graph, 0, 0)
+    def search(self, game : 'Game', depth: int, alpha: float, beta: float, player_to_max: int, next_player: int) -> float:
+        """Recursive search function for Expectimax algorithm. Adapt between Max and Min nodes based on the player parameter."""  
+        if self.terminal(game.tiles_info) or depth == 0:
+            return self.eval_fn(game.graph, 0, 0), ''
+        restored_hand = game.current_hand
         if player_to_max == next_player:  # Max node
             max_eval = float('-inf')
             possible_moves = self.get_possible_moves(game.current_hand, game)
             for move in possible_moves:
-                new_game = self.apply_move(game.graph, move)
-                eval_score = self.Star25(new_game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % self.nb_players)
+                game.play_move(move)
+                eval_score = self.Star25(game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % len(game.players))
+                game.undo()
+                game.current_hand = restored_hand
+                if eval_score > max_eval and depth == self.depth_max:
+                    best_move = move
                 max_eval = max(max_eval, eval_score)
                 alpha = max(alpha, eval_score)
                 if beta <= alpha:
                     break
-            return max_eval
+            return max_eval, best_move
         else:  # Min node (opponent's turn)
             min_eval = float('inf')
             possible_moves = self.get_possible_moves(game.current_hand, game)
             for move in possible_moves:
-                new_game = self.apply_move(game.graph, move)
-                eval_score = self.Star25(new_game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % self.nb_players)
+                game.play_move(move)
+                eval_score = self.Star25(game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % len(game.players))
+                game.undo()
+                game.current_hand = restored_hand
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
                 if beta <= alpha:
                     break
-            return min_eval
+            return min_eval, ''
     
     def eventProb(self, graph: IGraphData, tile: str, N: dict) -> float:
         """Calculate the probability of a chance event (e.g., drawing a specific tile)."""
@@ -234,29 +184,32 @@ class ExpectimaxPlayer:
             return 0.0
         return N.get(tile) / total_tiles_left
     
-    def nProbe(self, game: Game, alpha: float, beta: float,
+    def nProbe(self, game: 'Game', alpha: float, beta: float,
            depth: int, player_to_max: int, next_player: int,
            probingFactor: int = 5):
 
         moves = self.get_possible_moves(game.current_hand, game)
 
         best = alpha
+        
+        restored_hand = game.current_hand
 
         for i in range(min(probingFactor, len(moves))):
             move = moves[i]
 
-            new_graph = self.apply_move(game.graph, move)
-            new_game = game.copy()
-            new_game.graph = new_graph
+            game.play_move(move)
 
             value = self.search(
-                new_game,
+                game,
                 depth - 1,
                 best,
                 beta,
                 player_to_max,
-                (next_player + 1) % self.nb_players,
+                (next_player + 1) % len(game.players),
             )
+            
+            game.undo()
+            game.current_hand = restored_hand
 
             if value >= beta:
                 return beta
@@ -266,14 +219,10 @@ class ExpectimaxPlayer:
 
         return best
 
-    def applyChanceEvent(self, tile: str) -> IGraphData: 
-        """Apply a chance event (e.g., drawing a tile) to the game state and return the new state."""
-        game_copy = self.game.copy()
-        
+    def applyChanceEvent(self, game: 'Game', tile: str) -> None:
+        """Apply a chance event (e.g., drawing a tile) to the game state."""    
         # TODO: Make the next tile to draw the tile parameter
-        game_copy.current_hand = tile
-        
-        return game_copy
+        game.current_hand = tile
     
     def numSuccesors(self, tiles_info: ITilesInfo) -> int:
         """Return the number of possible chance events (e.g., tile draws) from this state."""
@@ -294,12 +243,12 @@ class ExpectimaxPlayer:
         
         return False
     
-    def Star25(self, game: Game, depth: int,
+    def Star25(self, game: 'Game', depth: int,
            alpha: float, beta: float,
            player_to_max: int, next_player: int):
 
         if self.terminal(game.tiles_info) or depth == 0:
-            return self.evaluate_state(game.graph, 0, 0)
+            return self.eval_fn(game.graph, 0, 0)
 
         successors = self.numSuccesors(game.tiles_info)
 
@@ -320,10 +269,10 @@ class ExpectimaxPlayer:
 
             cur_beta = (beta - self.L * cur_y - cur_x) / prob
 
-            succ_game = self.applyChanceEvent(tile)
+            self.applyChanceEvent(game, tile)
 
             value = self.nProbe(
-                succ_game,
+                game,
                 tile,
                 alpha,
                 cur_beta,
@@ -331,7 +280,7 @@ class ExpectimaxPlayer:
                 player_to_max,
                 next_player
             )
-
+            
             w[tile] = value
 
             if value >= cur_beta:
@@ -353,10 +302,10 @@ class ExpectimaxPlayer:
             ax = max(self.L, cur_alpha)
             bx = min(self.U, cur_beta)
 
-            succ_game = self.applyChanceEvent(tile)
+            self.applyChanceEvent(game, tile)
 
-            value = self.search(
-                succ_game,
+            value, _ = self.search(
+                game,
                 depth - 1,
                 ax,
                 bx,

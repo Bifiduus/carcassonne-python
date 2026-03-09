@@ -18,8 +18,6 @@ from carcassonne.Datas.History import History
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.Datas.TilesInfo import TilesInfo
 from carcassonne.BusinessLogic.SaveHandler import SaveHandler
-from carcassonne.BusinessLogic.AIModel import RandomPlayer
-from .AIModel import is_ai_player
 
 OPPOSITE = {
     "N": "S",
@@ -55,6 +53,7 @@ class Game(IGameService):
         self.shuffle_players_order()
         self.current_player_order_list = self.players_order[0]
         self.save_handler = SaveHandler(self)
+        self.AImodel = "expectimax"
 
     def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -79,6 +78,7 @@ class Game(IGameService):
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
+        from .AIModel import is_ai_player
         if self.rules_manager.current_player_is_human() and self.history.past_moves:
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
@@ -98,6 +98,7 @@ class Game(IGameService):
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
+        from .AIModel import is_ai_player
         if self.rules_manager.current_player_is_human() and self.history.future_moves:
             last_unplayed_move = self.history.pop_future()
             self.current_hand = last_unplayed_move.move_str.split('/')[0]
@@ -155,11 +156,18 @@ class Game(IGameService):
         return False
         
     def play_ai_turn(self) -> None:
+        from .AIModel import RandomPlayer
+        from .AIModel import ExpectimaxPlayer
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        tile = self.draw_tile()
-        model = RandomPlayer()
-        move = model.random_move(tile, self.graph)
+        self.draw_tile()
+        model = None
+        if self.AImodel == "random":
+            model = RandomPlayer(self)
+        elif self.AImodel == "expectimax":
+            model = ExpectimaxPlayer(self)
+        eval, move = model.search(self, depth = model.depth_max, alpha = float('-inf'), beta = float('inf'), player_to_max=ai_player.get_id(), next_player = ai_player.get_id())
+        print(f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
         self.play_move(move)
         
     def get_game_configuration(self) :
