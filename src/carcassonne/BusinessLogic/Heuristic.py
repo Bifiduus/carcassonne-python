@@ -36,7 +36,7 @@ def _find_player(game_state: Any, player_id: int) -> Any | None:
     Returns:
         The matching player object, or None if not found.
     """
-    for player in game_state.players:
+    for player in game_state.players.values():
         if player.get_id() == player_id:
             return player
     return None

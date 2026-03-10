@@ -343,8 +343,11 @@ class Game(IGameService):
         return seed
     
     def shuffle_players_order(self) -> None:
-        others = [player for player in self.players]
+        first_player = 0
+        print(first_player)
+        others = [player for player in self.players if player != 0]
         r.shuffle(others)
+        others = [first_player] + others
         self.players_order = others
         
     def add_players(self, nb_players: int) -> None:
