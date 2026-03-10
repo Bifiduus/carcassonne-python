@@ -23,7 +23,7 @@ class GameGUI(Gtk.Application):
     """
 
     def __init__(self, game_data):
-        super().__init__(application_id="com.example.Carcassonne", flags=0)
+        super().__init__(application_id="com.example.Carcassonne")
         GLib.set_application_name("Carcassonne")
 
         self.game_data = game_data
@@ -157,71 +157,6 @@ class GameGUI(Gtk.Application):
     def on_draw(self, action, param):
         # legacy entry point; forward to handler
         CommandsHandlerGui.on_draw_gui(self)
-    
-    
-    def update_preview_rotation(self):
-        if not self.game_data.current_tile:
-            return
-
-        image_path = utils.tile_image_path(self.game_data.current_tile.current_tile)
-
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-            filename=image_path,
-            width=100,
-            height=100,
-            preserve_aspect_ratio=True
-        )
-
-        # Rotate pixbuf
-        rotated = pixbuf.rotate_simple(
-            [GdkPixbuf.PixbufRotation.NONE,
-            GdkPixbuf.PixbufRotation.CLOCKWISE,
-            GdkPixbuf.PixbufRotation.UPSIDEDOWN,
-            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE][self.game_data.current_orientation]
-        )
-
-        texture = Gdk.Texture.new_for_pixbuf(rotated)
-        self.tile_preview.set_paintable(texture)
-
-    def on_drag_prepare(self, source, x, y):
-        if not self.current_tile:
-            return None
-
-        # Load the pixbuf of the current tile
-    # Provide tile name for drop logic
-        return Gdk.ContentProvider.new_for_value(self.game_data.current_tile.current_tile)
-    
-    def on_drag_begin(self, drag_source, drag):
-
-        if not self.current_tile:
-            return
-
-        image_path = utils.tile_image_path(self.game_data.current_tile.current_tile)
-
-        # Load scaled image
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-            filename=image_path,
-            width=100,
-            height=100,
-            preserve_aspect_ratio=True
-        )
-
-        rotations = [
-            GdkPixbuf.PixbufRotation.NONE,
-            GdkPixbuf.PixbufRotation.CLOCKWISE,
-            GdkPixbuf.PixbufRotation.UPSIDEDOWN,
-            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE
-        ]
-
-        rotated = pixbuf.rotate_simple(rotations[self.game_data.current_orientation])
-
-        texture = Gdk.Texture.new_for_pixbuf(rotated)
-
-        # Store reference to avoid GC
-        self._drag_texture = texture
-
-        # Center cursor on tile
-        drag_source.set_icon(texture, 50, 50)
 
     def create_menu_button(self, label, menu):
         button = Gtk.MenuButton()
@@ -235,10 +170,16 @@ class GameGUI(Gtk.Application):
     def button_clicked_end_turn(self, button):
         self.on_end_turn(None, None)
 
-    def set_tile_preview(self, tile_name):
-        image_path = utils.tile_image_path(tile_name)
-        
-        # Resize to 100x100
+    def update_preview_rotation(self):
+        if not self.game_data.current_tile:
+            return
+
+        image_path = utils.tile_image_path(self.game_data.current_tile.current_tile)
+
+        if not os.path.isfile(image_path):
+            print(f"Image not found: {image_path}")
+            return
+
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
             width=100,
@@ -246,6 +187,19 @@ class GameGUI(Gtk.Application):
             preserve_aspect_ratio=True
         )
 
-        # GTK4 Picture can take a pixbuf directly
-        self.tile_preview.set_paintable(Gdk.Texture.new_for_pixbuf(pixbuf))
-    
+        if pixbuf is None:
+            print(f"Failed to load Pixbuf from {image_path}")
+            return
+
+        # Rotate pixbuf
+        rotations = [
+            GdkPixbuf.PixbufRotation.NONE,
+            GdkPixbuf.PixbufRotation.CLOCKWISE,
+            GdkPixbuf.PixbufRotation.UPSIDEDOWN,
+            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE
+        ]
+        rotated = pixbuf.rotate_simple(rotations[self.game_data.current_orientation])
+
+        # Gdk.Texture attend un Pixbuf non-None
+        texture = Gdk.Texture.new_for_pixbuf(rotated)
+        self.tile_preview.set_paintable(texture)

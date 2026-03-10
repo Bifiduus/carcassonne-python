@@ -87,3 +87,8 @@ def on_rotate_gui(gui):
 def on_end_turn_gui(gui):
     """Play the pending move and let GameDataGui handle the reset."""
     gui.game_data.play_move_gui()
+    tile = gui.game_data.draw_tile()
+
+    image_path = utils.tile_image_path(tile)
+    gui.tile_preview.set_filename(image_path)
+
