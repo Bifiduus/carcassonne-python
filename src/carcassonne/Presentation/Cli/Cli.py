@@ -5,7 +5,7 @@ and displaying game information such as the player's hand, scores, history, and 
 """
 from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
-from carcassonne.Presentation import CommandsHandlerCli
+from carcassonne.Presentation.Cli import CommandsHandlerCli
 from carcassonne.BusinessLogic.Game import Game
 
 import readline

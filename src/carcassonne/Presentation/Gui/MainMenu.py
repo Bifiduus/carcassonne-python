@@ -1,0 +1,38 @@
+"""Simple helper for building the initial main menu UI."""
+
+from gi.repository import Gtk
+
+
+class MainMenu:
+    @staticmethod
+    def create(gui):
+        """Return a centered vertical box containing the main menu buttons.
+
+        ``gui`` is expected to be the :class:`GameGUI` instance so that the
+        signal handlers (start_singleplayer/start_multiplayer) can access
+        ``self.window`` etc.  Keeping these handlers on the GUI class keeps
+        the coupling low while still letting the menu be built from a
+        separate module.
+        """
+        box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=20,
+            halign=Gtk.Align.CENTER,
+            valign=Gtk.Align.CENTER,
+        )
+
+        title = Gtk.Label(label="Carcassonne")
+        title.add_css_class("title-1")
+
+        btn_single = Gtk.Button(label="Singleplayer")
+        btn_multi = Gtk.Button(label="Multiplayer")
+        btn_quit = Gtk.Button(label="Quit")
+
+        btn_single.connect("clicked", gui.start_singleplayer)
+        btn_multi.connect("clicked", gui.start_multiplayer)
+        btn_quit.connect("clicked", lambda b: gui.quit())
+
+        for widget in (title, btn_single, btn_multi, btn_quit):
+            box.append(widget)
+
+        return box
