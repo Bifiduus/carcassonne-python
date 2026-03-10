@@ -37,6 +37,7 @@ class Board:
             print("Error in getting position")
             return
         turn = graph.get_turn_number()
+        current_player_id = turn % len(players)
         tile_id = turn
         graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
 
@@ -53,15 +54,15 @@ class Board:
                     for tileid, directions in sets:
                         if tileid == tile_id and land_pos in directions:
                             set_name_to_place = set_name
-            meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
+            meeple = Meeple(player_id=current_player_id, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
-            players[turn % len(players)].remove_meeple()
+            players[current_player_id].remove_meeple()
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
 
         # Score completed components at end of turn
         # Map player_id (0-based) to Player object
         players_dict = {idx: player for idx, player in enumerate(players)}
-        ScoreManager.score_end_of_turn(graph, players_dict)
+        ScoreManager.score_end_of_turn(graph, players_dict, current_player_id, self.scored_components)
 
         # affiche les scores actuels dans la console
         print(f"-- Scores après le tour {turn} --")
