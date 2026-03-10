@@ -58,17 +58,18 @@ class BoardView(Gtk.DrawingArea):
         key_controller.connect("key-pressed", self.on_key_press)
         self.add_controller(key_controller)
     
-    def get_tile_image_path(self, name: str) -> str:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        images_dir = os.path.join(base_dir, "Images")
-        if(name.find("/") != -1):
-            name = name.split("/")
-            return os.path.join(images_dir, f"{name[0]}{name[1]}.png")
-        return os.path.join(images_dir, f"{name}.png")
+    def get_tile_image_path(self, name):
+        # reuse the shared utility so the rules for tile naming stay
+        # consistent with the preview and other helpers.
+        from carcassonne.Presentation.Gui.utils import tile_image_path
+        return tile_image_path(name)
             
-    def load_textures(self) -> None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        images_dir = os.path.join(base_dir, "Images")
+    def load_textures(self):
+        # use the shared helper to find the images directory; this keeps
+        # the code in multiple modules in sync and makes testing easier.
+        from carcassonne.Presentation.Gui.utils import get_images_dir
+
+        images_dir = get_images_dir()
         images_dir = os.path.normpath(images_dir)
 
         if not os.path.exists(images_dir):
@@ -77,13 +78,11 @@ class BoardView(Gtk.DrawingArea):
 
         for file in os.listdir(images_dir):
             if file.endswith(".png"):
-
-                # garde exactement le nom du fichier sans l'extension
-                name = os.path.splitext(file)[0]  
+                # keep the filename (without extension) as the key
+                name = os.path.splitext(file)[0]
                 full_path = os.path.join(images_dir, file)
 
                 print(f"Loading texture: {name} from {full_path}")
-
                 self.textures[name] = GdkPixbuf.Pixbuf.new_from_file(full_path)
 
         print("Images directory:", images_dir)
