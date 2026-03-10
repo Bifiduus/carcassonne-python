@@ -9,7 +9,7 @@ from typing import Dict, Any, Tuple
 from carcassonne.Presentation.Gui import board_utils
 
 class BoardView(Gtk.DrawingArea):
-    def __init__(self, game_service: IGameService, game_gui: Any, tile_size: int = 100) -> None:
+    def __init__(self, game_data: Any, tile_size: int = 100) -> None:
         super().__init__()
 
         self.game_data = game_data

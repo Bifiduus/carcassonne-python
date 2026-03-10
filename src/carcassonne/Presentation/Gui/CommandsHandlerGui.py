@@ -1,3 +1,5 @@
+from carcassonne.Presentation.Gui import utils
+
 """
 Lists of commands that can be triggered from the GUI, and their handlers.
 """
