@@ -10,7 +10,7 @@ from carcassonne.Presentation.Gui.TilePreview import TilePreview
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Gtk, Gio, Gdk
+from gi.repository import GLib, Gtk, Gio, Gdk, GdkPixbuf
 
 
 class GameGUI(Gtk.Application):
@@ -111,7 +111,7 @@ class GameGUI(Gtk.Application):
 
         window.stack.add_named(overlay, "game")
         window.stack.set_visible_child_name("menu")
-
+        # make the window visible on screen
         window.window.present()
 
     def on_end_turn(self, action, param):
