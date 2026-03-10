@@ -28,7 +28,7 @@ class GraphLogic:
         'SW': [2, 3],
         'SE': [2, 1]
     }
-    
+
     match_cardinals = {
         'N': 0,
         'E': 1,
@@ -42,16 +42,16 @@ class GraphLogic:
         'SW': ['NW', 'SE'],
         'SE': ['NE', 'SW']
     }
-    
+
     opposite_cardinal = {
         'N': 'S',
         'E': 'W',
         'S': 'N',
         'W': 'E'
     }
-    
+
     cardinals = ['N', 'E', 'S', 'W']
-    
+
     match_matrix = {
         'NW': NORTHWEST_MATRIX,
         'N': NORTH_MATRIX,
@@ -61,7 +61,7 @@ class GraphLogic:
         'E': EAST_MATRIX,
         'SW': SOUTHWEST_MATRIX,
         'S': SOUTH_MATRIX,
-        'SE': SOUTHEAST_MATRIX 
+        'SE': SOUTHEAST_MATRIX
     }
 
     # Direction constants and mappings
@@ -96,7 +96,7 @@ class GraphLogic:
         tile_def = tiles_info.tiles.get(vertex.name.split('/')[0])
         if tile_def is None or not tile_def.tiles_lands:
             return
-        
+
         groups_left = {}
         groups_apparition = {}
         for land_type, direction_groups in tile_def.tiles_lands.items():
@@ -105,9 +105,9 @@ class GraphLogic:
                 groups_apparition[tuple(drg)] = 0
 
         tile_orientation = vertex.orientation
-        
+
         neighbors = vertex.get_neighbors()
-        
+
         for card in self.cardinals:
             next_side_0 = card
             next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0][0]][self.match_matrix[next_side_0][1]]
@@ -117,7 +117,7 @@ class GraphLogic:
                 self.handle_cardinal_connection(
                     self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, groups_left, groups_apparition
                 )
-                
+
         for corner in self.corners:
             next_side_0 = corner
             next_side = tile_def.direction_matrix[tile_orientation][self.match_matrix[next_side_0][0]][self.match_matrix[next_side_0][1]]
@@ -150,7 +150,7 @@ class GraphLogic:
                     self.handle_corner_connection(
                         self, tile_id, next_neighbor_id, next_side_0, next_side, graph, tile_def, tiles_info, 1, groups_left, groups_apparition
                     )
-        
+
         # Every grp that isn't at True means that it was added to no already existing set, so we need new ones for them
         for grp, bool in groups_left.items():
             if bool == False:
@@ -165,8 +165,8 @@ class GraphLogic:
                     (tile_id, list(grp))
                 ]
                 groups_left[grp] = True
-            
-        # Merge the sets that are connected thanks to the tile we just placed 
+
+        # Merge the sets that are connected thanks to the tile we just placed
         for grp, apparition in groups_apparition.items():
             if apparition > 1:
                 # We need to merge the sets that have the same grp
@@ -174,9 +174,13 @@ class GraphLogic:
                 for land_type, sets in graph.lands_components.items():
                     for set_name, set_list in sets.items():
                         for _, drg in set_list:
-                            if drg == grp:
+                            # grp keys are tuples while stored direction groups are lists
+                            if tuple(drg) == grp:
                                 sets_to_merge.append((land_type, set_name))
                                 break
+                # Nothing to merge (defensive guard for inconsistent intermediate states)
+                if len(sets_to_merge) < 2:
+                    continue
                 # Merge all sets in sets_to_merge into the first one
                 main_set = sets_to_merge[0]
                 for other_set in sets_to_merge[1:]:
@@ -236,7 +240,7 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
-        
+
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx,ny = self.match_matrix.get(neigh_initial_corner)
@@ -277,7 +281,7 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
-        
+
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx,ny = self.match_matrix.get(neigh_initial_corner)
@@ -289,7 +293,7 @@ class GraphLogic:
             if neigh_corner in ndg:
                 neighbor_dir_group = ndg
                 break
-        
+
         if neighbor_dir_group == None:
             return
         # Means we have the same land for the two tiles
@@ -314,7 +318,7 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split('/')[0])
-        
+
         # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx,ny = self.match_matrix.get(neigh_initial_corner)
@@ -326,7 +330,7 @@ class GraphLogic:
             if neigh_corner in ndg:
                 neighbor_dir_group = ndg
                 break
-        
+
         if neighbor_dir_group == None:
             return
         # Means we have the same land for the two tiles
