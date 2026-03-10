@@ -27,7 +27,7 @@ class Tile:
          ['NW', 'W', 'SW']]
     ]
 
-    def __init__(self, code: str, connections: dict = None, connect_to: dict = None):
+    def __init__(self, code: str, connections: dict | None = None, connect_to: dict | None = None) -> None:
         self.code = code
         # tiles_lands is the terrain definitions for this tile
         self.tiles_lands = connections if connections is not None else {}
@@ -35,7 +35,7 @@ class Tile:
 
 
 class TilesInfo(ITilesInfo):
-    def __init__(self):
+    def __init__(self) -> None:
         self.tiles_dict = {
             # Basic Tiles
             'FFFF': ['m'], 'FFFR': ['m'], 'CFFF': ['void'], 'FCFC': ['f'], 'CFCF': ['c', 'b'],
@@ -50,17 +50,17 @@ class TilesInfo(ITilesInfo):
 
         self.tiles_parts_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
         self.direction_list = ['N', 'E', 'S', 'W']
-        
+
         self.meeple_placement_list = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'C']
 
         self.direction_dict = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
-        
-        self.direction_matrix = [['NW', 'N', 'NE'], 
-                                 ['W', 'C', 'E'], 
+
+        self.direction_matrix = [['NW', 'N', 'NE'],
+                                 ['W', 'C', 'E'],
                                  ['SW', 'S', 'SE']]
-        
+
         self.matrix_coordinates = {'NW' : (0,0), 'N' : (0,1), 'NE' : (0,2), 'E' : (1,2), 'SE' : (2,2), 'S' : (2,1), 'SW' : (2,0), 'W' : (1,0), 'C' : (1,1)}
-        
+
         self.tiles_count = {
             # Basic Tiles
             'FFFF/m': 4, 'FFFR/m': 2, 'CFFF': 5, 'FCFC/f': 3, 'CFCF/c': 1, 'CFCF/b': 2,
@@ -115,7 +115,7 @@ class TilesInfo(ITilesInfo):
             'RSRS': {'F': [['NE'], ['SE'], ['SW'], ['NW']], 'R' : [['N', 'S', 'C']], 'S' : [['E', 'W']],},
             'RRSS': {'F' : [['NE'], ['SE', 'NW', 'C'], ['SW']], 'R' : [['N', 'E']], 'S' : [['S', 'W']]}
         }
-        
+
         self.connects_to = {
             # Basic Tiles
             'FFFF/m': {},
@@ -171,69 +171,69 @@ class TilesInfo(ITilesInfo):
     def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
         """
         Rotates a matrix 90 degrees clockwise.
-        
+
         Args:
             matrix: A 2D list to rotate
-            
+
         Returns:
             A new matrix rotated 90 degrees clockwise
         """
         n = len(matrix)
         m = len(matrix[0]) if matrix else 0
-        
+
         # Create new matrix with swapped dimensions
         rotated = [['' for _ in range(n)] for _ in range(m)]
-        
+
         for i in range(n):
             for j in range(m):
                 rotated[j][n - 1 - i] = matrix[i][j]
-        
+
         return rotated
-    
+
     def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
         """
         Rotates a matrix 90 degrees clockwise.
-        
+
         Args:
             matrix: A 2D list to rotate
-            
+
         Returns:
             A new matrix rotated 90 degrees clockwise
         """
         n = len(matrix)
         m = len(matrix[0]) if matrix else 0
-        
+
         # Create new matrix with swapped dimensions
         rotated = [['' for _ in range(n)] for _ in range(m)]
-        
+
         for i in range(n):
             for j in range(m):
                 rotated[j][n - 1 - i] = matrix[i][j]
-        
+
         return rotated
-    
+
     def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
         """
         Rotates a matrix 90 degrees clockwise.
-        
+
         Args:
             matrix: A 2D list to rotate
-            
+
         Returns:
             A new matrix rotated 90 degrees clockwise
         """
         n = len(matrix)
         m = len(matrix[0]) if matrix else 0
-        
+
         # Create new matrix with swapped dimensions
         rotated = [['' for _ in range(n)] for _ in range(m)]
-        
+
         for i in range(n):
             for j in range(m):
                 rotated[j][n - 1 - i] = matrix[i][j]
-        
+
         return rotated
-    
+
     def is_tile_left(self, tile_code: str) -> bool:
         """
         Checks if there are tiles left of the specified type in the game.
