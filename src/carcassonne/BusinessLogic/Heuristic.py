@@ -36,8 +36,8 @@ def _find_player(game_state: Any, player_id: int) -> Any | None:
     Returns:
         The matching player object, or None if not found.
     """
-    for dict_id, player in game_state.players.items():
-        if dict_id == player_id:
+    for player in game_state.players.values():
+        if player.get_id() == player_id:
             return player
     return None
 
@@ -212,7 +212,8 @@ def _count_risky_fields_lt3_completed_cities(game_state: Any, player_id: int) ->
     for city_entries in graph.lands_components.get("C", {}).values():
         if _is_city_component_incomplete(graph, city_entries):
             continue
-        completed_city_tile_sets.append({tile_id for tile_id, _ in city_entries})
+        completed_city_tile_sets.append(
+            {tile_id for tile_id, _ in city_entries})
 
     for field_name, field_entries in graph.lands_components.get("F", {}).items():
         controllers = _component_controllers(field_name, counts)
@@ -220,7 +221,8 @@ def _count_risky_fields_lt3_completed_cities(game_state: Any, player_id: int) ->
             continue
 
         field_tiles = {tile_id for tile_id, _ in field_entries}
-        adjacent_completed_cities = sum(1 for city_tiles in completed_city_tile_sets if field_tiles & city_tiles)
+        adjacent_completed_cities = sum(
+            1 for city_tiles in completed_city_tile_sets if field_tiles & city_tiles)
 
         if adjacent_completed_cities < 3:
             share = 1.0 / len(controllers)
@@ -269,11 +271,16 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     Returns:
         Mapping of feature name to differential value.
     """
-    score_diff = _get_player_score(game_state, player_id) - _get_player_score(game_state, opponent_id)
-    meeple_diff = _get_player_meeples(game_state, player_id) - _get_player_meeples(game_state, opponent_id)
-    latent_score_diff = _estimate_latent_score(game_state, player_id) - _estimate_latent_score(game_state, opponent_id)
-    incomplete_city_tiles_diff = _count_incomplete_city_tiles(game_state, player_id) - _count_incomplete_city_tiles(game_state, opponent_id)
-    risky_fields_lt3_diff = _count_risky_fields_lt3_completed_cities(game_state, player_id) - _count_risky_fields_lt3_completed_cities(game_state, opponent_id)
+    score_diff = _get_player_score(
+        game_state, player_id) - _get_player_score(game_state, opponent_id)
+    meeple_diff = _get_player_meeples(
+        game_state, player_id) - _get_player_meeples(game_state, opponent_id)
+    latent_score_diff = _estimate_latent_score(
+        game_state, player_id) - _estimate_latent_score(game_state, opponent_id)
+    incomplete_city_tiles_diff = _count_incomplete_city_tiles(
+        game_state, player_id) - _count_incomplete_city_tiles(game_state, opponent_id)
+    risky_fields_lt3_diff = _count_risky_fields_lt3_completed_cities(
+        game_state, player_id) - _count_risky_fields_lt3_completed_cities(game_state, opponent_id)
     return {
         "score_diff": score_diff,
         "meeple_diff": meeple_diff,
@@ -316,7 +323,8 @@ def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: H
         weights.score_diff * features["score_diff"]
         + weights.meeple_diff * features["meeple_diff"]
         + weights.latent_score_diff * features["latent_score_diff"]
-        + weights.incomplete_city_tiles_diff * features["incomplete_city_tiles_diff"]
+        + weights.incomplete_city_tiles_diff *
+        features["incomplete_city_tiles_diff"]
         + weights.risky_fields_lt3_diff * features["risky_fields_lt3_diff"]
     )
     return _compress_to_star_bounds(raw_value)
