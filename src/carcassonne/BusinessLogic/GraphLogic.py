@@ -97,22 +97,9 @@ class GraphLogic:
         if tile_def is None or not tile_def.tiles_lands:
             return
 
-        # Process direction groups, handling special case for Roads/Streams with center
-        processed_lands = {}
-        for land_type, direction_groups in tile_def.tiles_lands.items():
-            processed_lands[land_type] = []
-            for drg in direction_groups:
-                # Special case: Road with center must split into separate components
-                if land_type in 'R' and 'C' in drg:
-                    # Split: 'C' alone, and each cardinal direction alone
-                    split_groups = self._split_road_stream_with_center(drg)
-                    processed_lands[land_type].extend(split_groups)
-                else:
-                    processed_lands[land_type].append(drg)
-
         groups_left = {}
         groups_apparition = {}
-        for land_type, direction_groups in processed_lands.items():
+        for land_type, direction_groups in tile_def.tiles_lands.items():
             for drg in direction_groups:
                 groups_left[tuple(drg)] = False
                 groups_apparition[tuple(drg)] = 0
