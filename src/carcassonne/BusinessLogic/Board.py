@@ -37,7 +37,7 @@ class Board:
             print("Error in getting position")
             return
         turn = graph.get_turn_number()
-        current_player_id = turn % len(players)
+        current_player_id = current_player.get_id()
         tile_id = turn
         graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
 
@@ -61,14 +61,13 @@ class Board:
 
         # Score completed components at end of turn
         # Map player_id (0-based) to Player object
-        players_dict = {idx: player for idx, player in enumerate(players)}
-        ScoreManager.score_end_of_turn(graph, players_dict, current_player_id, self.scored_components)
+        ScoreManager.score_end_of_turn(graph, players, current_player_id, self.scored_components)
 
         # affiche les scores actuels dans la console
         print(f"-- Scores après le tour {turn} --")
-        for idx, player in enumerate(players):
-            # use get_username() since Player has no get_name()
-            print(f"Joueur {idx+1} ({player.get_username()}): {player.get_score().score} pts")
+        for player_id in sorted(players.keys()):
+            player = players[player_id]
+            print(f"Joueur {player_id + 1} ({player.get_username()}): {player.get_score().score} pts")
         print("------------------------------")
 
         #enlever la tuile des tuiles disponibles
