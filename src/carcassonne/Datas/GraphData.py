@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, List
 
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.BusinessLogic.Player import Player
 from carcassonne.Datas.MeepleData import Meeple
 from carcassonne.Datas.TilesInfo import TilesInfo
 from carcassonne.Datas.TilesInfo import Tile
@@ -206,6 +207,14 @@ class GraphData(IGraphData):
                     vertex.remove_neighbor(ori)
                     self.turn -= 1
         del self.vertices[vertex_id]
+        
+    def remove_meeple(self, tile_id: int, players: dict[int, Player]) -> None:
+        for meeple in self.meeples:
+            if meeple.tile_id == tile_id:
+                self.meeples.remove(meeple)
+                meeple_owner = players.get(meeple.player_id)
+                meeple_owner.add_meeple()  # Return the meeple to the player
+                break
 
     def get_vertex(self, vertex_id: int) -> Optional[Vertex]:
         return self.vertices.get(vertex_id)
@@ -287,12 +296,6 @@ class GraphData(IGraphData):
     
     def get_meeples(self) -> List[Meeple]:
         return self.meeples
-    
-    def remove_meeple(self, tile_id: int) -> None:
-        for meeple in self.meeples:
-            if meeple.tile_id == tile_id:
-                self.meeples.remove(meeple)
-                break
 
     def reset_graph(self):
         self.vertices.clear()

@@ -42,14 +42,15 @@ class RulesManager():
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
-        graph_copy = copy.deepcopy(graph)
+        graph_copy = graph
         integers_placement = [int(x) for x in re.findall(r'\d+', placement_info)]  
         attach_direction = ''.join(c for c in placement_info if c.isalpha())
         tile_pos = graph_copy.get_position(vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
         if(tile_pos is None):
             print("Error in getting position")
             return False
-        turn = graph_copy.get_turn_number()
+        turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
+        #turn = graph_copy.get_turn_number()
         tile_id = turn
         graph_copy.add_vertex(vertex_id=turn, name=tile_code, middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)
         graph_logic = GraphLogic()
@@ -58,6 +59,7 @@ class RulesManager():
         land_matrix = vertex.get_matrix()
         land_type = land_matrix[self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         if not land_type or land_type not in graph_copy.lands_components:
+            graph_copy.remove_vertex(tile_id)
             return False
         land_pos = Tile.direction_matrix[integers_placement[1]][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         set_name_to_place = None
@@ -67,11 +69,14 @@ class RulesManager():
                     set_name_to_place = set_name
         if set_name_to_place is None:
             print("Error in finding the land component to place the meeple on")
+            graph_copy.remove_vertex(tile_id)
             return False
         for meeple in graph_copy.get_meeples():
             if meeple.lands_components == set_name_to_place:
                 #print("you can't place a meeple on that land component because there's already a meeple on it")
+                graph_copy.remove_vertex(tile_id)
                 return False
+        graph_copy.remove_vertex(tile_id)
         return True
     
     def areEqualSides(self, tile1: list[str], tile1pos: tuple[int, int], orientation: int, graph: IGraphData) -> bool:
@@ -168,54 +173,55 @@ class RulesManager():
         
         counter = 0
         if not isinstance(move, str):
-            #print("the move needs to be a str\n")
+            print("the move needs to be a str\n")
             return
         
         move_parts = move.split('/')
         if not 2 <= len(move_parts) <= 4:
-            #print("the move is invalid, are you sure you computed it right?\n")
+            print("the move is invalid, are you sure you computed it right?\n")
             return
         if move_parts[counter] not in self.tiles_info.tiles_dict:
-            #print("the tile you try to play doesn't exist, are you sure you computed it right?")
+            print(move_parts[counter])
+            print("the tile you try to play doesn't exist, are you sure you computed it right?")
             return
         
         counter += 1
         if (len(move_parts[counter]) == 1):
             if move_parts[counter] not in self.tiles_info.tiles_dict[move_parts[counter - 1]]:
-                #print("the tile you try to place doesn't have that center")
+                print("the tile you try to place doesn't have that center")
                 return  
             counter += 1
         else :
             if 'void' not in self.tiles_info.tiles_dict[move_parts[counter - 1]]:
-                #print("the tile you try to place needs a center")
+                print("the tile you try to place needs a center")
                 return
             
         if len(move_parts) <= counter:
-            #print("the move misses the tile placement details")
+            print("the move misses the tile placement details")
             return
             
         integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]
         if len(integers_placement) != 2:
-            #print("the tile placement details are invalid, need 2 integers : tile id and rotation")
+            print("the tile placement details are invalid, need 2 integers : tile id and rotation")
             return
-        if integers_placement[0] >= graph.get_turn_number():
-            #print("the tile you try to attach yours to has an invalid number")
+        if integers_placement[0] >= max(graph.get_verticies().keys(), default=-1) + 1:
+            print("the tile you try to attach yours to has an invalid number")
             return
         attach_direction = ''.join(c for c in move_parts[counter] if c.isalpha())
         if len(attach_direction) != 1:
-            #print("the tile placement details are invalid, only 1 char is needed for direction")
+            print("the tile placement details are invalid, only 1 char is needed for direction")
             return
         if attach_direction not in self.tiles_info.direction_list:   
-            #print("the tile's side you try to attach yours on must be N, S, W or E")
+            print("the tile's side you try to attach yours on must be N, S, W or E")
             return      
         if not (0 <= integers_placement[1] <= 3): 
-            #print("the rotation you apply to your tile must be between 0 and 3")
+            print("the rotation you apply to your tile must be between 0 and 3")
             return  
         
         counter += 1
         if (len(move_parts) == counter - 1):
             if move_parts[counter] not in (self.tiles_info.meeple_placement_list):
-                #print("the tile's side you try to place a meeple on must be NE, N, NW, SE, S, SW, W, E or C")
+                print("the tile's side you try to place a meeple on must be NE, N, NW, SE, S, SW, W, E or C")
                 return
             
         return True
@@ -227,6 +233,7 @@ class RulesManager():
         This method serves as a wrapper around  is_legal_move` to provide user feedback.
         """
         if not self.is_correctly_formed_move(move, graph=graph):
+            print("failed at is_correct")
             return False
         
         if not self.is_legal_move(move.split('/'), graph):

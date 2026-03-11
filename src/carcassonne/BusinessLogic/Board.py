@@ -5,7 +5,6 @@ The Board class interacts with the graph data structure that represents the game
 import re
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Player import Player
-from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.History import History, MoveRecord
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
 from carcassonne.BusinessLogic.GraphLogic import GraphLogic
@@ -25,7 +24,7 @@ SOUTHEAST_MATRIX = (2, 2)
 
 class Board:
     
-    def add_tile_to_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History, players: dict[int, Player], current_player: Player) -> None:
+    def add_tile_to_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History, players : dict[int, Player], players_order: list[int], current_player: Player) -> None:
         move_parts = move.split('/')
         #jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
@@ -35,14 +34,14 @@ class Board:
         if(tile_pos is None):
             print("Error in getting position")
             return
-        turn = graph.get_turn_number()
+        turn = max(graph.get_verticies().keys(), default=-1) + 1
         tile_id = turn
         graph.add_vertex(vertex_id=turn, name=move_parts[0], middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)  # example of adding the tile as a vertex in the graph, you would need to set neighbors and orientations based on the move details
         
         graph_logic = GraphLogic()
         graph_logic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
         
-        print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
+        #print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
         if counter == len(move_parts) - 1:
             #meeple
             land_pos = Tile.direction_matrix[integers_placement[1]][GraphLogic.match_matrix[move_parts[counter]][0]][GraphLogic.match_matrix[move_parts[counter]][1]]
@@ -54,8 +53,12 @@ class Board:
                             set_name_to_place = set_name
             meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
-            players[turn % len(players)].remove_meeple()
-        print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
+            #print(turn)
+            #print(len(players_order))
+            #print(players_order[(turn - 1) % len(players_order)])
+            #print(players[players_order[(turn - 1) % len(players_order)]])
+            players[players_order[(turn - 1) % len(players_order)]].remove_meeple()
+        #print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]
         tiles_info.remove_tile(tile_name)
@@ -71,7 +74,7 @@ class Board:
         except ValueError:
             pass
 
-    def remove_tile_from_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History) -> None:
+    def remove_tile_from_board(self, move: str, graph: IGraphData, tiles_info: ITilesInfo, history: History, players : dict[int, Player]) -> None:
 
         move_parts = move.split(':')[1].split('/')
         counter = 3 if len(move_parts[1]) == 1 else 2
@@ -82,9 +85,9 @@ class Board:
             print("Error in getting position")
             return
         
-        tile_id = graph.get_turn_number()-1
+        tile_id = max(graph.get_verticies().keys(), default=-1)
         graph.remove_vertex(vertex_id=tile_id)  # example of removing the tile as a vertex in the graph
-        graph.remove_meeple(tile_id)
+        graph.remove_meeple(tile_id, players)
         
         #rajouter la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]

@@ -83,18 +83,14 @@ class Game(IGameService):
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
             self.deck.tiles.append(previous_play.move_str.split('/')[0])
-            self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
+            self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history, self.players)
             self.current_player_order_list = self.get_current_player().get_id()
             while self.history.past_moves and is_ai_player(self.history.past_moves[-1]):
                 previous_play = self.history.pop_past()
-                self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
+                self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history, self.players)
                 self.current_player_order_list = self.get_current_player().get_id()
                 self.deck.tiles.append(previous_play.move_str.split('/')[0])
                 self.history.push_future(previous_play)
-            previous_play = self.history.pop_past()
-            self.history.push_future(previous_play)
-            self.deck.tiles.append(previous_play.move_str.split('/')[0])
-            self.board.remove_tile_from_board(build_str(previous_play), self.graph, self.tiles_info, self.history)
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
@@ -109,7 +105,7 @@ class Game(IGameService):
                 self.draw_tile()
                 self.play_move(self.history.future_moves[-1].move_str) 
                 self.history.pop_future()
-
+            
     def get_history(self) -> List[str]:
         """Return the current play history."""
         return self.history.list_history()
@@ -133,7 +129,7 @@ class Game(IGameService):
         if self.players_order[self.current_player_order_list] != self.get_current_player().get_id():
             print("It is not your turn to play.")
             print(f"The one: {self.players_order[self.current_player_order_list]} {self.current_player_order_list}. You: {self.get_current_player()}")
-            print(f"turn:{self.graph.get_turn_number()}")
+            print(f"turn:{max(self.graph.get_verticies().keys(), default=-1) + 1}")
             print(self.players_order)
             return False
         if self.current_hand is None:
@@ -147,12 +143,18 @@ class Game(IGameService):
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
-            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players, self.get_current_player())   
+            self.board.add_tile_to_board(move, self.graph, self.tiles_info, self.history, self.players, self.players_order, self.get_current_player())   
             print(move + " placed successfully.")
             self.current_hand = None
             self.current_player_order_list = (self.current_player_order_list + 1) % self.get_number_of_players()
+            '''vertices = self.graph.get_verticies()
+            for vertex in vertices.values():
+                print(vertex.get_neighbors())'''
             return True
-        
+        '''vertices = self.graph.get_verticies()
+        for vertex in vertices.values():
+            print(vertex.get_neighbors())
+        print('i failed the test')'''
         return False
         
     def play_ai_turn(self) -> None:
@@ -168,7 +170,9 @@ class Game(IGameService):
             model = ExpectimaxPlayer(self)
         eval, move = model.search(self, depth = model.depth_max, alpha = float('-inf'), beta = float('inf'), player_to_max=ai_player.get_id(), next_player = ai_player.get_id())
         print(f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
-        self.play_move(move)
+        #print("main avant de jouer le coup" + self.current_hand)
+        res = self.play_move(move)
+        #print(res)
         
     def get_game_configuration(self) :
         return self.game_configuration.get_setting()
@@ -200,7 +204,7 @@ class Game(IGameService):
         return self.number_of_ai_players
 
     def get_current_player(self) -> Player:
-        current_player_id = self.players_order[(self.graph.get_turn_number()-1) % len(self.players)]
+        current_player_id = self.players_order[max(self.graph.get_verticies().keys(), default=-1) % len(self.players)] 
         return self.players[current_player_id]
     
     def save_game_to_file(self, filename: str) -> int:
@@ -343,10 +347,10 @@ class Game(IGameService):
         return seed
     
     def shuffle_players_order(self) -> None:
-        others = [player for player in self.players]
+        others = [player for player in self.players if player != 0]
         r.shuffle(others)
-        self.players_order = others
-        
+        self.players_order = [0] + others
+
     def add_players(self, nb_players: int) -> None:
         colors = ["red", "blue", "yellow", "black", "white"]
         for i in range(1, nb_players + 1):
