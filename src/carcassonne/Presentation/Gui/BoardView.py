@@ -6,7 +6,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf
 import os
 from typing import Dict, Any, Tuple
 
-from carcassonne.Presentation.Gui import board_utils
+from carcassonne.Presentation.Gui import board_utils, utils
 
 class BoardView(Gtk.DrawingArea):
     def __init__(self, game_data: Any, tile_size: int = 100) -> None:
@@ -35,6 +35,17 @@ class BoardView(Gtk.DrawingArea):
         # ensure keyboard events can be received
         self.set_focusable(True)
         self.grab_focus()
+
+        self.background: GdkPixbuf.Pixbuf | None = None
+
+    def set_background(self, image_path: str) -> None:
+        """Load a background image for the board."""
+        if os.path.exists(image_path):
+            self.background = GdkPixbuf.Pixbuf.new_from_file(image_path)
+        else:
+            self.background = None
+        print(image_path)
+        self.queue_draw()
 
     # ---------- internal helpers ----------------------------------------
     def _setup_input_controllers(self) -> None:
@@ -98,8 +109,22 @@ class BoardView(Gtk.DrawingArea):
         Paints the board background, all placed tiles, optionally the tile
         currently being dragged, and any meeples.
         """
-        cr.set_source_rgb(0.6, 0.6, 0.6)
-        cr.paint()
+
+        # draw background image if available
+        if self.background:
+            scaled = self.background.scale_simple(
+                width,
+                height,
+                GdkPixbuf.InterpType.BILINEAR
+            )
+
+            Gdk.cairo_set_source_pixbuf(cr, scaled, 0, 0)
+            cr.paint()
+        else:
+            cr.set_source_rgb(0.6, 0.6, 0.6)
+            cr.paint()
+        """cr.set_source_rgb(0.6, 0.6, 0.6)
+        cr.paint()"""
 
         tiles = self.game_data.game.get_board_data()
         if not tiles:

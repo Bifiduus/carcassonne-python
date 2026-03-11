@@ -58,6 +58,9 @@ def on_new_gui(gui):
     """Start a new game and refresh GUI elements."""
     # delegate game logic to GameDataGui
     gui.game_data.new_game()
+    # refresh any dependent views
+    if hasattr(gui, "players_view"):
+        gui.players_view.refresh()
     # clear any tile preview image
     gui.tile_preview.set_filename("")
 
@@ -89,3 +92,6 @@ def on_rotate_gui(gui):
 def on_end_turn_gui(gui):
     """Play the pending move and let GameDataGui handle the reset."""
     gui.game_data.play_move_gui()
+    # after turn changes, update players list (highlight current player)
+    if hasattr(gui, "players_view"):
+        gui.players_view.refresh()
