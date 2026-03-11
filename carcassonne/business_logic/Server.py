@@ -3,14 +3,17 @@ import time
 import socket
 import select
 import threading
+
 from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.Game import Game
+from carcassonne.Datas.GamesRepository import GameRepository
 
 class Server:
     SERVER_TIMEOUT = 30
     SERVER_DIFFUSION_PERIOD = 10
 
-    def __init__(self):
+    def __init__(self, repo: GameRepository | None = None):
+        # networking/server state
         self.server_name = ""
         self.client = None
         self.server = None
@@ -20,6 +23,9 @@ class Server:
         self.clients_lock = threading.Lock()  # Lock for thread-safe access
         self.party_list: dict[int, tuple[str, Game]] = {}
         self.scoreboard: dict[socket.socket, Player] = {}
+
+        # repository for persistence
+        self.repo = repo if repo is not None else GameRepository()
 
     def list_available_servers(self, timeout: float = 5.0) -> list[str]:
         """
@@ -166,52 +172,62 @@ class Server:
                 if message.find("-p") != -1:
                     message, party_name = message.split("-p")
                 clients_list = message.split(" ")
-                clients_list_checked = self.check_clients_list_validity([int(client_id) for client in clients_list]) # Check if the clients exist and are available, remove the ones that cannot be invited
-                self.create_new_party(clients_list_checked, party_name) # Create a new party with a name and players, ask them first
+                clients_list_checked = self.check_clients_list_validity([client for client in clients_list]) # Check if the clients exist and are available, remove the ones that cannot be invited
+                self.create_new_party(clients_list_checked, int(client_id)) # Create a new party with a name and players, ask them first
             if message == "players":
                 if message.split("players")[1] != "\n":
                     answer = self.check_profile_player(int(message.split("players")[1]))
                 else:
-                    answer = self.current_players() # Return a list of the current players (id, name and status) in the server, not the away players
+                    answer = self.repo.current_players() # Return a list of the current players (id, name and status) in the server, not the away players
             if message == "scoreboard\n":
-                answer = self.print_scoreboard() # Affiche le tableau des scores des
+                answer = self.repo.get_scoreboard() # Affiche le tableau des scores des
                                                  # joueurs qui ont joué sur le serveur (nombre de
                                                  # victoires, défaites, parties jouées) de la db.
             if message == "accept\n":
-                if self.invitation_received(client_id) != -1:
+                sender, party_id = self.repo.invitation_received(client_id)
+                if sender != -1:
                     answer = f"You have no invitation to accept.\n"
                 else:
                     answer = "" # envoie à {self.invitation_received(client_id)}
+                    self.repo.accept_invitation(int(party_id), client_id)
             if message =="decline\n":
-                if self.invitation_received(client_id) != -1:
+                if self.repo.invitation_received(client_id) != -1:
                     answer = f"You have no invitation to decline.\n"
                 else:
                     answer = "" # envoie à {self.invitation_received(client_id)}
             if message == "cancel\n":
-                if self.invitation_sent_from(client_id):
-                    answer = self.cancel_invitation_from(client_id) # des invitations en attentes, envoie des messages
+                if self.repo.invitation_sent_from(client_id):
+                    answer = self.repo.cancel_invitation_from(client_id) # des invitations en attentes, envoie des messages
                 else:
                     answer = f"No invitations to cancel."
             if message == "away\n":
-                answer = self.change_status(client_id, "away")
+                answer = self.repo.change_status(client_id, "away")
             if message == "back\n":
-                answer = self.change_status(client_id, "idle")
+                answer = self.repo.change_status(client_id, "idle")
         return answer
     
-    def check_clients_list_validity(self, clients_list: list[int]) -> list[int]:
-        checked_list = []
-        for client in clients_list:
-            sql_request: str = "SELECT username FROM players WHERE id=client;"
-            if sql_request: # met
-                checked_list.append(client)
-        return checked_list
+    def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
+        """Verify that each client id refers to an existing player via the repository."""
+        return [c for c in clients_list if self.repo.player_exists(c)]
     
-    def create_new_party(self, clients_list: list[int], party_name: str) -> None:
-        new_party = Game() # to do, with sql stuff
+    def create_new_party(self, clients_list: list[str], host_id: int) -> None:
+        party_name = self.repo.get_party_name(host_id)
+        new_party = Game()
+        try:
+            self.repo.create_party(party_name, clients_list, host_id)
+        except Exception as e:
+            print(f"Error creating party in repository: {e}")
+        return new_party
 
     def check_profile_player(self, player_id: int) -> str:
-        sql_request: str = "SELECT username, status, score, stats_win, stats_lose FROM players WHERE id=player_id;"
-        return ""
+        """Return a simple textual profile for the given player id."""
+        profile = self.repo.get_player_profile(player_id)
+        if profile is None:
+            return "Player not found\n"
+        return (
+            f"{profile['username']} status={profile['status']} score={profile['score']} "
+            f"wins={profile['stats_win']} loses={profile['stats_lose']}\n"
+        )
 
     def server_stop(self):
         """
@@ -231,6 +247,12 @@ class Server:
             self.connected_clients.clear()
         if self.server:
             self.server.close()
+        # close repository database connection if there is one
+        if hasattr(self, 'repo') and self.repo:
+            try:
+                self.repo.close()
+            except Exception:
+                pass
 
     def server_quit(self, server_name: str):
         """
@@ -332,12 +354,14 @@ class Server:
                 self.get_game(client_id).play_move(move) # will check in the database for the game id and 
                 self.client.sendall("board".encode()) # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
-                if self.check_all_invitations_resolved(int(client_id)): # accepted or not or timed_out
-                    self.new_game_party(self.party(client_id)) # ajoute la party dans party_list, change ce qu'il faut et lance
-
-
+                if self.repo.check_all_invitations_resolved(int(client_id)): # accepted or not or timed_out
+                    self.create_new_party(self.repo.get_party(client_id), int(client_id)) # ajoute la party dans party_list, change ce qu'il faut et lance        
         
         print(message, end="")
+
+    def get_game(self, client_id: str):
+        party_id = int(self.repo.get_game(int(client_id))[0])
+        return self.party_list[party_id][1]
 
     def send_to_server(self, text: str) -> bool:
         """
