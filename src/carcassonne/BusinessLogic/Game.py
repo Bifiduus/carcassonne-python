@@ -4,6 +4,7 @@ The Game class is responsible for managing the game state, including the play hi
 import random as r
 from typing import Any, List
 
+from carcassonne.BusinessLogic.ScoreManager import ScoreManager
 from carcassonne.Datas.Deck import Deck
 from carcassonne.Datas.Seed import Seed
 from carcassonne.Datas.Serializer import parse_move, build_str
@@ -55,6 +56,7 @@ class Game(IGameService):
         self.shuffle_players_order()
         self.current_player_order_list = self.players_order[0]
         self.save_handler = SaveHandler(self)
+        self.score_manager = ScoreManager()
 
     def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -175,6 +177,13 @@ class Game(IGameService):
             return None
         self.current_hand = tile
         return tile
+    
+    def end_game(self) -> bool:
+        if self.deck.is_empty():
+            self.score_manager.score_end_of_game(self.graph, self.players)
+            return True
+        else:
+            return False
     
     def get_maximum_number_of_players(self) -> int:
         return self.maximum_number_of_players

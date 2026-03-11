@@ -31,3 +31,7 @@ class IPlayerInfoService(ABC):
     @abstractmethod
     def get_current_player(self) -> Player:
         pass
+
+    @abstractmethod
+    def get_score_int(self) -> int :
+        pass

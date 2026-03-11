@@ -12,8 +12,18 @@ class GameDataGui():
         self.board_view = None  # set later by Gui
         self.is_dragging = False
 
-    def new_game(self):
-        CommandsHandlerGui.on_new(self.game)
+    def new_game(self, players_order=None, seed=None):
+        """Helper that starts a new game and resets GUI state.
+
+        ``players_order`` and ``seed`` are simply forwarded to the underlying
+        game service (``Game.start_new_game``) so callers such as
+        :class:`OptionsView` can influence how the match is initialised.
+        """
+        # the command handler already implements the basic behaviour but it
+        # doesn't accept any of the extra keywords, so call the service
+        # directly.  ``Game.start_new_game`` is idempotent with respect to
+        # shuffling, so we don't need to double‑shuffle here.
+        self.game.start_new_game(players_order=players_order, seed=seed)
         self.reset()
 
     def undo(self):
@@ -32,7 +42,15 @@ class GameDataGui():
         
         final_move = self.current_tile.playable_tile()
         print(final_move)
-        self.game.play_move(final_move)
+        result = self.game.play_move(final_move)
+
+
+        if not self.game.is_undo_history_empty():
+                self.game.clear_undo_history()
+        if result:
+                while self.game.get_current_player().is_ai_player():
+                        self.game.play_ai_turn()
+        
         self.reset()
 
     def reset(self):
@@ -61,4 +79,5 @@ class GameDataGui():
         if self.board_view:
             self.board_view.refresh()
         return tile_name
+    
     

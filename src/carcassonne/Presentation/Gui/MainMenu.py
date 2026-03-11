@@ -26,13 +26,15 @@ class MainMenu:
 
         btn_single = Gtk.Button(label="Singleplayer")
         btn_multi = Gtk.Button(label="Multiplayer")
+        btn_options = Gtk.Button(label="Options")
         btn_quit = Gtk.Button(label="Quit")
 
         btn_single.connect("clicked", gui.start_singleplayer)
         btn_multi.connect("clicked", gui.start_multiplayer)
+        btn_options.connect("clicked", gui.show_options)
         btn_quit.connect("clicked", lambda b: gui.quit())
 
-        for widget in (title, btn_single, btn_multi, btn_quit):
+        for widget in (title, btn_single, btn_multi, btn_options, btn_quit):
             box.append(widget)
 
         return box

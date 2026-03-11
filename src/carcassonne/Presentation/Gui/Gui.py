@@ -7,6 +7,9 @@ from carcassonne.Presentation.Gui import utils
 from carcassonne.Presentation.Gui.MainMenu import MainMenu
 from carcassonne.Presentation.Gui.TilePreview import TilePreview
 from carcassonne.Presentation.Gui.PlayersView import PlayersView
+from carcassonne.Presentation.Gui.OptionsView import SingleplayerOptions
+from carcassonne.Presentation.Gui.OptionsView import GameOptions
+
 
 import gi
 
@@ -52,6 +55,14 @@ class GameGUI(Gtk.Application):
         # main menu is now produced by a small helper
         self.menu_view = MainMenu.create(self)
         window.stack.add_named(self.menu_view, "menu")
+
+        # options page is built once and kept around so that the user can
+        # revisit it from either the *Options* button or after doing a
+        # multi-player game later on.
+        self.options_view = SingleplayerOptions(self)
+        window.stack.add_named(self.options_view, "singleplayer_options")
+        self.options_view = GameOptions(self)
+        window.stack.add_named(self.options_view, "game_options")
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
@@ -155,12 +166,15 @@ class GameGUI(Gtk.Application):
     
     def start_singleplayer(self, button):
         #self.game.start_new_game(mode="single")
-        self.window.stack.set_visible_child_name("game")
+        self.window.stack.set_visible_child_name("singleplayer_options")
         self.board_view.grab_focus()
 
     def start_multiplayer(self, button):
         #self.game.start_new_game(mode="multi")
         self.window.stack.set_visible_child_name("game")
+
+    def show_options(self, button):
+        self.window.stack.set_visible_child_name("game_options")
 
 
     

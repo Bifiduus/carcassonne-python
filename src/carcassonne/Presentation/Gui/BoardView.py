@@ -144,10 +144,12 @@ class BoardView(Gtk.DrawingArea):
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
 
+        last_tile = tiles[-1] if tiles else None
+
         for t in tiles:
             x = offset_x + (t["x"] - min_x) * size
             y = offset_y + (t["y"] - min_y) * size
-            self.draw_tile(cr, x, y, size, t)
+            self.draw_tile(cr, x, y, size, t, t is last_tile)
 
         if self.game_data.is_dragging and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
@@ -183,7 +185,7 @@ class BoardView(Gtk.DrawingArea):
     # =========================
     # 🧩 DRAW ONE TILE
     # =========================
-    def draw_tile(self, cr, x: float, y: float, size: float, tile_data: Dict[str, Any]) -> None:
+    def draw_tile(self, cr, x, y, size, tile_data, is_last=False) -> None:
         """Draw a single placed tile at pixel coordinates ``x,y``.
 
         ``tile_data`` is expected to be the dictionary returned by
@@ -191,7 +193,11 @@ class BoardView(Gtk.DrawingArea):
         """
         name = board_utils.normalize_name(tile_data["name"] + tile_data["middle"] if tile_data["middle"] else tile_data["name"])
         orientation = tile_data["orientation"]
-
+        if is_last:
+            cr.set_source_rgb(1, 0, 0)
+            cr.set_line_width(4)
+            cr.rectangle(x+2, y+2, size-4, size-4)
+            cr.stroke()
         pixbuf = self.textures.get(name)
         if pixbuf:
             board_utils.draw_pixbuf(cr, x, y, size, pixbuf, orientation)

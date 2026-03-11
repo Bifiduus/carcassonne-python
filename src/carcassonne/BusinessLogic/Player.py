@@ -39,6 +39,9 @@ class Player():
     def get_score(self) -> PlayerScore:
         return self.score
     
+    def get_score_int(self) -> int :
+        return self.score.score
+    
     def get_color(self) -> str:
         return self.color
     

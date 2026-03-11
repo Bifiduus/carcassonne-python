@@ -70,3 +70,9 @@ class Deck:
                 j = int(str(seed_list[seed_index]) + str(seed_list[0])) * 123 % n
                 seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
+
+    def is_empty(self) -> bool:
+        if not self.tiles:
+            return True
+        else :
+            return False

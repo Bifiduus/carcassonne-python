@@ -73,6 +73,7 @@ class PlayersView(Gtk.Box):
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
             name = p.get_username()
+            score = p.get_score_int()
             color = p.get_color()
 
             label = Gtk.Label()
@@ -80,10 +81,10 @@ class PlayersView(Gtk.Box):
             label.set_xalign(0)
 
             if p is current:
-                label.set_markup(f'<span foreground="{color}"><b>{name}</b></span>')
+                label.set_markup(f'<span foreground="{color}"><b>{name} : {score}</b></span>')
                 row.add_css_class("current-player")
             else:
-                label.set_markup(f'<span foreground="{color}">{name}</span>')
+                label.set_markup(f'<span foreground="{color}">{name} : {score}</span>')
 
             row.append(label)
 

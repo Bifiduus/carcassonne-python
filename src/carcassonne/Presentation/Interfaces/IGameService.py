@@ -65,3 +65,7 @@ class IGameService(ABC):
     @abstractmethod
     def get_meeples_data(self) -> list[dict]:
         pass
+
+    @abstractmethod
+    def end_game(self) -> bool:
+        pass
