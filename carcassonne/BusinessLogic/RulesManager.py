@@ -43,7 +43,7 @@ class RulesManager():
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
-        graph_copy = copy.deepcopy(graph)
+        graph_copy = graph
         integers_placement = [int(x)
                               for x in re.findall(r'\d+', placement_info)]
         attach_direction = ''.join(c for c in placement_info if c.isalpha())
@@ -52,7 +52,8 @@ class RulesManager():
         if (tile_pos is None):
             print("Error in getting position")
             return False
-        turn = graph_copy.get_turn_number()
+        turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
+        # turn = graph_copy.get_turn_number()
         tile_id = turn
         graph_copy.add_vertex(vertex_id=turn, name=tile_code,
                               middle=move_parts[1] if counter == 3 else "", orientation=integers_placement[1], position=tile_pos)
@@ -63,6 +64,9 @@ class RulesManager():
         land_matrix = vertex.get_matrix()
         land_type = land_matrix[self.match_matrix[side_placement]
                                 [0]][self.match_matrix[side_placement][1]]
+        if not land_type or land_type not in graph_copy.lands_components:
+            graph_copy.remove_vertex(tile_id)
+            return False
         land_pos = Tile.direction_matrix[integers_placement[1]
                                          ][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         set_name_to_place = None
@@ -72,11 +76,14 @@ class RulesManager():
                     set_name_to_place = set_name
         if set_name_to_place is None:
             print("Error in finding the land component to place the meeple on")
+            graph_copy.remove_vertex(tile_id)
             return False
         for meeple in graph_copy.get_meeples():
             if meeple.lands_components == set_name_to_place:
                 # print("you can't place a meeple on that land component because there's already a meeple on it")
+                graph_copy.remove_vertex(tile_id)
                 return False
+        graph_copy.remove_vertex(tile_id)
         return True
 
     def are_equal_sides(self, tile1: list[str], tile1pos: tuple[int, int], orientation: int, graph: IGraphData) -> bool:
@@ -206,8 +213,8 @@ class RulesManager():
         if len(integers_placement) != 2:
             # print("the tile placement details are invalid, need 2 integers : tile id and rotation")
             return
-        if integers_placement[0] >= graph.get_turn_number():
-            # print("the tile you try to attach yours to has an invalid number")
+        if integers_placement[0] >= max(graph.get_verticies().keys(), default=-1) + 1:
+            print("the tile you try to attach yours to has an invalid number")
             return
         attach_direction = ''.join(
             c for c in move_parts[counter] if c.isalpha())
@@ -236,6 +243,7 @@ class RulesManager():
         This method serves as a wrapper around  is_legal_move` to provide user feedback.
         """
         if not self.is_correctly_formed_move(move, graph=graph):
+            print("failed at is_correct")
             return False
 
         if not self.is_legal_move(move.split('/'), graph):

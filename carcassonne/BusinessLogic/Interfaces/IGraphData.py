@@ -71,3 +71,7 @@ class IGraphData(ABC):
     @abstractmethod
     def get_meeples(self) -> List[Meeple]:
         pass
+    
+    @abstractmethod
+    def remove_meeple(self, tile_id: int, players : dict[int, Any]) -> None:
+        pass
