@@ -38,6 +38,18 @@ def load_css() -> None:
         border-radius: 4px;
         padding: 4px;
     }
+    .players-panel {
+        background-color: rgba(255, 125, 0, 0.6);
+        border: 3px solid white;
+        border-radius: 4px;
+        padding: 4px;
+    }
+
+    .current-player {
+        background-color: rgba(255,255,255,0.15);
+        border-radius: 6px;
+        padding: 4px;
+    }
     """
 
     provider = Gtk.CssProvider()

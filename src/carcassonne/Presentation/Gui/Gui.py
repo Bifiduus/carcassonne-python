@@ -6,6 +6,7 @@ from carcassonne.Presentation.Gui.WindowView import WindowView
 from carcassonne.Presentation.Gui import utils
 from carcassonne.Presentation.Gui.MainMenu import MainMenu
 from carcassonne.Presentation.Gui.TilePreview import TilePreview
+from carcassonne.Presentation.Gui.PlayersView import PlayersView
 
 import gi
 
@@ -78,6 +79,11 @@ class GameGUI(Gtk.Application):
         self.game_data.set_board_view(self.board_view)
         overlay.set_child(self.board_view)
 
+        # show player list at top-left corner
+        self.players_view = PlayersView(self.game_data)
+        self.players_view.add_css_class("players-panel")
+        overlay.add_overlay(self.players_view)
+
         # end-turn button in a semi-transparent panel
         end_turn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         end_turn_box.set_margin_bottom(40)
@@ -111,6 +117,11 @@ class GameGUI(Gtk.Application):
 
         window.stack.add_named(overlay, "game")
         window.stack.set_visible_child_name("menu")
+
+        
+        self.background_image = "fond_bois.jpg"
+        self.board_view.set_background(utils.get_images_dir()+'/'+self.background_image)
+
         # make the window visible on screen
         window.window.present()
 

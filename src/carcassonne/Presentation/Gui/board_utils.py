@@ -5,6 +5,8 @@ coordinate math, and drawing common GUI elements such as meeples and
 preview grids.  The idea is that ``BoardView`` can simply delegate to
 these helpers without holding too much implementation detail.
 """
+import os
+
 from gi.repository import Gdk, GdkPixbuf
 import math
 from typing import Dict, Any, Tuple
@@ -118,3 +120,5 @@ def draw_meeples(cr, x, y, size, meeples, tile_id) -> None:
         cr.move_to(cx + cell - padding, cy + padding)
         cr.line_to(cx + padding, cy + cell - padding)
         cr.stroke()
+
+
