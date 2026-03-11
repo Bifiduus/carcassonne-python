@@ -2,6 +2,7 @@ import sqlite3
 import threading
 from dataclasses import dataclass
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 import time
 from typing import Any
 
@@ -11,12 +12,17 @@ from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesReposito
 @dataclass
 class GameRepository(IGamesRepository):
 =======
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
 from typing import List, Optional, Any
 
 
 @dataclass
 class GameRepository:
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     """Repository handling persistence of players, parties and games.
 
     This class encapsulates all SQL operations so that the server and business
@@ -26,6 +32,7 @@ class GameRepository:
     db_path: str = "carcassonne.db"
 
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
     def __init__(self):
         self.closed = False
         self.__post_init__()
@@ -33,12 +40,15 @@ class GameRepository:
 
 =======
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     def __post_init__(self):
         # open sqlite connection once, allow multithreaded access via lock
         self.db = sqlite3.connect(self.db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.lock = threading.Lock()
 
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
     def init_database(self):
         table_players = "CREATE TABLE IF NOT EXISTS players(player_id INTEGER CONSTRAINT player_id_c PRIMARY KEY AUTOINCREMENT,"
@@ -73,6 +83,8 @@ class GameRepository:
 
 =======
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     # low-level helpers
     def _execute_query(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
         with self.lock:
@@ -88,6 +100,7 @@ class GameRepository:
             return cur.lastrowid
 
     # business operations
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 
     def get_next_available_id(self) -> int:
@@ -125,6 +138,8 @@ class GameRepository:
 
 =======
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     def player_exists(self, player_name: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM players WHERE username=?;",
@@ -132,6 +147,7 @@ class GameRepository:
         )
         return bool(rows)
 
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
     def get_player_profile(self, player_id: int) -> dict[str, Any]:
         rows = self._execute_query(
@@ -217,6 +233,8 @@ class GameRepository:
             (int(client_id),)
         )
 =======
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     def get_player_profile(self, player_id: int) -> Optional[dict[str, Any]]:
         rows = self._execute_query(
             "SELECT username, status, score, stats_win, stats_lose "
@@ -267,20 +285,28 @@ class GameRepository:
             "SELECT player_id, username FROM pending_invitations WHERE accepted!='accepted' AND host_player=?;",
             (client_id,)
         )
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
         if not rows:
             return True
         return False
 
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
     def get_scoreboard(self) -> list[sqlite3.Row]:
 =======
     def get_scoreboard(self):
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+    def get_scoreboard(self):
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
         rows = self._execute_query(
             "SELECT player_id AS id, username, victories, defeats, (victories + defeats) AS total_games FROM scoreboard NATURAL JOIN players;"
         )
         return rows
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 
     def invitation_sent_from(self, client_id: str) -> bool:
@@ -335,6 +361,8 @@ class GameRepository:
             "INSERT INTO groups(number_of_players, host_player) VALUES (?, ?);",
             (1, host_id,),
 =======
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     
     def invitation_sent_from(self, client_id: str):
         rows = self._execute_query(
@@ -354,7 +382,10 @@ class GameRepository:
         party_id = self._execute_non_query(
             "INSERT INTO parties(party_name, host_id) VALUES (?, ?);",
             (name, host_id,),
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
         )
         for username in player_names:
             player_id: int = self._execute_query(
@@ -366,6 +397,7 @@ class GameRepository:
                 (party_id, player_id, "pending"),
             )
         return party_id
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 <<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 
     def get_party(self, client_id: str) -> list[str]:
@@ -407,6 +439,8 @@ class GameRepository:
     def is_database_closed(self):
         return self.closed
 =======
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
     
     def get_party(self, host_id) -> list[str]:
         rows = self._execute_query(
@@ -427,4 +461,7 @@ class GameRepository:
             self.db.close()
         except Exception:
             pass
+<<<<<<< HEAD:carcassonne/datas/GamesRepository.py
 >>>>>>> c51c073 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
+=======
+>>>>>>> 864a9f7 (added start of database handling in GamesRepository):src/carcassonne/Datas/GamesRepository.py
