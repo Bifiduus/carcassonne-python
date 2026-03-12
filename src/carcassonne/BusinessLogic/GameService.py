@@ -1,6 +1,7 @@
 """This module defines the GameService class, which serves as a service layer for managing the game logic of Carcassonne.
 """
 
+
 class GameService():
     def __init__(self, game):
         self._game = game

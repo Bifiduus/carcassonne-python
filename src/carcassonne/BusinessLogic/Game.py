@@ -11,7 +11,7 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
-from carcassonne.Datas.GameRepository import GameRepository
+from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Datas.History import History
