@@ -41,6 +41,7 @@ class Board:
         graph_logic = GraphLogic()
         graph_logic.add_lands_components(tile_id=turn, graph=graph, tiles_info=tiles_info)  # example of updating lands components after adding a tile
         
+        #current_player = players[players_order[(turn - 1) % len(players_order)]]
         #print(f"Updated lands components after adding tile {turn}: {graph.lands_components}")
         if counter == len(move_parts) - 1:
             #meeple
@@ -51,13 +52,13 @@ class Board:
                     for tileid, directions in sets:
                         if tileid == tile_id and land_pos in directions:
                             set_name_to_place = set_name
-            meeple = Meeple(player_id=1, tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
+            meeple = Meeple(player_id=current_player.get_id(), tile_id=tile_id, position=tiles_info.meeple_placement_list.index(move_parts[counter]), lands_components=set_name_to_place)
             graph.add_meeple(meeple)
             #print(turn)
             #print(len(players_order))
             #print(players_order[(turn - 1) % len(players_order)])
             #print(players[players_order[(turn - 1) % len(players_order)]])
-            players[players_order[(turn - 1) % len(players_order)]].remove_meeple()
+            current_player.remove_meeple()
         #print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         #enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + move_parts[1] if len(move_parts[1]) == 1 else move_parts[0]

@@ -51,7 +51,7 @@ class Game(IGameService):
         self.players_order: list[int] = [0]
         self.add_players(nb_players - 1)
         self.shuffle_players_order()
-        self.current_player_order_list = self.players_order[0]
+        self.current_player_order_list = 0
         self.save_handler = SaveHandler(self)
         self.AImodel = "expectimax"
 

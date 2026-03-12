@@ -204,14 +204,8 @@ class ExpectimaxPlayer:
            depth: int, player_to_max: int, next_player: int,
            probingFactor: int = 1) -> float:
 
-        print(game.current_hand)
-
         moves = self.get_possible_moves(game.current_hand, game)
         
-        if not moves:
-            print("no more moves")
-            exit()
-
         best = alpha
         
         restored_hand = game.current_hand
@@ -221,14 +215,7 @@ class ExpectimaxPlayer:
 
             self.play_move_for_ai(game, move)
 
-            value,_ = self.search(
-                game,
-                depth - 1,
-                best,
-                beta,
-                player_to_max,
-                (next_player + 1) % len(game.players),
-            )
+            value = self.Star25(game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % len(game.players))
             
             self.undo_for_ai(game)
             game.current_hand = restored_hand
@@ -245,6 +232,8 @@ class ExpectimaxPlayer:
         """Apply a chance event (e.g., drawing a tile) to the game state."""    
         # TODO: Make the next tile to draw the tile parameter
         game.current_hand = tile
+        #TODO: bug happens when we have a river tile (because we can have a river tile while river tiles are commented in deck)
+        #game.deck.tiles.remove(tile)
     
     def numSuccesors(self, tiles_info: ITilesInfo) -> int:
         """Return the number of possible chance events (e.g., tile draws) from this state."""
@@ -298,7 +287,7 @@ class ExpectimaxPlayer:
                 game,
                 alpha,
                 cur_beta,
-                depth - 1,
+                depth,
                 player_to_max,
                 next_player
             )
@@ -352,7 +341,7 @@ class ExpectimaxPlayer:
             previous_play = game.history.pop_past()
             game.history.push_future(previous_play)
             game.board.remove_tile_from_board(build_str(previous_play), game.graph, game.tiles_info, game.history, players=game.players)
-            game.current_player_order_list = game.get_current_player().get_id()
+            game.current_player_order_list = (game.current_player_order_list - 1) % game.get_number_of_players()
             game.deck.tiles.append(previous_play.move_str.split('/')[0])  
             #print(game.graph.get_verticies())
             
