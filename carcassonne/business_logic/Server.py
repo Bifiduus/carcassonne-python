@@ -8,6 +8,7 @@ from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.Datas.GamesRepository import GameRepository
 
+
 class Server:
     SERVER_TIMEOUT = 30
     SERVER_DIFFUSION_PERIOD = 10
@@ -19,10 +20,15 @@ class Server:
         self.server = None
         self.running = False
         self.available_servers: dict[str, tuple[int, float]] = {}
-        self.connected_clients: list[socket.socket] = []  # List to track connected client sockets
+        # List to track connected client sockets
+        self.connected_clients: list[socket.socket] = []
         self.clients_lock = threading.Lock()  # Lock for thread-safe access
-        self.party_list: dict[int, tuple[str, Game]] = {}
+        self.parties_list: dict[int, tuple[str, Game]] = {}
         self.scoreboard: dict[socket.socket, Player] = {}
+        # Map client_id -> socket
+        self.client_sockets: dict[int, socket.socket] = {}
+        self.player_clients: dict[socket.socket,
+                                  int] = {}  # Map socket -> client_id
 
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
@@ -43,7 +49,8 @@ class Server:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                ready = select.select([s], [], [], timeout - (time.time() - start_time))
+                ready = select.select(
+                    [s], [], [], timeout - (time.time() - start_time))
                 if ready[0]:
                     message, addr = s.recvfrom(1500)
                     message_part = message.decode()
@@ -102,20 +109,24 @@ class Server:
         server_last_diffusion = time.time()
         while self.running:
             try:
-                self.server.settimeout(1.0)  # Timeout to check self.running periodically
+                # Timeout to check self.running periodically
+                self.server.settimeout(1.0)
                 client_socket, addr = self.server.accept()
                 print(f"Accepted connection from {addr}")
                 # Add client to the list
                 with self.clients_lock:
                     self.connected_clients.append(client_socket)
                 # Handle client in a new thread
-                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
+                client_thread = threading.Thread(
+                    target=self.handle_client, args=(client_socket,))
                 client_thread.start()
 
                 if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
                     message = f"{self.server_name}:{port}"
-                    socket_message = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    socket_message.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                    socket_message = socket.socket(
+                        socket.AF_INET, socket.SOCK_DGRAM)
+                    socket_message.setsockopt(
+                        socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                     broadcast_addr = ('', 12346)
                     socket_message.sendto(message.encode(), broadcast_addr)
                     socket_message.close()
@@ -143,7 +154,9 @@ class Server:
                 client, message = data.decode().split(":")
                 client_id = client.removeprefix("Client")
                 response = self.process_message(client_id, message)
-                client_socket.send((f"Server -> Client{self.connected_clients.index(client_socket)}: "+ response).encode())
+                # fonction qui check le statut d'une invitation et l'envoie à l'host
+                client_socket.send(
+                    (f"Server -> Client{self.connected_clients.index(client_socket)}: " + response).encode())
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
@@ -152,6 +165,10 @@ class Server:
             with self.clients_lock:
                 if client_socket in self.connected_clients:
                     self.connected_clients.remove(client_socket)
+                if client_socket in self.player_clients:
+                    client_id = self.player_clients[client_socket]
+                    del self.client_sockets[client_id]
+                    del self.player_clients[client_socket]
 
     def process_message(self, client_id: str, message: str) -> str:
         """
@@ -165,39 +182,53 @@ class Server:
             if message == "quit\n":
                 return f"Bye\n"
             if message == "server status\n":
-                answer = f"Port:{self.server.getsockname()}, Clients:{len(self.connected_clients)}, Current Parties:{len(self.party_list)}\n"
+                answer = f"Port:{self.server.getsockname()}, Clients:{len(self.connected_clients)}, Current Parties:{len(self.parties_list)}\n"
             if message.startswith("new"):
                 message = message.split("new")[1]
-                party_name = f"Party {len(self.party_list)}"
+                party_name = f"Party {len(self.parties_list)}"
                 if message.find("-p") != -1:
                     message, party_name = message.split("-p")
                 clients_list = message.split(" ")
-                clients_list_checked = self.check_clients_list_validity([client for client in clients_list]) # Check if the clients exist and are available, remove the ones that cannot be invited
-                self.create_new_party(clients_list_checked, int(client_id)) # Create a new party with a name and players, ask them first
+                # Check if the clients exist and are available, remove the ones that cannot be invited
+                clients_list_checked = self.check_clients_list_validity(
+                    [client for client in clients_list])
+                # Create a new party with a name and players, ask them first
+                self.create_new_party(
+                    clients_list_checked, int(client_id), party_name)
             if message == "players":
                 if message.split("players")[1] != "\n":
-                    answer = self.check_profile_player(int(message.split("players")[1]))
+                    answer = self.check_profile_player(
+                        int(message.split("players")[1]))
                 else:
-                    answer = self.repo.current_players() # Return a list of the current players (id, name and status) in the server, not the away players
+                    # Return a list of the current players (id, name and status) in the server, not the away players
+                    answer = self.repo.current_players()
             if message == "scoreboard\n":
-                answer = self.repo.get_scoreboard() # Affiche le tableau des scores des
-                                                 # joueurs qui ont joué sur le serveur (nombre de
-                                                 # victoires, défaites, parties jouées) de la db.
+                answer = self.repo.get_scoreboard()  # Affiche le tableau des scores des
+                # joueurs qui ont joué sur le serveur (nombre de
+                # victoires, défaites, parties jouées) de la db.
             if message == "accept\n":
                 sender, party_id = self.repo.invitation_received(client_id)
                 if sender != -1:
                     answer = f"You have no invitation to accept.\n"
                 else:
-                    answer = "" # envoie à {self.invitation_received(client_id)}
+                    # envoie à {self.invitation_received(client_id)}
                     self.repo.accept_invitation(int(party_id), client_id)
-            if message =="decline\n":
+                    # Get invitee's name from repository
+                    invitee_name = self.repo.get_player_profile(int(client_id))[
+                        'username']
+                    self.notify_host_of_acceptance(sender, invitee_name)
+                    answer = f"Invitation accepted!\n"
+
+            if message == "decline\n":
                 if self.repo.invitation_received(client_id) != -1:
                     answer = f"You have no invitation to decline.\n"
                 else:
-                    answer = "" # envoie à {self.invitation_received(client_id)}
+                    # envoie à {self.invitation_received(client_id)}
+                    answer = ""
             if message == "cancel\n":
                 if self.repo.invitation_sent_from(client_id):
-                    answer = self.repo.cancel_invitation_from(client_id) # des invitations en attentes, envoie des messages
+                    # des invitations en attentes, envoie des messages
+                    answer = self.repo.cancel_invitation_from(client_id)
                 else:
                     answer = f"No invitations to cancel."
             if message == "away\n":
@@ -205,13 +236,24 @@ class Server:
             if message == "back\n":
                 answer = self.repo.change_status(client_id, "idle")
         return answer
-    
+
+    def notify_host_of_acceptance(self, host_id: int, invitee_name: str):
+        """Send notification to host that an invitation was accepted."""
+        if host_id in self.client_sockets:
+            try:
+                host_socket = self.client_sockets[host_id]
+                message = f"Server -> Client{host_id}: {invitee_name} has accepted your invitation!\n"
+                host_socket.send(message.encode())
+            except Exception as e:
+                print(f"Error notifying host {host_id}: {e}")
+
     def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
         """Verify that each client id refers to an existing player via the repository."""
         return [c for c in clients_list if self.repo.player_exists(c)]
-    
-    def create_new_party(self, clients_list: list[str], host_id: int) -> None:
-        party_name = self.repo.get_party_name(host_id)
+
+    def create_new_party(self, clients_list: list[str], host_id: int,  party_name: str = "") -> None:
+        if party_name is "":
+            party_name = self.repo.get_party_name(host_id)
         new_party = Game()
         try:
             self.repo.create_party(party_name, clients_list, host_id)
@@ -237,7 +279,8 @@ class Server:
         # Send shutdown message to all connected clients
         shutdown_message = "Server Shutdown"
         with self.clients_lock:
-            for client_socket in self.connected_clients[:]:  # Copy the list to avoid modification during iteration
+            # Copy the list to avoid modification during iteration
+            for client_socket in self.connected_clients[:]:
                 try:
                     client_socket.sendall(shutdown_message.encode())
                 except Exception as e:
@@ -282,7 +325,7 @@ class Server:
             return message+f"Time={start - end}ms"
 
         return "No server response"  # Or implement actual ping logic
-    
+
     def join_server(self, server_name: str, port: int | None = None, timeout: float = 5.0) -> bool:
         """
         Connect to a remote server identified by name (and optional port).
@@ -318,7 +361,8 @@ class Server:
         self.client.settimeout(None)
 
         # start a listener thread so the caller can interact without blocking
-        self._recv_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self._recv_thread = threading.Thread(
+            target=self._receive_loop, daemon=True)
         self._recv_thread.start()
         return True
 
@@ -346,22 +390,26 @@ class Server:
         Override or extend this method to process messages received from the
         server. The default implementation simply prints the message.
         """
-        if self.client: ##### check what you do, if you have the server or if you only receive
+        if self.client:  # check what you do, if you have the server or if you only receive
             message = message.removeprefix("Server -> Client")
             client_id, message = message.split(":")
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
-                self.get_game(client_id).play_move(move) # will check in the database for the game id and 
-                self.client.sendall("board".encode()) # pour afficher le coup
+                # will check in the database for the game id and
+                self.get_game(client_id).play_move(move)
+                self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
-                if self.repo.check_all_invitations_resolved(int(client_id)): # accepted or not or timed_out
-                    self.create_new_party(self.repo.get_party(client_id), int(client_id)) # ajoute la party dans party_list, change ce qu'il faut et lance        
-        
+                # accepted or not or timed_out
+                if self.repo.check_all_invitations_resolved(int(client_id)):
+                    # ajoute la party dans party_list, change ce qu'il faut et lance
+                    self.create_new_party(
+                        self.repo.get_party(client_id), int(client_id))
+
         print(message, end="")
 
     def get_game(self, client_id: str):
         party_id = int(self.repo.get_game(int(client_id))[0])
-        return self.party_list[party_id][1]
+        return self.parties_list[party_id][1]
 
     def send_to_server(self, text: str) -> bool:
         """
@@ -377,7 +425,3 @@ class Server:
         except Exception as e:
             print(f"Failed to send: {e}")
             return False
-
-
-            
-            

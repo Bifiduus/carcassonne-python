@@ -42,30 +42,32 @@ class GameRepository:
         )
         return bool(rows)
 
-    def get_player_profile(self, player_id: int) -> Optional[dict[str, Any]]:
+    def get_player_profile(self, player_id: int) -> dict[str, Any]:
         rows = self._execute_query(
             "SELECT username, status, score, stats_win, stats_lose "
             "FROM players WHERE id=?;",
             (player_id,),
         )
         if not rows:
-            return None
+            return {}
         r = rows[0]
         return {k: r[k] for k in r.keys()}
-    
-    def change_status(self, client_id: str, status: str) -> bool:
+
+    def change_status(self, client_id: str, status: str) -> str:
         rows = self._execute_non_query(
             "UPDATE players SET status=? WHERE id=?;",
             (status, int(client_id),)
         )
-        return bool(rows)
-    
-    def current_players(self):
+        if rows is None:
+            return "Status not changed."
+        return f"Status changed to {status}."
+
+    def current_players(self) -> str:
         rows = self._execute_query(
             "SELECT player_id, username, status FROM players WHERE status!='away';"
         )
-        return rows
-    
+        return str([r for r in rows])
+
     def invitation_received(self, client_id: str):
         rows = self._execute_query(
             "SELECT host_player, party_id FROM pending_invitations WHERE invited_player=?;",
@@ -87,7 +89,8 @@ class GameRepository:
         )
         return rows[0]
 
-    def check_all_invitations_resolved(self, client_id: int): ## possible to change return type to tuple(int, message)
+    # possible to change return type to tuple(int, message)
+    def check_all_invitations_resolved(self, client_id: int):
         rows = self._execute_query(
             "SELECT player_id, username FROM pending_invitations WHERE accepted!='accepted' AND host_player=?;",
             (client_id,)
@@ -96,25 +99,27 @@ class GameRepository:
             return True
         return False
 
-    def get_scoreboard(self):
+    def get_scoreboard(self) -> str:
         rows = self._execute_query(
             "SELECT player_id AS id, username, victories, defeats, (victories + defeats) AS total_games FROM scoreboard NATURAL JOIN players;"
         )
-        return rows
-    
-    def invitation_sent_from(self, client_id: str):
+        return str([r for r in rows])
+
+    def invitation_sent_from(self, client_id: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM pending_invitations WHERE host_player=? AND accepted!='accepted';",
             (int(client_id),)
         )
         return bool(rows)
-    
+
     def cancel_invitation_from(self, client_id: str):
         rows = self._execute_non_query(
             "DELETE FROM pending_invitations WHERE host_player=?;",
             (int(client_id),)
         )
-        return bool(rows)
+        if bool(rows):
+            return "Invitation cancelled."
+        return ""
 
     def create_party(self, name: str, player_names: List[str], host_id: int) -> int | None:
         party_id = self._execute_non_query(
@@ -131,14 +136,14 @@ class GameRepository:
                 (party_id, player_id, "pending"),
             )
         return party_id
-    
+
     def get_party(self, host_id) -> list[str]:
         rows = self._execute_query(
             "SELECT username FROM party_players NATURAL JOIN parties NATURAL JOIN players WHERE host_id=?;",
             (host_id,)
         )
         return [r[0] for r in rows]
-    
+
     def get_party_name(self, host_id: int) -> str:
         rows = self._execute_query(
             "SELECT party_name FROM parties WHERE host_id=?;",
