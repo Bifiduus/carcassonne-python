@@ -24,7 +24,19 @@ class GameRepository(IGamesRepository):
 
     def init_database(self):
         rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS ;"
+            "CREATE TABLE IF NOT EXISTS groups(group_id, number_of_players, host_player);"
+        )
+        rows = self._execute_non_query(
+            "CREATE TABLE IF NOT EXISTS players(player_id, username, status, group_id);"
+        )
+        rows = self._execute_non_query(
+            "CREATE TABLE IF NOT EXISTS scoreboard(player_id, victories, defeats);"
+        )
+        rows = self._execute_non_query(
+            "CREATE TABLE IF NOT EXISTS current_games(game_id, game_name, group_id);"
+        )
+        rows = self._execute_non_query(
+            "CREATE TABLE IF NOT EXISTS pending_invitations(group_id, invited_player, status);"
         )
 
     # low-level helpers
