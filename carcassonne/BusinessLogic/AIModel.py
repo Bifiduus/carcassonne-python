@@ -212,12 +212,17 @@ class ExpectimaxPlayer:
 
         moves = self.get_possible_moves(game.current_hand, game)
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 
         if not moves:
             print("no more moves")
             exit()
 
 =======
+=======
+        # ordonner les moves selon un heuristique rapide à calculer 
+        #moves = sorted(moves, key=lambda m: self.quick_eval_move(game, m, player_to_max), reverse=True)
+>>>>>>> eea6dcf (changes):src/carcassonne/BusinessLogic/AIModel.py
         
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
         best = alpha
@@ -230,6 +235,7 @@ class ExpectimaxPlayer:
             self.play_move_for_ai(game, move)
 
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
             value = self.search(
                 game,
                 depth - 1,
@@ -241,6 +247,9 @@ class ExpectimaxPlayer:
 
 =======
             value = self.Star25(game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % len(game.players))
+=======
+            value = self.Star25(game, depth - 1, best, beta, player_to_max, (next_player + 1) % len(game.players))
+>>>>>>> eea6dcf (changes):src/carcassonne/BusinessLogic/AIModel.py
             
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
             self.undo_for_ai(game)
@@ -319,7 +328,7 @@ class ExpectimaxPlayer:
                 tile,
                 alpha,
                 cur_beta,
-                depth,
+                depth - 1,
                 player_to_max,
                 next_player
             )
