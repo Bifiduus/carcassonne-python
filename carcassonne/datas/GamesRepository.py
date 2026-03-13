@@ -1,11 +1,13 @@
 import sqlite3
 import threading
 from dataclasses import dataclass
-from typing import List, Optional, Any
+from typing import Any
+
+from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
 
 
 @dataclass
-class GameRepository:
+class GameRepository(IGamesRepository):
     """Repository handling persistence of players, parties and games.
 
     This class encapsulates all SQL operations so that the server and business
@@ -19,6 +21,11 @@ class GameRepository:
         self.db = sqlite3.connect(self.db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.lock = threading.Lock()
+
+    def init_database(self):
+        rows = self._execute_non_query(
+            "CREATE TABLE IF NOT EXISTS ;"
+        )
 
     # low-level helpers
     def _execute_query(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
@@ -121,7 +128,7 @@ class GameRepository:
             return "Invitation cancelled."
         return ""
 
-    def create_party(self, name: str, player_names: List[str], host_id: int) -> int | None:
+    def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
         party_id = self._execute_non_query(
             "INSERT INTO parties(party_name, host_id) VALUES (?, ?);",
             (name, host_id,),
