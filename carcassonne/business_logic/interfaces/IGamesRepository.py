@@ -10,6 +10,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+<<<<<<< HEAD:carcassonne/business_logic/interfaces/IGamesRepository.py
     def get_next_available_id(self) -> int:
         pass
 
@@ -22,18 +23,24 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+=======
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Interfaces/IGamesRepository.py
     def player_exists(self, player_name: str) -> bool:
         pass
 
     @abstractmethod
+<<<<<<< HEAD:carcassonne/business_logic/interfaces/IGamesRepository.py
     def check_all_invitations_timeout(self, timeout: float):
         pass
 
     @abstractmethod
+=======
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Interfaces/IGamesRepository.py
     def get_player_profile(self, player_id: int) -> dict[str, Any]:
         pass
 
     @abstractmethod
+<<<<<<< HEAD:carcassonne/business_logic/interfaces/IGamesRepository.py
     def is_database_closed(self) -> bool:
         pass
 
@@ -43,6 +50,9 @@ class IGamesRepository(ABC):
 
     @abstractmethod
     def change_status(self, client_username: str, status: str) -> str:
+=======
+    def change_status(self, client_id: str, status: str) -> str:
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Interfaces/IGamesRepository.py
         pass
 
     @abstractmethod
@@ -54,6 +64,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+<<<<<<< HEAD:carcassonne/business_logic/interfaces/IGamesRepository.py
     def accept_invitation(self, group_id: int, invited: str):
         pass
 
@@ -75,6 +86,21 @@ class IGamesRepository(ABC):
 
     @abstractmethod
     def send_invitation(self, invited_player: str, invitee_player: str) -> bool:
+=======
+    def accept_invitation(self, party_id: int, invited: str):
+        pass
+
+    @abstractmethod
+    def get_game(self, client_id: int) -> Row:
+        pass
+
+    @abstractmethod
+    def check_all_invitations_resolved(self, client_id: int) -> bool:
+        pass
+
+    @abstractmethod
+    def get_scoreboard(self) -> str:
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Interfaces/IGamesRepository.py
         pass
 
     @abstractmethod
@@ -82,6 +108,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+<<<<<<< HEAD:carcassonne/business_logic/interfaces/IGamesRepository.py
     def cancel_invitation_from(self, client_id: str, players: list[str]) -> str:
         pass
 
@@ -99,6 +126,21 @@ class IGamesRepository(ABC):
 
     @abstractmethod
     def get_party_name(self, client_id: str) -> str:
+=======
+    def cancel_invitation_from(self, client_id: str) -> str:
+        pass
+
+    @abstractmethod
+    def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
+        pass
+
+    @abstractmethod
+    def get_party(self, host_id) -> list[str]:
+        pass
+
+    @abstractmethod
+    def get_party_name(self, host_id: int) -> str:
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Interfaces/IGamesRepository.py
         pass
 
     @abstractmethod

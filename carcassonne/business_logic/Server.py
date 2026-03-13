@@ -4,16 +4,22 @@ import socket
 import select
 import threading
 
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+=======
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 from carcassonne.BusinessLogic.OnlineCommunication import OnlineCommunication
 from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
 from carcassonne.Presentation.Interfaces.IServerService import IServerService
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
+=======
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 
 
 class Server(IServerService):
@@ -43,6 +49,7 @@ class Server(IServerService):
         self.client_id = None
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         assert self.repo, "The database should not be None"
         self.handle_communication = OnlineCommunication(self)
         if not self.repo.is_accounted_for():
@@ -50,6 +57,9 @@ class Server(IServerService):
             print("Type: create <username>")
         else:
             self.client_player = self.repo.get_online_player()
+=======
+        self.handle_communication = OnlineCommunication(self)
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 
     def create_online_player(self, username: str) -> str:
         self.client_player = username
@@ -221,13 +231,22 @@ class Server(IServerService):
         # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
         if self.server is not None:
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             if message == "ping":
                 answer = self.handle_communication.command_ping()
             if message == "server status":
+=======
+            if message == "ping\n":
+                answer = self.handle_communication.command_ping()
+            if message == "quit\n":
+                answer = self.handle_communication.command_quit(client_id)
+            if message == "server status\n":
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
                 answer = self.handle_communication.command_server_status()
             if message.startswith("new"):
                 answer = self.handle_communication.command_new(
                     message, client_id)
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             if message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
             if message == "scoreboard":
@@ -247,11 +266,28 @@ class Server(IServerService):
             if message == "back":
                 answer = self.handle_communication.command_back(
                     client_id)
+=======
+            if message == "players":
+                answer = self.handle_communication.command_players(message)
+            if message == "scoreboard\n":
+                answer = self.handle_communication.command_scoreboard()
+            if message == "accept\n":
+                answer = self.handle_communication.command_accept(client_id)
+            if message == "decline\n":
+                answer = self.handle_communication.command_decline(client_id)
+            if message == "cancel\n":
+                answer = self.handle_communication.command_cancel(client_id)
+            if message == "away\n":
+                answer = self.handle_communication.command_away(client_id)
+            if message == "back\n":
+                answer = self.handle_communication.command_back(client_id)
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
         return answer
 
     def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
         """Verify that each client id refers to an existing player via the repository."""
         assert self.repo is not None, "No games repository."
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         return [c for c in clients_list if self.repo.player_exists(self.repo.get_username(c))]
 
     def create_new_party(self, clients_list: list[str], client_id: str,  party_name: str = "") -> str:
@@ -281,6 +317,21 @@ class Server(IServerService):
             username = self.repo.get_username(client)
             players_list.append(Player(int(client), username, "None"))
         return players_list
+=======
+        return [c for c in clients_list if self.repo.player_exists(c)]
+
+    def create_new_party(self, clients_list: list[str], host_id: int,  party_name: str = "") -> str:
+        assert self.repo is not None, "No games repository."
+        if party_name is "":
+            party_name = self.repo.get_party_name(host_id)
+        new_party = Game()
+        try:
+            self.repo.create_party(party_name, clients_list, host_id)
+            # ajouter party dans self.list
+        except Exception as e:
+            print(f"Error creating party in repository: {e}")
+        return "Your party has been created successfully !\n"
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 
     def check_profile_player(self, player_id: int) -> str:
         """Return a simple textual profile for the given player id."""
@@ -360,7 +411,11 @@ class Server(IServerService):
         message = data.decode()
         if message.find("pong\n") != -1:
             end = time.time()
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
             return message+f" Time={end - start}ms"
+=======
+            return message+f" Time={start - end}ms"
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 
         return "No server response"  # Or implement actual ping logic
 
@@ -454,11 +509,16 @@ class Server(IServerService):
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
+<<<<<<< HEAD:carcassonne/business_logic/Server.py
         party_id = int(self.repo.get_game(client_id)[0])
         return self.current_games_list[party_id][1]
 
     def connected_to_a_server(self) -> bool:
         return bool(self.client and self.has_joined_server)
+=======
+        party_id = int(self.repo.get_game(int(client_id))[0])
+        return self.parties_list[party_id][1]
+>>>>>>> d495553 (added OnlineCommunication to ease the reading of Server.py, plus implementation of IGamesRepository):src/carcassonne/BusinessLogic/Server.py
 
     def send_to_server(self, text: str) -> bool:
         """
