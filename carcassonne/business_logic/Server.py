@@ -38,9 +38,6 @@ class Server:
         self.repo = repo if repo is not None else GameRepository()
         self.handle_communication = OnlineCommunication(self)
 
-        # repository for persistence
-        self.repo = repo if repo is not None else GameRepository()
-
     def list_available_servers(self, timeout: float = 5.0) -> list[str]:
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
