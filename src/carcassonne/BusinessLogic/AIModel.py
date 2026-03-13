@@ -205,6 +205,8 @@ class ExpectimaxPlayer:
            probingFactor: int = 1) -> float:
 
         moves = self.get_possible_moves(game.current_hand, game)
+        # ordonner les moves selon un heuristique rapide à calculer 
+        #moves = sorted(moves, key=lambda m: self.quick_eval_move(game, m, player_to_max), reverse=True)
         
         best = alpha
         
@@ -215,7 +217,7 @@ class ExpectimaxPlayer:
 
             self.play_move_for_ai(game, move)
 
-            value = self.Star25(game, depth - 1, alpha, beta, player_to_max, (next_player + 1) % len(game.players))
+            value = self.Star25(game, depth - 1, best, beta, player_to_max, (next_player + 1) % len(game.players))
             
             self.undo_for_ai(game)
             game.current_hand = restored_hand
@@ -287,7 +289,7 @@ class ExpectimaxPlayer:
                 game,
                 alpha,
                 cur_beta,
-                depth,
+                depth - 1,
                 player_to_max,
                 next_player
             )
