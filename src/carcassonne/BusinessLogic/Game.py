@@ -69,8 +69,8 @@ class Game(IGameService):
         self.tiles_info = TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.shuffle_players_order()
+        self.shuffle_deck()
         self.current_player_order_list = 0
-        print(self.players_order)
         while self.get_current_player().is_ai_player():
             self.play_ai_turn()
 
