@@ -147,20 +147,7 @@ class GameGUI(Gtk.Application):
         CommandsHandlerGui.on_rotate_gui(self)
 
     def on_preview_pressed(self, gesture, n_press, x, y):
-        if not self.game_data.current_tile:
-            return
-
-        self.game_data.is_dragging = True
-
-        # Start ghost at center of board
-        width = self.board_view.get_allocated_width()
-        height = self.board_view.get_allocated_height()
-
-        self.board_view.ghost_x = width // 2
-        self.board_view.ghost_y = height // 2
-
-        self.board_view.grab_focus()
-        self.board_view.queue_draw()
+        pass
         
 
     def on_preview_released(self, gesture, n_press, x, y):

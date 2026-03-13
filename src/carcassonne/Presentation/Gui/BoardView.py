@@ -67,8 +67,11 @@ class BoardView(Gtk.DrawingArea):
         self.add_controller(key_controller)
 
         # accept drops from the preview widget (tile name strings)
-        drop = Gtk.DropTarget.new(str, Gdk.DragAction.COPY)
+        drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
         drop.connect("drop", self.on_drop)
+        drop.connect("enter", self.on_drag_enter)
+        drop.connect("motion", self.on_drag_motion)
+        drop.connect("leave", self.on_drag_leave)
         self.add_controller(drop)
 
     def _normalize_name(self, name: str) -> str:
@@ -288,21 +291,51 @@ class BoardView(Gtk.DrawingArea):
         handlers do, storing the move string and tile coordinates.  Meeple
         placement remains a separate click after the drop.
         """
-        tile_name = value
         grid_x, grid_y = self.pixel_to_grid(x, y)
         vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
-        if vertex_id is not None and side is not None and self.game_data.current_tile:
+        if vertex_id is not None and side is not None:
             orientation = self.game_data.current_orientation
             move_str = (
-                f"{tile_name}/{vertex_id}{['N','E','S','W'][side]}{orientation}"
+                f"{self.game_data.current_tile.current_tile}/"
+                f"{vertex_id}{['N','E','S','W'][side]}{orientation}"
             )
             self.game_data.current_tile.move = move_str
-            # remember where the tile will land so that a subsequent click
-            # inside the square can choose a meeple position.
             self.game_data.current_tile.x = grid_x
             self.game_data.current_tile.y = grid_y
+            # keep the tile in place so the player can pick a meeple later
+
+        # Stop ghost regardless of whether the drop was valid
+        self.game_data.is_dragging = False
+        self.ghost_x = None
+        self.ghost_y = None
+
         self.queue_draw()
         return True
+
+    def on_drag_enter(self, controller, x, y):
+        """Handle drag entering the board area."""
+        if self.game_data.current_tile:
+            self.game_data.is_dragging = True
+            self.ghost_x = x
+            self.ghost_y = y
+            self.queue_draw()
+            return Gdk.DragAction.MOVE
+        return 0
+
+    def on_drag_motion(self, controller, x, y):
+        """Handle drag motion over the board."""
+        if self.game_data.is_dragging:
+            self.ghost_x = x
+            self.ghost_y = y
+            self.queue_draw()
+        return Gdk.DragAction.MOVE
+
+    def on_drag_leave(self, controller):
+        """Handle drag leaving the board area."""
+        self.game_data.is_dragging = False
+        self.ghost_x = None
+        self.ghost_y = None
+        self.queue_draw()
 
     def on_key_press(self, controller, keyval, keycode, state):
         step = 20

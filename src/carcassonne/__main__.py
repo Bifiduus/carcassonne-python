@@ -106,8 +106,8 @@ def main() -> int:
         config_overrides['verbose'] = True
     if args.blitz:
         config_overrides['blitz'] = True
-    if args.timeout != 30:  # assuming default is 30
-        config_overrides['timeout'] = args.timeout
+    if args.time != 30:  # assuming default is 30
+        config_overrides['time'] = args.timeout
     
     game_data :IGraphData = GraphData()
     if args.players:

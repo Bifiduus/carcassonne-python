@@ -107,4 +107,8 @@ class TilePreview(Gtk.Picture):
 
         # keep a reference so the texture isn't garbage-collected
         self._drag_texture = texture
-        drag_source.set_icon(texture, 50, 50)
+        # Set a transparent icon to hide drag feedback
+        transparent_pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 1, 1)
+        transparent_pixbuf.fill(0x00000000)  # Fully transparent
+        transparent_texture = Gdk.Texture.new_for_pixbuf(transparent_pixbuf)
+        drag_source.set_icon(transparent_texture, 0, 0)
