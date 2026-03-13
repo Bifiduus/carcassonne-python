@@ -18,9 +18,14 @@ class OptionsMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Game options")
+        title = Gtk.Label(label="Options")
         title.add_css_class("title-2")
         self.append(title)
+
+        # --- game options button --------------------------------------------------
+        keybinds_button = Gtk.Button(label="Game Options")
+        keybinds_button.connect("clicked", self.on_game_options)
+        self.append(keybinds_button)
 
         # --- keybinds button --------------------------------------------------
         keybinds_button = Gtk.Button(label="Keybinds")
@@ -46,3 +51,6 @@ class OptionsMenu(Gtk.Box):
 
     def on_keybinds(self, button):
         self.gui.window.stack.set_visible_child_name("keybinds_menu")
+
+    def on_game_options(self, button):
+        self.gui.window.stack.set_visible_child_name("singleplayer_menu")

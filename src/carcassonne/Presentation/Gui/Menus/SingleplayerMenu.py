@@ -87,15 +87,11 @@ class SingleplayerMenu(Gtk.Box):
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_start = Gtk.Button(label="Start Game")
         btn_back = Gtk.Button(label="Back")
-        btn_start.connect("clicked", self.on_start)
         btn_back.connect("clicked", self.on_back)
-        btn_start.set_hexpand(False)
         btn_back.set_hexpand(False)
 
         btn_box.set_halign(Gtk.Align.CENTER)
-        btn_box.append(btn_start)
         btn_box.append(btn_back)
         
         self.append(btn_box)
@@ -120,11 +116,6 @@ class SingleplayerMenu(Gtk.Box):
 
     def on_back(self, button):
         """Return to the main menu without applying any settings."""
-        self.gui.window.stack.set_visible_child_name("menu")
-
-    def on_start(self, button):
-        """Apply the chosen options and switch to the game view."""
-        # parse seed entry
         seed_str = self.entry_seed.get_text().strip()
         seed = None
         if seed_str:
@@ -146,19 +137,21 @@ class SingleplayerMenu(Gtk.Box):
             print("Please select a contest file")
             return
 
-        # start a new game with the chosen seed; any further data (mode,
-        # contest file) is stored on the GUI object for downstream logic.
-        # the GameDataGui helper simply accepts seed and optionally other
-        # values, so we extend it to carry these new pieces of state.
-        """self.gui.game_data.new_game(seed=seed)
-        # record the selected mode and contest path on the GUI/data objects
-        self.gui.game_mode = mode
-        # attributes on game_data are convenient for game logic later
-        self.gui.game_data.mode = mode
+        # apply selected settings to the game configuration and start a new game
+        # (seed is passed to the game logic; mode is stored as a setting).
+        if mode == "blitz":
+            self.gui.game_data.game.set_game_configuration("blitz", True)
+            # clear contest file if any
+            self.gui.game_data.game.set_game_configuration("contest_file", "")
+        else:
+            self.gui.game_data.game.set_game_configuration("blitz", False)
+
         if contest_file:
-            self.gui.contest_file = contest_file
-            self.gui.game_data.contest_file = contest_file"""
+            self.gui.game_data.game.set_game_configuration("contest_file", contest_file)
 
-        # switch to the board view
-        self.gui.window.stack.set_visible_child_name("game")
+        # persist configuration to disk
+        self.gui.game_data.game.save_config()
 
+        # start the new game (players order is handled internally by Game)
+        self.gui.game_data.new_game(None, seed)
+        self.gui.window.stack.set_visible_child_name("options_menu")

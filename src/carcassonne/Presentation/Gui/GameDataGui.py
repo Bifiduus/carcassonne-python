@@ -15,7 +15,7 @@ class GameDataGui():
     def game_configuration(self):
         return self.game.get_game_configuration()
 
-    def new_game(self, players_order=None, seed=None):
+    def new_game(self, players_order, seed):
         """Helper that starts a new game and resets GUI state.
 
         ``players_order`` and ``seed`` are simply forwarded to the underlying
@@ -26,7 +26,7 @@ class GameDataGui():
         # doesn't accept any of the extra keywords, so call the service
         # directly.  ``Game.start_new_game`` is idempotent with respect to
         # shuffling, so we don't need to double‑shuffle here.
-        self.game.start_new_game(players_order=players_order, seed=seed)
+        self.game.start_new_game(players_order, seed)
         self.reset()
 
     def undo(self):
@@ -38,6 +38,10 @@ class GameDataGui():
         CommandsHandlerGui.on_redo(self.game)
         if self.board_view:
             self.board_view.refresh()
+
+    def save(self):
+        self.game.
+    def load(self):
 
     def play_move_gui(self):
         if self.current_tile is None:

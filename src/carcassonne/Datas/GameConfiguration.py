@@ -8,6 +8,7 @@ DEFAULT_SETTINGS = {
     "verbose": False,
     "blitz": False,
     "timeout": 30,
+    "contest_file": "",
     "file_keybinds": {
         "app.new": "n",
         "app.load": "l",
@@ -35,7 +36,8 @@ class GameConfiguration:
         config["defaults"] = {
             "verbose": "false",
             "blitz": "false",
-            "timeout": "30"
+            "timeout": "30",
+            "contest_file": ""
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),
@@ -64,6 +66,9 @@ class GameConfiguration:
             settings["verbose"] = config.getboolean("defaults", "verbose")
             settings["blitz"] = config.getboolean("defaults", "blitz")
             settings["timeout"] = config.getint("defaults", "timeout")
+            # optional contest file
+            if config.has_option("defaults", "contest_file"):
+                settings["contest_file"] = config.get("defaults", "contest_file")
 
             if "keybinds" in config:
                 if config.has_option("keybinds", "file_keybinds"):
@@ -83,7 +88,8 @@ class GameConfiguration:
         config["defaults"] = {
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
-            "timeout": str(self.settings["timeout"])
+            "timeout": str(self.settings["timeout"]),
+            "contest_file": str(self.settings.get("contest_file", ""))
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(self.settings["file_keybinds"]),

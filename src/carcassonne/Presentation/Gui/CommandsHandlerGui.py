@@ -1,4 +1,5 @@
 from carcassonne.Presentation.Gui import utils
+from gi.repository import Gio, Gtk
 
 """
 Lists of commands that can be triggered from the GUI, and their handlers.
@@ -8,8 +9,6 @@ Lists of commands that can be triggered from the GUI, and their handlers.
 File menu commands:
 """
 
-from carcassonne.Presentation.Gui import utils
-
 
 def on_new(game):
     game.start_new_game()
@@ -18,16 +17,58 @@ def on_new(game):
 
 
 def on_load(gui) -> None:
-    print("to add load")
+    """Show a file picker and load a saved game."""
 
-def on_save() -> None:
-    print("to add save")
+    dialog = Gtk.FileDialog(title="Load game")
 
+
+    def on_file_selected(dialog, result):
+        try:
+            file = dialog.open_finish(result)
+            filename = file.get_path()
+            if gui.game_data.game.load_game_from_file(filename) == 0:
+                # Refresh GUI state after loading
+                gui.game_data.reset()
+                if hasattr(gui, "players_view"):
+                    gui.players_view.refresh()
+                if hasattr(gui, "board_view"):
+                    gui.board_view.refresh()
+                gui.tile_preview.set_filename("")
+                gui.window.stack.set_visible_child_name("game")
+            else:
+                print(f"Failed to load game from {filename}")
+        except Exception:
+            # Cancelled or failed; ignore.
+            pass
+
+    dialog.open(gui.window.window, None, on_file_selected)
+
+
+def on_save(gui) -> None:
+    """Show a file picker and save the current game."""
+
+    dialog = Gtk.FileDialog(title="Save game")
+
+
+    def on_file_selected(dialog, result):
+        try:
+            file = dialog.save_finish(result)
+            filename = file.get_path()
+            if gui.game_data.game.save_game_to_file(filename) == 0:
+                print(f"Game saved to {filename}")
+            else:
+                print(f"Failed to save game to {filename}")
+        except Exception:
+            # Cancelled or failed; ignore.
+            pass
+
+    dialog.save(gui.window.window, None, on_file_selected)
 def on_config(gui) -> None:
     config = gui.game_data.game_configuration()
     print("Configuration actuelle du jeu:")
     for key, value in config.items():
         print(f"  {key}: {value}")
+    gui.window.stack.set_visible_child_name("options_menu")
 
 def on_info() -> None:
     print("to add info")
@@ -60,7 +101,7 @@ def on_hint():
 def on_new_gui(gui):
     """Start a new game and refresh GUI elements."""
     # delegate game logic to GameDataGui
-    gui.game_data.new_game()
+    gui.game_data.new_game(None, None)
     # refresh any dependent views
     if hasattr(gui, "players_view"):
         gui.players_view.refresh()

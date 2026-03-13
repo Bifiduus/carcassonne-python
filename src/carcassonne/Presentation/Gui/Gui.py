@@ -71,7 +71,7 @@ class GameGUI(Gtk.Application):
         register = utils.register_action
         register(self, "new", lambda a, p: CommandsHandlerGui.on_new_gui(self))
         register(self, "load", lambda a, p: CommandsHandlerGui.on_load(self))
-        register(self, "save", lambda a, p: CommandsHandlerGui.on_save())
+        register(self, "save", lambda a, p: CommandsHandlerGui.on_save(self))
         register(self, "config", lambda a, p: CommandsHandlerGui.on_config(self))
         register(self, "info", lambda a, p: CommandsHandlerGui.on_info())
         register(self, "quit", lambda a, p: CommandsHandlerGui.on_quit(self))
@@ -156,7 +156,7 @@ class GameGUI(Gtk.Application):
     
     def start_singleplayer(self, button):
         #self.game.start_new_game(mode="single")
-        self.window.stack.set_visible_child_name("singleplayer_menu")
+        self.window.stack.set_visible_child_name("game")
         self.board_view.grab_focus()
 
     def start_multiplayer(self, button):
