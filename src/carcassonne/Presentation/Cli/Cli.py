@@ -3,7 +3,6 @@ The GameCLI class allows players to enter commands to perform various actions su
 loading and saving game states, shuffling the tiles, getting hints, undoing and redoing moves, 
 and displaying game information such as the player's hand, scores, history, and configuration.
 """
-from carcassonne.Presentation.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Presentation.Cli import CommandsHandlerCli
 from carcassonne.BusinessLogic.Game import Game
@@ -33,7 +32,7 @@ class GameCLI:
     
     def __init__(self, game_service: IGameService):
         self.game = game_service
-        self.settings = GameConfiguration().settings
+        self.settings = self.game.get_game_configuration()
         self.running = True
 
         

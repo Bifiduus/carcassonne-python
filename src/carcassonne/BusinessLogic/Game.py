@@ -13,7 +13,7 @@ from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.RulesManager import RulesManager
 from carcassonne.BusinessLogic.Board import Board
 from carcassonne.Datas.GameRepository import GameRepository
-from carcassonne.Presentation.GameConfiguration import GameConfiguration
+from carcassonne.Datas.GameConfiguration import GameConfiguration
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Datas.History import History 
 from carcassonne.BusinessLogic.Interfaces.ITilesInfo import ITilesInfo
@@ -32,8 +32,8 @@ OPPOSITE = {
 class Game(IGameService):
 
 
-    def __init__(self, graphData: IGraphData, nb_players: int) -> None:
-        self.game_configuration = GameConfiguration()
+    def __init__(self, graphData: IGraphData, nb_players: int, config_overrides=None) -> None:
+        self.game_configuration = GameConfiguration(config_overrides)
         self.game_repository: GameRepository = GameRepository()
         self.graph: IGraphData = graphData
         self.tiles_info: ITilesInfo = TilesInfo()
@@ -167,6 +167,12 @@ class Game(IGameService):
         
     def get_game_configuration(self) :
         return self.game_configuration.get_setting()
+
+    def save_config(self) -> None:
+        self.game_configuration.save_config()
+
+    def set_game_configuration(self, key: str, value) -> None:
+        self.game_configuration.settings[key] = value
 
     def draw_tile(self) -> str | None:
         if self.current_hand is not None:

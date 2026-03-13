@@ -23,8 +23,11 @@ def on_load(gui) -> None:
 def on_save() -> None:
     print("to add save")
 
-def on_config() -> None:
-    print("to add config")
+def on_config(gui) -> None:
+    config = gui.game_data.game_configuration()
+    print("Configuration actuelle du jeu:")
+    for key, value in config.items():
+        print(f"  {key}: {value}")
 
 def on_info() -> None:
     print("to add info")

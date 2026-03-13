@@ -12,6 +12,9 @@ class GameDataGui():
         self.board_view = None  # set later by Gui
         self.is_dragging = False
 
+    def game_configuration(self):
+        return self.game.get_game_configuration()
+
     def new_game(self, players_order=None, seed=None):
         """Helper that starts a new game and resets GUI state.
 

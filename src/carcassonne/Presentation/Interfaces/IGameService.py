@@ -31,6 +31,14 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def save_config(self) -> None:
+        pass
+
+    @abstractmethod
+    def set_game_configuration(self, key: str, value) -> None:
+        pass
+
+    @abstractmethod
     def is_undo_history_empty(self) -> bool:
         pass
 

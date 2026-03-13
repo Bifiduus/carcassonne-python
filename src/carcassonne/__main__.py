@@ -73,18 +73,47 @@ def main() -> int:
     )
     
     parser.add_argument(
+        "-b",
+        "--blitz",
+        help="enable blitz mode",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-c",
+        "--contest",
+        help="enable contest mode",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-t",
+        "--time",
+        help="set timeout in minutes",
+        type=int,
+        default=30,
+    )
+
+    parser.add_argument(
         "-p",
         "--players",
         help="number of players (default: 2)",
         type=int,
     )
     
+    
     args: argparse.Namespace = parser.parse_args()
+    config_overrides = {}
+    if args.verbose:
+        config_overrides['verbose'] = True
+    if args.blitz:
+        config_overrides['blitz'] = True
+    if args.timeout != 30:  # assuming default is 30
+        config_overrides['timeout'] = args.timeout
+    
     game_data :IGraphData = GraphData()
     if args.players:
-        game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2)
+        game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2, config_overrides)
     else:
-        game :IGameService = Game(game_data, 1)
+        game :IGameService = Game(game_data, 1, config_overrides)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:

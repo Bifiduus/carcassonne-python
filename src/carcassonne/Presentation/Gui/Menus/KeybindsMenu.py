@@ -118,6 +118,13 @@ class KeybindsMenu(Gtk.Box):
         # update dictionary
         keybind_dict[action] = key
 
+        # update config
+        if keybind_dict is self.gui.window.file_keybinds:
+            self.gui.game_data.game.set_game_configuration("file_keybinds", self.gui.window.file_keybinds)
+        else:
+            self.gui.game_data.game.set_game_configuration("game_keybinds", self.gui.window.game_keybinds)
+        self.gui.game_data.game.save_config()
+
         # update GTK accelerator
         self.gui.window.application.set_accels_for_action(
             action,

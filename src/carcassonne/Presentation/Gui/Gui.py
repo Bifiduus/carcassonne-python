@@ -72,7 +72,7 @@ class GameGUI(Gtk.Application):
         register(self, "new", lambda a, p: CommandsHandlerGui.on_new_gui(self))
         register(self, "load", lambda a, p: CommandsHandlerGui.on_load(self))
         register(self, "save", lambda a, p: CommandsHandlerGui.on_save())
-        register(self, "config", lambda a, p: CommandsHandlerGui.on_config())
+        register(self, "config", lambda a, p: CommandsHandlerGui.on_config(self))
         register(self, "info", lambda a, p: CommandsHandlerGui.on_info())
         register(self, "quit", lambda a, p: CommandsHandlerGui.on_quit(self))
         register(self, "undo", lambda a, p: CommandsHandlerGui.on_undo_gui(self))
