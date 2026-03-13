@@ -2,13 +2,14 @@ import os
 
 from carcassonne.Presentation.Gui import CommandsHandlerGui
 from carcassonne.Presentation.Gui.BoardView import BoardView
+from carcassonne.Presentation.Gui.Menus.KeybindsMenu import KeybindsMenu
 from carcassonne.Presentation.Gui.WindowView import WindowView
 from carcassonne.Presentation.Gui import utils
-from carcassonne.Presentation.Gui.MainMenu import MainMenu
+from carcassonne.Presentation.Gui.Menus.MainMenu import MainMenu
 from carcassonne.Presentation.Gui.TilePreview import TilePreview
 from carcassonne.Presentation.Gui.PlayersView import PlayersView
-from carcassonne.Presentation.Gui.OptionsView import SingleplayerOptions
-from carcassonne.Presentation.Gui.OptionsView import GameOptions
+from carcassonne.Presentation.Gui.Menus.SingleplayerMenu import SingleplayerMenu
+from carcassonne.Presentation.Gui.Menus.OptionsMenu import OptionsMenu
 
 
 import gi
@@ -59,15 +60,17 @@ class GameGUI(Gtk.Application):
         # options page is built once and kept around so that the user can
         # revisit it from either the *Options* button or after doing a
         # multi-player game later on.
-        self.options_view = SingleplayerOptions(self)
-        window.stack.add_named(self.options_view, "singleplayer_options")
-        self.options_view = GameOptions(self)
-        window.stack.add_named(self.options_view, "game_options")
+        self.options_view = SingleplayerMenu(self)
+        window.stack.add_named(self.options_view, "singleplayer_menu")
+        self.options_view = OptionsMenu(self)
+        window.stack.add_named(self.options_view, "options_menu")
+        self.keybinds_view = KeybindsMenu(self)
+        window.stack.add_named(self.keybinds_view, "keybinds_menu")
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
         register(self, "new", lambda a, p: CommandsHandlerGui.on_new_gui(self))
-        register(self, "load", lambda a, p: CommandsHandlerGui.on_load())
+        register(self, "load", lambda a, p: CommandsHandlerGui.on_load(self))
         register(self, "save", lambda a, p: CommandsHandlerGui.on_save())
         register(self, "config", lambda a, p: CommandsHandlerGui.on_config())
         register(self, "info", lambda a, p: CommandsHandlerGui.on_info())
@@ -166,7 +169,7 @@ class GameGUI(Gtk.Application):
     
     def start_singleplayer(self, button):
         #self.game.start_new_game(mode="single")
-        self.window.stack.set_visible_child_name("singleplayer_options")
+        self.window.stack.set_visible_child_name("singleplayer_menu")
         self.board_view.grab_focus()
 
     def start_multiplayer(self, button):
@@ -174,7 +177,7 @@ class GameGUI(Gtk.Application):
         self.window.stack.set_visible_child_name("game")
 
     def show_options(self, button):
-        self.window.stack.set_visible_child_name("game_options")
+        self.window.stack.set_visible_child_name("options_menu")
 
 
     

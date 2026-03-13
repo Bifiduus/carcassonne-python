@@ -22,6 +22,22 @@ class WindowView:
     def __init__(self, application: Gtk.Application, game_data):
         self.application = application
         self.game_data = game_data
+        
+        self.file_keybinds = {
+            "app.new": "n",
+            "app.load": "l",
+            "app.save": "s",
+            "app.config": "comma",
+            "app.info": "i",
+            "app.quit": "q",
+        }
+
+        self.game_keybinds = {
+            "app.undo": "u",
+            "app.redo": "r",
+            "app.pause": "p",
+            "app.hint": "h"
+        }
 
         # main window
         self.window = Gtk.ApplicationWindow(application=self.application)
@@ -43,31 +59,24 @@ class WindowView:
     def _build_file_menu(self, header: Gtk.HeaderBar):
         menu_file = Gio.Menu()
         menu_file.append("New Game", "app.new")
-        self.application.set_accels_for_action("app.new", ["<Primary>n"])
         menu_file.append("Load Game", "app.load")
-        self.application.set_accels_for_action("app.load", ["<Primary>l"])
         menu_file.append("Save Game", "app.save")
-        self.application.set_accels_for_action("app.save", ["<Primary>s"])
         menu_file.append("Configuration", "app.config")
-        self.application.set_accels_for_action("app.config", ["<Primary>comma"])
         menu_file.append("Info", "app.info")
-        self.application.set_accels_for_action("app.info", ["<Primary>i"])
         menu_file.append("Quit", "app.quit")
-        self.application.set_accels_for_action("app.quit", ["<Primary>q"])
-
+        for action, key in self.file_keybinds.items():
+            self.application.set_accels_for_action(action, ["<Primary>" + key])
         file_button = self.create_menu_button("File", menu_file)
         header.pack_start(file_button)
 
     def _build_game_menu(self, header: Gtk.HeaderBar):
         menu_game = Gio.Menu()
         menu_game.append("Undo", "app.undo")
-        self.application.set_accels_for_action("app.undo", ["<Primary>u"])
         menu_game.append("Redo", "app.redo")
-        self.application.set_accels_for_action("app.redo", ["<Primary>r"])
         menu_game.append("Pause", "app.pause")
-        self.application.set_accels_for_action("app.pause", ["<Primary>p"])
         menu_game.append("Hint", "app.hint")
-        self.application.set_accels_for_action("app.hint", ["<Primary>h"])
+        for action, key in self.game_keybinds.items():
+            self.application.set_accels_for_action(action, ["<Primary>" + key])
 
         game_button = self.create_menu_button("Game", menu_game)
         header.pack_start(game_button)

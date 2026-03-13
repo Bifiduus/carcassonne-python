@@ -17,7 +17,7 @@ def on_new(game):
 
 
 
-def on_load() -> None:
+def on_load(gui) -> None:
     print("to add load")
 
 def on_save() -> None:

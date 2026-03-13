@@ -10,7 +10,7 @@ from carcassonne.Presentation.Gui import utils
 
 
 
-class SingleplayerOptions(Gtk.Box):
+class SingleplayerMenu(Gtk.Box):
     """Simple form that lets the user pick a few configuration options.
 
     The view is shown when the player chooses *Singleplayer* (or the
@@ -162,42 +162,3 @@ class SingleplayerOptions(Gtk.Box):
         # switch to the board view
         self.gui.window.stack.set_visible_child_name("game")
 
-class GameOptions(Gtk.Box):
-    def __init__(self, gui):
-        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-
-        self.gui = gui
-
-        self.set_halign(Gtk.Align.CENTER)
-        self.set_valign(Gtk.Align.CENTER)
-        self.set_margin_top(20)
-
-        title = Gtk.Label(label="Game options")
-        title.add_css_class("title-2")
-        self.append(title)
-
-        # --- random seed --------------------------------------------------
-        seed_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        seed_label = Gtk.Label(label="Random seed:")
-        self.entry_seed = Gtk.Entry()
-        self.entry_seed.set_placeholder_text("(leave blank for random)")
-        seed_box.append(seed_label)
-        seed_box.append(self.entry_seed)
-        self.append(seed_box)
-
-        
-
-        # --- start / back buttons ----------------------------------------
-        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
-        btn_back.connect("clicked", self.on_back)
-        btn_box.append(btn_back)
-        self.append(btn_box)
-
-
-        # ------------------------------------------------------------------
-
-        
-    def on_back(self, button):
-        """Return to the main menu"""
-        self.gui.window.stack.set_visible_child_name("menu")
