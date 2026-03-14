@@ -1,20 +1,21 @@
 """This module defines the GameService class, which serves as a service layer for managing the game logic of Carcassonne.
 """
 
+
 class GameService():
     def __init__(self, game):
         self._game = game
 
-    def placeTile(self, move):
+    def place_tile(self, move):
         self._game.placeTile(move)
 
-    def placeMeeple(self, move):
+    def place_meeple(self, move):
         self._game.placeMeeple(move)
 
-    def getGameConfiguration(self):
+    def get_game_configuration(self):
         return self._game.getConfiguration()
 
-    def playAI(self):
+    def play_ai(self):
         self._game.playAI()
 
     def get_board(self):

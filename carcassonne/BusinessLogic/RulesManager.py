@@ -20,8 +20,9 @@ SOUTHWEST_MATRIX = (2, 0)
 SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
 
+
 class RulesManager():
-    
+
     match_matrix = {
         'NW': NORTHWEST_MATRIX,
         'N': NORTH_MATRIX,
@@ -31,11 +32,11 @@ class RulesManager():
         'E': EAST_MATRIX,
         'SW': SOUTHWEST_MATRIX,
         'S': SOUTH_MATRIX,
-        'SE': SOUTHEAST_MATRIX 
+        'SE': SOUTHEAST_MATRIX
     }
-    
+
     def __init__(self, tiles_info: ITilesInfo):
-        
+
         self.tiles_info = tiles_info
 
     def can_place_meeple_on_tile_side(self, move_parts: list[str], counter: int, graph: IGraphData) -> bool:
@@ -43,21 +44,27 @@ class RulesManager():
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
         graph_copy = copy.deepcopy(graph)
-        integers_placement = [int(x) for x in re.findall(r'\d+', placement_info)]  
+        integers_placement = [int(x)
+                              for x in re.findall(r'\d+', placement_info)]
         attach_direction = ''.join(c for c in placement_info if c.isalpha())
-        tile_pos = graph_copy.get_position(vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
-        if(tile_pos is None):
+        tile_pos = graph_copy.get_position(
+            vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
+        if (tile_pos is None):
             print("Error in getting position")
             return False
         turn = graph_copy.get_turn_number()
         tile_id = turn
-        graph_copy.add_vertex(vertex_id=turn, name=tile_code, middle=move_parts[1] if counter==3 else "", orientation=integers_placement[1], position=tile_pos)
+        graph_copy.add_vertex(vertex_id=turn, name=tile_code,
+                              middle=move_parts[1] if counter == 3 else "", orientation=integers_placement[1], position=tile_pos)
         graph_logic = GraphLogic()
-        graph_logic.add_lands_components(tile_id=tile_id, graph=graph_copy, tiles_info=self.tiles_info)
+        graph_logic.add_lands_components(
+            tile_id=tile_id, graph=graph_copy, tiles_info=self.tiles_info)
         vertex = graph_copy.get_vertex(tile_id)
         land_matrix = vertex.get_matrix()
-        land_type = land_matrix[self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
-        land_pos = Tile.direction_matrix[integers_placement[1]][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
+        land_type = land_matrix[self.match_matrix[side_placement]
+                                [0]][self.match_matrix[side_placement][1]]
+        land_pos = Tile.direction_matrix[integers_placement[1]
+                                         ][self.match_matrix[side_placement][0]][self.match_matrix[side_placement][1]]
         set_name_to_place = None
         for set_name, sets in graph_copy.lands_components.get(land_type).items():
             for tileid, directions in sets:
@@ -68,11 +75,12 @@ class RulesManager():
             return False
         for meeple in graph_copy.get_meeples():
             if meeple.lands_components == set_name_to_place:
-                print("you can't place a meeple on that land component because there's already a meeple on it")
+                print(
+                    "you can't place a meeple on that land component because there's already a meeple on it")
                 return False
         return True
-    
-    def areEqualSides(self, tile1: list[str], tile1pos: tuple[int, int], orientation: int, graph: IGraphData) -> bool:
+
+    def are_equal_sides(self, tile1: list[str], tile1pos: tuple[int, int], orientation: int, graph: IGraphData) -> bool:
         """
         Checks if the sides of two tiles from the computed move are equal.
 
@@ -85,7 +93,7 @@ class RulesManager():
 
         Returns True if the sides are equal, False otherwise.
         """
-        
+
         for dir in range(4):
             next_pos = graph.get_position_by_pos(tile1pos, dir)
             for _, vertex in graph.get_verticies().items():
@@ -100,56 +108,61 @@ class RulesManager():
                         tile2_coord = NORTH_MATRIX
                     elif dir == 3:
                         tile2_coord = EAST_MATRIX
-                        
+
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
                     if land1 != land2:
                         return False
                     break
-            
+
         return True
-    
+
     def is_legal_move(self, move_parts: list[str], graph: IGraphData) -> bool:
-        
         """
         Checks if the given move is legal in the current game state.
-        
+
         Returns True if the move is legal, False otherwise.
         """
         counter = 0
-        
+
         counter += 1
         if len(move_parts[counter]) == 1:
             if not self.tiles_info.is_tile_left(move_parts[counter - 1] + '/' + move_parts[counter]):
                 print("no tiles left of that type with that center")
                 return False
-            counter += 1   
-        else :
+            counter += 1
+        else:
             if not self.tiles_info.is_tile_left(move_parts[counter - 1]):
                 print("no tiles left of that type without center")
-                return False 
-            
-        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]  
-        attach_direction = ''.join(c for c in move_parts[counter] if c.isalpha())
-        
+                return False
+
+        integers_placement = [int(x)
+                              for x in re.findall(r'\d+', move_parts[counter])]
+        attach_direction = ''.join(
+            c for c in move_parts[counter] if c.isalpha())
+
         if not graph.get_verticies()[integers_placement[0]].is_neighbor_free(self.tiles_info.direction_dict[attach_direction]):
-            print("the tile you try to attach yours to already has a neighbor on that side")
+            print(
+                "the tile you try to attach yours to already has a neighbor on that side")
             return False
-        
-        tile_pos = graph.get_position(integers_placement[0], self.tiles_info.direction_dict[attach_direction])
-        if not self.areEqualSides(move_parts[0], tile_pos, integers_placement[1], graph):
-            print("the tile you try to place doesn't match the tiles you try to attach yours to")
+
+        tile_pos = graph.get_position(
+            integers_placement[0], self.tiles_info.direction_dict[attach_direction])
+        if not self.are_equal_sides(move_parts[0], tile_pos, integers_placement[1], graph):
+            print(
+                "the tile you try to place doesn't match the tiles you try to attach yours to")
             return False
-        
-        # Verify meeple placement if applicable 
-        #TODO : can_place_meeple_on_tile_side(move_parts[0] : str, move_parts[counter] str, game : IGameService) -> bool
+
+        # Verify meeple placement if applicable
+        # TODO : can_place_meeple_on_tile_side(move_parts[0] : str, move_parts[counter] str, game : IGameService) -> bool
         counter += 1
         if len(move_parts) - 1 == counter:
             if not self.can_place_meeple_on_tile_side(move_parts, counter, graph):
-                print("you can't place a meeple on that side of the tile you try to place")
+                print(
+                    "you can't place a meeple on that side of the tile you try to place")
                 return False
-        
+
         return True
-    
+
     def is_correctly_formed_move(self, move: str, graph: IGraphData) -> bool:
         """
         Checks if the given move is correctly formed.
@@ -163,61 +176,67 @@ class RulesManager():
 
         Returns True if the move is correctly formed, False otherwise.
         """
-        
+
         counter = 0
         if not isinstance(move, str):
             print("the move needs to be a str\n")
             return
-        
+
         move_parts = move.split('/')
         if not 2 <= len(move_parts) <= 4:
             print("the move is invalid, are you sure you computed it right?\n")
             return
         if move_parts[counter] not in self.tiles_info.tiles_dict:
-            print("the tile you try to play doesn't exist, are you sure you computed it right?")
+            print(
+                "the tile you try to play doesn't exist, are you sure you computed it right?")
             return
-        
+
         counter += 1
         if (len(move_parts[counter]) == 1):
             if move_parts[counter] not in self.tiles_info.tiles_dict[move_parts[counter - 1]]:
                 print("the tile you try to place doesn't have that center")
-                return  
+                return
             counter += 1
-        else :
+        else:
             if 'void' not in self.tiles_info.tiles_dict[move_parts[counter - 1]]:
                 print("the tile you try to place needs a center")
                 return
-            
+
         if len(move_parts) <= counter:
             print("the move misses the tile placement details")
             return
-            
-        integers_placement = [int(x) for x in re.findall(r'\d+', move_parts[counter])]
+
+        integers_placement = [int(x)
+                              for x in re.findall(r'\d+', move_parts[counter])]
         if len(integers_placement) != 2:
-            print("the tile placement details are invalid, need 2 integers : tile id and rotation")
+            print(
+                "the tile placement details are invalid, need 2 integers : tile id and rotation")
             return
         if integers_placement[0] >= graph.get_turn_number():
             print("the tile you try to attach yours to has an invalid number")
             return
-        attach_direction = ''.join(c for c in move_parts[counter] if c.isalpha())
+        attach_direction = ''.join(
+            c for c in move_parts[counter] if c.isalpha())
         if len(attach_direction) != 1:
-            print("the tile placement details are invalid, only 1 char is needed for direction")
+            print(
+                "the tile placement details are invalid, only 1 char is needed for direction")
             return
-        if attach_direction not in self.tiles_info.direction_list:   
+        if attach_direction not in self.tiles_info.direction_list:
             print("the tile's side you try to attach yours on must be N, S, W or E")
-            return      
-        if not (0 <= integers_placement[1] <= 3): 
+            return
+        if not (0 <= integers_placement[1] <= 3):
             print("the rotation you apply to your tile must be between 0 and 3")
-            return  
-        
+            return
+
         counter += 1
         if (len(move_parts) == counter - 1):
             if move_parts[counter] not in (self.tiles_info.meeple_placement_list):
-                print("the tile's side you try to place a meeple on must be NE, N, NW, SE, S, SW, W, E or C")
+                print(
+                    "the tile's side you try to place a meeple on must be NE, N, NW, SE, S, SW, W, E or C")
                 return
-            
+
         return True
-        
+
     def check_move(self, move: str, graph: IGraphData) -> bool:
         """
         Checks if the given move is valid in the current game state and prints the result.
@@ -226,16 +245,15 @@ class RulesManager():
         """
         if not self.is_correctly_formed_move(move, graph=graph):
             return False
-        
+
         if not self.is_legal_move(move.split('/'), graph):
             return False
-        
-        return True  
-    
+
+        return True
+
     def getGameHistory(self) -> list:
         return self.history.list_history()
 
     def current_player_is_human(self) -> bool:
-        #TODO : is_human_player(game : IGameService) -> bool
+        # TODO : is_human_player(game : IGameService) -> bool
         return True
-    
