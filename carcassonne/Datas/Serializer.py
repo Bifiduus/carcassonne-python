@@ -1,17 +1,33 @@
-"""This module defines the Serializer class, which provides methods for parsing move strings and building move strings from move records in the Carcassonne game. 
-The Serializer class includes the parse_move function, which takes a move string and extracts the relevant information such as tile sides, target vertex, rotation, and meeple placement. 
-It also includes the build_str function, which takes a MoveRecord object and constructs a move string that can be used to represent the move in the game history.
 """
+This module defines helper functions for move string serialization.
+It parses move commands into structured data and builds printable history lines.
+"""
+
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from carcassonne.Datas.History import MoveRecord
 
+# Placement format: <target_vertex_id><side><rotation>, e.g. "12N3".
 PLACEMENT_RE: re.Pattern[str] = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
+# Allowed meeple placement sides in the move format.
 MEEPLE_SET: set[str] = {"N", "E", "S", "W"}
 
+
 def parse_move(move: str) -> dict:
+    """
+    Parse a raw move string into a structured dictionary.
+
+    Args:
+        move: Move string such as "CFFF/10N1/E"
+
+    Returns:
+        Dictionary with tile, center, placement, rotation, and meeple data
+
+    Raises:
+        ValueError: If the move format is invalid
+    """
     if not isinstance(move, str):
         raise ValueError("move must be a string")
 
@@ -26,6 +42,7 @@ def parse_move(move: str) -> dict:
 
     center = None
     placement_index = 1
+    # Some tiles include an explicit center part before placement.
     if len(parts) >= 3 and len(parts[1]) == 1 and not PLACEMENT_RE.match(parts[1]):
         center: str = parts[1]
         placement_index = 2
@@ -43,6 +60,7 @@ def parse_move(move: str) -> dict:
     meeple = None
     if placement_index + 1 < len(parts):
         candidate: str = parts[placement_index + 1]
+        # Meeple position is optional but must be one of the cardinal sides.
         if candidate in MEEPLE_SET:
             meeple: str = candidate
         else:
@@ -59,5 +77,15 @@ def parse_move(move: str) -> dict:
         "meeple": meeple,
     }
 
+
 def build_str(record: "MoveRecord") -> str:
+    """
+    Build a standardized history string from a move record.
+
+    Args:
+        record: Move record containing player id and move string
+
+    Returns:
+        Serialized history entry with trailing ';'
+    """
     return f"{record.player_id}:{record.move_str.strip(';')};"
