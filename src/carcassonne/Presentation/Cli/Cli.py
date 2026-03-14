@@ -13,32 +13,37 @@ import os
 import atexit
 from pathlib import Path
 
+from carcassonne.Presentation.Interfaces.IServerService import IServerService
+
 COMMANDS = [
     "new", "help", "quit", "load", "save",
     "shuffle", "draw", "hint", "undo", "redo",
     "show hand", "show score", "show history", "show configuration",
-    "set"
-    ]
+    "set", "server list", "server start", "server stop", "join",
+    "ping"
+]
+
 
 def completer(texte, state):
 
-        # filtrer les commandes qui commencent par text
-        matches = [cmd for cmd in COMMANDS if cmd.startswith(texte)]
-        if state < len(matches):
-            return matches[state]
-        else:
-            return None
+    # filtrer les commandes qui commencent par text
+    matches = [cmd for cmd in COMMANDS if cmd.startswith(texte)]
+    if state < len(matches):
+        return matches[state]
+    else:
+        return None
+
+
 class GameCLI:
-    
-    
-    def __init__(self, game_service: IGameService):
+
+    def __init__(self, game_service: IGameService, server_service: IServerService):
         self.game = game_service
+        self.server = server_service
         self.settings = GameConfiguration().settings
         self.running = True
 
-        
         readline.set_completer(completer)
-        readline.parse_and_bind("tab: complete") 
+        readline.parse_and_bind("tab: complete")
 
         readline.parse_and_bind("set show-all-if-ambiguous on")
 
@@ -63,7 +68,7 @@ class GameCLI:
             CommandsHandlerCli.help(self)
         elif command == "quit":
             CommandsHandlerCli.quit(self)
-        elif command.startswith("load "):   
+        elif command.startswith("load "):
             filename = command[5:].strip()
             CommandsHandlerCli.load(self, filename)
         elif command.startswith("save "):
@@ -102,9 +107,22 @@ class GameCLI:
             CommandsHandlerCli.play(self, move, game=self.game)
         elif command.startswith("board"):
             CommandsHandlerCli.show_board(self, game=self.game)
-
+        elif command == "server list":
+            CommandsHandlerCli.show_server_list(self, self.server)
+        elif command.startswith("server start"):
+            port = command[13:].strip()
+            CommandsHandlerCli.server_start(self, port, self.server)
+        elif command == "server stop":
+            CommandsHandlerCli.stop_server(self, self.server)
+        elif command.startswith("join"):
+            addresse = command[5:].strip()
+            if ":" in addresse:
+                ip, port = addresse.split(":")
+                CommandsHandlerCli.join(self, self.server, ip, port)
+            else:
+                CommandsHandlerCli.join(self, self.server, addresse)
+        elif command == "ping":
+            CommandsHandlerCli.ping(self, self.server)
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
-
-    

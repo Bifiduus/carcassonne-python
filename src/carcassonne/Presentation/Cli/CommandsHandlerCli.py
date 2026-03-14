@@ -5,11 +5,13 @@ shuffling the tiles, providing hints, undoing and redoing moves, and displaying 
 The command handler functions are designed to be called from the GameCLI class when the corresponding commands are entered by the player.
 """
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
+from carcassonne.Presentation.Interfaces.IServerService import IServerService
 
 
 def new_game(self, args) -> None:
-        self.game.start_new_game()
-        print("Nouvelle partie commencée.")
+    self.game.start_new_game()
+    print("Nouvelle partie commencée.")
+
 
 def help(self) -> None:
     print("Commandes disponibles:")
@@ -21,8 +23,10 @@ def help(self) -> None:
     print("  shuffle            - Mélange les tuiles de la pioche")
     print("  draw               - Pioche une tuile")
     print("  hint               - Donne un indice pour le placement de la tuile")
-    print("  undo [N]           - Annule le dernier coup ou les N derniers coups")
-    print("  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés")
+    print(
+        "  undo [N]           - Annule le dernier coup ou les N derniers coups")
+    print(
+        "  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés")
     print("  show hand          - Affiche la main du joueur courant")
     print("  show score         - Affiche le score des joueurs")
     print("  show history       - Affiche l'historique des coups joués")
@@ -30,95 +34,136 @@ def help(self) -> None:
     print("  set (PARAM=VALUE)  - Définit un paramètre de configuration")
     print("  play <move>        - Joue le coup spécifié par <move>")
 
+
 def quit(self) -> None:
-        saved = -1
-        while saved == -1:
-                confirm: str = input("Save the game before quitting?[y/N] ")
-                if confirm != 'y':
-                        print("Abandon de la commande de quitter.")
-                        self.running = False
-                        saved = 0
-                else:
-                        filename: str = input("Nom du fichier de sauvegarde: ")
-                        saved: None = save(self, filename)
-        print("Quitte le jeu. À bientôt!")
-        self.running = False
+    saved = -1
+    while saved == -1:
+        confirm: str = input("Save the game before quitting?[y/N] ")
+        if confirm != 'y':
+            print("Abandon de la commande de quitter.")
+            self.running = False
+            saved = 0
+        else:
+            filename: str = input("Nom du fichier de sauvegarde: ")
+            saved: None = save(self, filename)
+    print("Quitte le jeu. À bientôt!")
+    self.running = False
+
 
 def load(self, filename) -> None:
-        if self.game.load_game_from_file(filename) == 0:
-            print(f"Partie chargée depuis {filename}.")
-        else:
-            print(f"Erreur lors du chargement de la partie depuis {filename}.")
+    if self.game.load_game_from_file(filename) == 0:
+        print(f"Partie chargée depuis {filename}.")
+    else:
+        print(f"Erreur lors du chargement de la partie depuis {filename}.")
+
 
 def save(self, filename) -> None:
-        if self.game.save_game_to_file(filename) == 0:
-            print(f"Partie sauvegardée dans {filename}.")
+    if self.game.save_game_to_file(filename) == 0:
+        print(f"Partie sauvegardée dans {filename}.")
+
 
 def shuffle(self) -> None:
-        seed = self.game.shuffle_deck()
-        print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+    seed = self.game.shuffle_deck()
+    print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+
 
 def draw(self) -> None:
-        already_had_tile: bool = self.game.current_hand is not None
-        tile = self.game.draw_tile()
-        if tile is None:
-            print("La pioche est vide!")
-        elif already_had_tile:
-            print("Vous avez déjà une tuile en main.")
-        else:
-            print(f"Tuile piochée: {tile}")
+    already_had_tile: bool = self.game.current_hand is not None
+    tile = self.game.draw_tile()
+    if tile is None:
+        print("La pioche est vide!")
+    elif already_had_tile:
+        print("Vous avez déjà une tuile en main.")
+    else:
+        print(f"Tuile piochée: {tile}")
 
-    
+
 def hint(self) -> None:
-        #hint = self.game.getPlacementHint()
-        print(f"Indice pour le placement de la tuile: ")
+    # hint = self.game.getPlacementHint()
+    print(f"Indice pour le placement de la tuile: ")
+
 
 def undo(self, N) -> None:
-        self.game.undo()
-        print(f"Derniers {N} coups annulés.")
+    self.game.undo()
+    print(f"Derniers {N} coups annulés.")
+
 
 def redo(self, N) -> None:
-        self.game.redo()
-        print(f"Derniers {N} coups rétablis.")
+    self.game.redo()
+    print(f"Derniers {N} coups rétablis.")
+
 
 def show_hand(self) -> None:
-        if self.game.current_hand is None:
-            print("Aucune tuile en main.")
-        else:
-            print(f"Tuile en main: {self.game.current_hand}")
+    if self.game.current_hand is None:
+        print("Aucune tuile en main.")
+    else:
+        print(f"Tuile en main: {self.game.current_hand}")
+
 
 def show_score(self) -> None:
-        #scores = self.game.getPlayerScores()
-        print("Scores des joueurs:")
-        #for player, score in scores.items():
-        #    print(f"  {player}: {score}")
+    # scores = self.game.getPlayerScores()
+    print("Scores des joueurs:")
+    # for player, score in scores.items():
+    #    print(f"  {player}: {score}")
+
 
 def show_history(self, game) -> None:
-        history = game.get_history()
-        print("Historique des coups joués:")
-        for move in history:
-            print(f" {move}")
+    history = game.get_history()
+    print("Historique des coups joués:")
+    for move in history:
+        print(f" {move}")
+
 
 def show_configuration(self, game) -> None:
-        config = game.get_game_configuration()
-        print("Configuration actuelle du jeu:")
-        for key, value in config.items():
-            print(f"  {key}: {value}")
+    config = game.get_game_configuration()
+    print("Configuration actuelle du jeu:")
+    for key, value in config.items():
+        print(f"  {key}: {value}")
 
-    
+
 def set_parameter(self, param, value) -> None:
-        #self.game.setGameParameter(param, value)
-        print(f"Paramètre '{param}' défini à '{value}'.")
-        
+    # self.game.setGameParameter(param, value)
+    print(f"Paramètre '{param}' défini à '{value}'.")
+
+
 def play(self, move, game) -> None:
-        result = game.play_move(move)
-        game.get_board()
-        if not game.is_undo_history_empty():
-                game.clear_undo_history()
-        if result:
-                while game.get_current_player().is_ai_player():
-                        game.play_ai_turn()
-                        game.get_board()
+    result = game.play_move(move)
+    game.get_board()
+    if not game.is_undo_history_empty():
+        game.clear_undo_history()
+    if result:
+        while game.get_current_player().is_ai_player():
+            game.play_ai_turn()
+            game.get_board()
+
 
 def show_board(self, game) -> None:
-        game.get_board()
+    game.get_board()
+
+
+def show_server_list(self, server_service: IServerService):
+    server_list = server_service.list_available_servers()
+    print("Available servers list:")
+    for server in server_list:
+        print(server)
+
+
+def server_start(self, port: str, server_service: IServerService):
+    server_service.server_start(int(port))
+
+
+def stop_server(self, server_service: IServerService):
+    server_service.server_stop()
+
+
+def join(self, server_service: IServerService, ip: str | None = None, port: str | None = None):
+    if port is None and ip is None:
+        server_service.join_server()
+    if port is not None:
+        server_service.join_server(ip, int(port))
+    else:
+        server_service.join_server(ip)
+
+
+def ping(self, server_service: IServerService):
+    print(server_service.ping())
