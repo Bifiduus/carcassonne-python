@@ -9,7 +9,7 @@ from carcassonne.business_logic.online_communication import OnlineCommunication
 from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.game import Game
 from carcassonne.datas.graph_data import GraphData
-from carcassonne.datas.game_repository import GameRepository
+from carcassonne.datas.games_repository import GameRepository
 from carcassonne.business_logic.interfaces.i_games_repository import IGamesRepository
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
@@ -305,6 +305,17 @@ class Server(IServerService):
                 invited_client.sendall(message.encode())
                 assert self.repo, "The database should not be None"
                 self.repo.send_invitation(invited_player_id, invitee_player_id)
+            except Exception as e:
+                print(f"Error sending invitation: {e}")
+
+    def send_invitation(self, invited_player: str, invitee_player: str):
+        invited_client: socket.socket = self.client_sockets[int(
+            invited_player)]
+        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}."
+        with self.clients_lock:
+            try:
+                invited_client.sendall(message.encode())
+                self.repo.send_invitation(invited_player, invitee_player)
             except Exception as e:
                 print(f"Error sending invitation: {e}")
 
