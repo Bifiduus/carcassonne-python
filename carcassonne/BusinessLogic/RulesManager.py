@@ -251,7 +251,7 @@ class RulesManager():
 
         return True
 
-    def getGameHistory(self) -> list:
+    def get_game_history(self) -> list:
         return self.history.list_history()
 
     def current_player_is_human(self) -> bool:

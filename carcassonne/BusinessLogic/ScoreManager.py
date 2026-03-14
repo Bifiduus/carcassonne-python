@@ -1,8 +1,13 @@
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
-from carcassonne.Datas.GraphData import NORTH_DIR, EAST_DIR, SOUTH_DIR, WEST_DIR
 
 if TYPE_CHECKING:
     from carcassonne.BusinessLogic.Player import Player
+
+# Direction constants
+NORTH_DIR = 0
+EAST_DIR = 1
+SOUTH_DIR = 2
+WEST_DIR = 3
 
 # Mapping between position strings and cardinal directions
 DIRECTION_MAP = {
