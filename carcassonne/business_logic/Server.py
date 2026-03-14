@@ -64,10 +64,10 @@ class Server:
                     message, addr = s.recvfrom(1500)
                     message_part = message.decode()
                     if ":" in message_part:
-                        name, port_str = message_part.split(":", 1)
+                        ip, port_str = message_part.split(":", 1)
                         try:
                             port = int(port_str)
-                            self.available_servers[name] = (port, time.time())
+                            self.available_servers[ip] = (port, time.time())
                         except ValueError:
                             print(f"Invalid port in message: {message_part}")
                     else:
@@ -291,7 +291,7 @@ class Server:
             except Exception:
                 pass
 
-    def server_quit(self, server_name: str):
+    def server_quit(self):
         """
         Quit the server and clean up resources.
         """
@@ -320,7 +320,7 @@ class Server:
 
         return "No server response"  # Or implement actual ping logic
 
-    def join_server(self, server_name: str, port: int | None = None, timeout: float = 5.0) -> bool:
+    def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
         """
         Connect to a remote server identified by name (and optional port).
 
@@ -333,20 +333,21 @@ class Server:
         # refresh discovery cache first
         self.list_available_servers()
 
-        if server_name not in self.available_servers:
-            print("Error: There is no server with such a name.")
+        if ip not in self.available_servers:
+            print("Error: There is no server with such an ip.")
             return False
-
-        server_port, _ = self.available_servers[server_name]
+        if ip is None:
+            ip = "localhost"
+        server_port, _ = self.available_servers[ip]
         if port is None:
             port = server_port
 
         self.client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.client.settimeout(timeout)
         try:
-            self.client.connect((server_name, port))
+            self.client.connect((ip, port))
         except Exception as e:
-            print(f"Unable to connect to {server_name}:{port} -> {e}")
+            print(f"Unable to connect to {ip}:{port} -> {e}")
             self.client.close()
             self.client = None
             return False
