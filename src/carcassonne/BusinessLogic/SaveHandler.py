@@ -68,23 +68,13 @@ class SaveHandler:
         game_score = False
         sections_parsed = 0
         for line in lines:
-            # Remove comments and strip whitespace
-            line = line.strip().split("#")[0]
-
-            # Handle cases where comments are inline with data
-            if line.find("{") != -1 and line.find("}") == -1:
-                line1 = line.split("{")[0]
-                line2 = line.split("{")[1] 
-                line = line1 + line2
-
-            if line.find("{") != -1:
-                line = line.split("{")[0]
-                commentary = True
+            # Strip whitespace and remove inline comments (after '#').
+            line = line.strip()
+            if not line or line.startswith("#"):
                 continue
-            if line.find("}") != -1:
-                line = line.split("}")[1]
-                commentary = False
-            if commentary:
+            if "#" in line:
+                line = line.split("#", 1)[0].rstrip()
+            if not line:
                 continue
 
             if line == "[Settings]":
@@ -114,7 +104,7 @@ class SaveHandler:
                 continue
             elif line == "":
                 continue  # Skip empty lines
-            
+            print(line)
             if settings_section:
                 # Here you would parse the settings and set up the game accordingly.
                 # This is a placeholder for demonstration purposes.
@@ -175,7 +165,7 @@ class SaveHandler:
             elif history_section:
                 if not game_score:
                     print("Warning: no game score found in [GameState] section.")
-                for player_move in line.strip(" ").split(" "):
+                for player_move in reversed(line.strip(" ").split(" ")):
                     move = player_move.split(":")[1] if ":" in player_move else player_move
                     self.game.current_hand = move
                     if move != self.game.draw_tile():

@@ -122,15 +122,14 @@ def on_redo_gui(gui):
 def on_draw_gui(gui):
     """Draw a tile from the deck and update preview."""
     tile = gui.game_data.draw_tile()
-    image_path = utils.tile_image_path(tile)
-    gui.tile_preview.set_filename(image_path)
-    gui.update_preview_rotation()
+    gui.board_view.tile_preview.set_tile(tile)
+    gui.board_view.update_preview_rotation()
 
 
 def on_rotate_gui(gui):
     """Rotate the current tile and refresh preview."""
     gui.game_data.rotate_current_tile()
-    gui.update_preview_rotation()
+    gui.board_view.update_preview_rotation()
 
 
 def on_end_turn_gui(gui):

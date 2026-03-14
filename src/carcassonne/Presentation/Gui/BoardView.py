@@ -349,8 +349,11 @@ class BoardView(Gtk.DrawingArea):
             self.offset_x -= step
         elif keyval == Gdk.KEY_r:
             self.game_data.rotate_current_tile()
+            
         self.queue_draw()
         return True
+
+    
     
     def get_board_offsets(self) -> Tuple[int, int, int, int]:
         tiles = self.game_data.game.get_board_data()

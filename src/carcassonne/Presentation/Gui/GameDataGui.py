@@ -40,9 +40,9 @@ class GameDataGui():
             self.board_view.refresh()
 
     def save(self):
-        self.game.
+        pass
     def load(self):
-
+        pass
     def play_move_gui(self):
         if self.current_tile is None:
             return
@@ -73,7 +73,6 @@ class GameDataGui():
         if self.current_tile is None:
             return
         # change orientation state and refresh board
-        self.current_orientation = (self.current_orientation + 1) % 4
         if self.board_view:
             self.board_view.refresh()
 
