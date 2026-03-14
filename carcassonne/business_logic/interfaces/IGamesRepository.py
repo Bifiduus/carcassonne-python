@@ -30,7 +30,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def accept_invitation(self, party_id: int, invited: str):
+    def accept_invitation(self, group_id: int, invited: str):
         pass
 
     @abstractmethod
@@ -46,11 +46,19 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_username(self, player_id: str) -> str:
+        pass
+
+    @abstractmethod
+    def send_invitation(self, invited_player: str, invitee_player: str) -> bool:
+        pass
+
+    @abstractmethod
     def invitation_sent_from(self, client_id: str) -> bool:
         pass
 
     @abstractmethod
-    def cancel_invitation_from(self, client_id: str) -> str:
+    def cancel_invitation_from(self, client_id: str, players: list[str]) -> str:
         pass
 
     @abstractmethod

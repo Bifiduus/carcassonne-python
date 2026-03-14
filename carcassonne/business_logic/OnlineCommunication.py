@@ -25,15 +25,15 @@ class OnlineCommunication:
     def command_new(self, message: str, client_id: str) -> str:
         message = message.split("new")[1]
         party_name = f"Party {len(self.server.parties_list)}"
-        if message.find("-p") != -1:
-            message, party_name = message.split("-p")
         clients_list = message.split(" ")
         # Check if the clients exist and are available, remove the ones that cannot be invited
         clients_list_checked = self.server.check_clients_list_validity(
-            [client for client in clients_list])
+            clients_list)
+        for invited in clients_list_checked:
+            self.server.send_invitation(invited, client_id)
         # Create a new party with a name and players, ask them first
-        answer = self.server.create_new_party(
-            clients_list_checked, int(client_id), party_name)
+
+        answer = "Invitation(s) sent."
         return answer
 
     def command_players(self, message: str) -> str:
@@ -99,11 +99,13 @@ class OnlineCommunication:
             except Exception as e:
                 print(f"Error notifying host {host_id}: {e}")
 
-    def command_cancel(self, client_id: str) -> str:
+    def command_cancel(self, client_id: str, players: str) -> str:
         answer = ""
         if self.server.repo.invitation_sent_from(client_id):
             # des invitations en attentes, envoie des messages
-            answer = self.server.repo.cancel_invitation_from(client_id)
+            players_list = players.split(" ")
+            answer = self.server.repo.cancel_invitation_from(
+                client_id, players_list)
         else:
             answer = f"No invitations to cancel."
         return answer

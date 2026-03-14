@@ -58,15 +58,31 @@ class Game(IGameService):
         self.ai_model = "random"
         self.error_message = ""
 
-    def start_new_game(
-        self, players_order: list[int] | None = None, seed: int | None = None
-    ) -> None:
-        """Start a new game by clearing the play history, undo history,
+    # new method qui:
+    # recréer players avec données de repo ( dans attributs de fonction ), nb de players
+    def start_online_game(self, players: list[Player]):
+        if len(players) > self.get_maximum_number_of_players():
+            return f"Error, too many players: Maximum players is {self.get_maximum_number_of_players()}"
+        self.history.clear_history()
+        self.graph.reset_graph()
+        self.current_hand = None
+        self.board = Board()
+        self.deck = Deck()
+        self.tiles_info = TilesInfo()
+        self.rules_manager = RulesManager(self.tiles_info)
+        self.players.clear()
+        self.add_online_players(players)
+        self.shuffle_deck()
+        self.shuffle_players_order()
+        self.current_player_order_list = 0
+        return "Starting the game."
+
+    def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
+        """Start a new game by clearing the play history, undo history, 
         and resetting the graph and game repository.
         """
         self.history.clear_history()
         self.graph.reset_graph()
-        self.game_repository = GameRepository()
         self.board = Board()
         self.deck = Deck()
         self.current_hand = None
@@ -446,6 +462,12 @@ class Game(IGameService):
         others = [player for player in self.players if player != 0]
         r.shuffle(others)
         self.players_order = [0] + others
+
+    def add_online_players(self, players: list[Player]):
+        colors = ["red", "blue", "yellow", "black", "white"]
+        for i in range(0, len(players)+1):
+            players[i].set_color(colors[i-1] % len(colors))
+            self.players[i] = players[i]
 
     def add_players(self, nb_players: int) -> None:
         colors = ["red", "blue", "yellow", "black", "white"]
