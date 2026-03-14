@@ -27,6 +27,9 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = {attr = "carcassonne.__version__"} # Get version from package dynamically
 
+[tool.setuptools.packages.find]
+exclude = ["pdp*"]
+
 [tool.pytest.ini_options]
 addopts = [ # Add options for pytest
   "--cov=carcassonne",
