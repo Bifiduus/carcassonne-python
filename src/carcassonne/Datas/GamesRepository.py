@@ -27,7 +27,7 @@ class GameRepository(IGamesRepository):
             "CREATE TABLE IF NOT EXISTS groups(group_id, number_of_players, host_player);"
         )
         rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS players(player_id, username, status, group_id);"
+            "CREATE TABLE IF NOT EXISTS players(player_id, username, status, group_id, connected);"
         )
         rows = self._execute_non_query(
             "CREATE TABLE IF NOT EXISTS scoreboard(player_id, victories, defeats);"
@@ -36,7 +36,7 @@ class GameRepository(IGamesRepository):
             "CREATE TABLE IF NOT EXISTS current_games(game_id, game_name, group_id);"
         )
         rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS pending_invitations(group_id, invited_player, status);"
+            "CREATE TABLE IF NOT EXISTS pending_invitations(group_id, invited_player, invitation_status);"
         )
 
     # low-level helpers
@@ -63,14 +63,20 @@ class GameRepository(IGamesRepository):
 
     def get_player_profile(self, player_id: int) -> dict[str, Any]:
         rows = self._execute_query(
-            "SELECT username, status, score, stats_win, stats_lose "
-            "FROM players WHERE id=?;",
+            "SELECT username, status, victories AS stats_win, defeats AS stats_lose FROM players NATURAL JOIN scoreboard WHERE id=?;",
             (player_id,),
         )
         if not rows:
             return {}
         r = rows[0]
         return {k: r[k] for k in r.keys()}
+
+    def get_username(self, player_id: str) -> str:
+        rows = self._execute_query(
+            "SELECT username FROM players WHERE player_id=?;",
+            (int(player_id),)
+        )
+        return rows[0][0]
 
     def change_status(self, client_id: str, status: str) -> str:
         rows = self._execute_non_query(
@@ -83,27 +89,35 @@ class GameRepository(IGamesRepository):
 
     def current_players(self) -> str:
         rows = self._execute_query(
-            "SELECT player_id, username, status FROM players WHERE status!='away';"
+            "SELECT player_id, username, status FROM players WHERE status!='away' AND connected=true;"
         )
         return str([r for r in rows])
 
     def invitation_received(self, client_id: str):
         rows = self._execute_query(
-            "SELECT host_player, party_id FROM pending_invitations WHERE invited_player=?;",
+            "SELECT host_player, group_id FROM pending_invitations NATURAL JOIN groups WHERE invited_player=?;",
             (int(client_id),)
         )
         return rows[0]
 
-    def accept_invitation(self, party_id: int, invited: str):
+    def accept_invitation(self, group_id: int, invited: str):
         self.change_status(invited, "ingame")
         rows = self._execute_non_query(
-            "UPDATE party_players SET accepted='accepted' WHERE player_id=? AND party_id=?;",
-            (int(invited), party_id)
+            "UPDATE players SET group_id=? WHERE player_id=?;",
+            (group_id, int(invited),)
+        )
+        rows = self._execute_non_query(
+            "DELETE pending_invitations WHERE invited_player=?;",
+            (int(invited),)
+        )
+        rows = self._execute_non_query(
+            "UPDATE groups SET number_of_players=(SELECT number_of_players FROM groups WHERE group_id=?;)+1 WHERE group_id=?;",
+            (group_id, group_id)
         )
 
     def get_game(self, client_id: int):
         rows = self._execute_query(
-            "SELECT game_id FROM current_parties WHERE player_id=?;",
+            "SELECT game_id FROM current_games NATURAL JOIN groups NATURAL JOIN players WHERE player_id=?;",
             (int(client_id),)
         )
         return rows[0]
@@ -111,7 +125,7 @@ class GameRepository(IGamesRepository):
     # possible to change return type to tuple(int, message)
     def check_all_invitations_resolved(self, client_id: int):
         rows = self._execute_query(
-            "SELECT player_id, username FROM pending_invitations WHERE accepted!='accepted' AND host_player=?;",
+            "SELECT invited_player, username FROM pending_invitations NATURAL JOIN players NATURAL JOIN groups WHERE invitation_status!='waiting' AND host_player=?;",
             (client_id,)
         )
         if not rows:
@@ -126,24 +140,31 @@ class GameRepository(IGamesRepository):
 
     def invitation_sent_from(self, client_id: str) -> bool:
         rows = self._execute_query(
-            "SELECT 1 FROM pending_invitations WHERE host_player=? AND accepted!='accepted';",
+            "SELECT 1 FROM pending_invitations NATURAL JOIN groups WHERE host_player=? AND invitation_status!='accepted';",
             (int(client_id),)
         )
         return bool(rows)
 
-    def cancel_invitation_from(self, client_id: str):
-        rows = self._execute_non_query(
-            "DELETE FROM pending_invitations WHERE host_player=?;",
-            (int(client_id),)
-        )
-        if bool(rows):
-            return "Invitation cancelled."
-        return ""
+    def cancel_invitation_from(self, client_id: str, players: list[str]):
+        if players is []:
+            rows = self._execute_non_query(
+                "DELETE FROM pending_invitations NATURAL JOIN groups WHERE host_player=? AND invitation_status=='waiting';",
+                (int(client_id),)
+            )
+            if bool(rows):
+                return "All invitations cancelled."
+            return ""
+        for player_username in players:
+            rows = self._execute_non_query(
+                "DELETE FROM pending_invitations NATURAL JOIN groups NATURAL JOIN players WHERE host_player=? AND invitation_status=='waiting' AND username=?;",
+                (int(client_id), player_username)
+            )
+        return "Your invitation(s) have been cancelled."
 
     def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
         party_id = self._execute_non_query(
-            "INSERT INTO parties(party_name, host_id) VALUES (?, ?);",
-            (name, host_id,),
+            "INSERT INTO groups(number_of_players, host_player) VALUES (?, ?);",
+            (1, host_id,),
         )
         for username in player_names:
             player_id: int = self._execute_query(
@@ -169,6 +190,17 @@ class GameRepository(IGamesRepository):
             (host_id,)
         )
         return rows[0][0]
+
+    def send_invitation(self, invited_player: str, invitee_player: str) -> bool:
+        group_id: int = self._execute_query(
+            "SELECT group_id FROM groups WHERE host_player=?;",
+            (int(invitee_player),)
+        )[0][0]
+        rows = self._execute_non_query(
+            "INSERT INTO pending_invitations(group_id, invited_player, invitation_status) VALUES(?, ?, ?);",
+            (group_id, int(invited_player), "waiting")
+        )
+        return bool(rows)
 
     def close(self):
         try:

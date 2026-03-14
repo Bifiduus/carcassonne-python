@@ -4,9 +4,11 @@ import socket
 import select
 import threading
 
+from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.BusinessLogic.OnlineCommunication import OnlineCommunication
 from carcassonne.BusinessLogic.Player import Player
 from carcassonne.BusinessLogic.Game import Game
+from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
 
@@ -197,8 +199,9 @@ class Server:
                 answer = self.handle_communication.command_accept(client_id)
             if message == "decline\n":
                 answer = self.handle_communication.command_decline(client_id)
-            if message == "cancel\n":
-                answer = self.handle_communication.command_cancel(client_id)
+            if message.startswith("cancel"):
+                answer = self.handle_communication.command_cancel(
+                    client_id, message.strip("cancel"))
             if message == "away\n":
                 answer = self.handle_communication.command_away(client_id)
             if message == "back\n":
@@ -214,10 +217,15 @@ class Server:
         assert self.repo is not None, "No games repository."
         if party_name is "":
             party_name = self.repo.get_party_name(host_id)
-        new_party = Game()
+
+        # should be done after, because don't know how many
+        number_of_players_in_group: int = len(clients_list)
+        graph: IGraphData = GraphData()
+        new_party = Game(graph, number_of_players_in_group)
         try:
             self.repo.create_party(party_name, clients_list, host_id)
-            # ajouter party dans self.list
+            self.parties_list[len(self.parties_list)] = (party_name, new_party)
+            # création approfondit de la game ( new method avec données de repo (groups et players ) )
         except Exception as e:
             print(f"Error creating party in repository: {e}")
         return "Your party has been created successfully !\n"
@@ -232,6 +240,17 @@ class Server:
             f"{profile['username']} status={profile['status']} score={profile['score']} "
             f"wins={profile['stats_win']} loses={profile['stats_lose']}\n"
         )
+
+    def send_invitation(self, invited_player: str, invitee_player: str):
+        invited_client: socket.socket = self.client_sockets[int(
+            invited_player)]
+        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}."
+        with self.clients_lock:
+            try:
+                invited_client.sendall(message.encode())
+                self.repo.send_invitation(invited_player, invitee_player)
+            except Exception as e:
+                print(f"Error sending invitation: {e}")
 
     def server_stop(self):
         """
@@ -359,7 +378,7 @@ class Server:
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
-                self.get_game(client_id).play_move(move)
+                self.get_game(client_id).play_move(move[1])
                 self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out

@@ -189,7 +189,7 @@ class SaveHandler:
                 if not game_score:
                     print(
                         "Warning: no game score found in [GameState] section.")
-                for player_move in line.strip(" ").split(" "):
+                for player_move in reversed(line.strip(" ").split(" ")):
                     move = player_move.split(
                         ":")[1] if ":" in player_move else player_move
                     self.game.current_hand = move
