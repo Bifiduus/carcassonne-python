@@ -50,3 +50,7 @@ class Player:
 
     def is_ai_player(self) -> bool:
         return self.is_ai
+
+    def set_color(self, color: str):
+        if color in ["red", "blue", "yellow", "black", "white"]:
+            self.color = color
