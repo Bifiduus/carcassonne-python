@@ -3,13 +3,13 @@ import argparse
 import sys
 
 from carcassonne import __version__
-from carcassonne.Presentation.Gui.CreateGui import CreateGui
-from carcassonne.Presentation.Gui.Gui import GameGUI
-from carcassonne.Presentation.Interfaces.IGameService import IGameService
-from carcassonne.BusinessLogic.Game import Game
-from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
-from carcassonne.Presentation.Cli.Cli import GameCLI
-from carcassonne.Datas.GraphData import GraphData
+from carcassonne.presentation.gui.create_gui import CreateGui
+from carcassonne.presentation.gui.gui import GameGUI
+from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.business_logic.game import Game
+from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.presentation.cli.cli import GameCLI
+from carcassonne.datas.graph_data import GraphData
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message: str):  # pylint: disable=arguments-differ
