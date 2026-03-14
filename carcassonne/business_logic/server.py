@@ -15,6 +15,10 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
 
+# players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
+# TO DO: implement a catch by the server of any new socket
+# Possibly with username and a password
+
 
 class Server(IServerService):
     SERVER_TIMEOUT = 30
@@ -293,20 +297,6 @@ class Server(IServerService):
             return "Player not found\n"
         return f"Player profile:\n username={profile['username']}\n status={profile['status']}\n score={profile['score']}\n "\
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
-
-    def send_invitation(self, invited_player_id: str, invitee_player_id: str):
-        invited_client: socket.socket = self.client_sockets[int(
-            invited_player_id)]
-        host_name: str = self.repo.get_username(invitee_player_id)
-        message = f"Server: You have received an invitation from {host_name}.\n"
-        message += f"Expires in 300s.\n"
-        with self.clients_lock:
-            try:
-                invited_client.sendall(message.encode())
-                assert self.repo, "The database should not be None"
-                self.repo.send_invitation(invited_player_id, invitee_player_id)
-            except Exception as e:
-                print(f"Error sending invitation: {e}")
 
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
