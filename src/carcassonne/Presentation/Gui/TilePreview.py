@@ -27,7 +27,7 @@ class TilePreview(Gtk.Picture):
 
         # interaction
         click = Gtk.GestureClick()
-        click.connect("pressed", self._on_pressed)
+        """click.connect("pressed", self._on_pressed)"""
         self.add_controller(click)
 
         self._setup_drag_source()
@@ -48,7 +48,6 @@ class TilePreview(Gtk.Picture):
         """Apply the current orientation stored in ``gui.game_data``."""
         if not self.gui.game_data.current_tile:
             return
-
         image_path = tile_image_path(self.gui.game_data.current_tile.current_tile)
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
@@ -72,10 +71,11 @@ class TilePreview(Gtk.Picture):
         drag_source.set_actions(Gdk.DragAction.MOVE)
         drag_source.connect("prepare", self._on_drag_prepare)
         drag_source.connect("drag-begin", self._on_drag_begin)
+        drag_source.connect("end", self._on_drag_end)
         self.add_controller(drag_source)
 
-    def _on_pressed(self, gesture, n_press, x, y):
-        self.gui.on_preview_pressed(gesture, n_press, x, y)
+    """def _on_pressed(self, gesture, n_press, x, y):
+        self.gui.on_preview_pressed(gesture, n_press, x, y)"""
 
     def _on_drag_prepare(self, source, x, y):
         if not self.gui.game_data.current_tile:
@@ -112,3 +112,6 @@ class TilePreview(Gtk.Picture):
         transparent_pixbuf.fill(0x00000000)  # Fully transparent
         transparent_texture = Gdk.Texture.new_for_pixbuf(transparent_pixbuf)
         drag_source.set_icon(transparent_texture, 0, 0)
+
+    def _on_drag_end(self, drag_source, drag, *args):
+        self.gui.board_view.grab_focus()

@@ -319,6 +319,7 @@ class BoardView(Gtk.DrawingArea):
             self.ghost_x = x
             self.ghost_y = y
             self.queue_draw()
+            self.grab_focus()
             return Gdk.DragAction.MOVE
         return 0
 
@@ -328,6 +329,7 @@ class BoardView(Gtk.DrawingArea):
             self.ghost_x = x
             self.ghost_y = y
             self.queue_draw()
+            self.grab_focus()
         return Gdk.DragAction.MOVE
 
     def on_drag_leave(self, controller):
@@ -335,6 +337,7 @@ class BoardView(Gtk.DrawingArea):
         self.game_data.is_dragging = False
         self.ghost_x = None
         self.ghost_y = None
+        self.grab_focus()
         self.queue_draw()
 
     def on_key_press(self, controller, keyval, keycode, state):
@@ -349,6 +352,8 @@ class BoardView(Gtk.DrawingArea):
             self.offset_x -= step
         elif keyval == Gdk.KEY_r:
             self.game_data.rotate_current_tile()
+        else:
+            return False
             
         self.queue_draw()
         return True

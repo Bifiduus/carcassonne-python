@@ -10,6 +10,7 @@ class GameDataGui():
         self.current_tile: TilesView | None = None
         self.current_orientation=0
         self.board_view = None  # set later by Gui
+        self.gui = None
         self.is_dragging = False
 
     def game_configuration(self):
@@ -72,10 +73,17 @@ class GameDataGui():
     def rotate_current_tile(self):
         if self.current_tile is None:
             return
-        # change orientation state and refresh board
+        
+        self.current_orientation = (self.current_orientation + 1) % 4
+        
+        if self.current_tile.move:
+            self.current_tile.move = self.current_tile.move[:-1] + str(self.current_orientation)
+        
         if self.board_view:
             self.board_view.refresh()
-
+        
+        if hasattr(self, 'gui'):
+            self.gui.tile_preview.update_rotation()
 
     def draw_tile(self):
         tile_name = self.game.draw_tile()

@@ -91,6 +91,7 @@ class GameGUI(Gtk.Application):
 
         self.board_view = BoardView(self.game_data)
         self.game_data.set_board_view(self.board_view)
+        self.game_data.gui = self
         overlay.set_child(self.board_view)
 
         # show player list at top-left corner
@@ -138,6 +139,15 @@ class GameGUI(Gtk.Application):
 
         # make the window visible on screen
         window.window.present()
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self._on_global_key_press)
+        window.window.add_controller(key_controller)
+    
+    def _on_global_key_press(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_r:
+            CommandsHandlerGui.on_rotate_gui(self)
+            return True
+        return False
 
     def on_end_turn(self, action, param):
         # kept for backward compatibility; newer code should use CommandsHandlerGui
@@ -147,8 +157,7 @@ class GameGUI(Gtk.Application):
         CommandsHandlerGui.on_rotate_gui(self)
 
     def on_preview_pressed(self, gesture, n_press, x, y):
-        pass
-        
+        self.game_data.refresh()
 
     def on_preview_released(self, gesture, n_press, x, y):
         self.game_data.is_dragging = False
@@ -198,45 +207,8 @@ class GameGUI(Gtk.Application):
         texture = Gdk.Texture.new_for_pixbuf(rotated)
         self.tile_preview.set_paintable(texture)
 
-    def on_drag_prepare(self, source, x, y):
-        if not self.current_tile:
-            return None
 
-        # Load the pixbuf of the current tile
-    # Provide tile name for drop logic
-        return Gdk.ContentProvider.new_for_value(self.game_data.current_tile.current_tile)
-    
-    def on_drag_begin(self, drag_source, drag):
 
-        if not self.current_tile:
-            return
-
-        image_path = utils.tile_image_path(self.game_data.current_tile.current_tile)
-
-        # Load scaled image
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-            filename=image_path,
-            width=100,
-            height=100,
-            preserve_aspect_ratio=True
-        )
-
-        rotations = [
-            GdkPixbuf.PixbufRotation.NONE,
-            GdkPixbuf.PixbufRotation.CLOCKWISE,
-            GdkPixbuf.PixbufRotation.UPSIDEDOWN,
-            GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE
-        ]
-
-        rotated = pixbuf.rotate_simple(rotations[self.game_data.current_orientation])
-
-        texture = Gdk.Texture.new_for_pixbuf(rotated)
-
-        # Store reference to avoid GC
-        self._drag_texture = texture
-
-        # Center cursor on tile
-        drag_source.set_icon(texture, 50, 50)
 
     def create_menu_button(self, label, menu):
         button = Gtk.MenuButton()
