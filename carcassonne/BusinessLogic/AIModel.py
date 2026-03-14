@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 from carcassonne.BusinessLogic.Heuristic import evaluate_state as heuristic_evaluate_state
 
 
+
 class RandomPlayer:
 
     # Example positions for meeple placement
@@ -98,7 +99,11 @@ class ExpectimaxPlayer:
             self.set_evaluation_method(eval_name)
         self.depth_max = depth
 
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
     def set_evaluation_method(self, name_or_fn) -> None:
+=======
+    def set_evaluation_method(self, name_or_fn):
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
         """Set evaluation by name or by callable.
 
         Accepts a callable(graph, ai_score, opponent_score) or a string name.
@@ -152,7 +157,11 @@ class ExpectimaxPlayer:
 
         return possible_moves
 
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
     def search(self, game: 'Game', depth: int, alpha: float, beta: float, player_to_max: int, next_player: int) -> float:
+=======
+    def search(self, game: 'Game', depth: int, alpha: float, beta: float, player_to_max: int, next_player: int) -> Tuple[float, str]:
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
         """Recursive search function for Expectimax algorithm. Adapt between Max and Min nodes based on the player parameter."""
         if self.terminal(game.tiles_info) or depth == 0:
             return self.eval_fn(game.graph, 0, 0), ''
@@ -213,6 +222,7 @@ class ExpectimaxPlayer:
         moves = self.get_possible_moves(game.current_hand, game)
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 
         if not moves:
             print("no more moves")
@@ -225,6 +235,11 @@ class ExpectimaxPlayer:
 >>>>>>> eea6dcf (changes):src/carcassonne/BusinessLogic/AIModel.py
         
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
+=======
+        # ordonner les moves selon un heuristique rapide à calculer
+        # moves = sorted(moves, key=lambda m: self.quick_eval_move(game, m, player_to_max), reverse=True)
+
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
         best = alpha
 
         restored_hand = game.current_hand
@@ -234,6 +249,7 @@ class ExpectimaxPlayer:
 
             self.play_move_for_ai(game, move)
 
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
             value = self.search(
@@ -252,6 +268,11 @@ class ExpectimaxPlayer:
 >>>>>>> eea6dcf (changes):src/carcassonne/BusinessLogic/AIModel.py
             
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
+=======
+            value = self.Star25(game, depth - 1, best, beta,
+                                player_to_max, (next_player + 1) % len(game.players))
+
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
             self.undo_for_ai(game)
             game.current_hand = restored_hand
 
@@ -268,12 +289,18 @@ class ExpectimaxPlayer:
         # TODO: Make the next tile to draw the tile parameter
         game.current_hand = tile
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
 
 =======
         #TODO: bug happens when we have a river tile (because we can have a river tile while river tiles are commented in deck)
         #game.deck.tiles.remove(tile)
     
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
+=======
+        # TODO: bug happens when we have a river tile (because we can have a river tile while river tiles are commented in deck)
+        # game.deck.tiles.remove(tile)
+
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
     def numSuccesors(self, tiles_info: ITilesInfo) -> int:
         """Return the number of possible chance events (e.g., tile draws) from this state."""
         N = {}
@@ -295,7 +322,11 @@ class ExpectimaxPlayer:
 
     def Star25(self, game: 'Game', depth: int,
                alpha: float, beta: float,
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
                player_to_max: int, next_player: int):
+=======
+               player_to_max: int, next_player: int) -> float:
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
 
         if self.terminal(game.tiles_info) or depth == 0:
             return self.eval_fn(game, player_to_max, next_player)
@@ -382,6 +413,7 @@ class ExpectimaxPlayer:
             previous_play = game.history.pop_past()
             game.history.push_future(previous_play)
 <<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
+<<<<<<< HEAD:carcassonne/BusinessLogic/AIModel.py
             game.board.remove_tile_from_board(build_str(
                 previous_play), game.graph, game.tiles_info, game.history, players=game.players)
             game.current_player_order_list = game.get_current_player().get_id()
@@ -395,6 +427,15 @@ class ExpectimaxPlayer:
             #print(game.graph.get_verticies())
             
 >>>>>>> cdbc656 (now Star2.5 without probing works for n players):src/carcassonne/BusinessLogic/AIModel.py
+=======
+            game.board.remove_tile_from_board(build_str(
+                previous_play), game.graph, game.tiles_info, game.history, players=game.players)
+            game.current_player_order_list = (
+                game.current_player_order_list - 1) % game.get_number_of_players()
+            game.deck.tiles.append(previous_play.move_str.split('/')[0])
+            # print(game.graph.get_verticies())
+
+>>>>>>> fc294c0 (pep8 indentation for AI model):src/carcassonne/BusinessLogic/AIModel.py
     def play_move_for_ai(self, game: 'Game', move: str) -> None:
         """Play move for AI exploring the possibilities."""
         tile_code = game.extract_tile_code(move)
