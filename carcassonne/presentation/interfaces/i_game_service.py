@@ -4,6 +4,7 @@ from typing import Any
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 
+
 class IGameService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
@@ -27,7 +28,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_game_configuration(self) -> dict :
+    def get_game_configuration(self) -> dict:
         pass
 
     @abstractmethod

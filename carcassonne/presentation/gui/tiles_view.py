@@ -1,5 +1,5 @@
 class TilesView():
-    def __init__(self, tile_name: str , tile_id: int = 0) -> None:
+    def __init__(self, tile_name: str, tile_id: int = 0) -> None:
         # name of the tile that is currently held by the player
         self.current_tile = tile_name
         # unique identifier for preview/placement (used by parse_move)
@@ -14,8 +14,8 @@ class TilesView():
         self.meeple_pos = ''
 
     def playable_tile(self):
-        if self.meeple_pos!='':
-            return self.move + '/' + self.meeple_pos  
+        if self.meeple_pos != '':
+            return self.move + '/' + self.meeple_pos
         return self.move
 
     def parse_move(self, move, x, y):
@@ -37,5 +37,3 @@ class TilesView():
             "middle": middle,
             "orientation": orientation
         }
-
-    

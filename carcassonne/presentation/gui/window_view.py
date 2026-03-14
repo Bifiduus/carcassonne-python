@@ -22,7 +22,7 @@ class WindowView:
     def __init__(self, application: Gtk.Application, game_data):
         self.application = application
         self.game_data = game_data
-        
+
         # Load keybinds from config
         config = self.game_data.game.get_game_configuration()
         self.file_keybinds = config.get("file_keybinds", {
@@ -55,7 +55,6 @@ class WindowView:
 
         self._build_file_menu(header)
         self._build_game_menu(header)
-        
 
     def _build_file_menu(self, header: Gtk.HeaderBar):
         menu_file = Gio.Menu()

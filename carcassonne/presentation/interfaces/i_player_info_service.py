@@ -6,21 +6,26 @@ from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.score_manager import PlayerScore
 
-class IPlayerInfoService(ABC):  
 
-    @abstractmethod  
+class IPlayerInfoService(ABC):
+
+    @abstractmethod
     def get_id(self) -> int:
         pass
-    @abstractmethod  
+
+    @abstractmethod
     def get_username(self) -> str:
         pass
-    @abstractmethod  
+
+    @abstractmethod
     def get_score(self) -> PlayerScore:
         pass
-    @abstractmethod  
+
+    @abstractmethod
     def get_color(self) -> str:
         pass
-    @abstractmethod  
+
+    @abstractmethod
     def is_ai_player(self) -> bool:
         pass
 
@@ -33,5 +38,5 @@ class IPlayerInfoService(ABC):
         pass
 
     @abstractmethod
-    def get_score_int(self) -> int :
+    def get_score_int(self) -> int:
         pass
