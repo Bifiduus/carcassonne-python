@@ -12,6 +12,10 @@ from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
 
+# players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
+# TO DO: implement a catch by the server of any new socket
+# Possibly with username and a password
+
 
 class Server:
     SERVER_TIMEOUT = 30
@@ -225,10 +229,19 @@ class Server:
         try:
             self.repo.create_party(party_name, clients_list, host_id)
             self.parties_list[len(self.parties_list)] = (party_name, new_party)
+            players_list = self.create_players_from_list(clients_list)
+            new_party.start_online_game(players_list)
             # création approfondit de la game ( new method avec données de repo (groups et players ) )
         except Exception as e:
             print(f"Error creating party in repository: {e}")
         return "Your party has been created successfully !\n"
+
+    def create_players_from_list(self, clients_list: list[str]) -> list[Player]:
+        players_list = []
+        for client in clients_list:
+            username = self.repo.get_username(client)
+            players_list.append(Player(int(client), username, "None"))
+        return players_list
 
     def check_profile_player(self, player_id: int) -> str:
         """Return a simple textual profile for the given player id."""

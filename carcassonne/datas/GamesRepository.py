@@ -179,10 +179,10 @@ class GameRepository(IGamesRepository):
 
     def get_party(self, host_id) -> list[str]:
         rows = self._execute_query(
-            "SELECT username FROM party_players NATURAL JOIN parties NATURAL JOIN players WHERE host_id=?;",
+            "SELECT player_id FROM groups NATURAL JOIN players WHERE host_id=?;",
             (host_id,)
         )
-        return [r[0] for r in rows]
+        return [r[0] for r in rows]  # possibly int
 
     def get_party_name(self, host_id: int) -> str:
         rows = self._execute_query(
