@@ -17,11 +17,11 @@ object is expected to expose a ``players`` dictionary keyed by player id and a
 it could be reused in other contexts or driven by a mock service in tests.
 """
 
+from typing import Any
+import cairo
+from gi.repository import Gtk, Gdk
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gdk
-import cairo
-from typing import Any
 
 
 class PlayersView(Gtk.Box):
@@ -81,10 +81,12 @@ class PlayersView(Gtk.Box):
             label.set_xalign(0)
 
             if p is current:
-                label.set_markup(f'<span foreground="{color}"><b>{name} : {score}</b></span>')
+                label.set_markup(
+                    f'<span foreground="{color}"><b>{name} : {score}</b></span>')
                 row.add_css_class("current-player")
             else:
-                label.set_markup(f'<span foreground="{color}">{name} : {score}</span>')
+                label.set_markup(
+                    f'<span foreground="{color}">{name} : {score}</span>')
 
             row.append(label)
 

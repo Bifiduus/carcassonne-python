@@ -1,12 +1,11 @@
 """This module implements the BoardView class for displaying the game board."""
+from carcassonne.presentation.gui import board_utils, utils
+from typing import Dict, Any, Tuple
+import os
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import gi
 gi.require_version("Gtk", "4.0")
 
-from gi.repository import Gtk, Gdk, GdkPixbuf
-import os
-from typing import Dict, Any, Tuple
-
-from carcassonne.presentation.gui import board_utils, utils
 
 class BoardView(Gtk.DrawingArea):
     def __init__(self, game_data: Any, tile_size: int = 100) -> None:
@@ -102,10 +101,10 @@ class BoardView(Gtk.DrawingArea):
                 full_path = os.path.join(images_dir, file)
                 self.textures[name] = GdkPixbuf.Pixbuf.new_from_file(full_path)
 
-
     # =========================
     # 🎨 DRAW
     # =========================
+
     def on_draw(self, area: Gtk.DrawingArea, cr: Any, width: int, height: int) -> None:
         """Main draw callback passed to ``set_draw_func``.
 
@@ -157,8 +156,6 @@ class BoardView(Gtk.DrawingArea):
         if self.game_data.is_dragging and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
 
-    
-
     def draw_ghost_tile(self, cr):
         """Draw a semi‑transparent copy of the tile that is currently being
         dragged.  The tile is snapped to the grid before rendering.
@@ -166,7 +163,8 @@ class BoardView(Gtk.DrawingArea):
         if not (self.game_data.current_tile and self.game_data.current_tile.current_tile):
             return
 
-        name = board_utils.normalize_name(self.game_data.current_tile.current_tile)
+        name = board_utils.normalize_name(
+            self.game_data.current_tile.current_tile)
         pixbuf = self.textures.get(name)
         if not pixbuf:
             return
@@ -184,17 +182,18 @@ class BoardView(Gtk.DrawingArea):
             cr, x, y, tile, pixbuf, self.game_data.current_orientation, 0.6
         )
 
-
     # =========================
     # 🧩 DRAW ONE TILE
     # =========================
+
     def draw_tile(self, cr, x, y, size, tile_data, is_last=False) -> None:
         """Draw a single placed tile at pixel coordinates ``x,y``.
 
         ``tile_data`` is expected to be the dictionary returned by
         ``TilesView.parse_move`` or from ``game.get_board_data()``.
         """
-        name = board_utils.normalize_name(tile_data["name"] + tile_data["middle"] if tile_data["middle"] else tile_data["name"])
+        name = board_utils.normalize_name(
+            tile_data["name"] + tile_data["middle"] if tile_data["middle"] else tile_data["name"])
         orientation = tile_data["orientation"]
         if is_last:
             cr.set_source_rgb(1, 0, 0)
@@ -214,15 +213,16 @@ class BoardView(Gtk.DrawingArea):
         else:
             cr.set_source_rgb(0, 0, 0)
 
-        board_utils.draw_meeples(cr, x, y, size, self.game_data.game.get_meeples_data(), tile_data["id"])
+        board_utils.draw_meeples(
+            cr, x, y, size, self.game_data.game.get_meeples_data(), tile_data["id"])
         cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
         cr.stroke()
 
-
     # =========================
     # 🖱️ CLICK
     # =========================
+
     def on_click(self, gesture, n_press, mouse_x, mouse_y):
         """Handle left‑button clicks on the board.
 
@@ -255,7 +255,8 @@ class BoardView(Gtk.DrawingArea):
 
         # otherwise this is the first placement click
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
-        vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
+        vertex_id, side = self.game_data.game.get_close_neighbors(
+            grid_x, grid_y)
         if vertex_id is None or side is None:
             self.queue_draw()
             return
@@ -292,7 +293,8 @@ class BoardView(Gtk.DrawingArea):
         placement remains a separate click after the drop.
         """
         grid_x, grid_y = self.pixel_to_grid(x, y)
-        vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
+        vertex_id, side = self.game_data.game.get_close_neighbors(
+            grid_x, grid_y)
         if vertex_id is not None and side is not None:
             orientation = self.game_data.current_orientation
             move_str = (
@@ -354,12 +356,10 @@ class BoardView(Gtk.DrawingArea):
             self.game_data.rotate_current_tile()
         else:
             return False
-            
+
         self.queue_draw()
         return True
 
-    
-    
     def get_board_offsets(self) -> Tuple[int, int, int, int]:
         tiles = self.game_data.game.get_board_data()
         if not tiles:
@@ -396,7 +396,6 @@ class BoardView(Gtk.DrawingArea):
         """Convenience wrapper used by GameDataGui when state changes."""
         self.queue_draw()
 
-
     def on_mouse_move(self, controller, x, y):
         if self.game_data.is_dragging and self.game_data.current_tile:
             self.ghost_x, self.ghost_y = x, y
@@ -408,7 +407,8 @@ class BoardView(Gtk.DrawingArea):
 
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
 
-        vertex_id, side = self.game_data.game.get_close_neighbors(grid_x, grid_y)
+        vertex_id, side = self.game_data.game.get_close_neighbors(
+            grid_x, grid_y)
 
         if vertex_id is not None and side is not None:
             orientation = self.game_data.current_orientation

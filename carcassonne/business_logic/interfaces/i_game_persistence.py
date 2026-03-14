@@ -1,6 +1,7 @@
 """Module providing an interface between Logique Métier and Données"""
 from abc import ABC, abstractmethod
 
+
 class IGamePersistence(ABC):
     @abstractmethod
     def save(self):

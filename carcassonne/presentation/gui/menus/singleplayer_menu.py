@@ -1,13 +1,10 @@
+from carcassonne.presentation.gui import utils
+from gi.repository import Gtk
 import os
 
 import gi
 
 gi.require_version("Gtk", "4.0")
-
-from gi.repository import Gtk
-
-from carcassonne.presentation.gui import utils
-
 
 
 class SingleplayerMenu(Gtk.Box):
@@ -56,7 +53,7 @@ class SingleplayerMenu(Gtk.Box):
         # file chooser only enabled when contest is active
         self.file_button = Gtk.Button(label="Choose contest file")
         self.file_button.connect("clicked", self.on_choose_file)
-        
+
         self.file_button.set_visible(False)   # hidden by default
         self.selected_file = None
 
@@ -70,8 +67,8 @@ class SingleplayerMenu(Gtk.Box):
         def on_mode_toggle(button):
             if button is self.blitz_cb and button.get_active():
                 self.contest_cb.set_active(False)
-                
-                self.file_button.set_visible(False) 
+
+                self.file_button.set_visible(False)
                 self.selected_file = None
 
             elif button is self.contest_cb and button.get_active():
@@ -93,7 +90,7 @@ class SingleplayerMenu(Gtk.Box):
 
         btn_box.set_halign(Gtk.Align.CENTER)
         btn_box.append(btn_back)
-        
+
         self.append(btn_box)
 
     # ------------------------------------------------------------------
@@ -147,7 +144,8 @@ class SingleplayerMenu(Gtk.Box):
             self.gui.game_data.game.set_game_configuration("blitz", False)
 
         if contest_file:
-            self.gui.game_data.game.set_game_configuration("contest_file", contest_file)
+            self.gui.game_data.game.set_game_configuration(
+                "contest_file", contest_file)
 
         # persist configuration to disk
         self.gui.game_data.game.save_config()

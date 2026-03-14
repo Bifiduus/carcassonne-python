@@ -5,12 +5,11 @@ this widget knows how to present and gum up the feedback for the currently
 held tile.  It delegates higher-level logic (e.g. what happens when the
 user clicks the preview) back to the owning ``GameGUI`` instance.
 """
+from carcassonne.presentation.gui.utils import tile_image_path
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf
-
-from carcassonne.presentation.gui.utils import tile_image_path
 
 
 class TilePreview(Gtk.Picture):
@@ -48,7 +47,8 @@ class TilePreview(Gtk.Picture):
         """Apply the current orientation stored in ``gui.game_data``."""
         if not self.gui.game_data.current_tile:
             return
-        image_path = tile_image_path(self.gui.game_data.current_tile.current_tile)
+        image_path = tile_image_path(
+            self.gui.game_data.current_tile.current_tile)
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
             width=100,
@@ -61,7 +61,7 @@ class TilePreview(Gtk.Picture):
                 GdkPixbuf.PixbufRotation.CLOCKWISE,
                 GdkPixbuf.PixbufRotation.UPSIDEDOWN,
                 GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE,
-            ][ self.gui.game_data.current_orientation ]
+            ][self.gui.game_data.current_orientation]
         )
         self.set_paintable(Gdk.Texture.new_for_pixbuf(rotated))
 
@@ -89,7 +89,8 @@ class TilePreview(Gtk.Picture):
         if not self.gui.game_data.current_tile:
             return
 
-        image_path = tile_image_path(self.gui.game_data.current_tile.current_tile)
+        image_path = tile_image_path(
+            self.gui.game_data.current_tile.current_tile)
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
             width=100,
@@ -102,13 +103,15 @@ class TilePreview(Gtk.Picture):
             GdkPixbuf.PixbufRotation.UPSIDEDOWN,
             GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE,
         ]
-        rotated = pixbuf.rotate_simple(rotations[ self.gui.game_data.current_orientation ])
+        rotated = pixbuf.rotate_simple(
+            rotations[self.gui.game_data.current_orientation])
         texture = Gdk.Texture.new_for_pixbuf(rotated)
 
         # keep a reference so the texture isn't garbage-collected
         self._drag_texture = texture
         # Set a transparent icon to hide drag feedback
-        transparent_pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 1, 1)
+        transparent_pixbuf = GdkPixbuf.Pixbuf.new(
+            GdkPixbuf.Colorspace.RGB, True, 8, 1, 1)
         transparent_pixbuf.fill(0x00000000)  # Fully transparent
         transparent_texture = Gdk.Texture.new_for_pixbuf(transparent_pixbuf)
         drag_source.set_icon(transparent_texture, 0, 0)

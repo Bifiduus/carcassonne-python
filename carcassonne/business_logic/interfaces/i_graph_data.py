@@ -6,10 +6,11 @@ from typing import Any, Dict, List, Optional
 
 from carcassonne.datas.meeple_data import Meeple
 
+
 class IGraphData(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int,int]) -> None:
+    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int, int]) -> None:
         pass
 
     @abstractmethod
@@ -71,7 +72,7 @@ class IGraphData(ABC):
     @abstractmethod
     def get_meeples(self) -> List[Meeple]:
         pass
-    
+
     @abstractmethod
-    def remove_meeple(self, tile_id: int, players : dict[int, Any]) -> None:
+    def remove_meeple(self, tile_id: int, players: dict[int, Any]) -> None:
         pass

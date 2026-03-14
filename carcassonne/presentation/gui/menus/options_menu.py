@@ -1,12 +1,11 @@
+from carcassonne.presentation.gui import utils
+from gi.repository import Gtk
 import os
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 
-from gi.repository import Gtk
-
-from carcassonne.presentation.gui import utils
 
 class OptionsMenu(Gtk.Box):
     def __init__(self, gui):
@@ -32,8 +31,6 @@ class OptionsMenu(Gtk.Box):
         keybinds_button.connect("clicked", self.on_keybinds)
         self.append(keybinds_button)
 
-        
-
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         btn_back = Gtk.Button(label="Back")
@@ -41,10 +38,8 @@ class OptionsMenu(Gtk.Box):
         btn_box.append(btn_back)
         self.append(btn_box)
 
-
         # ------------------------------------------------------------------
 
-        
     def on_back(self, button):
         """Return to the main menu"""
         self.gui.window.stack.set_visible_child_name("menu")

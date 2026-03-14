@@ -25,6 +25,7 @@ DEFAULT_SETTINGS = {
     }
 }
 
+
 class GameConfiguration:
     def __init__(self, overrides=None):
         self.settings = self.load_config()
@@ -68,19 +69,22 @@ class GameConfiguration:
             settings["timeout"] = config.getint("defaults", "timeout")
             # optional contest file
             if config.has_option("defaults", "contest_file"):
-                settings["contest_file"] = config.get("defaults", "contest_file")
+                settings["contest_file"] = config.get(
+                    "defaults", "contest_file")
 
             if "keybinds" in config:
                 if config.has_option("keybinds", "file_keybinds"):
-                    settings["file_keybinds"] = json.loads(config.get("keybinds", "file_keybinds"))
+                    settings["file_keybinds"] = json.loads(
+                        config.get("keybinds", "file_keybinds"))
                 if config.has_option("keybinds", "game_keybinds"):
-                    settings["game_keybinds"] = json.loads(config.get("keybinds", "game_keybinds"))
+                    settings["game_keybinds"] = json.loads(
+                        config.get("keybinds", "game_keybinds"))
 
         except Exception as e:
             print("⚠️  Avertissement : fichier de configuration invalide.")
             print(f"   ({e})")
             print("   Lancement avec les options par défaut.")
-        
+
         return settings
 
     def save_config(self):

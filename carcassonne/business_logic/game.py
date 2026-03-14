@@ -55,7 +55,7 @@ class Game(IGameService):
         self.current_player_order_list = 0
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
-        self.ai_model = "expectimax"
+        self.ai_model = "random"
 
     def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -172,13 +172,16 @@ class Game(IGameService):
         self.draw_tile()
         model = None
         if self.ai_model == "random":
-            model = RandomPlayer(self)
+            model = RandomPlayer()
+            move = model.random_move(self.current_hand, self)
+            print(
+                f"AI Player {ai_player.get_username()} chooses move: {move}")
         elif self.ai_model == "expectimax":
             model = ExpectimaxPlayer(self)
-        eval, move = model.search(self, depth=model.depth_max, alpha=float(
-            '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
-        print(
-            f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
+            eval, move = model.search(self, depth=model.depth_max, alpha=float(
+                '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
+            print(
+                f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
         # print("main avant de jouer le coup" + self.current_hand)
         res = self.play_move(move)
         # print(res)

@@ -27,7 +27,7 @@ class Deck:
             "FRFR", "FRFR", "FRFR", "FRFR", "FRFR", "FRFR", "FRFR", "FRFR",
             "FFRR", "FFRR", "FFRR", "FFRR", "FFRR", "FFRR", "FFRR", "FFRR", "FFRR",
             "CRFR", "CRFR", "CRFR",
-            #"CRFR",
+            # "CRFR",
             "CFRR", "CFRR", "CFRR",
             "CRRF", "CRRF", "CRRF",
             "CCRR", "CCRR", "CCRR",
@@ -35,15 +35,15 @@ class Deck:
             "FRRR", "FRRR", "FRRR", "FRRR",
             "CRRR", "CRRR", "CRRR",
             "RRRR",
-            #"FSRS/m",
-            #"FFSF", "FFSF",
-            #"FSFS", "FSFS",
-            #"FFSS", "FFSS",
-            #"CSCS",
-            #"CCSS",
-            #"CSRS",
-            #"RSRS",
-            #"RRSS",
+            # "FSRS/m",
+            # "FFSF", "FFSF",
+            # "FSFS", "FSFS",
+            # "FFSS", "FFSS",
+            # "CSCS",
+            # "CCSS",
+            # "CSRS",
+            # "RSRS",
+            # "RRSS",
         ]
 
     def draw(self) -> str | None:
@@ -75,10 +75,12 @@ class Deck:
         for i in range(len(self.tiles) - 1, 0, -1):
             # Fisher-Yates step: swap tile i with a tile in [0, i].
             if seed_index + 1 < len(seed_list):
-                j = int(str(seed_list[seed_index]) + str(seed_list[seed_index + 1])) * 123 % (i + 1)
+                j = int(str(seed_list[seed_index]) +
+                        str(seed_list[seed_index + 1])) * 123 % (i + 1)
                 seed_index += 1
             else:
-                j = int(str(seed_list[seed_index]) + str(seed_list[0])) * 123 % (i + 1)
+                j = int(str(seed_list[seed_index]) +
+                        str(seed_list[0])) * 123 % (i + 1)
                 seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
 
@@ -94,10 +96,12 @@ class Deck:
         n = len(self.tiles)
         for i in range(n):
             if seed_index + 1 < len(seed_list):
-                j = int(str(seed_list[seed_index]) + str(seed_list[seed_index + 1])) * 123 % n
+                j = int(str(seed_list[seed_index]) +
+                        str(seed_list[seed_index + 1])) * 123 % n
                 seed_index += 1
             else:
-                j = int(str(seed_list[seed_index]) + str(seed_list[0])) * 123 % n
+                j = int(str(seed_list[seed_index]) +
+                        str(seed_list[0])) * 123 % n
                 seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
 

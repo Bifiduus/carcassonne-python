@@ -10,7 +10,8 @@ if TYPE_CHECKING:
     from carcassonne.datas.history import MoveRecord
 
 # Placement format: <target_vertex_id><side><rotation>, e.g. "12N3".
-PLACEMENT_RE: re.Pattern[str] = re.compile(r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
+PLACEMENT_RE: re.Pattern[str] = re.compile(
+    r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
 # Allowed meeple placement sides in the move format.
 MEEPLE_SET: set[str] = {"N", "E", "S", "W"}
 

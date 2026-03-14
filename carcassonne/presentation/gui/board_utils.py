@@ -64,7 +64,8 @@ def draw_pixbuf_with_alpha(cr, x, y, size, pixbuf, orientation: int, alpha: floa
     scale_x = size / pixbuf.get_width()
     scale_y = size / pixbuf.get_height()
     cr.scale(scale_x, scale_y)
-    Gdk.cairo_set_source_pixbuf(cr, pixbuf, -pixbuf.get_width() / 2, -pixbuf.get_height() / 2)
+    Gdk.cairo_set_source_pixbuf(
+        cr, pixbuf, -pixbuf.get_width() / 2, -pixbuf.get_height() / 2)
     cr.paint_with_alpha(alpha)
     cr.restore()
 
@@ -120,5 +121,3 @@ def draw_meeples(cr, x, y, size, meeples, tile_id) -> None:
         cr.move_to(cx + cell - padding, cy + padding)
         cr.line_to(cx + padding, cy + cell - padding)
         cr.stroke()
-
-

@@ -34,6 +34,7 @@ SOUTHWEST_MATRIX = (2, 0)
 SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
 
+
 @dataclass
 class Vertex:
     id: int
@@ -62,7 +63,8 @@ class Vertex:
 
     def set_neighbor(self, orientation: int, neighbor_id: int) -> None:
         if orientation not in range(ORIENTATIONS):
-            raise ValueError(f"Orientation must be between 0 and {ORIENTATIONS - 1}")
+            raise ValueError(
+                f"Orientation must be between 0 and {ORIENTATIONS - 1}")
         self.neighbors[orientation] = neighbor_id
 
     def remove_neighbor(self, orientation: int) -> None:
@@ -74,7 +76,7 @@ class Vertex:
 
     def rotate(self, k: int = 1) -> None:
         self.orientation = (self.orientation + k) % ORIENTATIONS
-        
+
     def build_matrix(self) -> None:
         dir_matrix = Tile.direction_matrix[self.orientation]
         for i in range(3):
@@ -85,8 +87,8 @@ class Vertex:
                     for set in self.tile_dict[land]:
                         if dir in set:
                             self.matrix[i][j] = land
-                            matched = True      
-                            break 
+                            matched = True
+                            break
                     if matched:
                         break
 
@@ -107,10 +109,10 @@ class Vertex:
 
     def get_neighbors(self) -> Dict[int, int]:
         return dict(self.neighbors)
-    
+
     def get_matrix(self) -> list[list]:
         return self.matrix
-    
+
     def get_tile_dict(self) -> Dict[str, list]:
         return self.tile_dict
 
@@ -139,13 +141,14 @@ class GraphData(IGraphData):
         self.next_set_id['R'] = 1  # Next set ID for roads
         self.next_set_id['F'] = 1  # Next set ID for fields
         self.next_set_id['M'] = 1  # Next set ID for monasteries
-    
+
     def initialize_starting_tile(self) -> None:
         # Define the lands components for each tile type, including the starting tile
-        self.add_vertex(vertex_id=0, name='CRFR', middle="", orientation=0, position=(0, 0))
+        self.add_vertex(vertex_id=0, name='CRFR', middle="",
+                        orientation=0, position=(0, 0))
         tile = self.tiles_dict['CRFR']
         for land in tile.tiles_lands.keys():
-            for connected in tile.tiles_lands[land] :
+            for connected in tile.tiles_lands[land]:
                 land_id = land + str(self.next_set_id[land])
                 self.lands_components[land][land_id] = [(0, connected)]
                 self.next_set_id[land] += 1
@@ -160,21 +163,22 @@ class GraphData(IGraphData):
         self.lands_components['F'] = {'F1': [(0, ['NE', 'NW'])], 'F2': [(0, ['SE', 'S', 'SW'])]}
         self.lands_components.append({})
         self.next_set_id.append({})'''
-    
-    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int,int]) -> None:
+
+    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int, int]) -> None:
         if vertex_id in self.vertices:
             raise ValueError(f"Vertex ID already exists : {vertex_id}")
 
         if position is None:
             return ValueError("Error in getting position")
 
-        vertex = Vertex(id=vertex_id, name=name, middle=middle, tile_dict=self.tiles_dict[name].tiles_lands, orientation=orientation % ORIENTATIONS, position=position)
+        vertex = Vertex(id=vertex_id, name=name, middle=middle,
+                        tile_dict=self.tiles_dict[name].tiles_lands, orientation=orientation % ORIENTATIONS, position=position)
         self.vertices[vertex_id] = vertex
 
         self.turn += 1
 
         self.compute_neighbors(vertex_id)
-        
+
     def add_meeple(self, meeple: Meeple) -> None:
         self.meeples.append(meeple)
 
@@ -207,7 +211,7 @@ class GraphData(IGraphData):
                     vertex.remove_neighbor(ori)
                     self.turn -= 1
         del self.vertices[vertex_id]
-        
+
     def remove_meeple(self, tile_id: int, players: dict[int, Player]) -> None:
         for meeple in self.meeples:
             if meeple.tile_id == tile_id:
@@ -224,7 +228,7 @@ class GraphData(IGraphData):
 
     def get_verticies(self) -> Dict[int, Vertex]:
         return dict(self.vertices)
-    
+
     def get_vertices_data(self) -> dict[int, dict]:
         """
         Retourne toutes les informations nécessaires pour l'affichage GUI.
@@ -240,7 +244,7 @@ class GraphData(IGraphData):
             }
             for vertex_id, vertex in self.vertices.items()
         }
-    
+
     def get_vertice_data(self, vertex: int) -> dict[int, dict]:
         """
         Retourne toutes les informations nécessaires pour l'affichage GUI.
@@ -254,7 +258,7 @@ class GraphData(IGraphData):
                 "middle": vertex.get_middle(),
                 "orientation": vertex.get_orientation(),
             }
-             
+
         }
 
     def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
@@ -272,7 +276,7 @@ class GraphData(IGraphData):
             return (x - 1, y)
         else:
             raise ValueError(f"Invalid side: {side}")
-        
+
     def get_position_by_pos(self, position: tuple[int, int], side: int) -> Optional[tuple[int, int]]:
         x, y = position
         if side == SOUTH_DIR:
@@ -293,7 +297,7 @@ class GraphData(IGraphData):
 
     def get_turn_number(self) -> int:
         return self.turn
-    
+
     def get_meeples(self) -> List[Meeple]:
         return self.meeples
 
@@ -306,13 +310,13 @@ class GraphData(IGraphData):
         # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
         self.initialize_land_components()
         self.initialize_starting_tile()
-    
+
     def get_vertex_orientation(self, vertex_id: int) -> int:
         vertex = self.get_vertex(vertex_id)
         if vertex is None:
             raise ValueError(f"Vertex ID not found : {vertex_id}")
         return vertex.get_orientation()
-    
+
     def find_neighbor_at(self, x: int, y: int) -> tuple[Optional[int], Optional[int]]:
         """
         Cherche une tuile voisine autour de (x, y).

@@ -11,6 +11,7 @@ from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.graph_data import GraphData
 
+
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message: str):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
@@ -71,7 +72,7 @@ def main() -> int:
         help="name of the file to load a game",
         type=str,
     )
-    
+
     parser.add_argument(
         "-b",
         "--blitz",
@@ -98,8 +99,7 @@ def main() -> int:
         help="number of players (default: 2)",
         type=int,
     )
-    
-    
+
     args: argparse.Namespace = parser.parse_args()
     config_overrides = {}
     if args.verbose:
@@ -108,12 +108,13 @@ def main() -> int:
         config_overrides['blitz'] = True
     if args.time != 30:  # assuming default is 30
         config_overrides['time'] = args.timeout
-    
-    game_data :IGraphData = GraphData()
+
+    game_data: IGraphData = GraphData()
     if args.players:
-        game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2, config_overrides)
+        game: IGameService = Game(game_data, args.players if args.players >
+                                  1 and args.players <= 5 else 2, config_overrides)
     else:
-        game :IGameService = Game(game_data, 1, config_overrides)
+        game: IGameService = Game(game_data, 1, config_overrides)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:
@@ -131,9 +132,6 @@ def main() -> int:
         game_cli = GameCLI(game)
         game_cli.run()
 
-
     # Call a function to start the game
-    
-    
 
     return 0

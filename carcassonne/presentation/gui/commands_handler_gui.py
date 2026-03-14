@@ -15,12 +15,10 @@ def on_new(game):
     game.shuffle_deck()
 
 
-
 def on_load(gui) -> None:
     """Show a file picker and load a saved game."""
 
     dialog = Gtk.FileDialog(title="Load game")
-
 
     def on_file_selected(dialog, result):
         try:
@@ -49,7 +47,6 @@ def on_save(gui) -> None:
 
     dialog = Gtk.FileDialog(title="Save game")
 
-
     def on_file_selected(dialog, result):
         try:
             file = dialog.save_finish(result)
@@ -63,6 +60,8 @@ def on_save(gui) -> None:
             pass
 
     dialog.save(gui.window.window, None, on_file_selected)
+
+
 def on_config(gui) -> None:
     config = gui.game_data.game_configuration()
     print("Configuration actuelle du jeu:")
@@ -70,8 +69,10 @@ def on_config(gui) -> None:
         print(f"  {key}: {value}")
     gui.window.stack.set_visible_child_name("options_menu")
 
+
 def on_info() -> None:
     print("to add info")
+
 
 def on_quit(self) -> None:
     self.quit()
@@ -81,16 +82,20 @@ def on_quit(self) -> None:
 Game menu commands:
 """
 
+
 def on_undo(game) -> None:
     game.undo()
     print("to add undo")
+
 
 def on_redo(game) -> None:
     game.redo()
     print("to add redo")
 
+
 def on_pause() -> None:
     print("to add pause")
+
 
 def on_hint():
     print("to add hint")

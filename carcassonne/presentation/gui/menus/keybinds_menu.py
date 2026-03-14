@@ -1,12 +1,11 @@
+from carcassonne.presentation.gui import utils
+from gi.repository import Gtk
 import os
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 
-from gi.repository import Gtk
-
-from carcassonne.presentation.gui import utils
 
 class KeybindsMenu(Gtk.Box):
     def __init__(self, gui):
@@ -22,9 +21,8 @@ class KeybindsMenu(Gtk.Box):
         title.add_css_class("title-2")
         self.append(title)
 
-
         # --- keybinds button --------------------------------------------------
-         # -------- FILE KEYBINDS --------
+        # -------- FILE KEYBINDS --------
         file_title = Gtk.Label(label="File")
         file_title.add_css_class("heading")
         self.append(file_title)
@@ -40,8 +38,6 @@ class KeybindsMenu(Gtk.Box):
         game_box = self.build_keybind_section(self.gui.window.game_keybinds)
         self.append(game_box)
 
-        
-
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         btn_back = Gtk.Button(label="Back")
@@ -49,10 +45,8 @@ class KeybindsMenu(Gtk.Box):
         btn_box.append(btn_back)
         self.append(btn_box)
 
-
         # ------------------------------------------------------------------
 
-        
     def on_back(self, button):
         """Return to the main menu"""
         self.gui.window.stack.set_visible_child_name("options_menu")
@@ -73,7 +67,8 @@ class KeybindsMenu(Gtk.Box):
             label.set_halign(Gtk.Align.START)
 
             button = Gtk.Button(label=key)
-            button.connect("clicked", self.on_rebind_clicked, action, button, keybind_dict)
+            button.connect("clicked", self.on_rebind_clicked,
+                           action, button, keybind_dict)
 
             row.append(label)
             row.append(button)
@@ -81,7 +76,6 @@ class KeybindsMenu(Gtk.Box):
             box.append(row)
 
         return box
-
 
     def on_rebind_clicked(self, button, action, button_widget, keybind_dict):
         button_widget.set_label("Press key...")
@@ -96,7 +90,6 @@ class KeybindsMenu(Gtk.Box):
         )
 
         self.add_controller(controller)
-
 
     def on_key_pressed(self, controller, keyval, keycode, state, action, button_widget, keybind_dict):
 
@@ -120,9 +113,11 @@ class KeybindsMenu(Gtk.Box):
 
         # update config
         if keybind_dict is self.gui.window.file_keybinds:
-            self.gui.game_data.game.set_game_configuration("file_keybinds", self.gui.window.file_keybinds)
+            self.gui.game_data.game.set_game_configuration(
+                "file_keybinds", self.gui.window.file_keybinds)
         else:
-            self.gui.game_data.game.set_game_configuration("game_keybinds", self.gui.window.game_keybinds)
+            self.gui.game_data.game.set_game_configuration(
+                "game_keybinds", self.gui.window.game_keybinds)
         self.gui.game_data.game.save_config()
 
         # update GTK accelerator

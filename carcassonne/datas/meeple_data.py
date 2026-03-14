@@ -15,18 +15,20 @@ class Meeple:
     player_id: int          # Name of the player who owns this meeple
     tile_id: int              # ID of the tile where the meeple is placed
     position: int             # Position on the tile (0-8)
-    lands_components: str     # Name of the lands component (e.g., 'C1', 'F2', 'R1')
+    # Name of the lands component (e.g., 'C1', 'F2', 'R1')
+    lands_components: str
 
     def __init__(self, player_id: int, tile_id: int, position: int, lands_components: str) -> None:
         self.player_id = player_id
         self.tile_id = tile_id
         self.position = position
         self.lands_components = lands_components
-        
+
     def __post_init__(self) -> None:
         """Validate position is within valid range."""
         if not 0 <= self.position <= 8:
-            raise ValueError(f"Position must be between 0 and 8, got {self.position}")
+            raise ValueError(
+                f"Position must be between 0 and 8, got {self.position}")
 
     def get_position_label(self) -> str:
         """Get the label for this position (N, NE, E, SE, S, SW, W, NW, C)."""
