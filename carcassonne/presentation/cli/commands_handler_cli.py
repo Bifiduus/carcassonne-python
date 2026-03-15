@@ -1,9 +1,9 @@
 """This module defines the command handler functions for the Carcassonne game.
-Each function corresponds to a specific command that can be entered by the player in the command-line interface. 
-The functions interact with the game service and the game state to perform actions such as starting a new game, loading and saving game states, 
-shuffling the tiles, providing hints, undoing and redoing moves, and displaying game information. 
-The command handler functions are designed to be called from the GameCLI class when the corresponding commands are entered by the player.
+Each function corresponds to a specific command entered in the CLI.
+The handlers call the game service to start/load/save games, draw and place
+tiles, provide hints, undo/redo, and display game information.
 """
+
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 
 
@@ -21,11 +21,16 @@ def help(self) -> None:
     print("  save <file>        - Sauvegarde la partie dans un fichier")
     print("  shuffle            - Mélange les tuiles de la pioche")
     print("  draw               - Pioche une tuile")
-    print("  hint               - Donne un indice pour le placement de la tuile")
     print(
-        "  undo [N]           - Annule le dernier coup ou les N derniers coups")
+        "  hint               - Donne un indice pour le placement de la tuile"
+    )
     print(
-        "  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés")
+        "  undo [N]           - Annule le dernier coup ou les N derniers coups"
+    )
+    print(
+        "  redo [N]           - Rétablit le dernier coup annulé ou les "
+        "N derniers coups annulés"
+    )
     print("  show hand          - Affiche la main du joueur courant")
     print("  show score         - Affiche le score des joueurs")
     print("  show history       - Affiche l'historique des coups joués")
@@ -38,7 +43,7 @@ def quit(self) -> None:
     saved = -1
     while saved == -1:
         confirm: str = input("Save the game before quitting?[y/N] ")
-        if confirm != 'y':
+        if confirm != "y":
             print("Abandon de la commande de quitter.")
             self.running = False
             saved = 0

@@ -1,5 +1,4 @@
-"""Heuristic module isolated from search algorithms.
-"""
+"""Heuristic module isolated from search algorithms."""
 
 from dataclasses import dataclass
 import math
@@ -99,7 +98,9 @@ def _component_meeple_counts(game_state: Any) -> dict[str, dict[int, int]]:
     return counts
 
 
-def _component_controllers(component_name: str, counts: dict[str, dict[int, int]]) -> list[int]:
+def _component_controllers(
+    component_name: str, counts: dict[str, dict[int, int]]
+) -> list[int]:
     """Return players controlling a component (majority rule).
 
     Args:
@@ -119,7 +120,9 @@ def _component_controllers(component_name: str, counts: dict[str, dict[int, int]
     return [pid for pid, count in by_player.items() if count == max_count]
 
 
-def _component_tile_count(component_entries: list[tuple[int, list[str]]]) -> float:
+def _component_tile_count(
+    component_entries: list[tuple[int, list[str]]],
+) -> float:
     """Count unique tiles present in one component.
 
     Args:
@@ -131,7 +134,9 @@ def _component_tile_count(component_entries: list[tuple[int, list[str]]]) -> flo
     return float(len({tile_id for tile_id, _ in component_entries}))
 
 
-def _is_city_component_incomplete(graph: Any, entries: list[tuple[int, list[str]]]) -> bool:
+def _is_city_component_incomplete(
+    graph: Any, entries: list[tuple[int, list[str]]]
+) -> bool:
     """Check whether a city component is incomplete.
 
     A city is considered incomplete if one required cardinal edge has no
@@ -151,7 +156,10 @@ def _is_city_component_incomplete(graph: Any, entries: list[tuple[int, list[str]
             return True
         neighbors = vertex.get_neighbors()
         for direction in directions:
-            if direction in direction_map and direction_map[direction] not in neighbors:
+            if (
+                direction in direction_map
+                and direction_map[direction] not in neighbors
+            ):
                 return True
     return False
 
@@ -188,7 +196,9 @@ def _count_incomplete_city_tiles(game_state: Any, player_id: int) -> float:
     return total
 
 
-def _count_risky_fields_lt3_completed_cities(game_state: Any, player_id: int) -> float:
+def _count_risky_fields_lt3_completed_cities(
+    game_state: Any, player_id: int
+) -> float:
     """Count controlled field components with fewer than 3 completed cities.
 
     Current approximation:
@@ -213,16 +223,22 @@ def _count_risky_fields_lt3_completed_cities(game_state: Any, player_id: int) ->
         if _is_city_component_incomplete(graph, city_entries):
             continue
         completed_city_tile_sets.append(
-            {tile_id for tile_id, _ in city_entries})
+            {tile_id for tile_id, _ in city_entries}
+        )
 
-    for field_name, field_entries in graph.lands_components.get("F", {}).items():
+    for field_name, field_entries in graph.lands_components.get(
+        "F", {}
+    ).items():
         controllers = _component_controllers(field_name, counts)
         if player_id not in controllers:
             continue
 
         field_tiles = {tile_id for tile_id, _ in field_entries}
         adjacent_completed_cities = sum(
-            1 for city_tiles in completed_city_tile_sets if field_tiles & city_tiles)
+            1
+            for city_tiles in completed_city_tile_sets
+            if field_tiles & city_tiles
+        )
 
         if adjacent_completed_cities < 3:
             share = 1.0 / len(controllers)
@@ -250,7 +266,9 @@ def _estimate_latent_score(game_state: Any, player_id: int) -> float:
     total = 0.0
 
     for land_type in ("C", "R", "M"):
-        for component_name, entries in game_state.graph.lands_components.get(land_type, {}).items():
+        for component_name, entries in game_state.graph.lands_components.get(
+            land_type, {}
+        ).items():
             controllers = _component_controllers(component_name, counts)
             if player_id not in controllers:
                 continue
@@ -260,7 +278,9 @@ def _estimate_latent_score(game_state: Any, player_id: int) -> float:
     return total
 
 
-def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[str, float]:
+def extract_features(
+    game_state: Any, player_id: int, opponent_id: int
+) -> dict[str, float]:
     """Extract heuristic features as differentials (player - opponent).
 
     Args:
@@ -271,16 +291,21 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     Returns:
         Mapping of feature name to differential value.
     """
-    score_diff = _get_player_score(
-        game_state, player_id) - _get_player_score(game_state, opponent_id)
+    score_diff = _get_player_score(game_state, player_id) - _get_player_score(
+        game_state, opponent_id
+    )
     meeple_diff = _get_player_meeples(
-        game_state, player_id) - _get_player_meeples(game_state, opponent_id)
+        game_state, player_id
+    ) - _get_player_meeples(game_state, opponent_id)
     latent_score_diff = _estimate_latent_score(
-        game_state, player_id) - _estimate_latent_score(game_state, opponent_id)
+        game_state, player_id
+    ) - _estimate_latent_score(game_state, opponent_id)
     incomplete_city_tiles_diff = _count_incomplete_city_tiles(
-        game_state, player_id) - _count_incomplete_city_tiles(game_state, opponent_id)
+        game_state, player_id
+    ) - _count_incomplete_city_tiles(game_state, opponent_id)
     risky_fields_lt3_diff = _count_risky_fields_lt3_completed_cities(
-        game_state, player_id) - _count_risky_fields_lt3_completed_cities(game_state, opponent_id)
+        game_state, player_id
+    ) - _count_risky_fields_lt3_completed_cities(game_state, opponent_id)
     return {
         "score_diff": score_diff,
         "meeple_diff": meeple_diff,
@@ -290,7 +315,11 @@ def extract_features(game_state: Any, player_id: int, opponent_id: int) -> dict[
     }
 
 
-def _compress_to_star_bounds(raw_value: float, bias: float = DEFAULT_COMPRESSION_BIAS, scale: float = DEFAULT_COMPRESSION_SCALE) -> float:
+def _compress_to_star_bounds(
+    raw_value: float,
+    bias: float = DEFAULT_COMPRESSION_BIAS,
+    scale: float = DEFAULT_COMPRESSION_SCALE,
+) -> float:
     """Compress a raw heuristic value into [-100, 100] with a sigmoid.
 
     Args:
@@ -317,7 +346,12 @@ def _compress_to_star_bounds(raw_value: float, bias: float = DEFAULT_COMPRESSION
     return float(round((200.0 * win_prob) - 100.0))
 
 
-def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: HeuristicWeights = DEFAULT_WEIGHTS) -> float:
+def evaluate_state(
+    game_state: Any,
+    player_id: int,
+    opponent_id: int,
+    weights: HeuristicWeights = DEFAULT_WEIGHTS,
+) -> float:
     """Compute linear heuristic score for a game state.
 
     Args:
@@ -334,8 +368,8 @@ def evaluate_state(game_state: Any, player_id: int, opponent_id: int, weights: H
         weights.score_diff * features["score_diff"]
         + weights.meeple_diff * features["meeple_diff"]
         + weights.latent_score_diff * features["latent_score_diff"]
-        + weights.incomplete_city_tiles_diff *
-        features["incomplete_city_tiles_diff"]
+        + weights.incomplete_city_tiles_diff
+        * features["incomplete_city_tiles_diff"]
         + weights.risky_fields_lt3_diff * features["risky_fields_lt3_diff"]
     )
     return _compress_to_star_bounds(raw_value)

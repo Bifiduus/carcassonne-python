@@ -25,20 +25,26 @@ class WindowView:
 
         # Load keybinds from config
         config = self.game_data.game.get_game_configuration()
-        self.file_keybinds = config.get("file_keybinds", {
-            "app.new": "n",
-            "app.load": "l",
-            "app.save": "s",
-            "app.config": "comma",
-            "app.info": "i",
-            "app.quit": "q",
-        })
-        self.game_keybinds = config.get("game_keybinds", {
-            "app.undo": "u",
-            "app.redo": "r",
-            "app.pause": "p",
-            "app.hint": "h"
-        })
+        self.file_keybinds = config.get(
+            "file_keybinds",
+            {
+                "app.new": "n",
+                "app.load": "l",
+                "app.save": "s",
+                "app.config": "comma",
+                "app.info": "i",
+                "app.quit": "q",
+            },
+        )
+        self.game_keybinds = config.get(
+            "game_keybinds",
+            {
+                "app.undo": "u",
+                "app.redo": "r",
+                "app.pause": "p",
+                "app.hint": "h",
+            },
+        )
 
         # main window
         self.window = Gtk.ApplicationWindow(application=self.application)

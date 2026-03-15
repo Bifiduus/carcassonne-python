@@ -1,8 +1,9 @@
-"""This module defines the GameCLI class, which provides a command-line interface for interacting with the Carcassonne game.
-The GameCLI class allows players to enter commands to perform various actions such as starting a new game, 
-loading and saving game states, shuffling the tiles, getting hints, undoing and redoing moves, 
-and displaying game information such as the player's hand, scores, history, and configuration.
+"""Command-line interface for the Carcassonne game.
+
+GameCLI accepts commands to start/load/save games, draw and place tiles,
+undo/redo turns, and display game state information.
 """
+
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.presentation.cli import commands_handler_cli
 from carcassonne.business_logic.game import Game
@@ -13,10 +14,21 @@ import atexit
 from pathlib import Path
 
 COMMANDS = [
-    "new", "help", "quit", "load", "save",
-    "shuffle", "draw", "hint", "undo", "redo",
-    "show hand", "show score", "show history", "show configuration",
-    "set"
+    "new",
+    "help",
+    "quit",
+    "load",
+    "save",
+    "shuffle",
+    "draw",
+    "hint",
+    "undo",
+    "redo",
+    "show hand",
+    "show score",
+    "show history",
+    "show configuration",
+    "set",
 ]
 
 
@@ -104,4 +116,6 @@ class GameCLI:
             commands_handler_cli.show_board(self, game=self.game)
 
         else:
-            print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
+            print(
+                "Commande inconnue. Tapez 'help' pour la liste des commandes."
+            )

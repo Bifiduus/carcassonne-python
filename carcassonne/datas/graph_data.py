@@ -1,7 +1,9 @@
-"""This module defines the GraphData class, which implements the IGraphData interface to represent the game state of Carcassonne as a graph.
-The GraphData class manages the vertices of the graph, which correspond to the tiles placed on the board and their connections.
-It provides methods to add and remove vertices, set neighbors, and retrieve vertex information.
+"""Graph-backed game state for Carcassonne.
+
+GraphData implements `IGraphData` and manages tile vertices, neighbors, and
+related lookup helpers.
 """
+
 from dataclasses import dataclass, field
 from typing import Dict, Optional, List
 
@@ -18,12 +20,7 @@ WEST_DIR = 3
 
 ORIENTATIONS = 4
 
-OPPOSITE = {
-    "N": "S",
-    "S": "N",
-    "E": "W",
-    "W": "E"
-}
+OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)
 NORTHEAST_MATRIX = (0, 2)
@@ -49,7 +46,15 @@ class Vertex:
     # Couples of (key = direction, value = neighbor vertex id)
     neighbors: Dict[int, int] = field(default_factory=dict)
 
-    def __init__(self, id: int, name: str, middle: str, tile_dict: Dict[str, list], orientation: int = 0, position: tuple[int, int] = (0, 0)) -> None:
+    def __init__(
+        self,
+        id: int,
+        name: str,
+        middle: str,
+        tile_dict: Dict[str, list],
+        orientation: int = 0,
+        position: tuple[int, int] = (0, 0),
+    ) -> None:
         self.id = id
         self.name = name
         self.middle = middle
@@ -64,7 +69,8 @@ class Vertex:
     def set_neighbor(self, orientation: int, neighbor_id: int) -> None:
         if orientation not in range(ORIENTATIONS):
             raise ValueError(
-                f"Orientation must be between 0 and {ORIENTATIONS - 1}")
+                f"Orientation must be between 0 and {ORIENTATIONS - 1}"
+            )
         self.neighbors[orientation] = neighbor_id
 
     def remove_neighbor(self, orientation: int) -> None:
@@ -121,7 +127,8 @@ class GraphData(IGraphData):
     def __init__(self) -> None:
         self.vertices: Dict[int, Vertex] = {}
         self.turn = 0
-        # Lands components structure: {land_type: {set_name: [(tile_id, [directions]), ...]}}
+        # Lands components structure: {land_type: {set_name: [(tile_id,
+        # [directions]), ...]}}
         self.lands_components: Dict[str, Dict[str, list]] = {}
         self.next_set_id: Dict[str, int] = {}  # Track next ID per land type
         # List of meeples placed on the board
@@ -133,46 +140,57 @@ class GraphData(IGraphData):
 
     def initialize_land_components(self) -> None:
         # Initialize land components for the starting tile (CRFR)
-        self.lands_components['C'] = {}
-        self.lands_components['R'] = {}
-        self.lands_components['F'] = {}
-        self.lands_components['M'] = {}
-        self.next_set_id['C'] = 1  # Next set ID for cities
-        self.next_set_id['R'] = 1  # Next set ID for roads
-        self.next_set_id['F'] = 1  # Next set ID for fields
-        self.next_set_id['M'] = 1  # Next set ID for monasteries
+        self.lands_components["C"] = {}
+        self.lands_components["R"] = {}
+        self.lands_components["F"] = {}
+        self.lands_components["M"] = {}
+        self.next_set_id["C"] = 1  # Next set ID for cities
+        self.next_set_id["R"] = 1  # Next set ID for roads
+        self.next_set_id["F"] = 1  # Next set ID for fields
+        self.next_set_id["M"] = 1  # Next set ID for monasteries
 
     def initialize_starting_tile(self) -> None:
-        # Define the lands components for each tile type, including the starting tile
-        self.add_vertex(vertex_id=0, name='CRFR', middle="",
-                        orientation=0, position=(0, 0))
-        tile = self.tiles_dict['CRFR']
+        # Define the lands components for each tile type, including the
+        # starting tile
+        self.add_vertex(
+            vertex_id=0, name="CRFR", middle="", orientation=0, position=(0, 0)
+        )
+        tile = self.tiles_dict["CRFR"]
         for land in tile.tiles_lands.keys():
             for connected in tile.tiles_lands[land]:
                 land_id = land + str(self.next_set_id[land])
                 self.lands_components[land][land_id] = [(0, connected)]
                 self.next_set_id[land] += 1
         print(self.lands_components)
-        '''
-        for type, components in tile.items():
-            
-            for component in components:
-                set_name = f"{type}{self.next_set_id[type]}"
-                self.lands_components[type][set_name] = [(0, component)]
-                self.next_set_id[type] += 1
-        self.lands_components['F'] = {'F1': [(0, ['NE', 'NW'])], 'F2': [(0, ['SE', 'S', 'SW'])]}
-        self.lands_components.append({})
-        self.next_set_id.append({})'''
+        # Legacy initialization draft kept for reference:
+        # for tile_type, components in tile.items():
+        #     for component in components:
+        #         set_name = f"{tile_type}{self.next_set_id[tile_type]}"
+        #         self.lands_components[tile_type][set_name] = [(0, component)]
+        #         self.next_set_id[tile_type] += 1
 
-    def add_vertex(self, vertex_id: int, name: str, middle: str, orientation: int, position: tuple[int, int]) -> None:
+    def add_vertex(
+        self,
+        vertex_id: int,
+        name: str,
+        middle: str,
+        orientation: int,
+        position: tuple[int, int],
+    ) -> None:
         if vertex_id in self.vertices:
             raise ValueError(f"Vertex ID already exists : {vertex_id}")
 
         if position is None:
             return ValueError("Error in getting position")
 
-        vertex = Vertex(id=vertex_id, name=name, middle=middle,
-                        tile_dict=self.tiles_dict[name].tiles_lands, orientation=orientation % ORIENTATIONS, position=position)
+        vertex = Vertex(
+            id=vertex_id,
+            name=name,
+            middle=middle,
+            tile_dict=self.tiles_dict[name].tiles_lands,
+            orientation=orientation % ORIENTATIONS,
+            position=position,
+        )
         self.vertices[vertex_id] = vertex
 
         self.turn += 1
@@ -194,7 +212,13 @@ class GraphData(IGraphData):
                     self.set_neighbor(vertex_id, side, other_vertex.get_id())
                     continue
 
-    def set_neighbor(self, vertex_id: int, orientation: int, neighbor_id: int, bidirectional: bool = True) -> None:
+    def set_neighbor(
+        self,
+        vertex_id: int,
+        orientation: int,
+        neighbor_id: int,
+        bidirectional: bool = True,
+    ) -> None:
         if vertex_id not in self.vertices or neighbor_id not in self.vertices:
             raise ValueError(f"Vertex ID or neighbor ID not found")
         self.vertices[vertex_id].set_neighbor(orientation, neighbor_id)
@@ -258,10 +282,11 @@ class GraphData(IGraphData):
                 "middle": vertex.get_middle(),
                 "orientation": vertex.get_orientation(),
             }
-
         }
 
-    def get_position(self, vertex_id: int, side: int) -> Optional[tuple[int, int]]:
+    def get_position(
+        self, vertex_id: int, side: int
+    ) -> Optional[tuple[int, int]]:
         vertex = self.get_vertex(vertex_id)
         if vertex is None:
             return None
@@ -277,7 +302,9 @@ class GraphData(IGraphData):
         else:
             raise ValueError(f"Invalid side: {side}")
 
-    def get_position_by_pos(self, position: tuple[int, int], side: int) -> Optional[tuple[int, int]]:
+    def get_position_by_pos(
+        self, position: tuple[int, int], side: int
+    ) -> Optional[tuple[int, int]]:
         x, y = position
         if side == SOUTH_DIR:
             return (x, y + 1)
@@ -307,7 +334,8 @@ class GraphData(IGraphData):
         self.next_set_id.clear()
         self.meeples.clear()
         self.turn = 0
-        # Resetting the graph with the starting tile (CRFR) as a vertex in the graph
+        # Resetting the graph with the starting tile (CRFR) as a vertex in the
+        # graph
         self.initialize_land_components()
         self.initialize_starting_tile()
 
@@ -317,19 +345,22 @@ class GraphData(IGraphData):
             raise ValueError(f"Vertex ID not found : {vertex_id}")
         return vertex.get_orientation()
 
-    def find_neighbor_at(self, x: int, y: int) -> tuple[Optional[int], Optional[int]]:
+    def find_neighbor_at(
+        self, x: int, y: int
+    ) -> tuple[Optional[int], Optional[int]]:
         """
         Cherche une tuile voisine autour de (x, y).
 
         Retourne un tuple (vertex_id, side_relative_to_new_tile)
-        side_relative_to_new_tile : côté de la nouvelle tuile où est collé le voisin
+        side_relative_to_new_tile : côté de la nouvelle tuile où est collé
+        le voisin
         """
         # Mapping direction → offset
         neighbors_offset = {
             NORTH_DIR: (0, -1),
             EAST_DIR: (1, 0),
             SOUTH_DIR: (0, 1),
-            WEST_DIR: (-1, 0)
+            WEST_DIR: (-1, 0),
         }
 
         for side, (dx, dy) in neighbors_offset.items():
@@ -337,7 +368,8 @@ class GraphData(IGraphData):
             for vertex in self.vertices.values():
                 vx, vy = vertex.get_position()
                 if (vx, vy) == (nx, ny):
-                    # side représente le côté de la nouvelle tuile où ce voisin est collé
+                    # side représente le côté de la nouvelle tuile où ce voisin
+                    # est collé
                     opposite_side = (side + 2) % 4
                     return vertex.get_id(), opposite_side
 

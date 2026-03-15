@@ -21,8 +21,8 @@ DEFAULT_SETTINGS = {
         "app.undo": "u",
         "app.redo": "r",
         "app.pause": "p",
-        "app.hint": "h"
-    }
+        "app.hint": "h",
+    },
 }
 
 
@@ -38,11 +38,11 @@ class GameConfiguration:
             "verbose": "false",
             "blitz": "false",
             "timeout": "30",
-            "contest_file": ""
+            "contest_file": "",
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),
-            "game_keybinds": json.dumps(DEFAULT_SETTINGS["game_keybinds"])
+            "game_keybinds": json.dumps(DEFAULT_SETTINGS["game_keybinds"]),
         }
 
         with open(CONFIG_PATH, "w") as f:
@@ -70,15 +70,18 @@ class GameConfiguration:
             # optional contest file
             if config.has_option("defaults", "contest_file"):
                 settings["contest_file"] = config.get(
-                    "defaults", "contest_file")
+                    "defaults", "contest_file"
+                )
 
             if "keybinds" in config:
                 if config.has_option("keybinds", "file_keybinds"):
                     settings["file_keybinds"] = json.loads(
-                        config.get("keybinds", "file_keybinds"))
+                        config.get("keybinds", "file_keybinds")
+                    )
                 if config.has_option("keybinds", "game_keybinds"):
                     settings["game_keybinds"] = json.loads(
-                        config.get("keybinds", "game_keybinds"))
+                        config.get("keybinds", "game_keybinds")
+                    )
 
         except Exception as e:
             print("⚠️  Avertissement : fichier de configuration invalide.")
@@ -93,11 +96,11 @@ class GameConfiguration:
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
             "timeout": str(self.settings["timeout"]),
-            "contest_file": str(self.settings.get("contest_file", ""))
+            "contest_file": str(self.settings.get("contest_file", "")),
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(self.settings["file_keybinds"]),
-            "game_keybinds": json.dumps(self.settings["game_keybinds"])
+            "game_keybinds": json.dumps(self.settings["game_keybinds"]),
         }
 
         with open(CONFIG_PATH, "w") as f:

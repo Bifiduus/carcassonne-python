@@ -1,6 +1,6 @@
 """
 This module defines helper functions for move string serialization.
-It parses move commands into structured data and builds printable history lines.
+It parses move commands and builds printable history lines.
 """
 
 import re
@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 # Placement format: <target_vertex_id><side><rotation>, e.g. "12N3".
 PLACEMENT_RE: re.Pattern[str] = re.compile(
-    r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$")
+    r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$"
+)
 # Allowed meeple placement sides in the move format.
 MEEPLE_SET: set[str] = {"N", "E", "S", "W"}
 
@@ -44,7 +45,11 @@ def parse_move(move: str) -> dict:
     center = None
     placement_index = 1
     # Some tiles include an explicit center part before placement.
-    if len(parts) >= 3 and len(parts[1]) == 1 and not PLACEMENT_RE.match(parts[1]):
+    if (
+        len(parts) >= 3
+        and len(parts[1]) == 1
+        and not PLACEMENT_RE.match(parts[1])
+    ):
         center: str = parts[1]
         placement_index = 2
     if placement_index >= len(parts):

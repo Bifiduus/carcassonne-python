@@ -54,7 +54,7 @@ class SingleplayerMenu(Gtk.Box):
         self.file_button = Gtk.Button(label="Choose contest file")
         self.file_button.connect("clicked", self.on_choose_file)
 
-        self.file_button.set_visible(False)   # hidden by default
+        self.file_button.set_visible(False)  # hidden by default
         self.selected_file = None
 
         mode_box.append(self.blitz_cb)
@@ -97,11 +97,7 @@ class SingleplayerMenu(Gtk.Box):
     def on_choose_file(self, button):
         dialog = Gtk.FileDialog(title="Select contest file")
 
-        dialog.open(
-            self.gui.window.window,
-            None,
-            self.on_file_selected
-        )
+        dialog.open(self.gui.window.window, None, self.on_file_selected)
 
     def on_file_selected(self, dialog, result):
         try:
@@ -134,7 +130,7 @@ class SingleplayerMenu(Gtk.Box):
             print("Please select a contest file")
             return
 
-        # apply selected settings to the game configuration and start a new game
+        # Apply selected settings and start a new game.
         # (seed is passed to the game logic; mode is stored as a setting).
         if mode == "blitz":
             self.gui.game_data.game.set_game_configuration("blitz", True)
@@ -145,7 +141,8 @@ class SingleplayerMenu(Gtk.Box):
 
         if contest_file:
             self.gui.game_data.game.set_game_configuration(
-                "contest_file", contest_file)
+                "contest_file", contest_file
+            )
 
         # persist configuration to disk
         self.gui.game_data.game.save_config()

@@ -5,6 +5,7 @@ coordinate math, and drawing common GUI elements such as meeples and
 preview grids.  The idea is that ``BoardView`` can simply delegate to
 these helpers without holding too much implementation detail.
 """
+
 import os
 
 from gi.repository import Gdk, GdkPixbuf
@@ -20,19 +21,32 @@ def normalize_name(name: str) -> str:
     return name
 
 
-def click_within_current_tile(mouse_x: float, mouse_y: float, offsets: Tuple[int, int, int, int],
-                              tile_size: float, current_tile) -> bool:
+def click_within_current_tile(
+    mouse_x: float,
+    mouse_y: float,
+    offsets: Tuple[int, int, int, int],
+    tile_size: float,
+    current_tile,
+) -> bool:
     """Return True if the pixel click lies inside the currently held tile."""
     offset_x, offset_y, min_x, min_y = offsets
     lx = current_tile.x
     ly = current_tile.y
     tile_px = offset_x + (lx - min_x) * tile_size
     tile_py = offset_y + (ly - min_y) * tile_size
-    return tile_px <= mouse_x <= tile_px + tile_size and tile_py <= mouse_y <= tile_py + tile_size
+    return (
+        tile_px <= mouse_x <= tile_px + tile_size
+        and tile_py <= mouse_y <= tile_py + tile_size
+    )
 
 
-def meeple_zone(mouse_x: float, mouse_y: float, offsets: Tuple[int, int, int, int],
-                tile_size: float, current_tile) -> str:
+def meeple_zone(
+    mouse_x: float,
+    mouse_y: float,
+    offsets: Tuple[int, int, int, int],
+    tile_size: float,
+    current_tile,
+) -> str:
     """Convert a click inside a tile into a meeple position string."""
     offset_x, offset_y, min_x, min_y = offsets
     lx = current_tile.x
@@ -50,7 +64,9 @@ def meeple_zone(mouse_x: float, mouse_y: float, offsets: Tuple[int, int, int, in
     return positions[row][col]
 
 
-def draw_pixbuf_with_alpha(cr, x, y, size, pixbuf, orientation: int, alpha: float = 1.0) -> None:
+def draw_pixbuf_with_alpha(
+    cr, x, y, size, pixbuf, orientation: int, alpha: float = 1.0
+) -> None:
     """Draw a tile pixbuf rotated and scaled with optional transparency.
 
     ``alpha`` defaults to 1.0 for an opaque tile; lower values produce a
@@ -65,7 +81,8 @@ def draw_pixbuf_with_alpha(cr, x, y, size, pixbuf, orientation: int, alpha: floa
     scale_y = size / pixbuf.get_height()
     cr.scale(scale_x, scale_y)
     Gdk.cairo_set_source_pixbuf(
-        cr, pixbuf, -pixbuf.get_width() / 2, -pixbuf.get_height() / 2)
+        cr, pixbuf, -pixbuf.get_width() / 2, -pixbuf.get_height() / 2
+    )
     cr.paint_with_alpha(alpha)
     cr.restore()
 
@@ -105,9 +122,15 @@ def draw_meeples(cr, x, y, size, meeples, tile_id) -> None:
         if m["tile_id"] != tile_id:
             continue
         position_map = {
-            7: (0, 0), 0: (0, 1), 1: (0, 2),
-            6: (1, 0), 8: (1, 1), 2: (1, 2),
-            5: (2, 0), 4: (2, 1), 3: (2, 2),
+            7: (0, 0),
+            0: (0, 1),
+            1: (0, 2),
+            6: (1, 0),
+            8: (1, 1),
+            2: (1, 2),
+            5: (2, 0),
+            4: (2, 1),
+            3: (2, 2),
         }
         row, col = position_map.get(m["position"], (1, 1))
         cell = size / 3

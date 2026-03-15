@@ -1,4 +1,5 @@
 """Utility helpers shared by several GUI modules."""
+
 import os
 
 from gi.repository import Gtk, Gdk, Gio

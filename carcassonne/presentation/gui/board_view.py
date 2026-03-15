@@ -1,9 +1,11 @@
 """This module implements the BoardView class for displaying the game board."""
+
 from carcassonne.presentation.gui import board_utils, utils
 from typing import Dict, Any, Tuple
 import os
 from gi.repository import Gtk, Gdk, GdkPixbuf
 import gi
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -105,7 +107,9 @@ class BoardView(Gtk.DrawingArea):
     # 🎨 DRAW
     # =========================
 
-    def on_draw(self, area: Gtk.DrawingArea, cr: Any, width: int, height: int) -> None:
+    def on_draw(
+        self, area: Gtk.DrawingArea, cr: Any, width: int, height: int
+    ) -> None:
         """Main draw callback passed to ``set_draw_func``.
 
         Paints the board background, all placed tiles, optionally the tile
@@ -115,9 +119,7 @@ class BoardView(Gtk.DrawingArea):
         # draw background image if available
         if self.background:
             scaled = self.background.scale_simple(
-                width,
-                height,
-                GdkPixbuf.InterpType.BILINEAR
+                width, height, GdkPixbuf.InterpType.BILINEAR
             )
 
             Gdk.cairo_set_source_pixbuf(cr, scaled, 0, 0)
@@ -160,11 +162,15 @@ class BoardView(Gtk.DrawingArea):
         """Draw a semi‑transparent copy of the tile that is currently being
         dragged.  The tile is snapped to the grid before rendering.
         """
-        if not (self.game_data.current_tile and self.game_data.current_tile.current_tile):
+        if not (
+            self.game_data.current_tile
+            and self.game_data.current_tile.current_tile
+        ):
             return
 
         name = board_utils.normalize_name(
-            self.game_data.current_tile.current_tile)
+            self.game_data.current_tile.current_tile
+        )
         pixbuf = self.textures.get(name)
         if not pixbuf:
             return
@@ -193,12 +199,15 @@ class BoardView(Gtk.DrawingArea):
         ``TilesView.parse_move`` or from ``game.get_board_data()``.
         """
         name = board_utils.normalize_name(
-            tile_data["name"] + tile_data["middle"] if tile_data["middle"] else tile_data["name"])
+            tile_data["name"] + tile_data["middle"]
+            if tile_data["middle"]
+            else tile_data["name"]
+        )
         orientation = tile_data["orientation"]
         if is_last:
             cr.set_source_rgb(1, 0, 0)
             cr.set_line_width(4)
-            cr.rectangle(x+2, y+2, size-4, size-4)
+            cr.rectangle(x + 2, y + 2, size - 4, size - 4)
             cr.stroke()
         pixbuf = self.textures.get(name)
         if pixbuf:
@@ -208,13 +217,21 @@ class BoardView(Gtk.DrawingArea):
             cr.rectangle(x, y, size, size)
             cr.fill()
 
-        if board_utils.is_previewed_tile(self.game_data.current_tile, tile_data):
+        if board_utils.is_previewed_tile(
+            self.game_data.current_tile, tile_data
+        ):
             board_utils.draw_preview_grid(cr, x, y, size)
         else:
             cr.set_source_rgb(0, 0, 0)
 
         board_utils.draw_meeples(
-            cr, x, y, size, self.game_data.game.get_meeples_data(), tile_data["id"])
+            cr,
+            x,
+            y,
+            size,
+            self.game_data.game.get_meeples_data(),
+            tile_data["id"],
+        )
         cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
         cr.stroke()
@@ -256,7 +273,8 @@ class BoardView(Gtk.DrawingArea):
         # otherwise this is the first placement click
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
         vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y)
+            grid_x, grid_y
+        )
         if vertex_id is None or side is None:
             self.queue_draw()
             return
@@ -264,7 +282,7 @@ class BoardView(Gtk.DrawingArea):
         orientation = self.game_data.current_orientation
         move_str = (
             f"{self.game_data.current_tile.current_tile}/"
-            f"{vertex_id}{['N','E','S','W'][side]}{orientation}"
+            f"{vertex_id}{['N', 'E', 'S', 'W'][side]}{orientation}"
         )
         self.game_data.current_tile.move = move_str
         self.game_data.current_tile.x = grid_x
@@ -277,11 +295,23 @@ class BoardView(Gtk.DrawingArea):
 
     def _click_within_current_tile(self, mouse_x, mouse_y) -> bool:
         offsets = self.get_board_offsets()
-        return board_utils.click_within_current_tile(mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile)
+        return board_utils.click_within_current_tile(
+            mouse_x,
+            mouse_y,
+            offsets,
+            self.tile_size,
+            self.game_data.current_tile,
+        )
 
     def _meeple_zone(self, mouse_x, mouse_y) -> str:
         offsets = self.get_board_offsets()
-        return board_utils.meeple_zone(mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile)
+        return board_utils.meeple_zone(
+            mouse_x,
+            mouse_y,
+            offsets,
+            self.tile_size,
+            self.game_data.current_tile,
+        )
 
     def on_drop(self, controller, value, x, y):
         """Handle a tile name string dropped on the board.
@@ -294,12 +324,13 @@ class BoardView(Gtk.DrawingArea):
         """
         grid_x, grid_y = self.pixel_to_grid(x, y)
         vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y)
+            grid_x, grid_y
+        )
         if vertex_id is not None and side is not None:
             orientation = self.game_data.current_orientation
             move_str = (
                 f"{self.game_data.current_tile.current_tile}/"
-                f"{vertex_id}{['N','E','S','W'][side]}{orientation}"
+                f"{vertex_id}{['N', 'E', 'S', 'W'][side]}{orientation}"
             )
             self.game_data.current_tile.move = move_str
             self.game_data.current_tile.x = grid_x
@@ -344,13 +375,13 @@ class BoardView(Gtk.DrawingArea):
 
     def on_key_press(self, controller, keyval, keycode, state):
         step = 20
-        if keyval == Gdk.KEY_z:      # up
+        if keyval == Gdk.KEY_z:  # up
             self.offset_y += step
-        elif keyval == Gdk.KEY_s:    # down
+        elif keyval == Gdk.KEY_s:  # down
             self.offset_y -= step
-        elif keyval == Gdk.KEY_q:    # left
+        elif keyval == Gdk.KEY_q:  # left
             self.offset_x += step
-        elif keyval == Gdk.KEY_d:    # right
+        elif keyval == Gdk.KEY_d:  # right
             self.offset_x -= step
         elif keyval == Gdk.KEY_r:
             self.game_data.rotate_current_tile()
@@ -376,7 +407,12 @@ class BoardView(Gtk.DrawingArea):
         board_height = (max_y - min_y + 1) * tile
         base_offset_x = (width - board_width) // 2
         base_offset_y = (height - board_height) // 2
-        return base_offset_x + self.offset_x, base_offset_y + self.offset_y, min_x, min_y
+        return (
+            base_offset_x + self.offset_x,
+            base_offset_y + self.offset_y,
+            min_x,
+            min_y,
+        )
 
     def pixel_to_grid(self, mouse_x: float, mouse_y: float) -> Tuple[int, int]:
         """Convert pixel coordinates to grid coordinates."""
@@ -408,13 +444,14 @@ class BoardView(Gtk.DrawingArea):
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
 
         vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y)
+            grid_x, grid_y
+        )
 
         if vertex_id is not None and side is not None:
             orientation = self.game_data.current_orientation
             move_str = (
                 f"{self.game_data.current_tile.current_tile}/{vertex_id}"
-                f"{['N','E','S','W'][side]}{orientation}"
+                f"{['N', 'E', 'S', 'W'][side]}{orientation}"
             )
             self.game_data.current_tile.move = move_str
             self.game_data.current_tile.x = grid_x

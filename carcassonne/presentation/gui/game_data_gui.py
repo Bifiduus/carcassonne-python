@@ -1,12 +1,11 @@
-
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
 
 
-class GameDataGui():
+class GameDataGui:
     def __init__(self, game):
         self.game = game
-        self.nb_tiles = 0               # used to give each drawn tile a unique id
+        self.nb_tiles = 0  # used to give each drawn tile a unique id
         self.current_tile: TilesView | None = None
         self.current_orientation = 0
         self.board_view = None  # set later by Gui
@@ -79,12 +78,13 @@ class GameDataGui():
 
         if self.current_tile.move:
             self.current_tile.move = self.current_tile.move[:-1] + str(
-                self.current_orientation)
+                self.current_orientation
+            )
 
         if self.board_view:
             self.board_view.refresh()
 
-        if hasattr(self, 'gui'):
+        if hasattr(self, "gui"):
             self.gui.tile_preview.update_rotation()
 
     def draw_tile(self):

@@ -1,4 +1,5 @@
 """Main file of the program"""
+
 import argparse
 import sys
 
@@ -103,16 +104,19 @@ def main() -> int:
     args: argparse.Namespace = parser.parse_args()
     config_overrides = {}
     if args.verbose:
-        config_overrides['verbose'] = True
+        config_overrides["verbose"] = True
     if args.blitz:
-        config_overrides['blitz'] = True
+        config_overrides["blitz"] = True
     if args.time != 30:  # assuming default is 30
-        config_overrides['time'] = args.timeout
+        config_overrides["time"] = args.timeout
 
     game_data: IGraphData = GraphData()
     if args.players:
-        game: IGameService = Game(game_data, args.players if args.players >
-                                  1 and args.players <= 5 else 2, config_overrides)
+        game: IGameService = Game(
+            game_data,
+            args.players if args.players > 1 and args.players <= 5 else 2,
+            config_overrides,
+        )
     else:
         game: IGameService = Game(game_data, 1, config_overrides)
     game.shuffle_algo = args.shuffle

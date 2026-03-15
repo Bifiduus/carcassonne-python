@@ -1,6 +1,6 @@
 """
 This module defines the Seed class used to generate deterministic seeds.
-Generated values are based on runtime information when no explicit seed is provided.
+Generated values are based on runtime info when no explicit seed is provided.
 """
 
 import time

@@ -11,14 +11,14 @@ WEST_DIR = 3
 
 # Mapping between position strings and cardinal directions
 DIRECTION_MAP = {
-    'N': NORTH_DIR,   # 0
-    'E': EAST_DIR,    # 1
-    'S': SOUTH_DIR,   # 2
-    'W': WEST_DIR     # 3
+    "N": NORTH_DIR,  # 0
+    "E": EAST_DIR,  # 1
+    "S": SOUTH_DIR,  # 2
+    "W": WEST_DIR,  # 3
 }
 
 
-class PlayerScore():
+class PlayerScore:
     id: int
     score: int
 
@@ -33,36 +33,37 @@ class PlayerScore():
         self.score = points
 
 
-class ScoreManager():
+class ScoreManager:
     def __init__(self):
         pass
 
     @staticmethod
-    def _to_oriented_cardinal(tile_id: int, raw_direction: str, graph) -> Optional[str]:
-        """Convert a raw component direction to the oriented cardinal direction on board."""
-        if raw_direction not in ['N', 'E', 'S', 'W']:
+    def _to_oriented_cardinal(
+        tile_id: int, raw_direction: str, graph
+    ) -> Optional[str]:
+        """Convert a raw component direction to oriented board cardinal."""
+        if raw_direction not in ["N", "E", "S", "W"]:
             return None
 
         vertex = graph.vertices.get(tile_id)
         if vertex is None:
             return None
 
-        tile_code = vertex.name.split('/')[0]
+        tile_code = vertex.name.split("/")[0]
         tile_def = graph.tiles_dict.get(tile_code)
         if tile_def is None:
             return raw_direction
 
-        i, j = {
-            'N': (0, 1),
-            'E': (1, 2),
-            'S': (2, 1),
-            'W': (1, 0)
-        }[raw_direction]
+        i, j = {"N": (0, 1), "E": (1, 2), "S": (2, 1), "W": (1, 0)}[
+            raw_direction
+        ]
         oriented = tile_def.direction_matrix[vertex.orientation][i][j]
-        return oriented if oriented in ['N', 'E', 'S', 'W'] else None
+        return oriented if oriented in ["N", "E", "S", "W"] else None
 
     @staticmethod
-    def is_component_complete(terrain_type: str, component_name: str, graph) -> bool:
+    def is_component_complete(
+        terrain_type: str, component_name: str, graph
+    ) -> bool:
         """Check if a terrain component is complete (can't expand).
 
         For Road/City/Stream: complete if no adjacent empty space
@@ -76,7 +77,7 @@ class ScoreManager():
 
         component = graph.lands_components[terrain_type][component_name]
 
-        if terrain_type == 'M':  # Monastery
+        if terrain_type == "M":  # Monastery
             return ScoreManager._is_monastery_complete(component, graph)
         else:  # Road, City, Stream
             return ScoreManager._is_edge_component_complete(component, graph)
@@ -101,7 +102,7 @@ class ScoreManager():
         """A Road/City/Stream is complete when it has no free edges.
 
         A free edge is a direction in the component that doesn't have
-        a neighbor in that direction, meaning the component can potentially expand.
+        a neighbor in that direction, so the component can still expand.
         """
         if not component:
             return False
@@ -118,13 +119,14 @@ class ScoreManager():
             # Check each cardinal direction in this tile's directions
             for direction_str in directions_list:
                 # Skip non-cardinal directions (corners and center)
-                if direction_str not in ['N', 'E', 'S', 'W']:
+                if direction_str not in ["N", "E", "S", "W"]:
                     continue
 
-                # Directions stored in components are from base tile definition.
-                # Convert them to the actual board-oriented direction first.
+                # Component directions are from base tile definitions.
+                # Convert to board-oriented directions first.
                 oriented_direction = ScoreManager._to_oriented_cardinal(
-                    tile_id, direction_str, graph)
+                    tile_id, direction_str, graph
+                )
                 if oriented_direction is None:
                     continue
 
@@ -170,104 +172,161 @@ class ScoreManager():
         banner_count = 0
         for tile_id in tile_ids:
             vertex = graph.vertices.get(tile_id)
-            if vertex and '/b' in vertex.name:
+            if vertex and "/b" in vertex.name:
                 banner_count += 1
         return banner_count
 
     @staticmethod
-    def score_end_of_turn(graph, players: Dict[int, 'Player'], current_player_id: int = 0, scored_components: set = None) -> None:
-        """Score at end of turn for completed Road, City, and Monastery components."""
+    def score_end_of_turn(
+        graph,
+        players: Dict[int, "Player"],
+        current_player_id: int = 0,
+        scored_components: set = None,
+    ) -> None:
+        """Score completed Road, City, and Monastery components."""
         if scored_components is None:
             scored_components = set()
 
         # Score Roads
-        if 'R' in graph.lands_components:
-            for road_name, road_component in graph.lands_components['R'].items():
+        if "R" in graph.lands_components:
+            for road_name, road_component in graph.lands_components[
+                "R"
+            ].items():
                 component_key = f"R:{road_name}"
                 is_complete = ScoreManager.is_component_complete(
-                    'R', road_name, graph)
+                    "R", road_name, graph
+                )
                 if component_key not in scored_components and is_complete:
                     ScoreManager._score_road_complete(
-                        road_component, road_name, graph, players, current_player_id)
+                        road_component,
+                        road_name,
+                        graph,
+                        players,
+                        current_player_id,
+                    )
                     scored_components.add(component_key)
 
         # Score Cities
-        if 'C' in graph.lands_components:
-            for city_name, city_component in graph.lands_components['C'].items():
+        if "C" in graph.lands_components:
+            for city_name, city_component in graph.lands_components[
+                "C"
+            ].items():
                 component_key = f"C:{city_name}"
                 is_complete = ScoreManager.is_component_complete(
-                    'C', city_name, graph)
+                    "C", city_name, graph
+                )
                 if component_key not in scored_components and is_complete:
                     ScoreManager._score_city_complete(
-                        city_component, city_name, graph, players, current_player_id)
+                        city_component,
+                        city_name,
+                        graph,
+                        players,
+                        current_player_id,
+                    )
                     scored_components.add(component_key)
 
         # Score Monasteries
-        if 'M' in graph.lands_components:
-            for monastery_name, monastery_component in graph.lands_components['M'].items():
+        if "M" in graph.lands_components:
+            for monastery_name, monastery_component in graph.lands_components[
+                "M"
+            ].items():
                 component_key = f"M:{monastery_name}"
                 is_complete = ScoreManager.is_component_complete(
-                    'M', monastery_name, graph)
+                    "M", monastery_name, graph
+                )
                 if component_key not in scored_components and is_complete:
                     ScoreManager._score_monastery_complete(
-                        monastery_component, monastery_name, graph, players, current_player_id)
+                        monastery_component,
+                        monastery_name,
+                        graph,
+                        players,
+                        current_player_id,
+                    )
                     scored_components.add(component_key)
 
     @staticmethod
-    def _score_road_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player'], current_player_id: int = 0) -> None:
+    def _score_road_complete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+        current_player_id: int = 0,
+    ) -> None:
         """Score a completed road: 1 point per tile."""
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             if current_player_id in players:
                 players[current_player_id].get_score().add_score(total_points)
             return
 
         max_count = max(meeple_count.values())
-        winning_players = [player_id for player_id,
-                           count in meeple_count.items() if count == max_count]
+        winning_players = [
+            player_id
+            for player_id, count in meeple_count.items()
+            if count == max_count
+        ]
 
         for player_id in winning_players:
             if player_id in players:
                 players[player_id].get_score().add_score(total_points)
 
     @staticmethod
-    def _score_city_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player'], current_player_id: int = 0) -> None:
+    def _score_city_complete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+        current_player_id: int = 0,
+    ) -> None:
         """Score a completed city: 2 points per tile + 2 per banner."""
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 2
         points_per_banner = 2
 
         banners = ScoreManager.get_banners_on_tiles(tile_ids, graph)
-        total_points = (len(tile_ids) * points_per_tile) + \
-            (banners * points_per_banner)
+        total_points = (len(tile_ids) * points_per_tile) + (
+            banners * points_per_banner
+        )
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             if current_player_id in players:
                 players[current_player_id].get_score().add_score(total_points)
             return
 
         max_count = max(meeple_count.values())
-        winning_players = [player_id for player_id,
-                           count in meeple_count.items() if count == max_count]
+        winning_players = [
+            player_id
+            for player_id, count in meeple_count.items()
+            if count == max_count
+        ]
 
         for player_id in winning_players:
             if player_id in players:
                 players[player_id].get_score().add_score(total_points)
 
     @staticmethod
-    def _score_monastery_complete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player'], current_player_id: int = 0) -> None:
+    def _score_monastery_complete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+        current_player_id: int = 0,
+    ) -> None:
         """Score a completed monastery: 9 points."""
         points = 9
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             if current_player_id in players:
                 players[current_player_id].get_score().add_score(points)
@@ -278,81 +337,123 @@ class ScoreManager():
                 players[player_id].get_score().add_score(points)
 
     @staticmethod
-    def score_end_of_game(graph, players: Dict[int, 'Player']) -> None:
+    def score_end_of_game(graph, players: Dict[int, "Player"]) -> None:
         """Score at end of game for non-completed R, C, M and all Fields."""
         # Score incomplete Roads
-        if 'R' in graph.lands_components:
-            for road_name, road_component in graph.lands_components['R'].items():
-                if not ScoreManager.is_component_complete('R', road_name, graph):
+        if "R" in graph.lands_components:
+            for road_name, road_component in graph.lands_components[
+                "R"
+            ].items():
+                if not ScoreManager.is_component_complete(
+                    "R", road_name, graph
+                ):
                     ScoreManager._score_road_incomplete(
-                        road_component, road_name, graph, players)
+                        road_component, road_name, graph, players
+                    )
 
         # Score incomplete Cities
-        if 'C' in graph.lands_components:
-            for city_name, city_component in graph.lands_components['C'].items():
-                if not ScoreManager.is_component_complete('C', city_name, graph):
+        if "C" in graph.lands_components:
+            for city_name, city_component in graph.lands_components[
+                "C"
+            ].items():
+                if not ScoreManager.is_component_complete(
+                    "C", city_name, graph
+                ):
                     ScoreManager._score_city_incomplete(
-                        city_component, city_name, graph, players)
+                        city_component, city_name, graph, players
+                    )
 
         # Score incomplete Monasteries
-        if 'M' in graph.lands_components:
-            for monastery_name, monastery_component in graph.lands_components['M'].items():
-                if not ScoreManager.is_component_complete('M', monastery_name, graph):
+        if "M" in graph.lands_components:
+            for monastery_name, monastery_component in graph.lands_components[
+                "M"
+            ].items():
+                if not ScoreManager.is_component_complete(
+                    "M", monastery_name, graph
+                ):
                     ScoreManager._score_monastery_incomplete(
-                        monastery_component, monastery_name, graph, players)
+                        monastery_component, monastery_name, graph, players
+                    )
 
         # Score Fields
-        if 'F' in graph.lands_components:
-            for field_name, field_component in graph.lands_components['F'].items():
+        if "F" in graph.lands_components:
+            for field_name, field_component in graph.lands_components[
+                "F"
+            ].items():
                 ScoreManager._score_field(
-                    field_component, field_name, graph, players)
+                    field_component, field_name, graph, players
+                )
 
     @staticmethod
-    def _score_road_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+    def _score_road_incomplete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+    ) -> None:
         """Score incomplete road: 1 point per tile."""
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             return
 
         max_count = max(meeple_count.values())
-        winning_players = [player_id for player_id,
-                           count in meeple_count.items() if count == max_count]
+        winning_players = [
+            player_id
+            for player_id, count in meeple_count.items()
+            if count == max_count
+        ]
 
         for player_id in winning_players:
             if player_id in players:
                 players[player_id].get_score().add_score(total_points)
 
     @staticmethod
-    def _score_city_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+    def _score_city_incomplete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+    ) -> None:
         """Score incomplete city: 1 point per tile + 1 per banner."""
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         points_per_banner = 1
 
         banners = ScoreManager.get_banners_on_tiles(tile_ids, graph)
-        total_points = (len(tile_ids) * points_per_tile) + \
-            (banners * points_per_banner)
+        total_points = (len(tile_ids) * points_per_tile) + (
+            banners * points_per_banner
+        )
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             return
 
         max_count = max(meeple_count.values())
-        winning_players = [player_id for player_id,
-                           count in meeple_count.items() if count == max_count]
+        winning_players = [
+            player_id
+            for player_id, count in meeple_count.items()
+            if count == max_count
+        ]
 
         for player_id in winning_players:
             if player_id in players:
                 players[player_id].get_score().add_score(total_points)
 
     @staticmethod
-    def _score_monastery_incomplete(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
+    def _score_monastery_incomplete(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+    ) -> None:
         """Score incomplete monastery: 1 point per adjacent tile."""
         if not component:
             return
@@ -366,7 +467,8 @@ class ScoreManager():
         adjacent_tiles = len(vertex.neighbors)
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             return
 
@@ -375,33 +477,46 @@ class ScoreManager():
                 players[player_id].get_score().add_score(adjacent_tiles)
 
     @staticmethod
-    def _score_field(component: List[Tuple], component_name: str, graph, players: Dict[int, 'Player']) -> None:
-        """Score field: 3 points per component + 3 per adjacent completed city."""
+    def _score_field(
+        component: List[Tuple],
+        component_name: str,
+        graph,
+        players: Dict[int, "Player"],
+    ) -> None:
+        """Score field as 3 points per component and adjacent city."""
         points_per_component = 3
         points_per_adjacent_city = 3
 
         # Count adjacent completed cities
-        adjacent_completed_cities = ScoreManager._count_adjacent_completed_cities(
-            component, graph)
+        adjacent_completed_cities = (
+            ScoreManager._count_adjacent_completed_cities(component, graph)
+        )
 
-        total_points = points_per_component + \
-            (adjacent_completed_cities * points_per_adjacent_city)
+        total_points = points_per_component + (
+            adjacent_completed_cities * points_per_adjacent_city
+        )
 
         meeple_count = ScoreManager.get_meeples_on_component(
-            component_name, graph)
+            component_name, graph
+        )
         if not meeple_count:
             return
 
         max_count = max(meeple_count.values())
-        winning_players = [player_id for player_id,
-                           count in meeple_count.items() if count == max_count]
+        winning_players = [
+            player_id
+            for player_id, count in meeple_count.items()
+            if count == max_count
+        ]
 
         for player_id in winning_players:
             if player_id in players:
                 players[player_id].get_score().add_score(total_points)
 
     @staticmethod
-    def _count_adjacent_completed_cities(field_component: List[Tuple], graph) -> int:
+    def _count_adjacent_completed_cities(
+        field_component: List[Tuple], graph
+    ) -> int:
         """Count the number of unique adjacent completed cities to a field."""
         adjacent_cities = set()
 
@@ -419,10 +534,13 @@ class ScoreManager():
 
                 # Find which city component this neighbor belongs to
                 city_name = ScoreManager._find_city_component_for_tile(
-                    neighbor_id, graph)
+                    neighbor_id, graph
+                )
 
                 # If it's part of a city and the city is complete, count it
-                if city_name and ScoreManager.is_component_complete('C', city_name, graph):
+                if city_name and ScoreManager.is_component_complete(
+                    "C", city_name, graph
+                ):
                     adjacent_cities.add(city_name)
 
         return len(adjacent_cities)
@@ -431,12 +549,12 @@ class ScoreManager():
     def _find_city_component_for_tile(tile_id: int, graph) -> Optional[str]:
         """Find the city component name that a tile belongs to.
 
-        Returns the city component name (e.g., 'C1') or None if tile is not in any city.
+        Returns the city component name (e.g., `C1`) or None if absent.
         """
-        if 'C' not in graph.lands_components:
+        if "C" not in graph.lands_components:
             return None
 
-        for city_name, city_component in graph.lands_components['C'].items():
+        for city_name, city_component in graph.lands_components["C"].items():
             for component_tile_id, _ in city_component:
                 if component_tile_id == tile_id:
                     return city_name
@@ -444,7 +562,7 @@ class ScoreManager():
         return None
 
 
-class EndGameScore():
+class EndGameScore:
 
     players_score: list[PlayerScore]
 

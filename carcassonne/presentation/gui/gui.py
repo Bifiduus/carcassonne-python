@@ -9,7 +9,9 @@ from carcassonne.presentation.gui import utils
 from carcassonne.presentation.gui.menus.main_menu import MainMenu
 from carcassonne.presentation.gui.tile_preview import TilePreview
 from carcassonne.presentation.gui.players_view import PlayersView
-from carcassonne.presentation.gui.menus.singleplayer_menu import SingleplayerMenu
+from carcassonne.presentation.gui.menus.singleplayer_menu import (
+    SingleplayerMenu,
+)
 from carcassonne.presentation.gui.menus.options_menu import OptionsMenu
 
 
@@ -69,26 +71,31 @@ class GameGUI(Gtk.Application):
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
-        register(self, "new", lambda a,
-                 p: commands_handler_gui.on_new_gui(self))
+        register(
+            self, "new", lambda a, p: commands_handler_gui.on_new_gui(self)
+        )
         register(self, "load", lambda a, p: commands_handler_gui.on_load(self))
         register(self, "save", lambda a, p: commands_handler_gui.on_save(self))
-        register(self, "config", lambda a,
-                 p: commands_handler_gui.on_config(self))
+        register(
+            self, "config", lambda a, p: commands_handler_gui.on_config(self)
+        )
         register(self, "info", lambda a, p: commands_handler_gui.on_info())
         register(self, "quit", lambda a, p: commands_handler_gui.on_quit(self))
-        register(self, "undo", lambda a,
-                 p: commands_handler_gui.on_undo_gui(self))
-        register(self, "redo", lambda a,
-                 p: commands_handler_gui.on_redo_gui(self))
+        register(
+            self, "undo", lambda a, p: commands_handler_gui.on_undo_gui(self)
+        )
+        register(
+            self, "redo", lambda a, p: commands_handler_gui.on_redo_gui(self)
+        )
         register(self, "pause", lambda a, p: commands_handler_gui.on_pause())
         register(self, "hint", lambda a, p: commands_handler_gui.on_hint())
 
         # the ``WindowView`` helper already attaches the file/game menus; an
         # explicit quit action is duplicated here for safety.
         quit_action = Gio.SimpleAction.new("quit", None)
-        quit_action.connect("activate", lambda a,
-                            p: commands_handler_gui.on_quit(self))
+        quit_action.connect(
+            "activate", lambda a, p: commands_handler_gui.on_quit(self)
+        )
         self.add_action(quit_action)
 
         # ----------- game overlay (board + controls) -----------------------
@@ -128,14 +135,21 @@ class GameGUI(Gtk.Application):
         overlay.add_overlay(end_turn_box)
 
         # application shortcuts for the three game actions
-        register(self, "draw", lambda a,
-                 p: commands_handler_gui.on_draw_gui(self))
+        register(
+            self, "draw", lambda a, p: commands_handler_gui.on_draw_gui(self)
+        )
         self.set_accels_for_action("app.draw", ["t"])
-        register(self, "rotate", lambda a,
-                 p: commands_handler_gui.on_rotate_gui(self))
+        register(
+            self,
+            "rotate",
+            lambda a, p: commands_handler_gui.on_rotate_gui(self),
+        )
         self.set_accels_for_action("app.rotate", ["r"])
-        register(self, "end_turn", lambda a,
-                 p: commands_handler_gui.on_end_turn_gui(self))
+        register(
+            self,
+            "end_turn",
+            lambda a, p: commands_handler_gui.on_end_turn_gui(self),
+        )
         self.set_accels_for_action("app.end_turn", ["space"])
 
         window.stack.add_named(overlay, "game")
@@ -143,7 +157,8 @@ class GameGUI(Gtk.Application):
 
         self.background_image = "fond_bois.jpg"
         self.board_view.set_background(
-            utils.get_images_dir()+'/'+self.background_image)
+            utils.get_images_dir() + "/" + self.background_image
+        )
 
         # make the window visible on screen
         window.window.present()
@@ -158,7 +173,8 @@ class GameGUI(Gtk.Application):
         return False
 
     def on_end_turn(self, action, param):
-        # kept for backward compatibility; newer code should use commands_handler_gui
+        # kept for backward compatibility; newer code should use
+        # commands_handler_gui
         commands_handler_gui.on_end_turn_gui(self)
 
     def on_rotate(self, action, param):
@@ -192,21 +208,24 @@ class GameGUI(Gtk.Application):
             return
 
         image_path = utils.tile_image_path(
-            self.game_data.current_tile.current_tile)
+            self.game_data.current_tile.current_tile
+        )
 
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
             filename=image_path,
             width=100,
             height=100,
-            preserve_aspect_ratio=True
+            preserve_aspect_ratio=True,
         )
 
         # Rotate pixbuf
         rotated = pixbuf.rotate_simple(
-            [GdkPixbuf.PixbufRotation.NONE,
-             GdkPixbuf.PixbufRotation.CLOCKWISE,
-             GdkPixbuf.PixbufRotation.UPSIDEDOWN,
-             GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE][self.game_data.current_orientation]
+            [
+                GdkPixbuf.PixbufRotation.NONE,
+                GdkPixbuf.PixbufRotation.CLOCKWISE,
+                GdkPixbuf.PixbufRotation.UPSIDEDOWN,
+                GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE,
+            ][self.game_data.current_orientation]
         )
 
         texture = Gdk.Texture.new_for_pixbuf(rotated)
@@ -232,7 +251,7 @@ class GameGUI(Gtk.Application):
             filename=image_path,
             width=100,
             height=100,
-            preserve_aspect_ratio=True
+            preserve_aspect_ratio=True,
         )
 
         # GTK4 Picture can take a pixbuf directly

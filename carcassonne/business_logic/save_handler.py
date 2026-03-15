@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
@@ -16,7 +15,7 @@ class SaveHandler:
             return -1
         if not filename.endswith(".txt"):
             filename += ".txt"
-        file = open(filename, 'w')
+        file = open(filename, "w")
 
         file.write("[Settings]\n")
         for key, value in self.game.get_game_configuration().items():
@@ -26,12 +25,30 @@ class SaveHandler:
         file.write("[GameState]\n")
         # + who is the current player, scores, etc.
         number_of_ai_players = self.game.get_number_of_ai_players()
-        file.write("NumberOfPlayers: " + str(len(self.game.players) -
-                   number_of_ai_players) + "," + str(number_of_ai_players) + "\n")
         file.write(
-            "PlayersOrder: [" + ", ".join([f"{player_id}" for player_id in self.game.players_order]) + "]\n")
-        file.write("GameScore: [" + ", ".join(
-            [f"{player.get_id()}: {player.get_score().score}" for player in self.game.players.values()]) + "]\n")
+            "NumberOfPlayers: "
+            + str(len(self.game.players) - number_of_ai_players)
+            + ","
+            + str(number_of_ai_players)
+            + "\n"
+        )
+        file.write(
+            "PlayersOrder: ["
+            + ", ".join(
+                [f"{player_id} " for player_id in self.game.players_order]
+            )
+            + "]\n"
+        )
+        file.write(
+            "GameScore: ["
+            + ", ".join(
+                [
+                    f"{player.get_id()}: {player.get_score().score} "
+                    for player in self.game.players.values()
+                ]
+            )
+            + "]\n"
+        )
         file.write("Seed: " + str(self.game.seed) + "\n")
         file.write("\n")
         file.write("[History]\n")
@@ -52,11 +69,12 @@ class SaveHandler:
         if not filename.endswith(".txt"):
             filename += ".txt"
         try:
-            file = open(filename, 'r')
+            file = open(filename, "r")
         except OSError:
             print(f"Error: Could not open file {filename}")
             return -1
-        self.game.start_load_game()  # Clear current game state before loading new one
+        # Clear current game state before loading a new one.
+        self.game.start_load_game()
 
         lines = file.readlines()
         settings_section = False
@@ -89,7 +107,9 @@ class SaveHandler:
             elif line == "[GameState]":
                 if not settings_section:
                     print(
-                        "Warning: [Settings] section not found before [GameState].")
+                        "Warning: [Settings] section not found before "
+                        "[GameState]."
+                    )
                 sections_parsed += 1
                 settings_section = False
                 game_state_section = True
@@ -99,7 +119,9 @@ class SaveHandler:
             elif line == "[History]":
                 if not game_state_section:
                     print(
-                        "Warning: [GameState] section not found before [History].")
+                        "Warning: [GameState] section not found before "
+                        "[History]."
+                    )
                 sections_parsed += 1
                 settings_section = False
                 game_state_section = False
@@ -110,7 +132,7 @@ class SaveHandler:
                 continue  # Skip empty lines
             print(line)
             if settings_section:
-                # Here you would parse the settings and set up the game accordingly.
+                # Parse settings and configure the game accordingly.
                 # This is a placeholder for demonstration purposes.
                 # Configuration of the game, shuffle algorithm and seed.
                 print("Parsing settings: ", line)
@@ -125,18 +147,26 @@ class SaveHandler:
                     if line == "":
                         print("Warning: Number of players not specified.")
                         continue
-                    number_of_players, number_of_ai_players = line.split(
-                        ",") if "," in line else (line, "0")
+                    number_of_players, number_of_ai_players = (
+                        line.split(",") if "," in line else (line, "0")
+                    )
+                    human_players = int(number_of_players.strip())
+                    ai_players = int(number_of_ai_players.strip())
+                    total_players = human_players + ai_players
                     print(
-                        f"Total number of players specified: {int(number_of_ai_players.strip()) + int(number_of_players.strip())}.")
-                    if int(number_of_ai_players.strip()) + int(number_of_players.strip()) > self.game.get_maximum_number_of_players():
+                        "Total number of players specified: "
+                        f"{total_players}."
+                    )
+                    min_players = self.game.get_minimum_number_of_players()
+                    max_players = self.game.get_maximum_number_of_players()
+                    if total_players > max_players:
                         print(
-                            f"Warning: Number of players should be between {self.game.get_minimum_number_of_players()} and {self.game.get_maximum_number_of_players()}.")
+                            "Warning: Number of players should be between "
+                            f"{min_players} and {max_players}."
+                        )
                         continue
-                    self.game.set_number_of_ai_players(
-                        int(number_of_ai_players.strip()))
-                    print(
-                        f"Number of players set to {int(number_of_players.strip()) + int(number_of_ai_players.strip())}.")
+                    self.game.set_number_of_ai_players(ai_players)
+                    print(f"Number of players set to {total_players}.")
 
                 if line.startswith("PlayersOrder:"):
                     line = line.split("PlayersOrder:")[1].strip()
@@ -144,11 +174,14 @@ class SaveHandler:
                         print("Warning: Players order not specified.")
                         continue
                     self.game.players_order = [
-                        int(player_id.strip()) for player_id in line.strip("[]").split(",")]
+                        int(player_id.strip())
+                        for player_id in line.strip("[]").split(",")
+                    ]
                     print(f"Players order set to {self.game.players_order}.")
 
                 if line.startswith("GameScore:"):
-                    # Assuming the format is "GameScore: [Player1ID: 10, Player2ID: 20]"
+                    # Assuming the format is "GameScore: [Player1ID: 10,
+                    # Player2ID: 20]"
                     line = line.split("GameScore:")[1].strip()
                     if line == "" or line == "[]":
                         print("Warning: No score yet.")
@@ -162,8 +195,11 @@ class SaveHandler:
                         for player in self.game.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
-                                print(
-                                    f"Player number {self.game.players_order.index(player.get_id())} ({player.get_username().strip()}) has {player.score.score} points.")
+                                print(f"Player number {
+                                        self.game.players_order.index(
+                                            player.get_id())} ({
+                                        player.get_username().strip()}) has {
+                                        player.score.score} points.")
                     game_score = True
                 if line.startswith("Seed:"):
                     # Assuming the format is "Seed: the seed"
@@ -178,10 +214,14 @@ class SaveHandler:
             elif history_section:
                 if not game_score:
                     print(
-                        "Warning: no game score found in [GameState] section.")
+                        "Warning: no game score found in [GameState] section."
+                    )
                 for player_move in reversed(line.strip(" ").split(" ")):
-                    move = player_move.split(
-                        ":")[1] if ":" in player_move else player_move
+                    move = (
+                        player_move.split(":")[1]
+                        if ":" in player_move
+                        else player_move
+                    )
                     self.game.current_hand = move
                     if move != self.game.draw_tile():
                         print("The mode doesn't match the seed !")

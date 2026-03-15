@@ -2,13 +2,16 @@
 This module defines classes used to track and serialize game move history.
 It stores past moves and future moves to support undo/redo workflows.
 """
+
 from carcassonne.datas.serializer import build_str
 
 
 class MoveRecord:
     """Store metadata for a single move in history."""
 
-    def __init__(self, move_str: str, player_id: int = 1, is_ai: bool = False) -> None:
+    def __init__(
+        self, move_str: str, player_id: int = 1, is_ai: bool = False
+    ) -> None:
         """
         Initialize a move history record.
 

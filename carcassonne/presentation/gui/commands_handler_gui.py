@@ -103,6 +103,7 @@ def on_hint():
 
 # GUI-specific commands that operate on the GameGUI instance itself
 
+
 def on_new_gui(gui):
     """Start a new game and refresh GUI elements."""
     # delegate game logic to GameDataGui

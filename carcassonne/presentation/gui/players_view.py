@@ -21,6 +21,7 @@ from typing import Any
 import cairo
 from gi.repository import Gtk, Gdk
 import gi
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -43,8 +44,7 @@ class PlayersView(Gtk.Box):
 
         # ---- zone qui contiendra les joueurs ----
         self.players_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=4
+            orientation=Gtk.Orientation.VERTICAL, spacing=4
         )
         self.append(self.players_box)
 
@@ -82,11 +82,14 @@ class PlayersView(Gtk.Box):
 
             if p is current:
                 label.set_markup(
-                    f'<span foreground="{color}"><b>{name} : {score}</b></span>')
+                    f'<span foreground="{color}"><b>{name} : {score}</b>'
+                    "</span>"
+                )
                 row.add_css_class("current-player")
             else:
                 label.set_markup(
-                    f'<span foreground="{color}">{name} : {score}</span>')
+                    f'<span foreground="{color}">{name} : {score}</span>'
+                )
 
             row.append(label)
 

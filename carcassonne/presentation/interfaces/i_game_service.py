@@ -1,4 +1,5 @@
 """Module providing an interface between Présentation and Logique Métier"""
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -52,7 +53,9 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def shuffle_deck(self, algo: str | None = None, seed: int | None = None) -> int:
+    def shuffle_deck(
+        self, algo: str | None = None, seed: int | None = None
+    ) -> int:
         pass
 
     @abstractmethod
@@ -68,7 +71,9 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_close_neighbors(self, x: int, y: int) -> tuple[int | None, int | None]:
+    def get_close_neighbors(
+        self, x: int, y: int
+    ) -> tuple[int | None, int | None]:
         pass
 
     @abstractmethod

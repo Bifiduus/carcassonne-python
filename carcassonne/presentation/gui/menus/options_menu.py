@@ -21,12 +21,12 @@ class OptionsMenu(Gtk.Box):
         title.add_css_class("title-2")
         self.append(title)
 
-        # --- game options button --------------------------------------------------
+        # --- game options button ---------------------------------------------
         keybinds_button = Gtk.Button(label="Game Options")
         keybinds_button.connect("clicked", self.on_game_options)
         self.append(keybinds_button)
 
-        # --- keybinds button --------------------------------------------------
+        # --- keybinds button -------------------------------------------------
         keybinds_button = Gtk.Button(label="Keybinds")
         keybinds_button.connect("clicked", self.on_keybinds)
         self.append(keybinds_button)
