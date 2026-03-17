@@ -83,3 +83,7 @@ class IGameService(ABC):
     @abstractmethod
     def end_game(self) -> bool:
         pass
+
+    @abstractmethod
+    def provide_hint(self) -> str:
+        pass

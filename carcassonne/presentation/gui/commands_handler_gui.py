@@ -17,7 +17,7 @@ def on_new(game):
 
 def on_load(gui) -> None:
     """Show a file picker and load a saved game."""
-
+    gui.window.window.present()
     dialog = Gtk.FileDialog(title="Load game")
 
     def on_file_selected(dialog, result):
@@ -44,7 +44,7 @@ def on_load(gui) -> None:
 
 def on_save(gui) -> None:
     """Show a file picker and save the current game."""
-
+    gui.window.window.present()
     dialog = Gtk.FileDialog(title="Save game")
 
     def on_file_selected(dialog, result):
@@ -67,7 +67,7 @@ def on_config(gui) -> None:
     print("Configuration actuelle du jeu:")
     for key, value in config.items():
         print(f"  {key}: {value}")
-    gui.window.stack.set_visible_child_name("options_menu")
+    gui.window.stack.set_visible_child_name("singleplayer_menu")
 
 
 def on_info() -> None:
@@ -85,20 +85,18 @@ Game menu commands:
 
 def on_undo(game) -> None:
     game.undo()
-    print("to add undo")
 
 
 def on_redo(game) -> None:
     game.redo()
-    print("to add redo")
 
 
 def on_pause() -> None:
     print("to add pause")
 
 
-def on_hint():
-    print("to add hint")
+def on_hint(gui):
+    gui.game_data.provide_hint()
 
 
 # GUI-specific commands that operate on the GameGUI instance itself

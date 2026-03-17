@@ -3,6 +3,7 @@ import os
 
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.board_view import BoardView
+from carcassonne.presentation.gui.error_message_view import ErrorMessageView
 from carcassonne.presentation.gui.menus.keybinds_menu import KeybindsMenu
 from carcassonne.presentation.gui.window_view import WindowView
 from carcassonne.presentation.gui import utils
@@ -50,10 +51,12 @@ class GameGUI(Gtk.Application):
         self.button_end_turn.connect(
             "clicked", lambda b: commands_handler_gui.on_end_turn_gui(self)
         )
+        self.error_message = ErrorMessageView(self)
 
     def do_activate(self):
         window = WindowView(self, self.game_data)
         self.window = window
+        self.error_message.show_error("Welcome to Carcassonne!")
 
         # main menu is now produced by a small helper
         self.menu_view = MainMenu.create(self)
@@ -62,8 +65,9 @@ class GameGUI(Gtk.Application):
         # options page is built once and kept around so that the user can
         # revisit it from either the *Options* button or after doing a
         # multi-player game later on.
-        self.options_view = SingleplayerMenu(self)
-        window.stack.add_named(self.options_view, "singleplayer_menu")
+        self.singleplayer_options_view = SingleplayerMenu(self)
+        window.stack.add_named(
+            self.singleplayer_options_view, "singleplayer_menu")
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
@@ -88,7 +92,7 @@ class GameGUI(Gtk.Application):
             self, "redo", lambda a, p: commands_handler_gui.on_redo_gui(self)
         )
         register(self, "pause", lambda a, p: commands_handler_gui.on_pause())
-        register(self, "hint", lambda a, p: commands_handler_gui.on_hint())
+        register(self, "hint", lambda a, p: commands_handler_gui.on_hint(self))
 
         # the ``WindowView`` helper already attaches the file/game menus; an
         # explicit quit action is duplicated here for safety.
@@ -167,6 +171,7 @@ class GameGUI(Gtk.Application):
         window.window.add_controller(key_controller)
 
     def _on_global_key_press(self, controller, keyval, keycode, state):
+        self.window.hide_menus()
         if keyval == Gdk.KEY_r:
             commands_handler_gui.on_rotate_gui(self)
             return True

@@ -6,8 +6,8 @@ held tile.  It delegates higher-level logic (e.g. what happens when the
 user clicks the preview) back to the owning ``GameGUI`` instance.
 """
 
-from carcassonne.presentation.gui.utils import tile_image_path
 from gi.repository import Gtk, Gdk, GdkPixbuf
+from carcassonne.presentation.gui.utils import tile_image_path
 import gi
 
 gi.require_version("Gtk", "4.0")

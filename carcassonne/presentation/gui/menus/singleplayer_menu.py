@@ -95,6 +95,7 @@ class SingleplayerMenu(Gtk.Box):
 
     # ------------------------------------------------------------------
     def on_choose_file(self, button):
+        self.gui.window.window.present()
         dialog = Gtk.FileDialog(title="Select contest file")
 
         dialog.open(self.gui.window.window, None, self.on_file_selected)

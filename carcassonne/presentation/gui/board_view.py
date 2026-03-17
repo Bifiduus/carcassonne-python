@@ -146,6 +146,10 @@ class BoardView(Gtk.DrawingArea):
             if temp:
                 tiles = tiles + [temp]
 
+        # if there is a hint tile, append it for transparent display
+        if self.game_data.hint_tile:
+            tiles = tiles + [self.game_data.hint_tile]
+
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
 
@@ -226,8 +230,13 @@ class BoardView(Gtk.DrawingArea):
         )
         orientation = tile_data["orientation"]
         pixbuf = self.textures.get(name)
+        is_hint = tile_data.get("id") == -1
         if pixbuf:
-            board_utils.draw_pixbuf(cr, x, y, size, pixbuf, orientation)
+            if is_hint:
+                board_utils.draw_pixbuf_with_alpha(
+                    cr, x, y, size, pixbuf, orientation, alpha=0.5)
+            else:
+                board_utils.draw_pixbuf(cr, x, y, size, pixbuf, orientation)
         else:
             cr.set_source_rgb(1, 1, 1)
             cr.rectangle(x, y, size, size)
@@ -238,7 +247,10 @@ class BoardView(Gtk.DrawingArea):
         ):
             board_utils.draw_preview_grid(cr, x, y, size)
         else:
-            cr.set_source_rgb(0, 0, 0)
+            if is_hint:
+                cr.set_source_rgba(0, 0, 0, 0.5)
+            else:
+                cr.set_source_rgb(0, 0, 0)
 
         cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
@@ -289,6 +301,28 @@ class BoardView(Gtk.DrawingArea):
             color = current_player.get_color()
             r, g, b = board_utils.color_map.get(color, (1, 0, 0))
             cr.set_source_rgba(r, g, b, 0.7)  # Semi-transparent for preview
+            cr.set_line_width(3)
+            cr.move_to(cx + padding, cy + padding)
+            cr.line_to(cx + cell - padding, cy + cell - padding)
+            cr.move_to(cx + cell - padding, cy + padding)
+            cr.line_to(cx + padding, cy + cell - padding)
+            cr.stroke()
+
+        # Draw hint meeple if this is the hint tile and meeple is set
+        if is_hint and tile_data.get("meeple"):
+            string_to_pos = {
+                "N": (0, 1),
+                "E": (1, 2),
+                "S": (2, 1),
+                "W": (1, 0),
+            }
+            row, col = string_to_pos.get(tile_data["meeple"], (1, 1))
+            cell = size / 3
+            cx = x + col * cell
+            cy = y + row * cell
+            padding = cell * 0.2
+            # Use gray color for hint meeple
+            cr.set_source_rgba(0.5, 0.5, 0.5, 0.8)  # Gray semi-transparent
             cr.set_line_width(3)
             cr.move_to(cx + padding, cy + padding)
             cr.line_to(cx + cell - padding, cy + cell - padding)

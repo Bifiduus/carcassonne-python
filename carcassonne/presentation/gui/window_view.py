@@ -23,6 +23,9 @@ class WindowView:
         self.application = application
         self.game_data = game_data
 
+        self.file_button = None
+        self.game_button = None
+
         # Load keybinds from config
         config = self.game_data.game.get_game_configuration()
         self.file_keybinds = config.get(
@@ -103,3 +106,17 @@ class WindowView:
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.application.add_action(action)
+
+    def hide_menus(self):
+        """Cache les menus (ex: pendant le jeu ou après un clic)."""
+        if self.file_button:
+            self.file_button.set_visible(False)
+        if self.game_button:
+            self.game_button.set_visible(False)
+
+    def show_menus(self):
+        """Réaffiche les menus."""
+        if self.file_button:
+            self.file_button.set_visible(True)
+        if self.game_button:
+            self.game_button.set_visible(True)

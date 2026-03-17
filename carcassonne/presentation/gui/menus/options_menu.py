@@ -40,8 +40,41 @@ class OptionsMenu(Gtk.Box):
 
         # ------------------------------------------------------------------
 
+        options_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        options_box.set_halign(Gtk.Align.CENTER)
+        self.fullscreen_cb = Gtk.CheckButton(label="Fullscreen")
+
+        options_box.append(self.fullscreen_cb)
+        self.append(options_box)
+
+        res_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        self.width_combo = Gtk.ComboBoxText()
+        self.height_combo = Gtk.ComboBoxText()
+
+        # Exemple de résolutions courantes
+        resolutions = [(800, 600), (1024, 768), (1280, 720), (1920, 1080)]
+        for w, h in resolutions:
+            self.width_combo.append_text(str(w))
+            self.height_combo.append_text(str(h))
+
+        # Valeurs par défaut
+        self.width_combo.set_active(0)
+        self.height_combo.set_active(0)
+
+        res_box.append(Gtk.Label(label="Width:"))
+        res_box.append(self.width_combo)
+        res_box.append(Gtk.Label(label="Height:"))
+        res_box.append(self.height_combo)
+
+        # bouton pour appliquer la résolution
+        apply_btn = Gtk.Button(label="Apply Resolution")
+        apply_btn.connect("clicked", self.apply_resolution)
+        res_box.append(apply_btn)
+
+        self.append(res_box)
+
     def on_back(self, button):
-        """Return to the main menu"""
         self.gui.window.stack.set_visible_child_name("menu")
 
     def on_keybinds(self, button):
@@ -49,3 +82,19 @@ class OptionsMenu(Gtk.Box):
 
     def on_game_options(self, button):
         self.gui.window.stack.set_visible_child_name("singleplayer_menu")
+
+    def on_fullscreen_toggled(self, button):
+        if self.fullscreen_cb.get_active():
+            self.gui.window.fullscreen()
+        else:
+            # applique la résolution sélectionnée si on quitte le fullscreen
+            self.apply_resolution()
+
+    def apply_resolution(self, button=None):
+        width = int(self.width_combo.get_active_text())
+        height = int(self.height_combo.get_active_text())
+        if self.fullscreen_cb.get_active():
+            self.gui.window.window.fullscreen()
+        else:
+            self.gui.window.window.unfullscreen()
+            self.gui.window.window.set_default_size(width, height)

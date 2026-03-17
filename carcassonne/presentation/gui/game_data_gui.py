@@ -1,5 +1,6 @@
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
+from carcassonne.datas.serializer import parse_move
 
 
 class GameDataGui:
@@ -11,6 +12,7 @@ class GameDataGui:
         self.board_view = None  # set later by Gui
         self.gui = None
         self.is_dragging = False
+        self.hint_tile = None  # hint tile data for transparent display
 
     def game_configuration(self):
         return self.game.get_game_configuration()
@@ -64,6 +66,7 @@ class GameDataGui:
     def reset(self):
         self.current_tile = None
         self.current_orientation = 0
+        self.hint_tile = None  # clear hint when resetting
         if self.board_view:
             self.board_view.refresh()
 
@@ -95,3 +98,31 @@ class GameDataGui:
         if self.board_view:
             self.board_view.refresh()
         return tile_name
+
+    def provide_hint(self):
+        hint_move = self.game.provide_hint()
+        if hint_move:
+            # Parse the hint move to get tile and placement info
+            parsed = parse_move(hint_move)
+            tile_code = parsed["tile_sides"]
+            if parsed.get("center"):
+                tile_code = f"{tile_code}/{parsed['center']}"
+
+            # Calculate position
+            position = self.game.graph.get_position(
+                vertex_id=parsed["target_id"],
+                side=self.game.tiles_info.direction_dict[parsed["target_side"]]
+            )
+            if position:
+                self.hint_tile = {
+                    "id": -1,  # special id for hint
+                    "x": position[0],
+                    "y": position[1],
+                    "name": parsed["tile_sides"],
+                    "middle": parsed.get("center", ""),
+                    "orientation": parsed["rotation"],
+                    "meeple": parsed.get("meeple"),  # add meeple position
+                }
+                if self.board_view:
+                    self.board_view.queue_draw()
+        return hint_move

@@ -63,7 +63,7 @@ def parse_move(move: str) -> dict:
     target_id = int(match.group("target"))
     target_side: str | re.Any = match.group("side")
     rotation = int(match.group("rot"))
-    meeple = None
+    meeple = ""
     if placement_index + 1 < len(parts):
         candidate: str = parts[placement_index + 1]
         # Meeple position is optional but must be one of the cardinal sides.
