@@ -126,10 +126,18 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
-    def change_status(self, client_id: str, status: str) -> str:
+    def get_id_from_username(self, player_username: str) -> int:
+        rows = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (player_username,)
+        )
+        return rows[0][0]
+
+    def change_status(self, client_username: str, status: str) -> str:
+        client_id = self.get_id_from_username(client_username)
         rows = self._execute_non_query(
             "UPDATE players SET status=? WHERE id=?;",
-            (status, int(client_id),)
+            (status, client_id,)
         )
         if rows is None:
             return "Status not changed."
@@ -141,18 +149,23 @@ class GameRepository(IGamesRepository):
         )
         return str([r for r in rows])
 
-    def invitation_received(self, client_id: str):
+    def invitation_received(self, client_username: str):
+        client_id: int = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (client_username,)
+        )[0][0]
         rows = self._execute_query(
             "SELECT host_player, group_id FROM pending_invitations NATURAL JOIN groups WHERE invited_player=?;",
-            (int(client_id),)
+            (client_id,)
         )
         return rows[0]
 
     def accept_invitation(self, group_id: int, invited: str):
-        self.change_status(invited, "ingame")
+        invited_id = self.get_id_from_username(invited)
+        self.change_status(str(invited_id), "ingame")
         rows = self._execute_non_query(
             "UPDATE players SET group_id=? WHERE player_id=?;",
-            (group_id, int(invited),)
+            (group_id, int(invited_id),)
         )
         rows = self._execute_non_query(
             "DELETE pending_invitations WHERE invited_player=?;",
@@ -194,18 +207,20 @@ class GameRepository(IGamesRepository):
         )
         return str([r for r in rows])
 
-    def invitation_sent_from(self, client_id: str) -> bool:
+    def invitation_sent_from(self, client_username: str) -> bool:
+        client_id: int = self.get_id_from_username(client_username)
         rows = self._execute_query(
             "SELECT 1 FROM pending_invitations NATURAL JOIN groups WHERE host_player=? AND invitation_status!='accepted';",
-            (int(client_id),)
+            (client_id,)
         )
         return bool(rows)
 
-    def cancel_invitation_from(self, client_id: str, players: list[str]):
+    def cancel_invitation_from(self, client_username: str, players: list[str]):
+        client_id = self.get_id_from_username(client_username)
         if players is []:
             rows = self._execute_non_query(
                 "DELETE FROM pending_invitations NATURAL JOIN groups WHERE host_player=? AND invitation_status=='waiting';",
-                (int(client_id),)
+                (client_id,)
             )
             if bool(rows):
                 return "All invitations cancelled."
@@ -213,7 +228,7 @@ class GameRepository(IGamesRepository):
         for player_username in players:
             rows = self._execute_non_query(
                 "DELETE FROM pending_invitations NATURAL JOIN groups NATURAL JOIN players WHERE host_player=? AND invitation_status=='waiting' AND username=?;",
-                (int(client_id), player_username)
+                (client_id, player_username)
             )
         return "Your invitation(s) have been cancelled."
 
@@ -288,9 +303,13 @@ class GameRepository(IGamesRepository):
         return rows[0][0]
 
     def send_invitation(self, invited_player: str, invitee_player: str) -> bool:
+        invitee_id: int = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (invitee_player,)
+        )[0][0]
         group_id: int = self._execute_query(
             "SELECT group_id FROM groups WHERE host_player=?;",
-            (int(invitee_player),)
+            (invitee_id,)
         )[0][0]
         rows = self._execute_non_query(
             "INSERT INTO pending_invitations(group_id, invited_player, invitation_status, sending_time) VALUES(?, ?, ?);",
