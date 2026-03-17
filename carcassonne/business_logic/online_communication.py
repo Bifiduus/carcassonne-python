@@ -24,7 +24,7 @@ class OnlineCommunication:
         answer += f"Current Parties: {len(self.server.current_games_list)}\n"
         return answer
 
-    def command_new(self, message: str, client_id: str) -> str:
+    def command_new(self, message: str, client_username: str) -> str:
         message = message.split("new")[1]
         party_name = f"Party {len(self.server.current_games_list)}"
         clients_list = message.split(" ")
@@ -32,7 +32,7 @@ class OnlineCommunication:
         clients_list_checked = self.server.check_clients_list_validity(
             clients_list)
         for invited in clients_list_checked:
-            self.server.send_invitation(invited, client_id)
+            self.server.send_invitation(invited, client_username)
         # Create a new party with a name and players, ask them first
 
         answer = "Invitation(s) sent."
@@ -58,7 +58,7 @@ class OnlineCommunication:
         # joueurs qui ont joué sur le serveur (nombre de
         # victoires, défaites, parties jouées) de la db.
 
-    def command_accept(self, client_id: str) -> str:
+    def command_accept(self, client_username: str) -> str:
         answer = ""
         sender, party_id = self.server.repo.invitation_received(
             client_id)
@@ -66,15 +66,15 @@ class OnlineCommunication:
             answer = f"You have no invitation to accept.\n"
         else:
             # envoie à {self.invitation_received(client_id)}
-            self.server.repo.accept_invitation(int(party_id), client_id)
+            self.server.repo.accept_invitation(int(party_id), client_username)
             # Get invitee's name from repository
             self.notify_host_of_acceptance(sender, client_id)
             answer = f"Invitation accepted!\n"
         return answer
 
-    def command_decline(self, client_id: str) -> str:
+    def command_decline(self, client_username: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) != -1:
+        if self.server.repo.invitation_received(client_username) != -1:
             answer = f"You have no invitation to decline.\n"
         else:
             host_id: str = self.server.repo.invitation_received(client_id)[
@@ -114,13 +114,13 @@ class OnlineCommunication:
             except Exception as e:
                 print(f"Error notifying host {host_id}: {e}")
 
-    def command_cancel(self, client_id: str, players: str) -> str:
+    def command_cancel(self, client_username: str, players: str) -> str:
         answer = ""
-        if self.server.repo.invitation_sent_from(client_id):
+        if self.server.repo.invitation_sent_from(client_username):
             # des invitations en attentes, envoie des messages
             players_list = players.split(" ")
             answer = self.server.repo.cancel_invitation_from(
-                client_id, players_list)
+                client_username, players_list)
         else:
             answer = f"No invitations to cancel."
         return answer

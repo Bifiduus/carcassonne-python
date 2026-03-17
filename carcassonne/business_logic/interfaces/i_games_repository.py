@@ -50,7 +50,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def invitation_received(self, client_id: str) -> Row:
+    def invitation_received(self, client_username: str) -> Row:
         pass
 
     @abstractmethod
@@ -78,11 +78,11 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def invitation_sent_from(self, client_id: str) -> bool:
+    def invitation_sent_from(self, client_username: str) -> bool:
         pass
 
     @abstractmethod
-    def cancel_invitation_from(self, client_id: str, players: list[str]) -> str:
+    def cancel_invitation_from(self, client_username: str, players: list[str]) -> str:
         pass
 
     @abstractmethod

@@ -223,7 +223,7 @@ class Server(IServerService):
                     del self.client_sockets[client_id]
                     del self.player_clients[client_socket]
 
-    def process_message(self, client_id: str, message: str) -> str:
+    def process_message(self, client_username: str, message: str) -> str:
         """
         Process incoming message (from a client) and return a response.
         """
@@ -303,7 +303,7 @@ class Server(IServerService):
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
             invited_player)]
-        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}.\n"
+        message = f"Server: You have received an invitation from {invitee_player}.\n"
         message += f"Expires in 300s.\n"
         with self.clients_lock:
             try:
@@ -365,6 +365,7 @@ class Server(IServerService):
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
+        print(message)
         if message.find("pong\n") != -1:
             end = time.time()
             return message+f" Time={end - start}ms"
