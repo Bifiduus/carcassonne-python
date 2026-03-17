@@ -3,13 +3,18 @@ import argparse
 import sys
 
 from carcassonne import __version__
+from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
+from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.Presentation.Gui.CreateGui import CreateGui
 from carcassonne.Presentation.Gui.Gui import GameGUI
+from carcassonne.Presentation.Interfaces.IServerService import IServerService
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.BusinessLogic.Game import Game
+from carcassonne.BusinessLogic.Server import Server
 from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 from carcassonne.Presentation.Cli.Cli import GameCLI
 from carcassonne.Datas.GraphData import GraphData
+
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message: str):  # pylint: disable=arguments-differ
@@ -71,20 +76,23 @@ def main() -> int:
         help="name of the file to load a game",
         type=str,
     )
-    
+
     parser.add_argument(
         "-p",
         "--players",
         help="number of players (default: 2)",
         type=int,
     )
-    
+
     args: argparse.Namespace = parser.parse_args()
-    game_data :IGraphData = GraphData()
+    game_data: IGraphData = GraphData()
     if args.players:
-        game :IGameService = Game(game_data, args.players if args.players > 1 and args.players <= 5 else 2)
+        game: IGameService = Game(
+            game_data, args.players if args.players > 1 and args.players <= 5 else 2)
     else:
-        game :IGameService = Game(game_data, 1)
+        game: IGameService = Game(game_data, 1)
+    game_repo: IGamesRepository = GameRepository()
+    server_service: IServerService = Server(game_repo)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:
@@ -99,12 +107,9 @@ def main() -> int:
         print("GUI mode enabled.")
         CreateGui(game)
     else:
-        game_cli = GameCLI(game)
+        game_cli = GameCLI(game, server_service)
         game_cli.run()
 
-
     # Call a function to start the game
-    
-    
 
     return 0

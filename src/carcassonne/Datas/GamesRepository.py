@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 from dataclasses import dataclass
+import time
 from typing import Any
 
 from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
@@ -23,21 +24,37 @@ class GameRepository(IGamesRepository):
         self.lock = threading.Lock()
 
     def init_database(self):
-        rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS groups(group_id, number_of_players, host_player);"
-        )
-        rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS players(player_id, username, status, group_id, connected);"
-        )
-        rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS scoreboard(player_id, victories, defeats);"
-        )
-        rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS current_games(game_id, game_name, group_id);"
-        )
-        rows = self._execute_non_query(
-            "CREATE TABLE IF NOT EXISTS pending_invitations(group_id, invited_player, invitation_status);"
-        )
+        players_status = ["idle", "ingame", "away"]
+        table_players = "CREATE TABLE IF NOT EXISTS players(player_id int CONSTRAINT player_id PRIMARY KEY,"
+        table_players += " username varchar(30) CONSTRAINT username NOT NULL,"
+        table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN {players_status}),"
+        # can be null ? group_id
+        table_players += " group_id int CONSTRAINT group_id REFERENCES groups(group_id),"
+        table_players += " connected boolean);"
+        rows = self._execute_non_query(table_players)
+
+        table_groups = "CREATE TABLE IF NOT EXISTS groups(group_id int CONSTRAINT group_id_c PRIMARY KEY,"
+        table_groups += " number_of_players int CONSTRAINT number_of_players CHECK(number_of_players >= 0),"
+        table_groups += "host_player int CONSTRAINT host_player REFERENCES players(player_id));"
+        rows = self._execute_non_query(table_groups)
+
+        table_scoreboard = "CREATE TABLE IF NOT EXISTS scoreboard(player_id int CONSTRAINT player_id_scoreboard REFERENCES players(player_id),"
+        table_scoreboard += " victories int CONSTRAINT victories CHECK(victories >= 0),"
+        table_scoreboard += " defeats int CONSTRAINT defeats CHECK(defeats >= 0));"
+        rows = self._execute_non_query(table_scoreboard)
+
+        table_games = "CREATE TABLE IF NOT EXISTS current_games(game_id int CONSTRAINT game_id PRIMARY KEY,"
+        table_games += " game_name varchar(30) CONSTRAINT game_name NOT NULL,"
+        table_games += " group_id int CONSTRAINT group_id_game REFERENCES groups(group_id));"
+        rows = self._execute_non_query(table_games)
+
+        invitation_status = ["waiting", "accepted"]
+        table_invitations = "CREATE TABLE IF NOT EXISTS pending_invitations(invitation_id int CONSTRAINT invitation_id PRIMARY KEY,"
+        table_invitations += " group_id int CONSTRAINT group_id_invitation REFERENCES groups(group_id),"
+        table_invitations += " invited_player int CONSTRAINT invited_player REFERENCES players(player_id),"
+        table_invitations += f" invitation_status varchar(20) CONSTRAINT invitation_status CHECK(invitation_status IN {invitation_status}),"
+        table_invitations += " sending_time float CONSTRAINT sending_time NOT NULL);"
+        rows = self._execute_non_query(table_invitations)
 
     # low-level helpers
     def _execute_query(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
@@ -54,6 +71,13 @@ class GameRepository(IGamesRepository):
             return cur.lastrowid
 
     # business operations
+
+    def get_next_available_id(self) -> int:
+        rows = self._execute_query(
+            "SELECT * FROM players;"
+        )
+        return len(rows) + 1
+
     def player_exists(self, player_name: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM players WHERE username=?;",
@@ -161,6 +185,22 @@ class GameRepository(IGamesRepository):
             )
         return "Your invitation(s) have been cancelled."
 
+    def check_all_invitations_timeout(self, timeout):
+        rows = self._execute_query(
+            "SELECT invitation_id, sending_time FROM pending_invitations;"
+        )
+        for row in rows:
+            id, t = row
+            if time.time() - t < timeout:
+                self.cancel_invitation(id)
+
+    def cancel_invitation(self, invitation_id) -> bool:
+        rows = self._execute_non_query(
+            "DELETE FORM pending_invitations WHERE invitation_id=?;",
+            (invitation_id,)
+        )
+        return bool(rows)
+
     def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
         party_id = self._execute_non_query(
             "INSERT INTO groups(number_of_players, host_player) VALUES (?, ?);",
@@ -197,8 +237,8 @@ class GameRepository(IGamesRepository):
             (int(invitee_player),)
         )[0][0]
         rows = self._execute_non_query(
-            "INSERT INTO pending_invitations(group_id, invited_player, invitation_status) VALUES(?, ?, ?);",
-            (group_id, int(invited_player), "waiting")
+            "INSERT INTO pending_invitations(group_id, invited_player, invitation_status, sending_time) VALUES(?, ?, ?);",
+            (group_id, int(invited_player), "waiting", time.time())
         )
         return bool(rows)
 
