@@ -78,6 +78,28 @@ class GameRepository(IGamesRepository):
         )
         return len(rows) + 1
 
+    def is_accounted_for(self):
+        rows = self._execute_query(
+            "SELECT 1 FROM players;"
+        )
+        return len(rows) == 1
+
+    def create_online_player(self, username: str):
+        if len(username) <= 30:
+            rows = self._execute_non_query(
+                "INSERT INTO players(username, player_status, connected) VALUES(?, ?, ?);",
+                (username, "idle", True)
+            )
+            return "Account successfully created."
+        else:
+            return "Error creating the account, username too long (max 30 characters)."
+
+    def get_online_player(self) -> str:
+        rows = self._execute_query(
+            "SELECT username FROM players;"
+        )
+        return rows[0][0]
+
     def player_exists(self, player_name: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM players WHERE username=?;",
@@ -139,17 +161,25 @@ class GameRepository(IGamesRepository):
             (group_id, group_id)
         )
 
-    def get_game(self, client_id: int):
+    def get_game(self, client_username: str):
         rows = self._execute_query(
-            "SELECT game_id FROM current_games NATURAL JOIN groups NATURAL JOIN players WHERE player_id=?;",
-            (int(client_id),)
+            "SELECT game_id FROM current_games NATURAL JOIN groups NATURAL JOIN players WHERE username=?;",
+            (client_username,)
         )
         return rows[0]
 
     # possible to change return type to tuple(int, message)
-    def check_all_invitations_resolved(self, client_id: int):
+    def check_all_invitations_resolved(self, client_username: str):
         rows = self._execute_query(
-            "SELECT invited_player, username FROM pending_invitations NATURAL JOIN players NATURAL JOIN groups WHERE invitation_status!='waiting' AND host_player=?;",
+            "SELECT player_id FROM players WHERE username=?;",
+            (client_username,)
+        )
+        if len(rows) == 0:
+            print("Error: no such username.")
+            return False
+        client_id = rows[0][0]
+        rows = self._execute_query(
+            "SELECT invited_player, username FROM pending_invitations NATURAL JOIN players NATURAL JOIN groups WHERE username=? AND host_id==player_id;",
             (client_id,)
         )
         if not rows:
@@ -201,7 +231,15 @@ class GameRepository(IGamesRepository):
         )
         return bool(rows)
 
-    def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
+    def create_party(self, name: str, player_names: list[str], client_username: str) -> int | None:
+        rows = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (client_username,)
+        )
+        if len(rows) == 0:
+            print("Error: no such username.")
+            return
+        host_id: int = rows[0][0]
         party_id = self._execute_non_query(
             "INSERT INTO groups(number_of_players, host_player) VALUES (?, ?);",
             (1, host_id,),
@@ -217,14 +255,30 @@ class GameRepository(IGamesRepository):
             )
         return party_id
 
-    def get_party(self, host_id) -> list[str]:
+    def get_party(self, client_username: str) -> list[str]:
+        rows = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (client_username,)
+        )
+        if len(rows) == 0:
+            print("Error: no such username.")
+            return []
+        host_id: int = rows[0][0]
         rows = self._execute_query(
             "SELECT player_id FROM groups NATURAL JOIN players WHERE host_id=?;",
             (host_id,)
         )
         return [r[0] for r in rows]  # possibly int
 
-    def get_party_name(self, host_id: int) -> str:
+    def get_party_name(self, client_username: str) -> str:
+        rows = self._execute_query(
+            "SELECT player_id FROM players WHERE username=?;",
+            (client_username,)
+        )
+        if len(rows) == 0:
+            print("Error: no such username.")
+            return ""
+        host_id: int = rows[0][0]
         rows = self._execute_query(
             "SELECT party_name FROM parties WHERE host_id=?;",
             (host_id,)

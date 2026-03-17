@@ -123,6 +123,9 @@ class GameCLI:
                 CommandsHandlerCli.join(self, self.server, addresse)
         elif command == "ping":
             CommandsHandlerCli.ping(self, self.server)
+        elif command.startswith("create"):
+            command = command[7:].strip()
+            CommandsHandlerCli.create(self, command, self.server)
 
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")
