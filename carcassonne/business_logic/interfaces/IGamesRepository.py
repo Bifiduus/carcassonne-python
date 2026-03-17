@@ -10,7 +10,15 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_next_available_id(self) -> int:
+        pass
+
+    @abstractmethod
     def player_exists(self, player_name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def check_all_invitations_timeout(self, timeout: float):
         pass
 
     @abstractmethod

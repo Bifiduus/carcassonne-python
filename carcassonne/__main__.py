@@ -174,7 +174,7 @@ def main() -> int:
         print("GUI mode enabled.")
         CreateGui(game)
     else:
-        game_cli = GameCLI(game)
+        game_cli = GameCLI(game, server_service)
         game_cli.run()
 
     # Call a function to start the game
