@@ -35,19 +35,20 @@ def help(self) -> None:
     print("  play <move>        - Joue le coup spécifié par <move>")
 
 
-def quit(self) -> None:
-    saved = -1
-    while saved == -1:
-        confirm: str = input("Save the game before quitting?[y/N] ")
-        if confirm != 'y':
-            print("Abandon de la commande de quitter.")
-            self.running = False
-            saved = 0
-        else:
-            filename: str = input("Nom du fichier de sauvegarde: ")
-            saved: None = save(self, filename)
-    print("Quitte le jeu. À bientôt!")
-    self.running = False
+def quit(self, server_service: IServerService) -> None:
+    if not server_service.is_server_running():
+        saved = -1
+        while saved == -1:
+            confirm: str = input("Save the game before quitting?[y/N] ")
+            if confirm != 'y':
+                print("Abandon de la commande de quitter.")
+                self.running = False
+                saved = 0
+            else:
+                filename: str = input("Nom du fichier de sauvegarde: ")
+                saved: None = save(self, filename)
+        print("Quitte le jeu. À bientôt!")
+        self.running = False
 
 
 def load(self, filename) -> None:

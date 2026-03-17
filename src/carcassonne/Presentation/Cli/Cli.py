@@ -67,7 +67,7 @@ class GameCLI:
         elif command == "help":
             CommandsHandlerCli.help(self)
         elif command == "quit":
-            CommandsHandlerCli.quit(self)
+            CommandsHandlerCli.quit(self, self.server)
         elif command.startswith("load "):
             filename = command[5:].strip()
             CommandsHandlerCli.load(self, filename)
