@@ -229,6 +229,7 @@ class Server(IServerService):
         """
         # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
+        message = message.strip()
         if self.server is not None:
             if message == "ping":
                 answer = self.handle_communication.command_ping()
@@ -481,6 +482,7 @@ class Server(IServerService):
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
             text = f"{self.client_player}: " + text
+            print(text)
             self.client.sendall(text.encode())
             return True
         except Exception as e:
