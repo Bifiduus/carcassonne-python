@@ -16,8 +16,6 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
-# TO DO: implement a catch by the server of any new socket
-# Possibly with username and a password
 
 
 class Server(IServerService):
@@ -165,6 +163,10 @@ class Server(IServerService):
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
 
+                # Timeout to check pending invitations periodically
+                self.repo.check_all_invitations_timeout(
+                    self.INVITATION_TIMEOUT)
+
                 if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
                     message = f"{self.server_name}:{port}"
                     socket_message = socket.socket(
@@ -301,7 +303,8 @@ class Server(IServerService):
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
             invited_player)]
-        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}."
+        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}.\n"
+        message += f"Expires in 300s.\n"
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
