@@ -8,11 +8,15 @@ from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
 class IServerService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def list_available_servers(self, timeout: float = 5.0) -> list[str]:
+    def list_available_servers(self, timeout: float = 5.0) -> list[int]:
         pass
 
     @abstractmethod
-    def server_start(self, port: int = 12345):
+    def server_start(self, port: str = "12345"):
+        pass
+
+    @abstractmethod
+    def create_online_player(self, username: str) -> str:
         pass
 
     @abstractmethod

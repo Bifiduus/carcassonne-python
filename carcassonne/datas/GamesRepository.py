@@ -17,6 +17,10 @@ class GameRepository(IGamesRepository):
 
     db_path: str = "carcassonne.db"
 
+    def __init__(self):
+        self.__post_init__()
+        self.init_database()
+
     def __post_init__(self):
         # open sqlite connection once, allow multithreaded access via lock
         self.db = sqlite3.connect(self.db_path, check_same_thread=False)
@@ -24,12 +28,11 @@ class GameRepository(IGamesRepository):
         self.lock = threading.Lock()
 
     def init_database(self):
-        players_status = ["idle", "ingame", "away"]
-        table_players = "CREATE TABLE IF NOT EXISTS players(player_id int CONSTRAINT player_id PRIMARY KEY,"
+        table_players = "CREATE TABLE IF NOT EXISTS players(player_id INTEGER CONSTRAINT player_id_c PRIMARY KEY AUTOINCREMENT,"
         table_players += " username varchar(30) CONSTRAINT username NOT NULL,"
-        table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN {players_status}),"
+        table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN (\"idle\",\"ingame\", \"away\")),"
         # can be null ? group_id
-        table_players += " group_id int CONSTRAINT group_id REFERENCES groups(group_id),"
+        table_players += " group_id INTEGER CONSTRAINT group_id_c REFERENCES groups(group_id),"
         table_players += " connected boolean);"
         rows = self._execute_non_query(table_players)
 
@@ -48,11 +51,10 @@ class GameRepository(IGamesRepository):
         table_games += " group_id int CONSTRAINT group_id_game REFERENCES groups(group_id));"
         rows = self._execute_non_query(table_games)
 
-        invitation_status = ["waiting", "accepted"]
         table_invitations = "CREATE TABLE IF NOT EXISTS pending_invitations(invitation_id int CONSTRAINT invitation_id PRIMARY KEY,"
         table_invitations += " group_id int CONSTRAINT group_id_invitation REFERENCES groups(group_id),"
         table_invitations += " invited_player int CONSTRAINT invited_player REFERENCES players(player_id),"
-        table_invitations += f" invitation_status varchar(20) CONSTRAINT invitation_status CHECK(invitation_status IN {invitation_status}),"
+        table_invitations += f" invitation_status varchar(20) CONSTRAINT invitation_status CHECK(invitation_status IN (\"waiting\",\"accepted\")),"
         table_invitations += " sending_time float CONSTRAINT sending_time NOT NULL);"
         rows = self._execute_non_query(table_invitations)
 
@@ -84,10 +86,10 @@ class GameRepository(IGamesRepository):
         )
         return len(rows) == 1
 
-    def create_online_player(self, username: str):
+    def create_online_player(self, username: str) -> str:
         if len(username) <= 30:
             rows = self._execute_non_query(
-                "INSERT INTO players(username, player_status, connected) VALUES(?, ?, ?);",
+                "INSERT INTO players(username, status, connected) VALUES(?, ?, ?);",
                 (username, "idle", True)
             )
             return "Account successfully created."
