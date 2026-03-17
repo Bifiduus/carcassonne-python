@@ -7,7 +7,9 @@ tiles, provide hints, undo/redo, and display game information.
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 
 
-def new_game(self, args) -> None:
+def new_game(self, args, server_service: IServerService) -> None:
+    if server_service.connected_to_a_server():
+        server_service.send_to_server("new "+args)
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
 

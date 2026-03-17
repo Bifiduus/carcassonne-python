@@ -40,7 +40,7 @@ class OnlineCommunication:
 
     def command_players(self, message: str) -> str:
         answer = ""
-        if message.split("players")[1] != "\n":
+        if message.removeprefix("players") != "":
             answer = self.server.check_profile_player(
                 int(message.split("players")[1]))
         else:

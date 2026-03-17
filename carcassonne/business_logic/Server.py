@@ -27,6 +27,7 @@ class Server(IServerService):
         self.client = None
         self.client_player = None
         self.server = None
+        self.has_joined_server = False
         self.should_stop = threading.Event()
         self.server_thread = None
         self.available_servers: dict[str, tuple[int, float]] = {}
@@ -50,6 +51,7 @@ class Server(IServerService):
             self.client_player = self.repo.get_online_player()
 
     def create_online_player(self, username: str) -> str:
+        self.client_player = username
         return self.repo.create_online_player(username)
 
     def list_available_servers(self, timeout: float = 5.0) -> list[int]:
@@ -140,7 +142,6 @@ class Server(IServerService):
                 for s in r:
                     if s is self.server:
                         client_socket, addr = self.server.accept()
-                        print(f"Accepted connection from a client.")
                         # Add client to the list
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
@@ -148,6 +149,7 @@ class Server(IServerService):
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,))
                         client_thread.start()
+                        print(f"Accepted connection from a client.")
 
                 # Timeout to check pending invitations periodically
                 self.repo.check_all_invitations_timeout(
@@ -188,8 +190,8 @@ class Server(IServerService):
                 client, message = data.decode().split(":")
                 response = self.process_message(client, message)
                 # fonction qui check le statut d'une invitation et l'envoie à l'host
-                client_socket.send(
-                    (f"Server -> Client{self.connected_clients.index(client_socket)}: " + response).encode())
+                answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {response}"
+                client_socket.send(answer.encode())
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
@@ -209,6 +211,7 @@ class Server(IServerService):
         """
         # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
+        message = message.strip()
         if self.server is not None:
             if message == "ping\n":
                 answer = self.handle_communication.command_ping()
@@ -220,7 +223,7 @@ class Server(IServerService):
             if message.startswith("new"):
                 answer = self.handle_communication.command_new(
                     message, client_username)
-            if message == "players":
+            if message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
             if message == "scoreboard\n":
                 answer = self.handle_communication.command_scoreboard()
@@ -248,7 +251,7 @@ class Server(IServerService):
 
     def create_new_party(self, clients_list: list[str], client_username: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
-        if party_name is "":
+        if party_name == "":
             party_name = self.repo.get_party_name(client_username)
 
         # should be done after, because don't know how many
@@ -279,10 +282,8 @@ class Server(IServerService):
         profile = self.repo.get_player_profile(player_id)
         if profile is None:
             return "Player not found\n"
-        return (
-            f"{profile['username']} status={profile['status']} score={profile['score']} "
+        return f"{profile['username']} status={profile['status']} score={profile['score']} "\
             f"wins={profile['stats_win']} loses={profile['stats_lose']}\n"
-        )
 
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
@@ -300,29 +301,30 @@ class Server(IServerService):
         """
         Stop the server gracefully.
         """
-        # Send shutdown message to all connected clients
-        shutdown_message = "Server Shutdown"
-        with self.clients_lock:
-            # Copy the list to avoid modification during iteration
-            for client_socket in self.connected_clients[:]:
+        if self.server_thread is not None:
+
+            # Send shutdown message to all connected clients
+            shutdown_message = "Server Shutdown"
+            with self.clients_lock:
+                # Copy the list to avoid modification during iteration
+                for client_socket in self.connected_clients[:]:
+                    try:
+                        client_socket.sendall(shutdown_message.encode())
+                    except Exception as e:
+                        print(f"Error sending shutdown message to client: {e}")
+                    finally:
+                        client_socket.close()
+                self.connected_clients.clear()
+            if self.server:
+                self.should_stop.clear()
+                self.server.close()
+            # close repository database connection if there is one
+            if hasattr(self, 'repo') and self.repo:
                 try:
-                    client_socket.sendall(shutdown_message.encode())
-                except Exception as e:
-                    print(f"Error sending shutdown message to client: {e}")
-                finally:
-                    client_socket.close()
-            self.connected_clients.clear()
-        if self.server:
-            self.should_stop.clear()
-            self.server.close()
-        # close repository database connection if there is one
-        if hasattr(self, 'repo') and self.repo:
-            try:
-                self.repo.close()
-            except Exception:
-                pass
-        assert self.server_thread
-        self.server_thread.join()
+                    self.repo.close()
+                except Exception:
+                    pass
+            self.server_thread.join()
 
     def server_quit(self):
         """
@@ -374,6 +376,7 @@ class Server(IServerService):
             return False
 
         server_port, _ = self.available_servers[ip]
+        self.connected_to_server_index = ip
         if port is None:
             port = server_port
 
@@ -394,6 +397,7 @@ class Server(IServerService):
         self._recv_thread = threading.Thread(
             target=self._receive_loop, daemon=True)
         self._recv_thread.start()
+        self.has_joined_server = True
         return True
 
     def _receive_loop(self):
@@ -443,6 +447,9 @@ class Server(IServerService):
         party_id = int(self.repo.get_game(client_username)[0])
         return self.current_games_list[party_id][1]
 
+    def connected_to_a_server(self) -> bool:
+        return bool(self.client and self.has_joined_server)
+
     def send_to_server(self, text: str) -> bool:
         """
         Send a message to the connected server. Returns False if not
@@ -455,6 +462,7 @@ class Server(IServerService):
             if self.client_id is None:
                 self.client_id = self.repo.get_next_available_id()
             text = f"{self.client_player}: " + text
+            print(text)
             self.client.sendall(text.encode())
             return True
         except Exception as e:

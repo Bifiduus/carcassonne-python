@@ -36,5 +36,13 @@ class IServerService(ABC):
         pass
 
     @abstractmethod
+    def connected_to_a_server(self) -> bool:
+        pass
+
+    @abstractmethod
     def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
+        pass
+
+    @abstractmethod
+    def send_to_server(self, text: str) -> bool:
         pass
