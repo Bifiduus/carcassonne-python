@@ -8,7 +8,9 @@ from carcassonne.Presentation.Interfaces.IGameService import IGameService
 from carcassonne.Presentation.Interfaces.IServerService import IServerService
 
 
-def new_game(self, args) -> None:
+def new_game(self, args, server_service: IServerService) -> None:
+    if server_service.connected_to_a_server():
+        server_service.send_to_server("new "+args)
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
 
@@ -173,3 +175,35 @@ def join(self, server_service: IServerService, ip: str | None = None, port: str 
 
 def ping(self, server_service: IServerService):
     print(server_service.ping())
+
+
+def server_status(self, server_service: IServerService):
+    server_service.send_to_server("serveur status")
+
+
+def players(self, server_service: IServerService, message: str):
+    server_service.send_to_server(message)
+
+
+def scoreboard(self, server_service: IServerService):
+    server_service.send_to_server("scoreboard")
+
+
+def accept(self, server_service: IServerService):
+    server_service.send_to_server("accept")
+
+
+def decline(self, server_service: IServerService):
+    server_service.send_to_server("decline")
+
+
+def cancel(self, server_service: IServerService):
+    server_service.send_to_server("cancel")
+
+
+def back(self, server_service: IServerService):
+    server_service.send_to_server("back")
+
+
+def away(self, server_service: IServerService):
+    server_service.send_to_server("away")

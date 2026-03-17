@@ -63,7 +63,7 @@ class GameCLI:
 
         if command.startswith("new"):
             args = command[4:].strip()
-            CommandsHandlerCli.new_game(self, args)
+            CommandsHandlerCli.new_game(self, args, self.server)
         elif command == "help":
             CommandsHandlerCli.help(self)
         elif command == "quit":
@@ -126,6 +126,21 @@ class GameCLI:
         elif command.startswith("create"):
             command = command[7:].strip()
             CommandsHandlerCli.create(self, command, self.server)
-
+        elif command == "server status":
+            CommandsHandlerCli.server_status(self, self.server)
+        elif command.startswith("players"):
+            CommandsHandlerCli.players(self, self.server, command)
+        elif command == "scoreboard":
+            CommandsHandlerCli.scoreboard(self, self.server)
+        elif command == "accept":
+            CommandsHandlerCli.accept(self, self.server)
+        elif command == "decline":
+            CommandsHandlerCli.decline(self, self.server)
+        elif command == "cancel":
+            CommandsHandlerCli.cancel(self, self.server)
+        elif command == "back":
+            CommandsHandlerCli.back(self, self.server)
+        elif command == "away":
+            CommandsHandlerCli.away(self, self.server)
         else:
             print("Commande inconnue. Tapez 'help' pour la liste des commandes.")

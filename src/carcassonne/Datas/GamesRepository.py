@@ -30,7 +30,7 @@ class GameRepository(IGamesRepository):
     def init_database(self):
         table_players = "CREATE TABLE IF NOT EXISTS players(player_id INTEGER CONSTRAINT player_id_c PRIMARY KEY AUTOINCREMENT,"
         table_players += " username varchar(30) CONSTRAINT username NOT NULL,"
-        table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN (\"idle\",\"ingame\", \"away\")),"
+        table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN (\"idle\",\"ingame\", \"away\",\"waitgame\")),"
         # can be null ? group_id
         table_players += " group_id INTEGER CONSTRAINT group_id_c REFERENCES groups(group_id),"
         table_players += " connected boolean);"
@@ -84,7 +84,7 @@ class GameRepository(IGamesRepository):
         rows = self._execute_query(
             "SELECT 1 FROM players;"
         )
-        return len(rows) == 1
+        return len(rows) >= 1
 
     def create_online_player(self, username: str) -> str:
         if len(username) <= 30:
@@ -145,9 +145,10 @@ class GameRepository(IGamesRepository):
 
     def current_players(self) -> str:
         rows = self._execute_query(
-            "SELECT player_id, username, status FROM players WHERE status!='away' AND connected=true;"
+            "SELECT player_id, username, status FROM players WHERE status!='away' AND connected=True;"
         )
-        return str([r for r in rows])
+        answer = ([(r['player_id'], r['username'], r['status']) for r in rows])
+        return f"List of current players: {answer}"
 
     def invitation_received(self, client_username: str):
         client_id: int = self._execute_query(
