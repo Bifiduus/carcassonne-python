@@ -20,7 +20,7 @@ class IServerService(ABC):
         pass
 
     @abstractmethod
-    def server_quit(self):
+    def server_quit(self) -> int:
         pass
 
     @abstractmethod

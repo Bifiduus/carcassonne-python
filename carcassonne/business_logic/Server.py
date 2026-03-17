@@ -11,15 +11,15 @@ from carcassonne.BusinessLogic.Game import Game
 from carcassonne.Datas.GraphData import GraphData
 from carcassonne.Datas.GamesRepository import GameRepository
 from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
+from carcassonne.Presentation.Interfaces.IServerService import IServerService
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
-# TO DO: implement a catch by the server of any new socket
-# Possibly with username and a password
 
 
-class Server:
+class Server(IServerService):
     SERVER_TIMEOUT = 30
     SERVER_DIFFUSION_PERIOD = 10
+    INVITATION_TIMEOUT = 300
 
     def __init__(self, repo: IGamesRepository | None = None):
         # networking/server state
@@ -31,13 +31,13 @@ class Server:
         # List to track connected client sockets
         self.connected_clients: list[socket.socket] = []
         self.clients_lock = threading.Lock()  # Lock for thread-safe access
-        self.parties_list: dict[int, tuple[str, Game]] = {}
-        self.scoreboard: dict[socket.socket, Player] = {}
+        # Needed to keep track of the different games
+        self.current_games_list: dict[int, tuple[str, Game]] = {}
         # Map client_id -> socket
         self.client_sockets: dict[int, socket.socket] = {}
         self.player_clients: dict[socket.socket,
                                   int] = {}  # Map socket -> client_id
-
+        self.client_id = None
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         self.handle_communication = OnlineCommunication(self)
@@ -129,6 +129,10 @@ class Server:
                 client_thread = threading.Thread(
                     target=self.handle_client, args=(client_socket,))
                 client_thread.start()
+
+                # Timeout to check pending invitations periodically
+                self.repo.check_all_invitations_timeout(
+                    self.INVITATION_TIMEOUT)
 
                 if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
                     message = f"{self.server_name}:{port}"
@@ -228,7 +232,8 @@ class Server:
         new_party = Game(graph, number_of_players_in_group)
         try:
             self.repo.create_party(party_name, clients_list, host_id)
-            self.parties_list[len(self.parties_list)] = (party_name, new_party)
+            self.current_games_list[len(self.current_games_list)] = (
+                party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)
             # création approfondit de la game ( new method avec données de repo (groups et players ) )
@@ -257,7 +262,8 @@ class Server:
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
             invited_player)]
-        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}."
+        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}.\n"
+        message += f"Expires in 300s.\n"
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
@@ -301,6 +307,7 @@ class Server:
         data = "quit\n".encode()
         self.client.sendall(data)
         self.server_stop()
+        return 0
         # Additional cleanup if needed
 
     def ping(self) -> str:
@@ -383,7 +390,7 @@ class Server:
     def handle_server_message(self, message: str):
         """
         Override or extend this method to process messages received from the
-        server. The default implementation simply prints the message.
+        server.
         """
         assert self.repo is not None, "No games repository."
         if self.client:  # check what you do, if you have the server or if you only receive
@@ -406,7 +413,7 @@ class Server:
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
         party_id = int(self.repo.get_game(int(client_id))[0])
-        return self.parties_list[party_id][1]
+        return self.current_games_list[party_id][1]
 
     def send_to_server(self, text: str) -> bool:
         """
@@ -417,6 +424,9 @@ class Server:
             print("Not connected to any server")
             return False
         try:
+            if self.client_id is None:
+                self.client_id = self.repo.get_next_available_id()
+            text = f"Client{self.client_id}: " + text
             self.client.sendall(text.encode())
             return True
         except Exception as e:

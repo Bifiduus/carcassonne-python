@@ -19,12 +19,12 @@ class OnlineCommunication:
             self.server.server is not None), "No server to execute the command on..."
         answer = f"Port:{ self.server.server.getsockname()}, "
         answer += f"Clients:{len(self.server.connected_clients)}, "
-        answer += f"Current Parties:{len(self.server.parties_list)}\n"
+        answer += f"Current Parties:{len(self.server.current_games_list)}\n"
         return answer
 
     def command_new(self, message: str, client_id: str) -> str:
         message = message.split("new")[1]
-        party_name = f"Party {len(self.server.parties_list)}"
+        party_name = f"Party {len(self.server.current_games_list)}"
         clients_list = message.split(" ")
         # Check if the clients exist and are available, remove the ones that cannot be invited
         clients_list_checked = self.server.check_clients_list_validity(
