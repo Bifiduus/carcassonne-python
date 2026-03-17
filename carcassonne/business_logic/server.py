@@ -450,7 +450,7 @@ class Server(IServerService):
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
-                self.get_game(client_id).play_move(move[1])
+                self.get_game(client_username).play_move(move[1])
                 self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out
@@ -459,7 +459,7 @@ class Server(IServerService):
                     self.create_new_party(
                         self.repo.get_party(client_id), client_id)
 
-    def get_game(self, client_id: str):
+    def get_game(self, client_username: str):
         assert self.repo is not None, "No games repository."
         party_id = int(self.repo.get_game(client_id)[0])
         return self.current_games_list[party_id][1]

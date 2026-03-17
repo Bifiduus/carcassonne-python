@@ -187,8 +187,8 @@ class GameRepository(IGamesRepository):
 
     def get_game(self, client_id: str):
         rows = self._execute_query(
-            "SELECT game_id FROM current_games NATURAL JOIN groups NATURAL JOIN players WHERE player_id=?;",
-            (int(client_id),)
+            "SELECT game_id FROM current_games NATURAL JOIN groups NATURAL JOIN players WHERE username=?;",
+            (client_username,)
         )
         return rows[0]
 
