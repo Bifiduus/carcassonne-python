@@ -130,6 +130,10 @@ def set_parameter(self, param, value) -> None:
     print(f"Paramètre '{param}' défini à '{value}'.")
 
 
+def create(self, username: str, server_service: IServerService):
+    self.server_service.repo.create_online_player(username)
+
+
 def play(self, move, game) -> None:
     result = game.play_move(move)
     game.get_board()

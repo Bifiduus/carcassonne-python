@@ -25,6 +25,7 @@ class Server(IServerService):
         # networking/server state
         self.server_name = ""
         self.client = None
+        self.client_player = None
         self.server = None
         self.running = False
         self.available_servers: dict[str, tuple[int, float]] = {}
@@ -41,6 +42,12 @@ class Server(IServerService):
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         self.handle_communication = OnlineCommunication(self)
+        if not self.repo.is_accounted_for():
+            print(f"You should create an online account.\n")
+            print("Type: >>create <username>")
+            return False
+        else:
+            self.client_player = self.repo.get_online_player()
 
     def list_available_servers(self, timeout: float = 5.0) -> list[str]:
         """
@@ -221,17 +228,17 @@ class Server(IServerService):
         assert self.repo is not None, "No games repository."
         return [c for c in clients_list if self.repo.player_exists(c)]
 
-    def create_new_party(self, clients_list: list[str], host_id: int,  party_name: str = "") -> str:
+    def create_new_party(self, clients_list: list[str], client_username: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
         if party_name is "":
-            party_name = self.repo.get_party_name(host_id)
+            party_name = self.repo.get_party_name(client_username)
 
         # should be done after, because don't know how many
         number_of_players_in_group: int = len(clients_list)
         graph: IGraphData = GraphData()
         new_party = Game(graph, number_of_players_in_group)
         try:
-            self.repo.create_party(party_name, clients_list, host_id)
+            self.repo.create_party(party_name, clients_list, client_username)
             self.current_games_list[len(self.current_games_list)] = (
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
@@ -394,25 +401,25 @@ class Server(IServerService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:  # check what you do, if you have the server or if you only receive
-            message = message.removeprefix("Server -> Client")
-            client_id, message = message.split(":")
+            message = message.removeprefix("Server -> ")
+            client_username, message = message.split(":")
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
-                self.get_game(client_id).play_move(move[1])
+                self.get_game(client_username).play_move(move[1])
                 self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out
-                if self.repo.check_all_invitations_resolved(int(client_id)):
+                if self.repo.check_all_invitations_resolved(client_username):
                     # ajoute la party dans party_list, change ce qu'il faut et lance
                     self.create_new_party(
-                        self.repo.get_party(client_id), int(client_id))
+                        self.repo.get_party(client_username), client_username)
 
         print(message, end="")
 
-    def get_game(self, client_id: str):
+    def get_game(self, client_username: str):
         assert self.repo is not None, "No games repository."
-        party_id = int(self.repo.get_game(int(client_id))[0])
+        party_id = int(self.repo.get_game(client_username)[0])
         return self.current_games_list[party_id][1]
 
     def send_to_server(self, text: str) -> bool:
@@ -426,7 +433,7 @@ class Server(IServerService):
         try:
             if self.client_id is None:
                 self.client_id = self.repo.get_next_available_id()
-            text = f"Client{self.client_id}: " + text
+            text = f"{self.client_player}: " + text
             self.client.sendall(text.encode())
             return True
         except Exception as e:

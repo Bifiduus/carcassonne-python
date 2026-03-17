@@ -14,6 +14,14 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def is_accounted_for(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_online_player(self) -> str:
+        pass
+
+    @abstractmethod
     def player_exists(self, player_name: str) -> bool:
         pass
 
@@ -42,11 +50,11 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_game(self, client_id: int) -> Row:
+    def get_game(self, client_username: str) -> Row:
         pass
 
     @abstractmethod
-    def check_all_invitations_resolved(self, client_id: int) -> bool:
+    def check_all_invitations_resolved(self, client_username: str) -> bool:
         pass
 
     @abstractmethod
@@ -70,15 +78,15 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_party(self, name: str, player_names: list[str], host_id: int) -> int | None:
+    def create_party(self, name: str, player_names: list[str], client_username: str) -> int | None:
         pass
 
     @abstractmethod
-    def get_party(self, host_id) -> list[str]:
+    def get_party(self, client_username: str) -> list[str]:
         pass
 
     @abstractmethod
-    def get_party_name(self, host_id: int) -> str:
+    def get_party_name(self, client_username: str) -> str:
         pass
 
     @abstractmethod
