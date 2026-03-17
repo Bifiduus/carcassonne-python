@@ -12,6 +12,10 @@ class IServerService(ABC):
         pass
 
     @abstractmethod
+    def is_server_running(self) -> bool:
+        pass
+
+    @abstractmethod
     def server_start(self, port: str = "12345"):
         pass
 

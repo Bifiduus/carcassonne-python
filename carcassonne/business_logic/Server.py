@@ -136,15 +136,18 @@ class Server(IServerService):
             try:
                 # Timeout to check self.running periodically
                 self.server.settimeout(1.0)
-                client_socket, addr = self.server.accept()
-                print(f"Accepted connection from {addr}")
-                # Add client to the list
-                with self.clients_lock:
-                    self.connected_clients.append(client_socket)
-                # Handle client in a new thread
-                client_thread = threading.Thread(
-                    target=self.handle_client, args=(client_socket,))
-                client_thread.start()
+                r, _, _ = select.select([self.server], [], [], 1.0)
+                for s in r:
+                    if s is self.server:
+                        client_socket, addr = self.server.accept()
+                        print(f"Accepted connection from a client.")
+                        # Add client to the list
+                        with self.clients_lock:
+                            self.connected_clients.append(client_socket)
+                        # Handle client in a new thread
+                        client_thread = threading.Thread(
+                            target=self.handle_client, args=(client_socket,))
+                        client_thread.start()
 
                 # Timeout to check pending invitations periodically
                 self.repo.check_all_invitations_timeout(
@@ -168,6 +171,9 @@ class Server(IServerService):
         self.server.close()
         print("Server stopped")
 
+    def is_server_running(self) -> bool:
+        return self.should_stop.is_set()
+
     def handle_client(self, client_socket: socket.socket):
         """
         Handle communication with a single client.
@@ -180,8 +186,7 @@ class Server(IServerService):
                     break
                 # Process data (e.g., echo back for now; replace with game logic)
                 client, message = data.decode().split(":")
-                client_id = client.removeprefix("Client")
-                response = self.process_message(client_id, message)
+                response = self.process_message(client, message)
                 # fonction qui check le statut d'une invitation et l'envoie à l'host
                 client_socket.send(
                     (f"Server -> Client{self.connected_clients.index(client_socket)}: " + response).encode())
@@ -198,7 +203,7 @@ class Server(IServerService):
                     del self.client_sockets[client_id]
                     del self.player_clients[client_socket]
 
-    def process_message(self, client_id: str, message: str) -> str:
+    def process_message(self, client_username: str, message: str) -> str:
         """
         Process incoming message (from a client) and return a response.
         """
@@ -208,27 +213,32 @@ class Server(IServerService):
             if message == "ping\n":
                 answer = self.handle_communication.command_ping()
             if message == "quit\n":
-                answer = self.handle_communication.command_quit(client_id)
-            if message == "server status\n":
+                answer = self.handle_communication.command_quit(
+                    client_username)
+            if message == "server status":
                 answer = self.handle_communication.command_server_status()
             if message.startswith("new"):
                 answer = self.handle_communication.command_new(
-                    message, client_id)
+                    message, client_username)
             if message == "players":
                 answer = self.handle_communication.command_players(message)
             if message == "scoreboard\n":
                 answer = self.handle_communication.command_scoreboard()
             if message == "accept\n":
-                answer = self.handle_communication.command_accept(client_id)
+                answer = self.handle_communication.command_accept(
+                    client_username)
             if message == "decline\n":
-                answer = self.handle_communication.command_decline(client_id)
+                answer = self.handle_communication.command_decline(
+                    client_username)
             if message.startswith("cancel"):
                 answer = self.handle_communication.command_cancel(
-                    client_id, message.strip("cancel"))
+                    client_username, message.strip("cancel"))
             if message == "away\n":
-                answer = self.handle_communication.command_away(client_id)
+                answer = self.handle_communication.command_away(
+                    client_username)
             if message == "back\n":
-                answer = self.handle_communication.command_back(client_id)
+                answer = self.handle_communication.command_back(
+                    client_username)
         return answer
 
     def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
@@ -277,7 +287,7 @@ class Server(IServerService):
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
             invited_player)]
-        message = f"Server: You have received an invitation from {self.repo.get_username(invitee_player)}.\n"
+        message = f"Server: You have received an invitation from {invitee_player}.\n"
         message += f"Expires in 300s.\n"
         with self.clients_lock:
             try:
@@ -338,6 +348,7 @@ class Server(IServerService):
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
+        print(message)
         if message.find("pong\n") != -1:
             end = time.time()
             return message+f" Time={start - end}ms"
@@ -356,8 +367,8 @@ class Server(IServerService):
         """
         # refresh discovery cache first
         self.list_available_servers()
-        if ip is None:
-            ip = "localhost"
+        if ip is (None or ""):
+            ip = self.server_name
         if ip not in self.available_servers:
             print("Error: There is no server with such an ip.")
             return False
