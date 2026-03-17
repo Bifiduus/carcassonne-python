@@ -12,6 +12,14 @@ from gi.repository import Gdk, GdkPixbuf
 import math
 from typing import Dict, Any, Tuple
 
+color_map = {
+    "red": (1, 0, 0),
+    "blue": (0, 0, 1),
+    "yellow": (1, 1, 0),
+    "white": (0.9, 0.9, 0.9),
+    "green": (0, 1, 0),
+}
+
 
 def normalize_name(name: str) -> str:
     """Return the key used in texture cache for a given tile identifier."""
@@ -117,7 +125,7 @@ def draw_preview_grid(cr, x, y, size) -> None:
     cr.line_to(x + size, y + 2 * cell)
 
 
-def draw_meeples(cr, x, y, size, meeples, tile_id) -> None:
+def draw_meeples(cr, x, y, size, meeples, tile_id, players) -> None:
     for m in meeples:
         if m["tile_id"] != tile_id:
             continue
@@ -137,7 +145,10 @@ def draw_meeples(cr, x, y, size, meeples, tile_id) -> None:
         cx = x + col * cell
         cy = y + row * cell
         padding = cell * 0.2
-        cr.set_source_rgb(1, 0, 0)
+        player = players[m["player_id"]]
+        color = player.get_color()
+        r, g, b = color_map.get(color, (1, 0, 0))
+        cr.set_source_rgb(r, g, b)
         cr.set_line_width(3)
         cr.move_to(cx + padding, cy + padding)
         cr.line_to(cx + cell - padding, cy + cell - padding)

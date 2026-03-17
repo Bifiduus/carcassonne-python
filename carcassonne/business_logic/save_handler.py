@@ -196,10 +196,10 @@ class SaveHandler:
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
                                 print(f"Player number {
-                                        self.game.players_order.index(
-                                            player.get_id())} ({
-                                        player.get_username().strip()}) has {
-                                        player.score.score} points.")
+                                    self.game.players_order.index(
+                                        player.get_id())} ({
+                                    player.get_username().strip()}) has {
+                                    player.score.score} points.")
                     game_score = True
                 if line.startswith("Seed:"):
                     # Assuming the format is "Seed: the seed"

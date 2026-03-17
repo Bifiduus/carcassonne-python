@@ -181,6 +181,8 @@ class GameGUI(Gtk.Application):
         commands_handler_gui.on_rotate_gui(self)
 
     def on_preview_pressed(self, gesture, n_press, x, y):
+        self.game_data.is_dragging = True
+        self.board_view.grab_focus()
         self.game_data.refresh()
 
     def on_preview_released(self, gesture, n_press, x, y):

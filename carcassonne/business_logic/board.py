@@ -122,10 +122,10 @@ class Board:
         for player_id in sorted(players.keys()):
             player = players[player_id]
             print(f"Joueur {
-                    player_id +
-                    1} ({
-                    player.get_username()}): {
-                    player.get_score().score} pts")
+                player_id +
+                1} ({
+                player.get_username()}): {
+                player.get_score().score} pts")
         print("------------------------------")
 
         # enlever la tuile des tuiles disponibles

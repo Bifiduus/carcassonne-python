@@ -68,12 +68,12 @@ class BoardView(Gtk.DrawingArea):
         self.add_controller(key_controller)
 
         # accept drops from the preview widget (tile name strings)
-        drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
+        """drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
         drop.connect("drop", self.on_drop)
         drop.connect("enter", self.on_drag_enter)
         drop.connect("motion", self.on_drag_motion)
         drop.connect("leave", self.on_drag_leave)
-        self.add_controller(drop)
+        self.add_controller(drop)"""
 
     def _normalize_name(self, name: str) -> str:
         """Turn a tile identifier into the key used in ``self.textures``.
@@ -130,12 +130,13 @@ class BoardView(Gtk.DrawingArea):
         """cr.set_source_rgb(0.6, 0.6, 0.6)
         cr.paint()"""
 
-        tiles = self.game_data.game.get_board_data()
-        if not tiles:
+        board_data = self.game_data.game.get_board_data()
+        if not board_data:
             return
 
         # if there is a pending placement, append it to the list so the
         # preview shows on the board
+        tiles = board_data
         if self.game_data.current_tile and self.game_data.current_tile.move:
             temp = self.game_data.current_tile.parse_move(
                 self.game_data.current_tile.move,
@@ -148,12 +149,32 @@ class BoardView(Gtk.DrawingArea):
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
 
-        last_tile = tiles[-1] if tiles else None
+        num_players = len(self.game_data.game.players)
 
-        for t in tiles:
+        num_players = len(self.game_data.game.players)
+
+        # compute last tile index for each player
+        player_last_i = {}
+        for i in range(1, len(board_data)):  # start from 1
+            turn = i - 1  # turn 0 for i=1
+            player_id = self.game_data.game.players_order[turn % len(
+                self.game_data.game.players_order)]
+            player_last_i[player_id] = i
+
+        for i, t in enumerate(tiles):
             x = offset_x + (t["x"] - min_x) * size
             y = offset_y + (t["y"] - min_y) * size
-            self.draw_tile(cr, x, y, size, t, t is last_tile)
+            border_color = None
+            if i < len(board_data) and i > 0:
+                turn = i - 1
+                player_id = self.game_data.game.players_order[turn % len(
+                    self.game_data.game.players_order)]
+                if i == player_last_i.get(player_id):
+                    player = self.game_data.game.players[player_id]
+                    color_str = player.get_color()
+                    border_color = board_utils.color_map.get(
+                        color_str, (1, 0, 0))
+            self.draw_tile(cr, x, y, size, t, border_color)
 
         if self.game_data.is_dragging and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
@@ -192,7 +213,7 @@ class BoardView(Gtk.DrawingArea):
     # 🧩 DRAW ONE TILE
     # =========================
 
-    def draw_tile(self, cr, x, y, size, tile_data, is_last=False) -> None:
+    def draw_tile(self, cr, x, y, size, tile_data, border_color) -> None:
         """Draw a single placed tile at pixel coordinates ``x,y``.
 
         ``tile_data`` is expected to be the dictionary returned by
@@ -204,11 +225,6 @@ class BoardView(Gtk.DrawingArea):
             else tile_data["name"]
         )
         orientation = tile_data["orientation"]
-        if is_last:
-            cr.set_source_rgb(1, 0, 0)
-            cr.set_line_width(4)
-            cr.rectangle(x + 2, y + 2, size - 4, size - 4)
-            cr.stroke()
         pixbuf = self.textures.get(name)
         if pixbuf:
             board_utils.draw_pixbuf(cr, x, y, size, pixbuf, orientation)
@@ -224,17 +240,67 @@ class BoardView(Gtk.DrawingArea):
         else:
             cr.set_source_rgb(0, 0, 0)
 
-        board_utils.draw_meeples(
-            cr,
-            x,
-            y,
-            size,
-            self.game_data.game.get_meeples_data(),
-            tile_data["id"],
-        )
         cr.set_line_width(2)
         cr.rectangle(x, y, size, size)
         cr.stroke()
+
+        is_preview = board_utils.is_previewed_tile(
+            self.game_data.current_tile, tile_data
+        )
+
+        # ❌ Do NOT draw real meeples on preview tile
+        if not is_preview:
+            board_utils.draw_meeples(
+                cr,
+                x,
+                y,
+                size,
+                self.game_data.game.get_meeples_data(),
+                tile_data["id"],
+                self.game_data.game.players,
+            )
+        # Draw preview meeple if this is the previewed tile and meeple_pos is
+        # set
+        current_tile = self.game_data.current_tile
+
+        if (
+            current_tile
+            and current_tile.meeple_pos
+            and board_utils.is_previewed_tile(current_tile, tile_data)
+        ):
+            string_to_pos = {
+                "NW": (0, 0),
+                "N": (0, 1),
+                "NE": (0, 2),
+                "W": (1, 0),
+                "C": (1, 1),
+                "E": (1, 2),
+                "SW": (2, 0),
+                "S": (2, 1),
+                "SE": (2, 2),
+            }
+            row, col = string_to_pos.get(
+                self.game_data.current_tile.meeple_pos, (1, 1))
+            cell = size / 3
+            cx = x + col * cell
+            cy = y + row * cell
+            padding = cell * 0.2
+            current_player = self.game_data.game.get_current_player()
+            color = current_player.get_color()
+            r, g, b = board_utils.color_map.get(color, (1, 0, 0))
+            cr.set_source_rgba(r, g, b, 0.7)  # Semi-transparent for preview
+            cr.set_line_width(3)
+            cr.move_to(cx + padding, cy + padding)
+            cr.line_to(cx + cell - padding, cy + cell - padding)
+            cr.move_to(cx + cell - padding, cy + padding)
+            cr.line_to(cx + padding, cy + cell - padding)
+            cr.stroke()
+
+        if border_color:
+            cr.set_source_rgb(*border_color)
+            cr.set_line_width(2)
+            cr.rectangle(x + 3, y + 3, size - 6, size - 6)
+            cr.stroke()
 
     # =========================
     # 🖱️ CLICK
@@ -289,6 +355,7 @@ class BoardView(Gtk.DrawingArea):
         self.game_data.current_tile.y = grid_y
         # stop any ghost; tile has been dropped by click
         self.game_data.is_dragging = False
+
         self.ghost_x = None
         self.ghost_y = None
         self.queue_draw()

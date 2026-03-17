@@ -27,7 +27,7 @@ class TilePreview(Gtk.Picture):
 
         # interaction
         click = Gtk.GestureClick()
-        """click.connect("pressed", self._on_pressed)"""
+        click.connect("pressed", self._on_pressed)
         self.add_controller(click)
 
         self._setup_drag_source()
@@ -69,15 +69,20 @@ class TilePreview(Gtk.Picture):
 
     # internal helpers -------------------------------------------------------
     def _setup_drag_source(self):
-        drag_source = Gtk.DragSource()
-        drag_source.set_actions(Gdk.DragAction.MOVE)
-        drag_source.connect("prepare", self._on_drag_prepare)
-        drag_source.connect("drag-begin", self._on_drag_begin)
-        drag_source.connect("end", self._on_drag_end)
-        self.add_controller(drag_source)
+        click = Gtk.GestureClick()
+        click.connect("pressed", self._on_pressed)
+        click.connect("released", self._on_released)
+        self.add_controller(click)
 
-    """def _on_pressed(self, gesture, n_press, x, y):
-        self.gui.on_preview_pressed(gesture, n_press, x, y)"""
+    def _on_pressed(self, gesture, n_press, x, y):
+        if self.gui.game_data.current_tile:
+            self.gui.game_data.is_dragging = True
+            self.gui.board_view.grab_focus()
+            self.gui.board_view.queue_draw()
+
+    def _on_released(self, gesture, n_press, x, y):
+        # le release se fait sur le board, pas ici
+        pass
 
     def _on_drag_prepare(self, source, x, y):
         if not self.gui.game_data.current_tile:
