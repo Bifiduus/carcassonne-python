@@ -127,7 +127,8 @@ def set_parameter(self, param, value) -> None:
 
 
 def create(self, username: str, server_service: IServerService):
-    self.server_service.repo.create_online_player(username)
+    answer = server_service.create_online_player(username)
+    print(answer)
 
 
 def play(self, move, game) -> None:
@@ -153,7 +154,7 @@ def show_server_list(self, server_service: IServerService):
 
 
 def server_start(self, port: str, server_service: IServerService):
-    server_service.server_start(int(port))
+    server_service.server_start(port)
 
 
 def stop_server(self, server_service: IServerService):

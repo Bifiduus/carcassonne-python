@@ -1,4 +1,8 @@
-from carcassonne.BusinessLogic.Server import Server
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from carcassonne.BusinessLogic.Server import Server
 
 
 class OnlineCommunication:

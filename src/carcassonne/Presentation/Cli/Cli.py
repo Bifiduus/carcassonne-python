@@ -102,7 +102,7 @@ class GameCLI:
                 param = content
                 value = None
             CommandsHandlerCli.set_parameter(self, param, value)
-        elif command.startswith("play"):
+        elif command.startswith("play "):
             move = command[5:].strip()
             CommandsHandlerCli.play(self, move, game=self.game)
         elif command.startswith("board"):
@@ -110,7 +110,7 @@ class GameCLI:
         elif command == "server list":
             CommandsHandlerCli.show_server_list(self, self.server)
         elif command.startswith("server start"):
-            port = command[13:].strip()
+            port = command.strip("server start")
             CommandsHandlerCli.server_start(self, port, self.server)
         elif command == "server stop":
             CommandsHandlerCli.stop_server(self, self.server)
