@@ -23,11 +23,12 @@ class Server(IServerService):
 
     def __init__(self, repo: IGamesRepository | None = None):
         # networking/server state
-        self.server_name = ""
+        self.server_name = "localhost"
         self.client = None
         self.client_player = None
         self.server = None
-        self.running = False
+        self.should_stop = threading.Event()
+        self.server_thread = None
         self.available_servers: dict[str, tuple[int, float]] = {}
         # List to track connected client sockets
         self.connected_clients: list[socket.socket] = []
@@ -45,11 +46,13 @@ class Server(IServerService):
         if not self.repo.is_accounted_for():
             print(f"You should create an online account.\n")
             print("Type: >>create <username>")
-            return False
         else:
             self.client_player = self.repo.get_online_player()
 
-    def list_available_servers(self, timeout: float = 5.0) -> list[str]:
+    def create_online_player(self, username: str) -> str:
+        return self.repo.create_online_player(username)
+
+    def list_available_servers(self, timeout: float = 5.0) -> list[int]:
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
         Returns a list of server names that responded within the timeout.
@@ -89,7 +92,7 @@ class Server(IServerService):
 
         s.close()
         self.check_servers_last_time_sent()
-        return list(self.available_servers.keys())
+        return list(server[0] for server in self.available_servers.values())
 
     def check_servers_last_time_sent(self):
         """
@@ -105,25 +108,31 @@ class Server(IServerService):
             del self.available_servers[name]
         return self.available_servers
 
-    def server_start(self, port: int = 12345):
+    def server_start(self, port: str = "12345"):
         """
         Start the TCP server on the specified port.
         Handles multiple clients concurrently using threading.
         """
-
+        if port is "":
+            port = "12345"
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            self.server.bind(('', port))
+            self.server.bind(('', int(port)))
             self.server.listen(5)  # Allow up to 5 pending connections
             print(f"Server started on port {port}")
         except Exception as e:
             print(f"Error starting server: {e}")
             return
+        self.should_stop.set()
+        self.server_thread = threading.Thread(
+            target=self.server_running, args=(port,))
+        self.server_thread.start()
 
-        self.running = True
+    def server_running(self, port):
+        assert self.server
         server_last_diffusion = time.time()
-        while self.running:
+        while self.should_stop.is_set():
             try:
                 # Timeout to check self.running periodically
                 self.server.settimeout(1.0)
@@ -153,10 +162,9 @@ class Server(IServerService):
             except socket.timeout:
                 continue  # Check self.running again
             except Exception as e:
-                if self.running:
+                if self.should_stop.is_set():
                     print(f"Error accepting connection: {e}")
                 break
-
         self.server.close()
         print("Server stopped")
 
@@ -282,7 +290,6 @@ class Server(IServerService):
         """
         Stop the server gracefully.
         """
-        self.running = False
         # Send shutdown message to all connected clients
         shutdown_message = "Server Shutdown"
         with self.clients_lock:
@@ -296,6 +303,7 @@ class Server(IServerService):
                     client_socket.close()
             self.connected_clients.clear()
         if self.server:
+            self.should_stop.clear()
             self.server.close()
         # close repository database connection if there is one
         if hasattr(self, 'repo') and self.repo:
@@ -303,6 +311,8 @@ class Server(IServerService):
                 self.repo.close()
             except Exception:
                 pass
+        assert self.server_thread
+        self.server_thread.join()
 
     def server_quit(self):
         """
@@ -346,12 +356,12 @@ class Server(IServerService):
         """
         # refresh discovery cache first
         self.list_available_servers()
-
+        if ip is None:
+            ip = "localhost"
         if ip not in self.available_servers:
             print("Error: There is no server with such an ip.")
             return False
-        if ip is None:
-            ip = "localhost"
+
         server_port, _ = self.available_servers[ip]
         if port is None:
             port = server_port

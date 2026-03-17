@@ -86,6 +86,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def create_online_player(self, username: str) -> str:
+        pass
+
+    @abstractmethod
     def get_party_name(self, client_username: str) -> str:
         pass
 
