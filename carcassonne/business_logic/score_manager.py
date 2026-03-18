@@ -38,10 +38,54 @@ class ScoreManager:
         pass
 
     @staticmethod
+    def _return_component_meeples(
+        component_name: str, graph, players: Dict[int, "Player"]
+    ) -> None:
+        """Return all meeples placed on a component to their owners.
+
+        This helper is used when a component is completed and has just been
+        scored. Meeples on that component are removed from the board and each
+        corresponding player's meeple stock is incremented.
+
+        Args:
+            component_name: Unique component identifier (for example `C3`).
+            graph: Current graph state containing the live meeple list.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Mutates `graph.meeples` and player meeple counts in place.
+        """
+        remaining_meeples = []
+        for meeple in graph.meeples:
+            if meeple.lands_components == component_name:
+                owner = players.get(meeple.player_id)
+                if owner is not None:
+                    owner.add_meeple()
+            else:
+                remaining_meeples.append(meeple)
+
+        graph.meeples = remaining_meeples
+
+    @staticmethod
     def _to_oriented_cardinal(
         tile_id: int, raw_direction: str, graph
     ) -> Optional[str]:
-        """Convert a raw component direction to oriented board cardinal."""
+        """Convert an unrotated direction to board-oriented cardinal.
+
+        Component directions are stored from the base tile definition. This
+        method maps them to the effective board orientation according to the
+        tile rotation already placed in the graph.
+
+        Args:
+            tile_id: Identifier of the tile in the graph.
+            raw_direction: Original direction from the tile definition
+                (`N`, `E`, `S`, `W`).
+            graph: Graph state containing vertices and tile definitions.
+
+        Returns:
+            A cardinal direction (`N`, `E`, `S`, `W`) after orientation, or
+            None if conversion cannot be performed.
+        """
         if raw_direction not in ["N", "E", "S", "W"]:
             return None
 
@@ -64,10 +108,19 @@ class ScoreManager:
     def is_component_complete(
         terrain_type: str, component_name: str, graph
     ) -> bool:
-        """Check if a terrain component is complete (can't expand).
+        """Tell whether a terrain component is complete.
 
-        For Road/City/Stream: complete if no adjacent empty space
-        For Monastery: complete if surrounded by 8 tiles
+        Completion means the component cannot legally expand anymore.
+        Monasteries and edge-based terrains use different completion checks.
+
+        Args:
+            terrain_type: Terrain key (`R`, `C`, `M`, etc.).
+            component_name: Identifier of the component inside
+                `graph.lands_components[terrain_type]`.
+            graph: Current graph state.
+
+        Returns:
+            True if the component is complete, otherwise False.
         """
         if terrain_type not in graph.lands_components:
             return False
@@ -84,7 +137,16 @@ class ScoreManager:
 
     @staticmethod
     def _is_monastery_complete(component: List[Tuple], graph) -> bool:
-        """A monastery is complete when it has 8 adjacent tiles."""
+        """Check monastery completion by adjacency count.
+
+        Args:
+            component: Monastery component representation (single tile entry).
+            graph: Current graph state.
+
+        Returns:
+            True when the monastery is surrounded by 8 neighboring tiles,
+            otherwise False.
+        """
         if not component or len(component) == 0:
             return False
 
@@ -99,10 +161,17 @@ class ScoreManager:
 
     @staticmethod
     def _is_edge_component_complete(component: List[Tuple], graph) -> bool:
-        """A Road/City/Stream is complete when it has no free edges.
+        """Check completion for edge-based terrains (Road/City/Stream).
 
-        A free edge is a direction in the component that doesn't have
-        a neighbor in that direction, so the component can still expand.
+        The component is complete when none of its cardinal edges can expand.
+
+        Args:
+            component: List of tuples `(tile_id, directions)` describing the
+                tiles and edge directions that belong to the component.
+            graph: Current graph state.
+
+        Returns:
+            True if there is no free edge, otherwise False.
         """
         if not component:
             return False
@@ -152,9 +221,15 @@ class ScoreManager:
 
     @staticmethod
     def get_meeples_on_component(component_name: str, graph) -> Dict[int, int]:
-        """Count meeples per player on a component.
+        """Count meeples placed on a component, grouped by player.
 
-        Returns: {player_id: count}
+        Args:
+            component_name: Unique component identifier.
+            graph: Current graph state containing all placed meeples.
+
+        Returns:
+            Dictionary mapping `player_id -> meeple_count` for the component.
+            Returns an empty dict when no meeple is present.
         """
         meeple_count = {}
 
@@ -168,7 +243,15 @@ class ScoreManager:
 
     @staticmethod
     def get_banners_on_tiles(tile_ids: List[int], graph) -> int:
-        """Count banners on a set of tiles."""
+        """Count banner symbols across a list of city tiles.
+
+        Args:
+            tile_ids: Tile identifiers to inspect.
+            graph: Current graph state with tile vertices.
+
+        Returns:
+            Number of banners found.
+        """
         banner_count = 0
         for tile_id in tile_ids:
             vertex = graph.vertices.get(tile_id)
@@ -183,7 +266,20 @@ class ScoreManager:
         current_player_id: int = 0,
         scored_components: set = None,
     ) -> None:
-        """Score completed Road, City, and Monastery components."""
+        """Score components completed by the latest placement.
+
+        Completed Roads, Cities and Monasteries are scored once, then all
+        meeples on those components are returned to their owners.
+
+        Args:
+            graph: Current graph state.
+            players: Mapping from player id to Player instance.
+            current_player_id: Kept for compatibility with existing call sites.
+            scored_components: Mutable set of already-scored component keys.
+
+        Returns:
+            None. Mutates player scores, meeple pools and scored component set.
+        """
         if scored_components is None:
             scored_components = set()
 
@@ -204,6 +300,9 @@ class ScoreManager:
                         players,
                         current_player_id,
                     )
+                    ScoreManager._return_component_meeples(
+                        road_name, graph, players
+                    )
                     scored_components.add(component_key)
 
         # Score Cities
@@ -222,6 +321,9 @@ class ScoreManager:
                         graph,
                         players,
                         current_player_id,
+                    )
+                    ScoreManager._return_component_meeples(
+                        city_name, graph, players
                     )
                     scored_components.add(component_key)
 
@@ -242,6 +344,9 @@ class ScoreManager:
                         players,
                         current_player_id,
                     )
+                    ScoreManager._return_component_meeples(
+                        monastery_name, graph, players
+                    )
                     scored_components.add(component_key)
 
     @staticmethod
@@ -252,7 +357,21 @@ class ScoreManager:
         players: Dict[int, "Player"],
         current_player_id: int = 0,
     ) -> None:
-        """Score a completed road: 1 point per tile."""
+        """Apply score for a completed road.
+
+        Rule applied: 1 point per tile in the road, only if at least one
+        meeple is present. In case of majority tie, all tied players score.
+
+        Args:
+            component: Road component data.
+            component_name: Road component identifier.
+            graph: Current graph state.
+            players: Mapping from player id to Player instance.
+            current_player_id: Unused compatibility parameter.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
@@ -261,8 +380,6 @@ class ScoreManager:
             component_name, graph
         )
         if not meeple_count:
-            if current_player_id in players:
-                players[current_player_id].get_score().add_score(total_points)
             return
 
         max_count = max(meeple_count.values())
@@ -284,7 +401,22 @@ class ScoreManager:
         players: Dict[int, "Player"],
         current_player_id: int = 0,
     ) -> None:
-        """Score a completed city: 2 points per tile + 2 per banner."""
+        """Apply score for a completed city.
+
+        Rule applied: 2 points per tile plus 2 points per banner, only if at
+        least one meeple is present. In case of majority tie, all tied players
+        score the full amount.
+
+        Args:
+            component: City component data.
+            component_name: City component identifier.
+            graph: Current graph state.
+            players: Mapping from player id to Player instance.
+            current_player_id: Unused compatibility parameter.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 2
         points_per_banner = 2
@@ -298,8 +430,6 @@ class ScoreManager:
             component_name, graph
         )
         if not meeple_count:
-            if current_player_id in players:
-                players[current_player_id].get_score().add_score(total_points)
             return
 
         max_count = max(meeple_count.values())
@@ -321,15 +451,27 @@ class ScoreManager:
         players: Dict[int, "Player"],
         current_player_id: int = 0,
     ) -> None:
-        """Score a completed monastery: 9 points."""
+        """Apply score for a completed monastery.
+
+        Rule applied: fixed 9 points when at least one meeple is present on the
+        monastery component.
+
+        Args:
+            component: Monastery component data.
+            component_name: Monastery component identifier.
+            graph: Current graph state.
+            players: Mapping from player id to Player instance.
+            current_player_id: Unused compatibility parameter.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         points = 9
 
         meeple_count = ScoreManager.get_meeples_on_component(
             component_name, graph
         )
         if not meeple_count:
-            if current_player_id in players:
-                players[current_player_id].get_score().add_score(points)
             return
 
         for player_id in meeple_count.keys():
@@ -338,7 +480,18 @@ class ScoreManager:
 
     @staticmethod
     def score_end_of_game(graph, players: Dict[int, "Player"]) -> None:
-        """Score at end of game for non-completed R, C, M and all Fields."""
+        """Apply all end-of-game scoring rules.
+
+        Scores incomplete Roads/Cities/Monasteries and all Fields according to
+        current game rules.
+
+        Args:
+            graph: Final graph state when the game ends.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         # Score incomplete Roads
         if "R" in graph.lands_components:
             for road_name, road_component in graph.lands_components[
@@ -391,7 +544,20 @@ class ScoreManager:
         graph,
         players: Dict[int, "Player"],
     ) -> None:
-        """Score incomplete road: 1 point per tile."""
+        """Apply end-game score for an incomplete road.
+
+        Rule applied: 1 point per tile, only if at least one meeple is present.
+        In case of majority tie, all tied players score.
+
+        Args:
+            component: Road component data.
+            component_name: Road component identifier.
+            graph: Final graph state.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
@@ -420,7 +586,21 @@ class ScoreManager:
         graph,
         players: Dict[int, "Player"],
     ) -> None:
-        """Score incomplete city: 1 point per tile + 1 per banner."""
+        """Apply end-game score for an incomplete city.
+
+        Rule applied: 1 point per tile plus 1 point per banner, only if at
+        least one meeple is present. In case of majority tie, all tied players
+        score the full amount.
+
+        Args:
+            component: City component data.
+            component_name: City component identifier.
+            graph: Final graph state.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         tile_ids = [tid for tid, _ in component]
         points_per_tile = 1
         points_per_banner = 1
@@ -454,7 +634,20 @@ class ScoreManager:
         graph,
         players: Dict[int, "Player"],
     ) -> None:
-        """Score incomplete monastery: 1 point per adjacent tile."""
+        """Apply end-game score for an incomplete monastery.
+
+        Points are awarded only when there is exactly one meeple on the
+        monastery component.
+
+        Args:
+            component: Monastery component data.
+            component_name: Monastery component identifier.
+            graph: Final graph state.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         if not component:
             return
 
@@ -463,18 +656,19 @@ class ScoreManager:
         if vertex is None:
             return
 
-        # 1 point per adjacent tile
-        adjacent_tiles = len(vertex.neighbors)
+        # Monastery scores 1 point for itself + 1 per adjacent tile.
+        points = 1 + len(vertex.neighbors)
 
         meeple_count = ScoreManager.get_meeples_on_component(
             component_name, graph
         )
-        if not meeple_count:
+        total_meeples = sum(meeple_count.values())
+        if total_meeples != 1:
             return
 
-        for player_id in meeple_count.keys():
-            if player_id in players:
-                players[player_id].get_score().add_score(adjacent_tiles)
+        owner_id = next(iter(meeple_count.keys()))
+        if owner_id in players:
+            players[owner_id].get_score().add_score(points)
 
     @staticmethod
     def _score_field(
@@ -483,8 +677,20 @@ class ScoreManager:
         graph,
         players: Dict[int, "Player"],
     ) -> None:
-        """Score field as 3 points per component and adjacent city."""
-        points_per_component = 3
+        """Apply end-game score for a field component.
+
+        Rule applied: 3 points per adjacent completed city, only if at least
+        one meeple is present. In case of majority tie, all tied players score.
+
+        Args:
+            component: Field component data.
+            component_name: Field component identifier.
+            graph: Final graph state.
+            players: Mapping from player id to Player instance.
+
+        Returns:
+            None. Updates player scores in place.
+        """
         points_per_adjacent_city = 3
 
         # Count adjacent completed cities
@@ -492,9 +698,7 @@ class ScoreManager:
             ScoreManager._count_adjacent_completed_cities(component, graph)
         )
 
-        total_points = points_per_component + (
-            adjacent_completed_cities * points_per_adjacent_city
-        )
+        total_points = adjacent_completed_cities * points_per_adjacent_city
 
         meeple_count = ScoreManager.get_meeples_on_component(
             component_name, graph
@@ -517,7 +721,15 @@ class ScoreManager:
     def _count_adjacent_completed_cities(
         field_component: List[Tuple], graph
     ) -> int:
-        """Count the number of unique adjacent completed cities to a field."""
+        """Count unique completed cities adjacent to a field component.
+
+        Args:
+            field_component: Field component data.
+            graph: Final graph state.
+
+        Returns:
+            Number of distinct adjacent city components that are complete.
+        """
         adjacent_cities = set()
 
         # For each tile in the field
@@ -547,9 +759,14 @@ class ScoreManager:
 
     @staticmethod
     def _find_city_component_for_tile(tile_id: int, graph) -> Optional[str]:
-        """Find the city component name that a tile belongs to.
+        """Find which city component contains a given tile.
 
-        Returns the city component name (e.g., `C1`) or None if absent.
+        Args:
+            tile_id: Tile identifier to search.
+            graph: Graph state containing city component partitions.
+
+        Returns:
+            City component name (for example `C1`) if found, otherwise None.
         """
         if "C" not in graph.lands_components:
             return None

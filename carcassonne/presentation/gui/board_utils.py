@@ -7,10 +7,13 @@ these helpers without holding too much implementation detail.
 """
 
 import os
-
-from gi.repository import Gdk, GdkPixbuf
 import math
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
+import gi
+gi.require_version("Gdk", "4.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk, GdkPixbuf
 
 color_map = {
     "red": (1, 0, 0),
