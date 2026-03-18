@@ -42,7 +42,7 @@ class OnlineCommunication:
         answer = ""
         if message.removeprefix("players") != "":
             answer = self.server.check_profile_player(
-                int(message.split("players")[1]))
+                int(message.split("players")[1].strip()))
         else:
             # Return a list of the current players (id, name and status) in the server, not the away players
             answer = self.server.repo.current_players()

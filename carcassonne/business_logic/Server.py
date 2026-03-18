@@ -43,15 +43,17 @@ class Server(IServerService):
         self.client_id = None
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
+        assert self.repo, "The database should not be None"
         self.handle_communication = OnlineCommunication(self)
         if not self.repo.is_accounted_for():
             print(f"You should create an online account.\n")
-            print("Type: >>create <username>")
+            print("Type: create <username>")
         else:
             self.client_player = self.repo.get_online_player()
 
     def create_online_player(self, username: str) -> str:
         self.client_player = username
+        assert self.repo, "The database should not be None"
         return self.repo.create_online_player(username)
 
     def list_available_servers(self, timeout: float = 5.0) -> list[int]:
@@ -115,7 +117,10 @@ class Server(IServerService):
         Start the TCP server on the specified port.
         Handles multiple clients concurrently using threading.
         """
-        if port is "":
+        assert self.repo, "The database should not be None"
+        if self.repo.is_database_closed():
+            self.repo.reopen()
+        if port == "":
             port = "12345"
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -152,6 +157,7 @@ class Server(IServerService):
                         print(f"Accepted connection from a client.")
 
                 # Timeout to check pending invitations periodically
+                assert self.repo, "The database should not be None"
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
 
@@ -184,13 +190,19 @@ class Server(IServerService):
         try:
             while True:
                 data = client_socket.recv(1500)
-                if data.decode() == "quit\n":
+                client, message = data.decode().split(":")
+                message = message.strip()
+                if message == "quit":
+                    answer = self.handle_communication.command_quit(
+                        client)
+                    answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {answer}"
+                    client_socket.send(answer.encode())
+                    self.has_joined_server = False
                     break
                 # Process data (e.g., echo back for now; replace with game logic)
-                client, message = data.decode().split(":")
                 response = self.process_message(client, message)
                 # fonction qui check le statut d'une invitation et l'envoie à l'host
-                answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {response}"
+                answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {response}\n"
                 client_socket.send(answer.encode())
         except Exception as e:
             print(f"Error handling client: {e}")
@@ -211,13 +223,9 @@ class Server(IServerService):
         """
         # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
-        message = message.strip()
         if self.server is not None:
-            if message == "ping\n":
+            if message == "ping":
                 answer = self.handle_communication.command_ping()
-            if message == "quit\n":
-                answer = self.handle_communication.command_quit(
-                    client_username)
             if message == "server status":
                 answer = self.handle_communication.command_server_status()
             if message.startswith("new"):
@@ -225,21 +233,21 @@ class Server(IServerService):
                     message, client_username)
             if message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
-            if message == "scoreboard\n":
+            if message == "scoreboard":
                 answer = self.handle_communication.command_scoreboard()
-            if message == "accept\n":
+            if message == "accept":
                 answer = self.handle_communication.command_accept(
                     client_username)
-            if message == "decline\n":
+            if message == "decline":
                 answer = self.handle_communication.command_decline(
                     client_username)
             if message.startswith("cancel"):
                 answer = self.handle_communication.command_cancel(
                     client_username, message.strip("cancel"))
-            if message == "away\n":
+            if message == "away":
                 answer = self.handle_communication.command_away(
                     client_username)
-            if message == "back\n":
+            if message == "back":
                 answer = self.handle_communication.command_back(
                     client_username)
         return answer
@@ -249,17 +257,17 @@ class Server(IServerService):
         assert self.repo is not None, "No games repository."
         return [c for c in clients_list if self.repo.player_exists(c)]
 
-    def create_new_party(self, clients_list: list[str], client_username: str,  party_name: str = "") -> str:
+    def create_new_party(self, clients_list: list[str], client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
         if party_name == "":
-            party_name = self.repo.get_party_name(client_username)
+            party_name = self.repo.get_party_name(client_id)
 
         # should be done after, because don't know how many
         number_of_players_in_group: int = len(clients_list)
         graph: IGraphData = GraphData()
         new_party = Game(graph, number_of_players_in_group)
         try:
-            self.repo.create_party(party_name, clients_list, client_username)
+            self.repo.create_party(party_name, clients_list, client_id)
             self.current_games_list[len(self.current_games_list)] = (
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
@@ -271,6 +279,7 @@ class Server(IServerService):
 
     def create_players_from_list(self, clients_list: list[str]) -> list[Player]:
         players_list = []
+        assert self.repo, "The database should not be None"
         for client in clients_list:
             username = self.repo.get_username(client)
             players_list.append(Player(int(client), username, "None"))
@@ -282,8 +291,8 @@ class Server(IServerService):
         profile = self.repo.get_player_profile(player_id)
         if profile is None:
             return "Player not found\n"
-        return f"{profile['username']} status={profile['status']} score={profile['score']} "\
-            f"wins={profile['stats_win']} loses={profile['stats_lose']}\n"
+        return f"Player profile:\n username={profile['username']}\n status={profile['status']}\n score={profile['score']}\n "\
+            f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 
     def send_invitation(self, invited_player: str, invitee_player: str):
         invited_client: socket.socket = self.client_sockets[int(
@@ -293,6 +302,7 @@ class Server(IServerService):
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
+                assert self.repo, "The database should not be None"
                 self.repo.send_invitation(invited_player, invitee_player)
             except Exception as e:
                 print(f"Error sending invitation: {e}")
@@ -304,7 +314,7 @@ class Server(IServerService):
         if self.server_thread is not None:
 
             # Send shutdown message to all connected clients
-            shutdown_message = "Server Shutdown"
+            shutdown_message = "Server Shutdown\n"
             with self.clients_lock:
                 # Copy the list to avoid modification during iteration
                 for client_socket in self.connected_clients[:]:
@@ -345,15 +355,14 @@ class Server(IServerService):
         Placeholder implementation.
         """
         start = time.time()
-        self.send_to_server("ping\n")
+        self.send_to_server("ping")
         if self.client == None:
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
-        print(message)
         if message.find("pong\n") != -1:
             end = time.time()
-            return message+f" Time={start - end}ms"
+            return message+f" Time={end - start}ms"
 
         return "No server response"  # Or implement actual ping logic
 
@@ -408,10 +417,12 @@ class Server(IServerService):
         try:
             while self.client:
                 data = self.client.recv(1500)
-                if not data or data.decode('utf-8') == "Server Shutdown\n":
+                if data.decode().endswith("Server Shutdown\n"):
                     print("Server closed the connection")
                     break
                 self.handle_server_message(data.decode())
+                if (not self.has_joined_server):
+                    break
         except Exception as e:
             print(f"Error receiving from server: {e}")
         finally:
@@ -426,25 +437,27 @@ class Server(IServerService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:  # check what you do, if you have the server or if you only receive
+
             message = message.removeprefix("Server -> ")
-            client_username, message = message.split(":")
+            client_id, message = message.split(":", 1)
+            client_id = client_id.removeprefix("Client").strip()
+            message = message.strip()
+            print(message, end="")
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
-                self.get_game(client_username).play_move(move[1])
+                self.get_game(client_id).play_move(move[1])
                 self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out
-                if self.repo.check_all_invitations_resolved(client_username):
+                if self.repo.check_all_invitations_resolved(client_id):
                     # ajoute la party dans party_list, change ce qu'il faut et lance
                     self.create_new_party(
-                        self.repo.get_party(client_username), client_username)
+                        self.repo.get_party(client_id), client_id)
 
-        print(message, end="")
-
-    def get_game(self, client_username: str):
+    def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
-        party_id = int(self.repo.get_game(client_username)[0])
+        party_id = int(self.repo.get_game(client_id)[0])
         return self.current_games_list[party_id][1]
 
     def connected_to_a_server(self) -> bool:
@@ -460,9 +473,9 @@ class Server(IServerService):
             return False
         try:
             if self.client_id is None:
+                assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
             text = f"{self.client_player}: " + text
-            print(text)
             self.client.sendall(text.encode())
             return True
         except Exception as e:
