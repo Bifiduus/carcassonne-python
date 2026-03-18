@@ -93,9 +93,9 @@ def main() -> int:
     parser.add_argument(
         "-t",
         "--time",
-        help="set timeout in minutes",
+        help="set time limit in minutes",
         type=int,
-        default=30,
+        default=None,
     )
 
     parser.add_argument(
@@ -144,16 +144,22 @@ def main() -> int:
         config_overrides["verbose"] = True
     if args.blitz:
         config_overrides["blitz"] = True
-    if args.time != 30:  # assuming default is 30
-        config_overrides['time'] = args.timeout
+        config_overrides["time"] = (
+            args.time if args.time is not None else 30
+        )
+    elif args.time is not None:
+        print(
+            "Warning: --time is ignored because --blitz is not enabled.",
+            file=sys.stderr,
+        )
     if args.ai_time:
-        config_overrides['ai_time'] = args.ai_time
+        config_overrides["ai_time"] = args.ai_time
     if args.ai_mode == "mcts" or args.ai_mode == "random":
-        config_overrides['ai_mode'] = args.ai_mode
+        config_overrides["ai_mode"] = args.ai_mode
     if args.ai_minimax_depth > 0:
-        config_overrides['ai_minimax_depth'] = args.ai_minimax_depth
+        config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
     if args.ai_mcts_selection == "UCT" or args.ai_mcts_selection == "ML":
-        config_overrides['ai_mcts_selection'] = args.ai_mcts_selection
+        config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
 
     game_data: IGraphData = GraphData()
     if args.players:

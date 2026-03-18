@@ -7,7 +7,7 @@ CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".carcassonnerc")
 DEFAULT_SETTINGS = {
     "verbose": False,
     "blitz": False,
-    "timeout": 30,
+    "time": 30,
     "ai_time": 5,
     "ai_mode": "minimax",
     "ai_minimax_depth": 80,
@@ -35,13 +35,19 @@ class GameConfiguration:
         self.settings = self.load_config()
         if overrides:
             self.settings.update(overrides)
+        self._normalize_time_key()
+
+    def _normalize_time_key(self):
+        if "time" not in self.settings and "timeout" in self.settings:
+            self.settings["time"] = self.settings["timeout"]
+        self.settings.pop("timeout", None)
 
     def create_default_config(self):
         config = configparser.ConfigParser()
         config["defaults"] = {
             "verbose": "false",
             "blitz": "false",
-            "timeout": "30",
+            "time": "30",
             "ai_time": 5,
             "ai_mode": "minimax",
             "ai_minimax_depth": 83,
@@ -74,7 +80,11 @@ class GameConfiguration:
 
             settings["verbose"] = config.getboolean("defaults", "verbose")
             settings["blitz"] = config.getboolean("defaults", "blitz")
-            settings["timeout"] = config.getint("defaults", "timeout")
+            if config.has_option("defaults", "time"):
+                settings["time"] = config.getint("defaults", "time")
+            elif config.has_option("defaults", "timeout"):
+                # backward compatibility with previous setting name
+                settings["time"] = config.getint("defaults", "timeout")
             # optional contest file
             if config.has_option("defaults", "contest_file"):
                 settings["contest_file"] = config.get(
@@ -103,7 +113,7 @@ class GameConfiguration:
         config["defaults"] = {
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
-            "timeout": str(self.settings["timeout"]),
+            "time": str(self.settings["time"]),
             "ai_time": str(self.settings["ai_time"]),
             "ai_mode": str(self.settings["ai_mode"]),
             "ai_minimax_depth": str(self.settings["ai_minimax_depth"]),
