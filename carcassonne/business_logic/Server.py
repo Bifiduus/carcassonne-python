@@ -192,7 +192,6 @@ class Server(IServerService):
                 data = client_socket.recv(1500)
                 client, message = data.decode().split(":")
                 message = message.strip()
-                print(message)
                 if message == "quit":
                     answer = self.handle_communication.command_quit(
                         client)
@@ -218,7 +217,7 @@ class Server(IServerService):
                     del self.client_sockets[client_id]
                     del self.player_clients[client_socket]
 
-    def process_message(self, client_username: str, message: str) -> str:
+    def process_message(self, client_id: str, message: str) -> str:
         """
         Process incoming message (from a client) and return a response.
         """
@@ -231,32 +230,32 @@ class Server(IServerService):
                 answer = self.handle_communication.command_server_status()
             if message.startswith("new"):
                 answer = self.handle_communication.command_new(
-                    message, client_username)
+                    message, client_id)
             if message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
             if message == "scoreboard":
                 answer = self.handle_communication.command_scoreboard()
             if message == "accept":
                 answer = self.handle_communication.command_accept(
-                    client_username)
+                    client_id)
             if message == "decline":
                 answer = self.handle_communication.command_decline(
-                    client_username)
+                    client_id)
             if message.startswith("cancel"):
                 answer = self.handle_communication.command_cancel(
-                    client_username, message.strip("cancel"))
+                    client_id, message.strip("cancel"))
             if message == "away":
                 answer = self.handle_communication.command_away(
-                    client_username)
+                    client_id)
             if message == "back":
                 answer = self.handle_communication.command_back(
-                    client_username)
+                    client_id)
         return answer
 
     def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
         """Verify that each client id refers to an existing player via the repository."""
         assert self.repo is not None, "No games repository."
-        return [c for c in clients_list if self.repo.player_exists(c)]
+        return [c for c in clients_list if self.repo.player_exists(self.repo.get_username(c))]
 
     def create_new_party(self, clients_list: list[str], client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
@@ -295,16 +294,17 @@ class Server(IServerService):
         return f"Player profile:\n username={profile['username']}\n status={profile['status']}\n score={profile['score']}\n "\
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 
-    def send_invitation(self, invited_player: str, invitee_player: str):
+    def send_invitation(self, invited_player_id: str, invitee_player_id: str):
         invited_client: socket.socket = self.client_sockets[int(
-            invited_player)]
-        message = f"Server: You have received an invitation from {invitee_player}.\n"
+            invited_player_id)]
+        host_name: str = self.repo.get_username(invitee_player_id)
+        message = f"Server: You have received an invitation from {host_name}.\n"
         message += f"Expires in 300s.\n"
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
                 assert self.repo, "The database should not be None"
-                self.repo.send_invitation(invited_player, invitee_player)
+                self.repo.send_invitation(invited_player_id, invitee_player_id)
             except Exception as e:
                 print(f"Error sending invitation: {e}")
 
