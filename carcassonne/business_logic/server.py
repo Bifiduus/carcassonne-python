@@ -198,6 +198,7 @@ class Server(IServerService):
                 data = client_socket.recv(1500)
                 client, message = data.decode().split(":")
                 message = message.strip()
+                print(message)
                 if message == "quit":
                     answer = self.handle_communication.command_quit(
                         client)
@@ -443,7 +444,6 @@ class Server(IServerService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:  # check what you do, if you have the server or if you only receive
-
             message = message.removeprefix("Server -> ")
             client_id, message = message.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()
