@@ -1,5 +1,6 @@
 import pytest
-from carcassonne.Datas.MeepleData import Meeple
+from carcassonne.datas.meeple_data import Meeple
+
 
 class TestMeepleData:
     def test_meeple_data_init(self):
@@ -13,12 +14,15 @@ class TestMeepleData:
 
     def test_meeple_data_invalid_position(self):
         try:
-            Meeple(1, 1, 9, 'R1').__post_init__()  # Manually call __post_init__ to trigger validation
+            # Manually call __post_init__ to trigger validation
+            Meeple(1, 1, 9, 'R1').__post_init__()
             assert False, "Creating a Meeple with an invalid position should raise ValueError"
         except ValueError as e:
-            assert str(e) == "Position must be between 0 and 8, got 9", "Error message should indicate invalid position"
+            assert str(
+                e) == "Position must be between 0 and 8, got 9", "Error message should indicate invalid position"
 
     def test_meeple_data_repr(self):
         meeple = Meeple(1, 1, 0, 'R1')
         expected_repr = "Meeple(player=1, tile=1, pos=N, lands_components=R1)"
-        assert repr(meeple) == expected_repr, "Meeple __repr__ should return the expected string representation"
+        assert repr(
+            meeple) == expected_repr, "Meeple __repr__ should return the expected string representation"

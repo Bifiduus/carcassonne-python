@@ -1,5 +1,6 @@
 import pytest
-from carcassonne.Datas.Deck import Deck
+from carcassonne.datas.deck import Deck
+
 
 class TestDeck:
     def test_deck_creation(self):
@@ -7,7 +8,7 @@ class TestDeck:
         assert len(deck.tiles) == 71, "Deck should contain 71 tiles"
 
     def test_deck_shuffle(self):
-        from carcassonne.Datas.Seed import Seed
+        from carcassonne.datas.seed import Seed
         deck1 = Deck()
         deck2 = Deck()
         deck1.shuffle_fisher_yates(Seed().seed)
@@ -22,7 +23,8 @@ class TestDeck:
         initial_length = len(deck.tiles)
         tile = deck.draw()
         assert tile is not None, "Drawn tile should not be None"
-        assert len(deck.tiles) == initial_length - 1, "Deck should have one less tile after drawing"
+        assert len(deck.tiles) == initial_length - \
+            1, "Deck should have one less tile after drawing"
 
     def test_deck_draw_empty(self, capfd):
         deck = Deck()

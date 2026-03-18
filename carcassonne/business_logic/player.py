@@ -19,11 +19,11 @@ class Player:
         self.is_ai = is_ai
 
     def __str__(self):
-        return f"{
-            self.name} ({
-            self.color}) - Score: {
-            self.score}, Meeples: {
-                self.meeples}"
+        player_to_string: str = f"{self.name}"
+        player_to_string += f"({self.color})"
+        player_to_string += f" - Score: {self.score},"
+        player_to_string += f" Meeples: {self.meeples}"
+        return player_to_string
 
     def remove_meeple(self) -> None:
         if self.meeples > 0:

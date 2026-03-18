@@ -1,5 +1,5 @@
 import pytest
-from carcassonne.Datas.Seed import Seed
+from carcassonne.datas.seed import Seed
 
 
 class TestSeed:
@@ -12,5 +12,7 @@ class TestSeed:
     def test_seed_generation(self):
         seed1 = Seed()
         seed2 = Seed()
-        assert isinstance(seed1.seed, int), "Generated seed should be an integer"
-        assert isinstance(seed2.seed, int), "Generated seed should be an integer"
+        assert isinstance(
+            seed1.seed, int), "Generated seed should be an integer"
+        assert isinstance(
+            seed2.seed, int), "Generated seed should be an integer"

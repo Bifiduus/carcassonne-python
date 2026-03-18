@@ -1,12 +1,13 @@
 import pytest
-from carcassonne.Datas.History import History, MoveRecord
+from carcassonne.datas.history import History, MoveRecord
+
 
 class TestHistory:
     def test_history_init(self):
         history = History()
         assert history.past_moves == [], "Past moves should be initialized as an empty list"
         assert history.future_moves == [], "Future moves should be initialized as an empty list"
-    
+
     def test_push_and_pop_moves(self):
         history = History()
         move1 = "RRRR"
@@ -20,11 +21,14 @@ class TestHistory:
         assert len(history.past_moves) == 2, "Two moves should be in past moves"
         assert history.pop_past() == record2, "The last move popped should be the second move"
         assert history.pop_past() == record1, "The next move popped should be the first move"
-        assert len(history.past_moves) == 0, "Past moves should be empty after popping all moves"
+        assert len(
+            history.past_moves) == 0, "Past moves should be empty after popping all moves"
         history.push_future(record1)
-        assert len(history.future_moves) == 1, "One move should be in future moves"
+        assert len(
+            history.future_moves) == 1, "One move should be in future moves"
         assert history.pop_future() == record1, "The move popped from future should be the first move"
-        assert len(history.future_moves) == 0, "Future moves should be empty after popping all moves"
+        assert len(
+            history.future_moves) == 0, "Future moves should be empty after popping all moves"
 
     def test_clear_history(self):
         history = History()
@@ -38,8 +42,10 @@ class TestHistory:
         history.push_future(record1)
 
         history.clear_history()
-        assert len(history.past_moves) == 0, "Past moves should be empty after clearing history"
-        assert len(history.future_moves) == 0, "Future moves should be empty after clearing history"
+        assert len(
+            history.past_moves) == 0, "Past moves should be empty after clearing history"
+        assert len(
+            history.future_moves) == 0, "Future moves should be empty after clearing history"
 
     def test_list_history(self):
         history = History()

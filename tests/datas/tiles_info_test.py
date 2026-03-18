@@ -1,5 +1,7 @@
 import pytest
-from carcassonne.Datas.TilesInfo import Tile, TilesInfo
+from carcassonne.datas.tiles_info import Tile, TilesInfo
+
+
 class TestTile:
     def test_tile_init(self):
         code = "RRRR"
@@ -20,11 +22,13 @@ class TestTile:
         assert tile_info.tiles_lands == connections, "Tile connections should be set correctly"
         assert tile_info.connect_to == connect_to, "Tile connect_to should be set correctly"
 
+
 class TestTilesInfo:
     def test_tile_info_creation(self):
         tiles_info = TilesInfo()
         assert tiles_info is not None, "TilesInfo instance should be created successfully"
-        assert len(tiles_info.tiles_dict) > 0, "TilesInfo should contain tiles definitions"
+        assert len(
+            tiles_info.tiles_dict) > 0, "TilesInfo should contain tiles definitions"
         assert 'RRRR' in tiles_info.tiles_dict, "Tile 'RRRR' should be defined in TilesInfo"
 
     def test_rotate_matrix_90(self):
@@ -44,16 +48,19 @@ class TestTilesInfo:
 
     def test_is_tile_left(self):
         tiles_info = TilesInfo()
-        tiles_info.tiles_count['RRRR']=0
-        assert tiles_info.is_tile_left('RRRR') == False, "Tile 'RRRR' should not be left when count is 0"
-        tiles_info.tiles_count['RRRR']=1
-        assert tiles_info.is_tile_left('RRRR') == True, "Tile 'RRRR' should be left when count is greater than 0"
+        tiles_info.tiles_count['RRRR'] = 0
+        assert tiles_info.is_tile_left(
+            'RRRR') == False, "Tile 'RRRR' should not be left when count is 0"
+        tiles_info.tiles_count['RRRR'] = 1
+        assert tiles_info.is_tile_left(
+            'RRRR') == True, "Tile 'RRRR' should be left when count is greater than 0"
 
     def test_add_tile(self):
         tiles_info = TilesInfo()
         initial_count = tiles_info.tiles_count['RRRR']
         tiles_info.add_tile('RRRR')
-        assert tiles_info.tiles_count['RRRR'] == initial_count + 1, "Tile count for 'RRRR' should be incremented by 1"
+        assert tiles_info.tiles_count['RRRR'] == initial_count + \
+            1, "Tile count for 'RRRR' should be incremented by 1"
         with pytest.raises(ValueError):
             tiles_info.add_tile('INVALID_TILE')
 
@@ -66,4 +73,3 @@ class TestTilesInfo:
             tiles_info.remove_tile('INVALID_TILE')
         with pytest.raises(ValueError):
             tiles_info.remove_tile('RRRR')
-        
