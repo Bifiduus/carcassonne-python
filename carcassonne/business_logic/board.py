@@ -75,7 +75,6 @@ class Board:
             players[players_order[(turn - 1) %
                                   len(players_order)]].remove_meeple()
         # print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
-        print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
 
         # Score completed components at end of turn
         # Map player_id (0-based) to Player object
@@ -83,12 +82,13 @@ class Board:
             graph, players, current_player_id, self.scored_components)
 
         # affiche les scores actuels dans la console
-        print(f"-- Scores après le tour {turn} --")
+        '''print(f"-- Scores après le tour {turn} --")
         for player_id in sorted(players.keys()):
             player = players[player_id]
             print(
                 f"Joueur {player_id + 1} ({player.get_username()}): {player.get_score().score} pts")
         print("------------------------------")
+        '''
 
         # enlever la tuile des tuiles disponibles
         tile_name = move_parts[0] + '/' + \
@@ -120,7 +120,7 @@ class Board:
             print("Error in getting position")
             return
 
-        tile_id = graph.get_turn_number()-1
+        tile_id = max(graph.get_verticies().keys(), default=-1)
         # example of removing the tile as a vertex in the graph
         graph.remove_vertex(vertex_id=tile_id)
         graph.remove_meeple(tile_id, players)

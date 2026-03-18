@@ -2,6 +2,7 @@
 The Game class is responsible for managing the game state, including the play history and undo history. It interacts with the RulesEngine to determine if the current player is human and with the GameRepository to store and retrieve game data.
 """
 import random as r
+import time
 from typing import Any, List
 
 from carcassonne.business_logic.score_manager import ScoreManager
@@ -170,11 +171,13 @@ class Game(IGameService):
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.draw_tile()
+        ai_time = self.get_game_configuration().get("ai_time")
         model = None
         if self.ai_model == "random":
             model = RandomPlayer(self)
         elif self.ai_model == "expectimax":
-            model = ExpectimaxPlayer(self)
+            start_time = time.time()
+            model = ExpectimaxPlayer(self, start_time, ai_time)
         eval, move = model.search(self, depth=model.depth_max, alpha=float(
             '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
         print(

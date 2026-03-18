@@ -1,5 +1,5 @@
-"""This module defines the RulesManager class, which is responsible for managing the rules of the Carcassonne game. 
-It provides methods to check the legality of moves, to determine if the current player is human, and to retrieve the game history. 
+"""This module defines the RulesManager class, which is responsible for managing the rules of the Carcassonne game.
+It provides methods to check the legality of moves, to determine if the current player is human, and to retrieve the game history.
 The RulesManager interacts with the graph data structure that represents the game state and the tiles information to enforce the game rules.
 """
 import copy
@@ -50,7 +50,7 @@ class RulesManager():
         tile_pos = graph_copy.get_position(
             vertex_id=integers_placement[0], side=self.tiles_info.direction_dict[attach_direction])
         if (tile_pos is None):
-            print("Error in getting position")
+            # print("Error in getting position")
             return False
         turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
         # turn = graph_copy.get_turn_number()
@@ -75,12 +75,13 @@ class RulesManager():
                 if tileid == tile_id and land_pos in directions:
                     set_name_to_place = set_name
         if set_name_to_place is None:
-            print("Error in finding the land component to place the meeple on")
+            # print("Error in finding the land component to place the meeple on")
             graph_copy.remove_vertex(tile_id)
             return False
         for meeple in graph_copy.get_meeples():
             if meeple.lands_components == set_name_to_place:
-                # print("you can't place a meeple on that land component because there's already a meeple on it")
+                # print(
+                #    "you can't place a meeple on that land component because there's already a meeple on it")
                 graph_copy.remove_vertex(tile_id)
                 return False
         graph_copy.remove_vertex(tile_id)
@@ -92,7 +93,7 @@ class RulesManager():
 
         This handles two formats for `tile2_details`:
         - a tile code (e.g. 'CRRF') in which case we compare the corresponding side
-        - a move spec (e.g. '12N2') where the first number is the tile id, the second char is the orientation (N/S/W/E) 
+        - a move spec (e.g. '12N2') where the first number is the tile id, the second char is the orientation (N/S/W/E)
             and second number is the rotation applied to the tile to place
 
         Rotation arithmetic uses Python's modulo so negative results wrap (e.g. (2 - 3) % 4 -> 3).
@@ -117,6 +118,10 @@ class RulesManager():
 
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
                     if land1 != land2:
+                        '''print("position : " + str(tile1pos) + ", and land 1 of " + str(tile1) + " with orientation " +
+                              str(orientation) + " and direction " + str(dir) + " is " + land1)
+                        print("position : " + str(next_pos) + ", and land 2 of " + vertex.get_name() + " with orientation " +
+                              str(vertex.get_orientation()) + " and direction " + str((dir + 2) % 4) + " is " + land2)'''
                         return False
                     break
 
@@ -147,13 +152,15 @@ class RulesManager():
             c for c in move_parts[counter] if c.isalpha())
 
         if not graph.get_verticies()[integers_placement[0]].is_neighbor_free(self.tiles_info.direction_dict[attach_direction]):
-            # print("the tile you try to attach yours to already has a neighbor on that side")
+            # print(
+            #    "the tile you try to attach yours to already has a neighbor on that side")
             return False
 
         tile_pos = graph.get_position(
             integers_placement[0], self.tiles_info.direction_dict[attach_direction])
         if not self.are_equal_sides(move_parts[0], tile_pos, integers_placement[1], graph):
-            # print("the tile you try to place doesn't match the tiles you try to attach yours to")
+            # print(
+            #    "the tile you try to place doesn't match the tiles you try to attach yours to")
             return False
 
         # Verify meeple placement if applicable
@@ -161,7 +168,8 @@ class RulesManager():
         counter += 1
         if len(move_parts) - 1 == counter:
             if not self.can_place_meeple_on_tile_side(move_parts, counter, graph):
-                # print("you can't place a meeple on that side of the tile you try to place")
+                # print(
+                #    "you can't place a meeple on that side of the tile you try to place")
                 return False
 
         return True
@@ -214,7 +222,7 @@ class RulesManager():
             # print("the tile placement details are invalid, need 2 integers : tile id and rotation")
             return
         if integers_placement[0] >= max(graph.get_verticies().keys(), default=-1) + 1:
-            print("the tile you try to attach yours to has an invalid number")
+            # print("the tile you try to attach yours to has an invalid number")
             return
         attach_direction = ''.join(
             c for c in move_parts[counter] if c.isalpha())
@@ -243,7 +251,7 @@ class RulesManager():
         This method serves as a wrapper around  is_legal_move` to provide user feedback.
         """
         if not self.is_correctly_formed_move(move, graph=graph):
-            print("failed at is_correct")
+            # print("failed at is_correct")
             return False
 
         if not self.is_legal_move(move.split('/'), graph):
