@@ -8,6 +8,10 @@ DEFAULT_SETTINGS = {
     "verbose": False,
     "blitz": False,
     "timeout": 30,
+    "ai_time": 5,
+    "ai_mode": "minimax",
+    "ai_minimax_depth": 80,
+    "ai_mcts_selection": "UCT",
     "contest_file": "",
     "file_keybinds": {
         "app.new": "n",
@@ -38,7 +42,11 @@ class GameConfiguration:
             "verbose": "false",
             "blitz": "false",
             "timeout": "30",
-            "contest_file": "",
+            "ai_time": 5,
+            "ai_mode": "minimax",
+            "ai_minimax_depth": 83,
+            "ai_mcts_selection": "UCT",
+            "contest_file": ""
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),
@@ -96,6 +104,10 @@ class GameConfiguration:
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
             "timeout": str(self.settings["timeout"]),
+            "ai_time": str(self.settings["ai_time"]),
+            "ai_mode": str(self.settings["ai_mode"]),
+            "ai_minimax_depth": str(self.settings["ai_minimax_depth"]),
+            "ai_mcts_selection": str(self.settings["ai_mcts_selection"]),
             "contest_file": str(self.settings.get("contest_file", "")),
         }
         config["keybinds"] = {
