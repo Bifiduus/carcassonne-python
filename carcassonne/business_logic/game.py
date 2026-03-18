@@ -56,7 +56,6 @@ class Game(IGameService):
         self.current_player_order_list = 0
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
-        self.ai_model = "expectimax"
 
     def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
         """Start a new game by clearing the play history, undo history, 
@@ -168,20 +167,28 @@ class Game(IGameService):
     def play_ai_turn(self) -> None:
         from .ai_model import RandomPlayer
         from .ai_model import ExpectimaxPlayer
+        from .ai_model import MCTSPlayer
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.draw_tile()
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
-        if self.ai_model == "random":
+        if self.get_game_configuration().get("ai_mode") == "random":
             model = RandomPlayer(self)
-        elif self.ai_model == "expectimax":
+            move = model.random_move(self.current_hand, self)
+        elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
-            model = ExpectimaxPlayer(self, start_time, ai_time)
-        eval, move = model.search(self, depth=model.depth_max, alpha=float(
-            '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
-        print(
-            f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
+            depth = self.get_game_configuration().get("ai_minimax_depth")
+            model = ExpectimaxPlayer(self, start_time, ai_time, depth)
+            eval, move = model.search(self, depth=model.depth_max, alpha=float(
+                '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
+            print(
+                f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
+        elif self.get_game_configuration().get("ai_mode") == "mcts":
+            start_time = time.time()
+            eval_fn_name = self.get_game_configuration().get("ai_mcts_selection")
+            model = MCTSPlayer(self, start_time, ai_time, eval_fn_name)
+            move = model.mcts(self)
         # print("main avant de jouer le coup" + self.current_hand)
         res = self.play_move(move)
         # print(res)

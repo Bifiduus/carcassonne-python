@@ -109,6 +109,30 @@ def main() -> int:
         default=5,
     )
 
+    parser.add_argument(
+        "-am",
+        "--ai-mode",
+        help="AI algorithm we use (default: star2.5 (= minimax with pruning))",
+        type=str,
+        default="minimax",
+    )
+
+    parser.add_argument(
+        "-amd",
+        "--ai-minimax-depth",
+        help="depth of the ai tree search (default: maximum depth = 80 playable tiles)",
+        type=int,
+        default=83,
+    )
+
+    parser.add_argument(
+        "-ams",
+        "--ai-mcts-selection",
+        help="selection function for mcts (default: UCT)",
+        type=str,
+        default="UCT",
+    )
+
     args: argparse.Namespace = parser.parse_args()
     config_overrides = {}
     if args.verbose:
@@ -119,6 +143,12 @@ def main() -> int:
         config_overrides['time'] = args.timeout
     if args.ai_time:
         config_overrides['ai_time'] = args.ai_time
+    if args.ai_mode == "mcts" or args.ai_mode == "random":
+        config_overrides['ai_mode'] = args.ai_mode
+    if args.ai_minimax_depth > 0:
+        config_overrides['ai_minimax_depth'] = args.ai_minimax_depth
+    if args.ai_mcts_selection == "UCT" or args.ai_mcts_selection == "ML":
+        config_overrides['ai_mcts_selection'] = args.ai_mcts_selection
 
     game_data: IGraphData = GraphData()
     if args.players:

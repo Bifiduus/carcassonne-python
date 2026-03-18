@@ -9,6 +9,9 @@ DEFAULT_SETTINGS = {
     "blitz": False,
     "timeout": 30,
     "ai_time": 5,
+    "ai_mode": "minimax",
+    "ai_minimax_depth": 80,
+    "ai_mcts_selection": "UCT",
     "contest_file": "",
     "file_keybinds": {
         "app.new": "n",
@@ -39,6 +42,10 @@ class GameConfiguration:
             "verbose": "false",
             "blitz": "false",
             "timeout": "30",
+            "ai_time": 5,
+            "ai_mode": "minimax",
+            "ai_minimax_depth": 83,
+            "ai_mcts_selection": "UCT",
             "contest_file": ""
         }
         config["keybinds"] = {
