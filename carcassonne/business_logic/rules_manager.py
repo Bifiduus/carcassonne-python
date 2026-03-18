@@ -47,7 +47,9 @@ class RulesManager:
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
-        graph_copy = graph
+        # Use an isolated copy so rule checks do not mutate the live game
+        # state (land components, vertices, meeples, etc.).
+        graph_copy = copy.deepcopy(graph)
         integers_placement = [
             int(x) for x in re.findall(r"\d+", placement_info)
         ]
