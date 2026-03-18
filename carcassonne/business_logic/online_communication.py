@@ -114,13 +114,13 @@ class OnlineCommunication:
             except Exception as e:
                 print(f"Error notifying host {host_id}: {e}")
 
-    def command_cancel(self, client_username: str, players: str) -> str:
+    def command_cancel(self, client_id: str, players: str) -> str:
         answer = ""
-        if self.server.repo.invitation_sent_from(client_username):
+        if self.server.repo.invitation_sent_from(client_id):
             # des invitations en attentes, envoie des messages
             players_list = players.split(" ")
             answer = self.server.repo.cancel_invitation_from(
-                client_username, players_list)
+                client_id, players_list)
         else:
             answer = f"No invitations to cancel."
         return answer
