@@ -53,6 +53,7 @@ class WindowView:
         self.window = Gtk.ApplicationWindow(application=self.application)
         self.window.set_title("Carcassonne")
         self.window.set_default_size(1080, 720)
+        self.window.add_css_class("main-title")
 
         # stack of views (menu / game / etc.)
         self.stack = Gtk.Stack()

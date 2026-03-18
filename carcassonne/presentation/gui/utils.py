@@ -51,7 +51,21 @@ def load_css() -> None:
         border-radius: 6px;
         padding: 4px;
     }
-    """
+    .main-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: orange;
+    }
+    .back-button {
+        background-color: rgba(255, 0, 0, 0.8);
+        border: 2px solid white;
+        border-radius: 8px;
+        color: red;
+        font-weight: bold;
+    }
+    .back-button:hover {
+        background-color: rgba(255, 0, 0, 1.0);
+    }"""
 
     provider = Gtk.CssProvider()
     provider.load_from_data(css.encode())

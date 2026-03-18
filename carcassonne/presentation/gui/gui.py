@@ -56,7 +56,7 @@ class GameGUI(Gtk.Application):
     def do_activate(self):
         window = WindowView(self, self.game_data)
         self.window = window
-        self.error_message.show_error("Welcome to Carcassonne!")
+        # self.error_message.show_error("Welcome to Carcassonne!")
 
         # main menu is now produced by a small helper
         self.menu_view = MainMenu.create(self)
@@ -114,6 +114,17 @@ class GameGUI(Gtk.Application):
         self.players_view = PlayersView(self.game_data)
         self.players_view.add_css_class("players-panel")
         overlay.add_overlay(self.players_view)
+
+        # back button in top-right corner
+        back_button = Gtk.Button(label="Back to Menu")
+        back_button.set_margin_top(10)
+        back_button.set_margin_end(10)
+        back_button.set_halign(Gtk.Align.END)
+        back_button.set_valign(Gtk.Align.START)
+        back_button.add_css_class("back-button")
+        back_button.connect(
+            "clicked", lambda b: self.window.stack.set_visible_child_name("menu"))
+        overlay.add_overlay(back_button)
 
         # end-turn button in a semi-transparent panel
         end_turn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
