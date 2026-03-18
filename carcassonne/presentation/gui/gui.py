@@ -4,6 +4,7 @@ import os
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.board_view import BoardView
 from carcassonne.presentation.gui.error_message_view import ErrorMessageView
+from carcassonne.presentation.gui.info_message import InfoMessage
 from carcassonne.presentation.gui.menus.keybinds_menu import KeybindsMenu
 from carcassonne.presentation.gui.window_view import WindowView
 from carcassonne.presentation.gui import utils
@@ -52,6 +53,7 @@ class GameGUI(Gtk.Application):
             "clicked", lambda b: commands_handler_gui.on_end_turn_gui(self)
         )
         self.error_message = ErrorMessageView(self)
+        self.info_message = InfoMessage(self)
 
     def do_activate(self):
         window = WindowView(self, self.game_data)
@@ -83,7 +85,7 @@ class GameGUI(Gtk.Application):
         register(
             self, "config", lambda a, p: commands_handler_gui.on_config(self)
         )
-        register(self, "info", lambda a, p: commands_handler_gui.on_info())
+        register(self, "info", lambda a, p: commands_handler_gui.on_info(self))
         register(self, "quit", lambda a, p: commands_handler_gui.on_quit(self))
         register(
             self, "undo", lambda a, p: commands_handler_gui.on_undo_gui(self)

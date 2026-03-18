@@ -70,8 +70,20 @@ def on_config(gui) -> None:
     gui.window.stack.set_visible_child_name("singleplayer_menu")
 
 
-def on_info() -> None:
-    print("to add info")
+def on_info(gui) -> None:
+    import carcassonne
+    message = f"""Carcassonne Python
+
+Version: {carcassonne.__version__}
+
+Authors:
+- Clément SIMON --- Serveur
+- Maxence SALIN --- Client GUI/CLI
+- Loic THIN --- IA et Logique de jeu
+- Anthony BEAUVIEUX --- Logique de jeu
+- Tony HUANG --- Graine, shuffle et logique de jeu
+"""
+    gui.info_message.show_info(message)
 
 
 def on_quit(self) -> None:
