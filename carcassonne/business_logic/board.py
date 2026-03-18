@@ -121,11 +121,10 @@ class Board:
         print(f"-- Scores après le tour {turn} --")
         for player_id in sorted(players.keys()):
             player = players[player_id]
-            print(f"Joueur {
-                player_id +
-                1} ({
-                player.get_username()}): {
-                player.get_score().score} pts")
+            print(
+                f"Joueur {player_id + 1} "
+                f"({player.get_username()}): {player.get_score().score} pts"
+            )
         print("------------------------------")
 
         # enlever la tuile des tuiles disponibles
