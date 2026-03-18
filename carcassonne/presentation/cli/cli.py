@@ -114,6 +114,41 @@ class GameCLI:
             commands_handler_cli.play(self, move, game=self.game)
         elif command.startswith("board"):
             commands_handler_cli.show_board(self, game=self.game)
+        elif command == "server list":
+            commands_handler_cli.show_server_list(self, self.server)
+        elif command.startswith("server start"):
+            port = command.strip("server start")
+            commands_handler_cli.server_start(self, port, self.server)
+        elif command == "server stop":
+            commands_handler_cli.stop_server(self, self.server)
+        elif command.startswith("join"):
+            addresse = command[5:].strip()
+            if ":" in addresse:
+                ip, port = addresse.split(":")
+                commands_handler_cli.join(self, self.server, ip, port)
+            else:
+                commands_handler_cli.join(self, self.server, addresse)
+        elif command == "ping":
+            commands_handler_cli.ping(self, self.server)
+        elif command.startswith("create"):
+            command = command[7:].strip()
+            commands_handler_cli.create(self, command, self.server)
+        elif command == "server status":
+            commands_handler_cli.server_status(self, self.server)
+        elif command.startswith("players"):
+            commands_handler_cli.players(self, self.server, command)
+        elif command == "scoreboard":
+            commands_handler_cli.scoreboard(self, self.server)
+        elif command == "accept":
+            commands_handler_cli.accept(self, self.server)
+        elif command == "decline":
+            commands_handler_cli.decline(self, self.server)
+        elif command == "cancel":
+            commands_handler_cli.cancel(self, self.server)
+        elif command == "back":
+            commands_handler_cli.back(self, self.server)
+        elif command == "away":
+            commands_handler_cli.away(self, self.server)
 
         else:
             print(
