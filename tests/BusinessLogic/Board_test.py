@@ -1,9 +1,9 @@
 import pytest
-from carcassonne.BusinessLogic.Board import Board
-from carcassonne.Datas.GraphData import GraphData
-from carcassonne.Datas.History import History
-from carcassonne.Datas.TilesInfo import TilesInfo
-from carcassonne.BusinessLogic.Player import Player
+from carcassonne.business_logic.board import Board
+from carcassonne.datas.graph_data import GraphData
+from carcassonne.datas.history import History
+from carcassonne.datas.tiles_info import TilesInfo
+from carcassonne.business_logic.player import Player
 
 
 class TestBoard:
@@ -21,7 +21,7 @@ class TestBoard:
         players[1] = Player(2, "Alice", "red")
         move = "RRRR/1E0"
         board.add_tile_to_board(move, graph, tiles_info,
-                                history, players, players[0])
+                                history, players, [0, 1], players[0])
         assert len(graph.vertices) == 1, "Tile should be added to the graph"
         assert len(
             graph.lands_components) > 0, "Lands components should be updated after adding a tile"

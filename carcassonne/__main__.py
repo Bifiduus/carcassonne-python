@@ -4,6 +4,9 @@ import argparse
 import sys
 
 from carcassonne import __version__
+from carcassonne.business_logic.interfaces.i_games_repository import IGamesRepository
+from carcassonne.business_logic.server import Server
+from carcassonne.datas.games_repository import GameRepository
 from carcassonne.presentation.gui.create_gui import CreateGui
 from carcassonne.presentation.gui.gui import GameGUI
 from carcassonne.presentation.interfaces.i_game_service import IGameService
@@ -11,6 +14,7 @@ from carcassonne.business_logic.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.graph_data import GraphData
+from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -113,12 +117,11 @@ def main() -> int:
     game_data: IGraphData = GraphData()
     if args.players:
         game: IGameService = Game(
-            game_data,
-            args.players if args.players > 1 and args.players <= 5 else 2,
-            config_overrides,
-        )
+            game_data, args.players if args.players > 1 and args.players <= 5 else 2)
     else:
         game: IGameService = Game(game_data, 1, config_overrides)
+    game_repo: IGamesRepository = GameRepository()
+    server_service: IServerService = Server(game_repo)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:

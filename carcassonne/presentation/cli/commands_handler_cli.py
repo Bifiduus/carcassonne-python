@@ -6,6 +6,7 @@ The command handler functions are designed to be called from the GameCLI class w
 """
 
 from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
 def new_game(self, args, server_service: IServerService) -> None:

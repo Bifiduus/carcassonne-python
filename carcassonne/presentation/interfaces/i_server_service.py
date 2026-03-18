@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
+from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 
 
 class IServerService(ABC):

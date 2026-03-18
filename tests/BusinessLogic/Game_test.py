@@ -1,7 +1,7 @@
 import pytest
 
-from carcassonne.BusinessLogic.Game import Game
-from carcassonne.Datas.GraphData import GraphData
+from carcassonne.business_logic.game import Game
+from carcassonne.datas.graph_data import GraphData
 
 
 class TestGame:
