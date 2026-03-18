@@ -42,6 +42,7 @@ class Board:
         players: dict[int, Player],
         players_order: list[int],
         current_player: Player,
+        record_history: bool = True,
     ) -> None:
         move_parts = move.split("/")
         # jouer le move dans les structures
@@ -101,13 +102,7 @@ class Board:
                 lands_components=set_name_to_place,
             )
             graph.add_meeple(meeple)
-            # print(turn)
-            # print(len(players_order))
-            # print(players_order[(turn - 1) % len(players_order)])
-            # print(players[players_order[(turn - 1) % len(players_order)]])
-            players[
-                players_order[(turn - 1) % len(players_order)]
-            ].remove_meeple()
+            players[current_player_id].remove_meeple()
         # print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
         print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
 
@@ -135,16 +130,17 @@ class Board:
         )
         tiles_info.remove_tile(tile_name)
 
-        try:
-            record = MoveRecord(
-                move_str=move,
-                player_id=current_player.get_id(),
-                is_ai=current_player.is_ai,
-            )
-            history.push_past(record)
-            history.clear_future()
-        except ValueError:
-            pass
+        if record_history:
+            try:
+                record = MoveRecord(
+                    move_str=move,
+                    player_id=current_player.get_id(),
+                    is_ai=current_player.is_ai,
+                )
+                history.push_past(record)
+                history.clear_future()
+            except ValueError:
+                pass
 
     def remove_tile_from_board(
         self,

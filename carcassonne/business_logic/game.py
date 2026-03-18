@@ -91,31 +91,13 @@ class Game(IGameService):
         ):
             previous_play = self.history.pop_past()
             self.history.push_future(previous_play)
-            self.deck.tiles.append(previous_play.move_str.split("/")[0])
-            self.board.remove_tile_from_board(
-                build_str(previous_play),
-                self.graph,
-                self.tiles_info,
-                self.history,
-                self.players,
-            )
-            self.current_player_order_list = self.get_current_player().get_id()
             while self.history.past_moves and is_ai_player(
                 self.history.past_moves[-1]
             ):
                 previous_play = self.history.pop_past()
-                self.board.remove_tile_from_board(
-                    build_str(previous_play),
-                    self.graph,
-                    self.tiles_info,
-                    self.history,
-                    self.players,
-                )
-                self.current_player_order_list = (
-                    self.get_current_player().get_id()
-                )
-                self.deck.tiles.append(previous_play.move_str.split("/")[0])
                 self.history.push_future(previous_play)
+
+            self._rebuild_state_from_history()
 
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
@@ -126,16 +108,49 @@ class Game(IGameService):
             and self.history.future_moves
         ):
             last_unplayed_move = self.history.pop_future()
-            self.current_hand = last_unplayed_move.move_str.split("/")[0]
-            self.draw_tile()
-            self.play_move(last_unplayed_move.move_str)
-            print(self.players_order[self.current_player_order_list])
+            self.history.push_past(last_unplayed_move)
             while self.history.future_moves and is_ai_player(
                 self.history.future_moves[-1]
             ):
-                self.draw_tile()
-                self.play_move(self.history.future_moves[-1].move_str)
-                self.history.pop_future()
+                self.history.push_past(self.history.pop_future())
+
+            self._rebuild_state_from_history()
+
+    def _rebuild_state_from_history(self) -> None:
+        """Rebuild full game state from past moves to keep data coherent."""
+        past_moves = list(self.history.past_moves)
+
+        self.graph.reset_graph()
+        self.board = Board()
+        self.tiles_info = TilesInfo()
+        self.rules_manager = RulesManager(self.tiles_info)
+        self.current_hand = None
+
+        for player in self.players.values():
+            player.get_score().set_points(0)
+            player.meeples = 7
+
+        self.shuffle_deck(self.shuffle_algo, self.seed)
+
+        for record in past_moves:
+            player = self.players.get(record.player_id)
+            if player is None:
+                continue
+
+            self.board.add_tile_to_board(
+                record.move_str,
+                self.graph,
+                self.tiles_info,
+                self.history,
+                self.players,
+                self.players_order,
+                player,
+                record_history=False,
+            )
+
+        self.current_player_order_list = len(self.history.past_moves) % len(
+            self.players_order
+        )
 
     def get_history(self) -> List[str]:
         """Return the current play history."""
@@ -282,8 +297,7 @@ class Game(IGameService):
 
     def get_current_player(self) -> Player:
         current_player_id = self.players_order[
-            max(self.graph.get_verticies().keys(), default=-1)
-            % len(self.players)
+            self.current_player_order_list
         ]
         return self.players[current_player_id]
 
