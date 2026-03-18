@@ -19,9 +19,9 @@ class OnlineCommunication:
     def command_server_status(self):
         assert (
             self.server.server is not None), "No server to execute the command on..."
-        answer = f"Port:{ self.server.server.getsockname()}, "
-        answer += f"Clients:{len(self.server.connected_clients)}, "
-        answer += f"Current Parties:{len(self.server.current_games_list)}\n"
+        answer = f"Port: { self.server.server.getsockname()[1]}, "
+        answer += f"Clients: {len(self.server.connected_clients)}, "
+        answer += f"Current Parties: {len(self.server.current_games_list)}\n"
         return answer
 
     def command_new(self, message: str, client_username: str) -> str:
@@ -49,7 +49,12 @@ class OnlineCommunication:
         return answer
 
     def command_scoreboard(self) -> str:
-        return self.server.repo.get_scoreboard()  # Affiche le tableau des scores des
+        rows = self.server.repo.get_scoreboard()
+        scoreboard: str = "Scoreboard:\n"
+        for row in rows:
+            scoreboard += f"Id: {row['id']}, username: {row['username']},"\
+                f" victories: {row['victories']}, defeats: {row['defeats']}, total games: {row['total_games']}\n"
+        return scoreboard  # Affiche le tableau des scores
         # joueurs qui ont joué sur le serveur (nombre de
         # victoires, défaites, parties jouées) de la db.
 

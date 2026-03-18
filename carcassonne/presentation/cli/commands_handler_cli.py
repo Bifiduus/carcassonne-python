@@ -154,3 +154,63 @@ def play(self, move, game) -> None:
 
 def show_board(self, game) -> None:
     game.get_board()
+
+
+def show_server_list(self, server_service: IServerService):
+    server_list = server_service.list_available_servers()
+    print("Available servers list:")
+    for server in server_list:
+        print(server)
+
+
+def server_start(self, port: str, server_service: IServerService):
+    server_service.server_start(port)
+
+
+def stop_server(self, server_service: IServerService):
+    server_service.server_stop()
+
+
+def join(self, server_service: IServerService, ip: str | None = None, port: str | None = None):
+    if port is None and ip is None:
+        server_service.join_server()
+    if port is not None:
+        server_service.join_server(ip, int(port))
+    else:
+        server_service.join_server(ip)
+
+
+def ping(self, server_service: IServerService):
+    print(server_service.ping())
+
+
+def server_status(self, server_service: IServerService):
+    server_service.send_to_server("server status")
+
+
+def players(self, server_service: IServerService, message: str):
+    server_service.send_to_server(message)
+
+
+def scoreboard(self, server_service: IServerService):
+    server_service.send_to_server("scoreboard")
+
+
+def accept(self, server_service: IServerService):
+    server_service.send_to_server("accept")
+
+
+def decline(self, server_service: IServerService):
+    server_service.send_to_server("decline")
+
+
+def cancel(self, server_service: IServerService):
+    server_service.send_to_server("cancel")
+
+
+def back(self, server_service: IServerService):
+    server_service.send_to_server("back")
+
+
+def away(self, server_service: IServerService):
+    server_service.send_to_server("away")
