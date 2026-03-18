@@ -229,7 +229,6 @@ class Server(IServerService):
         """
         # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
-        message = message.strip()
         if self.server is not None:
             if message == "ping":
                 answer = self.handle_communication.command_ping()
@@ -309,6 +308,7 @@ class Server(IServerService):
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
+                assert self.repo, "The database should not be None"
                 self.repo.send_invitation(invited_player, invitee_player)
             except Exception as e:
                 print(f"Error sending invitation: {e}")
@@ -366,7 +366,6 @@ class Server(IServerService):
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
-        print(message)
         if message.find("pong\n") != -1:
             end = time.time()
             return message+f" Time={end - start}ms"
@@ -444,6 +443,7 @@ class Server(IServerService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:  # check what you do, if you have the server or if you only receive
+
             message = message.removeprefix("Server -> ")
             client_id, message = message.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()
@@ -452,7 +452,7 @@ class Server(IServerService):
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
-                self.get_game(client_username).play_move(move[1])
+                self.get_game(client_id).play_move(move[1])
                 self.client.sendall("board".encode())  # pour afficher le coup
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out
@@ -482,7 +482,6 @@ class Server(IServerService):
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
             text = f"{self.client_player}: " + text
-            print(text)
             self.client.sendall(text.encode())
             return True
         except Exception as e:
