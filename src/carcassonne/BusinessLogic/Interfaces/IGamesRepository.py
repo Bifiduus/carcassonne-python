@@ -66,7 +66,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_scoreboard(self) -> str:
+    def get_scoreboard(self) -> list[Row]:
         pass
 
     @abstractmethod

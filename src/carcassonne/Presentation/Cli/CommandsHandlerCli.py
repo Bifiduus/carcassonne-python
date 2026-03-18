@@ -180,7 +180,7 @@ def ping(self, server_service: IServerService):
 
 
 def server_status(self, server_service: IServerService):
-    server_service.send_to_server("serveur status")
+    server_service.send_to_server("server status")
 
 
 def players(self, server_service: IServerService, message: str):

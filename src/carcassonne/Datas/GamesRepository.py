@@ -206,11 +206,11 @@ class GameRepository(IGamesRepository):
             return True
         return False
 
-    def get_scoreboard(self) -> str:
+    def get_scoreboard(self) -> list[sqlite3.Row]:
         rows = self._execute_query(
             "SELECT player_id AS id, username, victories, defeats, (victories + defeats) AS total_games FROM scoreboard NATURAL JOIN players;"
         )
-        return str([r for r in rows])
+        return rows
 
     def invitation_sent_from(self, client_username: str) -> bool:
         client_id: int = self.get_id_from_username(client_username)
