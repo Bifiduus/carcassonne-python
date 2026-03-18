@@ -34,6 +34,14 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def is_database_closed(self) -> bool:
+        pass
+
+    @abstractmethod
+    def reopen(self):
+        pass
+
+    @abstractmethod
     def change_status(self, client_username: str, status: str) -> str:
         pass
 
@@ -50,11 +58,11 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_game(self, client_username: str) -> Row:
+    def get_game(self, client_id: str) -> Row:
         pass
 
     @abstractmethod
-    def check_all_invitations_resolved(self, client_username: str) -> bool:
+    def check_all_invitations_resolved(self, client_id: str) -> bool:
         pass
 
     @abstractmethod
@@ -82,7 +90,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_party(self, client_username: str) -> list[str]:
+    def get_party(self, client_id: str) -> list[str]:
         pass
 
     @abstractmethod
@@ -90,7 +98,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_party_name(self, client_username: str) -> str:
+    def get_party_name(self, client_id: str) -> str:
         pass
 
     @abstractmethod
