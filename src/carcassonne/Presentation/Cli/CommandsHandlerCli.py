@@ -1,7 +1,7 @@
 """This module defines the command handler functions for the Carcassonne game.
-Each function corresponds to a specific command that can be entered by the player in the command-line interface. 
-The functions interact with the game service and the game state to perform actions such as starting a new game, loading and saving game states, 
-shuffling the tiles, providing hints, undoing and redoing moves, and displaying game information. 
+Each function corresponds to a specific command that can be entered by the player in the command-line interface.
+The functions interact with the game service and the game state to perform actions such as starting a new game, loading and saving game states,
+shuffling the tiles, providing hints, undoing and redoing moves, and displaying game information.
 The command handler functions are designed to be called from the GameCLI class when the corresponding commands are entered by the player.
 """
 from carcassonne.Presentation.Interfaces.IGameService import IGameService
@@ -38,7 +38,9 @@ def help(self) -> None:
 
 
 def quit(self, server_service: IServerService) -> None:
-    if not server_service.is_server_running():
+    if server_service.connected_to_a_server():
+        server_service.send_to_server("quit")
+    else:
         saved = -1
         while saved == -1:
             confirm: str = input("Save the game before quitting?[y/N] ")
