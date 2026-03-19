@@ -112,6 +112,8 @@ class GameCLI:
                 param = content
                 value = None
             commands_handler_cli.set_parameter(self, param, value)
+        elif command.startswith("players"):
+            commands_handler_cli.players(self, self.server, command)
         elif command.startswith("play"):
             move = command[5:].strip()
             commands_handler_cli.play(self, move, game=self.game)
@@ -138,8 +140,6 @@ class GameCLI:
             commands_handler_cli.create(self, command, self.server)
         elif command == "server status":
             commands_handler_cli.server_status(self, self.server)
-        elif command.startswith("players"):
-            commands_handler_cli.players(self, self.server, command)
         elif command == "scoreboard":
             commands_handler_cli.scoreboard(self, self.server)
         elif command == "accept":

@@ -4,14 +4,14 @@ import socket
 import select
 import threading
 
-from carcassonne.BusinessLogic.Interfaces.IGraphData import IGraphData
-from carcassonne.BusinessLogic.OnlineCommunication import OnlineCommunication
-from carcassonne.BusinessLogic.Player import Player
-from carcassonne.BusinessLogic.Game import Game
-from carcassonne.Datas.GraphData import GraphData
-from carcassonne.Datas.GamesRepository import GameRepository
-from carcassonne.BusinessLogic.Interfaces.IGamesRepository import IGamesRepository
-from carcassonne.Presentation.Interfaces.IServerService import IServerService
+from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.business_logic.online_communication import OnlineCommunication
+from carcassonne.business_logic.player import Player
+from carcassonne.business_logic.game import Game
+from carcassonne.datas.graph_data import GraphData
+from carcassonne.datas.games_repository import GameRepository
+from carcassonne.business_logic.interfaces.i_games_repository import IGamesRepository
+from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
 
@@ -363,7 +363,7 @@ class Server(IServerService):
         message = data.decode()
         if message.find("pong\n") != -1:
             end = time.time()
-            return message+f" Time={end - start}ms"
+            return f"pong\nTime={end - start}ms"
 
         return "No server response"  # Or implement actual ping logic
 

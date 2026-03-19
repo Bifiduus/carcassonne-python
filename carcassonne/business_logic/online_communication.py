@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from carcassonne.BusinessLogic.Server import Server
+    from carcassonne.business_logic.server import Server
 
 
 class OnlineCommunication:
@@ -60,27 +60,27 @@ class OnlineCommunication:
 
     def command_accept(self, client_id: str) -> str:
         answer = ""
-        sender, party_id = self.server.repo.invitation_received(
-            client_id)
-        if sender == -1:
+        if self.server.repo.invitation_received(client_id) != None:
             answer = f"You have no invitation to accept.\n"
         else:
+            sender_id, party_id = self.server.repo.invitation_received(
+                client_id)
             # envoie à {self.invitation_received(client_id)}
             self.server.repo.accept_invitation(int(party_id), client_id)
             # Get invitee's name from repository
-            self.notify_host_of_acceptance(sender, client_id)
+            self.notify_host_of_acceptance(sender_id, client_id)
             answer = f"Invitation accepted!\n"
         return answer
 
     def command_decline(self, client_id: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) != -1:
+        if self.server.repo.invitation_received(client_id) != None:
             answer = f"You have no invitation to decline.\n"
         else:
-            host_id: str = self.server.repo.invitation_received(client_id)[
+            host_id: int = self.server.repo.invitation_received(client_id)[
                 'host_player']
             # envoie à {self.invitation_received(client_id)}
-            self.notify_host_of_rejection(int(host_id), client_id)
+            self.notify_host_of_rejection(host_id, client_id)
             answer = ""
         return answer
 
