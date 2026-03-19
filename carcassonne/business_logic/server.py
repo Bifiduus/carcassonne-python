@@ -23,7 +23,7 @@ class Server(IServerService):
 
     def __init__(self, repo: IGamesRepository | None = None):
         # networking/server state
-        self.server_name = "localhost"
+        self.server_name = "local"
         self.client = None
         self.client_player = None
         self.server = None
@@ -168,10 +168,10 @@ class Server(IServerService):
                 if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
                     message = f"{self.server_name}:{port}"
                     socket_message = socket.socket(
-                        socket.AF_INET, socket.SOCK_DGRAM)
+                        socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                     socket_message.setsockopt(
                         socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                    broadcast_addr = ('', 12346)
+                    broadcast_addr = ('<broadcast>', 12346)
                     socket_message.sendto(message.encode(), broadcast_addr)
                     socket_message.close()
             except socket.timeout:
