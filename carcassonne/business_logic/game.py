@@ -348,27 +348,21 @@ class Game(IGameService):
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
         move = None
+        eval_score = None
         if self.get_game_configuration().get("ai_mode") == "random":
             model = RandomPlayer()
             move = model.random_move(self.current_hand, self)
-            print(
-                f"AI Player {ai_player.get_username()} chooses move: {move}"
-            )
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth")
             model = ExpectimaxPlayer(self, start_time, ai_time, depth)
-            eval, move = model.search(
+            eval_score, move = model.search(
                 self,
                 depth=model.depth_max,
                 alpha=float("-inf"),
                 beta=float("inf"),
                 player_to_max=ai_player.get_id(),
                 next_player=ai_player.get_id(),
-            )
-            print(
-                f"AI Player {ai_player.get_username()} chooses move: {move} "
-                f"with evaluation score: {eval}"
             )
         elif self.get_game_configuration().get("ai_mode") == "mcts":
             start_time = time.time()
@@ -377,11 +371,22 @@ class Game(IGameService):
             )
             model = MCTSPlayer(self, start_time, ai_time, eval_fn_name)
             move = model.mcts(self)
+        if not move:
+            print(
+                f"AI Player {ai_player.get_username()} has no legal move. "
+                "Passing turn."
+            )
+            self.skip_current_player()
+            return
+        if eval_score is None:
             print(
                 f"AI Player {ai_player.get_username()} chooses move: {move}"
             )
-        if move is None:
-            return
+        else:
+            print(
+                f"AI Player {ai_player.get_username()} chooses move: {move} "
+                f"with evaluation score: {eval_score}"
+            )
         # print("main avant de jouer le coup" + self.current_hand)
         self.play_move(move)
 
@@ -482,7 +487,9 @@ class Game(IGameService):
     def get_timeout_message(self) -> str:
         return self.blitz_manager.get_timeout_message()
 
-    def get_current_player_remaining_time_seconds(self) -> float:
+    def get_current_player_remaining_time_seconds(self) -> float | None:
+        if not self._is_blitz_enabled():
+            return None
         self.tick_blitz()
         current_player_id = self.get_current_player().get_id()
         return self.blitz_manager.get_remaining_seconds(current_player_id)
@@ -490,6 +497,8 @@ class Game(IGameService):
     def get_player_remaining_time_seconds(
         self, player_id: int
     ) -> float | None:
+        if not self._is_blitz_enabled():
+            return None
         self.tick_blitz()
         if player_id not in self.players:
             return None
@@ -498,6 +507,8 @@ class Game(IGameService):
     def get_all_players_remaining_time_seconds(
         self,
     ) -> list[tuple[int, float]]:
+        if not self._is_blitz_enabled():
+            return []
         self.tick_blitz()
         return [
             (

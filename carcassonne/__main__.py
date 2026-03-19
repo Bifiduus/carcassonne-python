@@ -140,10 +140,11 @@ def main() -> int:
 
     args: argparse.Namespace = parser.parse_args()
     config_overrides = {}
+    # CLI contract: blitz mode is enabled only when -b/--blitz is passed.
+    config_overrides["blitz"] = bool(args.blitz)
     if args.verbose:
         config_overrides["verbose"] = True
     if args.blitz:
-        config_overrides["blitz"] = True
         config_overrides["time"] = (
             args.time if args.time is not None else 30
         )
