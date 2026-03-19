@@ -1,6 +1,8 @@
+import math
+
 import gi
 
-from gi.repository import Gio, Gtk
+from gi.repository import Gio, Gtk, GLib
 
 
 class WindowView:
@@ -59,8 +61,13 @@ class WindowView:
         self.window.set_child(self.stack)
 
         # header and menus
+    
         header = Gtk.HeaderBar()
         self.window.set_titlebar(header)
+        header.add_css_class("headers")
+
+        self.header = header  # garder une référence
+        self._setup_header_animation()
 
         self._build_file_menu(header)
         self._build_game_menu(header)
@@ -76,6 +83,7 @@ class WindowView:
         for action, key in self.file_keybinds.items():
             self.application.set_accels_for_action(action, ["<Primary>" + key])
         file_button = self.create_menu_button("File", menu_file)
+        file_button.add_css_class("headers_buttons")
         header.pack_start(file_button)
 
     def _build_game_menu(self, header: Gtk.HeaderBar):
@@ -88,6 +96,7 @@ class WindowView:
             self.application.set_accels_for_action(action, ["<Primary>" + key])
 
         game_button = self.create_menu_button("Game", menu_game)
+        game_button.add_css_class("headers_buttons")
         header.pack_start(game_button)
 
     def create_menu_button(self, label: str, menu: Gio.Menu) -> Gtk.MenuButton:
@@ -120,3 +129,43 @@ class WindowView:
             self.file_button.set_visible(True)
         if self.game_button:
             self.game_button.set_visible(True)
+            
+    def _setup_header_animation(self):
+        self._t = 0
+
+        self._css_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_display(
+            self.window.get_display(),
+            self._css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        GLib.timeout_add(50, self._animate_header)
+
+
+    def _animate_header(self):
+        self._t += 0.02
+
+        # couleurs animées (effet fluide)
+        r = int((math.sin(self._t) + 1) * 127)
+        g = int((math.sin(self._t + 2) + 1) * 127)
+        b = int((math.sin(self._t + 4) + 1) * 127)
+
+        color1 = f"rgb({r},{g},{b})"
+        color2 = f"rgb({b},{r},{g})"
+
+        css = f"""
+        .headers {{
+            background: linear-gradient(135deg, {color1}, {color2});
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }}
+        """
+
+        self._css_provider.load_from_data(css.encode())
+
+        return True

@@ -41,3 +41,7 @@ class IPlayerInfoService(ABC):
     @abstractmethod
     def get_score_int(self) -> int:
         pass
+
+    @abstractmethod
+    def get_meeples(self) -> int:
+        pass

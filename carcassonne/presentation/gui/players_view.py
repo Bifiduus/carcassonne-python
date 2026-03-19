@@ -75,6 +75,7 @@ class PlayersView(Gtk.Box):
             name = p.get_username()
             score = p.get_score_int()
             color = p.get_color()
+            meeple = p.get_meeples()
 
             label = Gtk.Label()
             label.set_use_markup(True)
@@ -82,13 +83,13 @@ class PlayersView(Gtk.Box):
 
             if p is current:
                 label.set_markup(
-                    f'<span foreground="{color}"><b>{name} : {score}</b>'
+                    f'<span foreground="{color}"><b>{name} : {score} | {meeple}x </b>'
                     "</span>"
                 )
                 row.add_css_class("current-player")
             else:
                 label.set_markup(
-                    f'<span foreground="{color}">{name} : {score}</span>'
+                    f'<span foreground="{color}">{name} : {score} | {meeple}x</span>'
                 )
 
             row.append(label)

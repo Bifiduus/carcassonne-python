@@ -1,5 +1,6 @@
 """Utility helpers shared by several GUI modules."""
 
+import math
 import os
 
 from gi.repository import Gtk, Gdk, Gio
@@ -182,6 +183,20 @@ def load_css() -> None:
         outline: 2px solid white;
         outline-offset: 2px;
     }
+    /*header buttons*/
+    /*.headers_buttons {
+    background: #ab8ee7;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    outline: 2px solid white;
+    outline-offset: 2px;
+    }*/
+
 
 
     """
@@ -201,13 +216,3 @@ def register_action(application, name: str, callback) -> None:
     action = Gio.SimpleAction.new(name, None)
     action.connect("activate", callback)
     application.add_action(action)
-
-def set_background() -> None:
-        """Load a background image for the board."""
-        background_image = "main_menu_background_test.png"
-            
-        if os.path.exists(get_images_dir() + "/" + background_image):
-            background = GdkPixbuf.Pixbuf.new_from_file(image_path)
-        else:
-            background = None
-        print(image_path)
