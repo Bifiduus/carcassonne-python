@@ -102,6 +102,22 @@ class Game(IGameService):
             ) % len(self.players_order)
         return False
 
+    def skip_current_player(self) -> bool:
+        """Skip current player and advance to the next playable player."""
+        if not self.players_order:
+            return False
+
+        self.current_hand = None
+        self.current_player_order_list = (
+            self.current_player_order_list + 1
+        ) % len(self.players_order)
+
+        if not self._advance_to_next_playable_player():
+            return False
+        if self._is_blitz_enabled():
+            self.blitz_manager.start_turn(self.get_current_player().get_id())
+        return True
+
     def _ensure_current_player_playable(self) -> bool:
         if not self._is_blitz_enabled():
             return True
@@ -456,15 +472,24 @@ class Game(IGameService):
         if not timed_out_now:
             return False
 
-        # A timed-out player cannot keep an in-progress tile.
-        self.current_hand = None
-        self._advance_to_next_playable_player()
-        if self._has_playable_player():
-            self.blitz_manager.start_turn(self.get_current_player().get_id())
+        self.skip_current_player()
         return True
 
     def get_timeout_message(self) -> str:
         return self.blitz_manager.get_timeout_message()
+
+    def get_current_player_remaining_time_seconds(self) -> float:
+        self.tick_blitz()
+        current_player_id = self.get_current_player().get_id()
+        return self.blitz_manager.get_remaining_seconds(current_player_id)
+
+    def get_player_remaining_time_seconds(
+        self, player_id: int
+    ) -> float | None:
+        self.tick_blitz()
+        if player_id not in self.players:
+            return None
+        return self.blitz_manager.get_remaining_seconds(player_id)
 
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)

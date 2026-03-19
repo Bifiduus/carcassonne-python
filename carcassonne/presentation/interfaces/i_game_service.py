@@ -95,3 +95,13 @@ class IGameService(ABC):
     @abstractmethod
     def get_timeout_message(self) -> str:
         pass
+
+    @abstractmethod
+    def get_current_player_remaining_time_seconds(self) -> float:
+        pass
+
+    @abstractmethod
+    def get_player_remaining_time_seconds(
+        self, player_id: int
+    ) -> float | None:
+        pass

@@ -36,6 +36,10 @@ def help(self) -> None:
         "N derniers coups annulés"
     )
     print("  show hand          - Affiche la main du joueur courant")
+    print(
+        "  show time [ID]     - Affiche le temps restant du joueur courant "
+        "ou du joueur ID"
+    )
     print("  show score         - Affiche le score des joueurs")
     print("  show history       - Affiche l'historique des coups joués")
     print("  show configuration - Affiche la configuration actuelle du jeu")
@@ -109,6 +113,41 @@ def show_hand(self) -> None:
         print("Aucune tuile en main.")
     else:
         print(f"Tuile en main: {self.game.current_hand}")
+
+
+def _format_clock(remaining_seconds: float) -> str:
+    minutes = int(remaining_seconds // 60)
+    seconds = int(remaining_seconds % 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
+
+def show_time(self, player_id_raw: str | None = None) -> None:
+    if player_id_raw is None or player_id_raw == "":
+        current_player_id = self.game.get_current_player().get_id()
+        remaining_seconds = float(
+            self.game.get_current_player_remaining_time_seconds()
+        )
+        print(
+            "Temps restant joueur "
+            f"{current_player_id}: {_format_clock(remaining_seconds)}"
+        )
+        return
+
+    try:
+        player_id = int(player_id_raw)
+    except ValueError:
+        print("Usage: show time [PLAYER_ID]")
+        return
+
+    remaining_seconds = self.game.get_player_remaining_time_seconds(player_id)
+    if remaining_seconds is None:
+        print(f"Joueur inconnu: {player_id}")
+        return
+
+    print(
+        f"Temps restant joueur {player_id}: "
+        f"{_format_clock(float(remaining_seconds))}"
+    )
 
 
 def show_score(self) -> None:

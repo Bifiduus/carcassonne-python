@@ -25,6 +25,7 @@ COMMANDS = [
     "undo",
     "redo",
     "show hand",
+    "show time",
     "show score",
     "show history",
     "show configuration",
@@ -112,20 +113,21 @@ class GameCLI:
                 self.handle_command(command)
 
     def _tick_once(self) -> None:
-        timed_out_now = bool(self.game.tick_blitz())
-        if not timed_out_now:
-            return
+        self.game.tick_blitz()
         timeout_message = str(self.game.get_timeout_message() or "")
         clean_message = timeout_message.strip()
-        if clean_message and clean_message != self._tick_last_message:
-            print(f"\n{clean_message}")
-            self._tick_last_message = clean_message
+        if not clean_message or clean_message == self._tick_last_message:
+            return
+
+        print(f"\n{clean_message}")
+        self._tick_last_message = clean_message
 
     def handle_command(self, command):
 
         if command.startswith("new"):
             args = command[4:].strip()
             commands_handler_cli.new_game(self, args, self.server)
+            self._tick_last_message = ""
         elif command == "help":
             commands_handler_cli.help(self)
         elif command == "quit":
@@ -133,6 +135,7 @@ class GameCLI:
         elif command.startswith("load "):
             filename = command[5:].strip()
             commands_handler_cli.load(self, filename)
+            self._tick_last_message = ""
         elif command.startswith("save "):
             filename = command[5:].strip()
             commands_handler_cli.save(self, filename)
@@ -148,6 +151,9 @@ class GameCLI:
             commands_handler_cli.redo(self, 1)
         elif command == "show hand":
             commands_handler_cli.show_hand(self)
+        elif command == "show time" or command.startswith("show time "):
+            player_id_arg = command[len("show time") :].strip()
+            commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
             commands_handler_cli.show_score(self)
         elif command == "show history":
