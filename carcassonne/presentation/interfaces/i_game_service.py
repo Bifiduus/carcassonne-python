@@ -87,3 +87,11 @@ class IGameService(ABC):
     @abstractmethod
     def provide_hint(self) -> str:
         pass
+
+    @abstractmethod
+    def tick_blitz(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_timeout_message(self) -> str:
+        pass

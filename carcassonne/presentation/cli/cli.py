@@ -6,12 +6,10 @@ undo/redo turns, and display game state information.
 
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.presentation.cli import commands_handler_cli
-from carcassonne.business_logic.game import Game
 
 import readline
-import os
-import atexit
-from pathlib import Path
+import threading
+import time
 
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
@@ -51,6 +49,12 @@ class GameCLI:
         self.game = game_service
         self.settings = self.game.get_game_configuration()
         self.running = True
+        self._tick_interval_seconds = 0.1
+        self._tick_sleep_seconds = 0.01
+        self._tick_last_message = ""
+        self._stop_event = threading.Event()
+        self._game_lock = threading.RLock()
+        self._input_thread: threading.Thread | None = None
 
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
@@ -61,13 +65,61 @@ class GameCLI:
         print("Bienvenue dans Carcassonne")
         print("Tapez 'help' pour la liste des commandes.\n")
 
-        while self.running:
+        self._start_input_loop()
+        last_tick = time.monotonic()
+
+        try:
+            while self.running:
+                now = time.monotonic()
+                if now - last_tick >= self._tick_interval_seconds:
+                    with self._game_lock:
+                        self._tick_once()
+                    last_tick = now
+                time.sleep(self._tick_sleep_seconds)
+        except KeyboardInterrupt:
+            print("\nFin de partie.")
+            self.running = False
+        finally:
+            self._stop_event.set()
+            if self._input_thread is not None:
+                self._input_thread.join(timeout=0.2)
+
+    def _start_input_loop(self) -> None:
+        if self._input_thread is not None and self._input_thread.is_alive():
+            return
+        self._input_thread = threading.Thread(
+            target=self._input_loop,
+            name="carcassonne-cli-input",
+            daemon=True,
+        )
+        self._input_thread.start()
+
+    def _input_loop(self) -> None:
+        while self.running and not self._stop_event.is_set():
             try:
                 command = input(">> ").strip()
-                self.handle_command(command)
+            except EOFError:
+                self.running = False
+                break
             except KeyboardInterrupt:
                 print("\nFin de partie.")
                 self.running = False
+                break
+
+            with self._game_lock:
+                if not self.running:
+                    break
+                self.handle_command(command)
+
+    def _tick_once(self) -> None:
+        timed_out_now = bool(self.game.tick_blitz())
+        if not timed_out_now:
+            return
+        timeout_message = str(self.game.get_timeout_message() or "")
+        clean_message = timeout_message.strip()
+        if clean_message and clean_message != self._tick_last_message:
+            print(f"\n{clean_message}")
+            self._tick_last_message = clean_message
 
     def handle_command(self, command):
 

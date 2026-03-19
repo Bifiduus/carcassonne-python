@@ -23,6 +23,7 @@ from carcassonne.datas.history import History
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.business_logic.save_handler import SaveHandler
+from carcassonne.business_logic.blitz_manager import BlitzManager
 
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
@@ -57,6 +58,60 @@ class Game(IGameService):
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.error_message = ""
+        self.blitz_manager = BlitzManager()
+        self._end_game_scored = False
+        self._initialize_blitz_state()
+
+    def _configured_blitz_minutes(self) -> int:
+        settings = self.get_game_configuration()
+        raw_value = settings.get("time", 30)
+        try:
+            minutes = int(raw_value)
+        except (TypeError, ValueError):
+            minutes = 30
+        return minutes if minutes > 0 else 30
+
+    def _is_blitz_enabled(self) -> bool:
+        return bool(self.get_game_configuration().get("blitz", False))
+
+    def _initialize_blitz_state(self) -> None:
+        self.blitz_manager.reset(
+            player_ids=self.players_order,
+            enabled=self._is_blitz_enabled(),
+            minutes=self._configured_blitz_minutes(),
+        )
+        if self._is_blitz_enabled() and self._advance_to_next_playable_player():
+            self.blitz_manager.start_turn(self.get_current_player().get_id())
+
+    def _has_playable_player(self) -> bool:
+        for player_id in self.players_order:
+            if not self.blitz_manager.is_player_timed_out(player_id):
+                return True
+        return False
+
+    def _advance_to_next_playable_player(self) -> bool:
+        if not self.players_order:
+            return False
+
+        for _ in range(len(self.players_order)):
+            player_id = self.players_order[self.current_player_order_list]
+            if not self.blitz_manager.is_player_timed_out(player_id):
+                return True
+            self.current_player_order_list = (
+                self.current_player_order_list + 1
+            ) % len(self.players_order)
+        return False
+
+    def _ensure_current_player_playable(self) -> bool:
+        if not self._is_blitz_enabled():
+            return True
+        if not self._advance_to_next_playable_player():
+            return False
+
+        current_player_id = self.get_current_player().get_id()
+        if self.blitz_manager.active_player_id != current_player_id:
+            self.blitz_manager.start_turn(current_player_id)
+        return True
 
     # new method qui:
     # recréer players avec données de repo ( dans attributs de fonction ), nb de players
@@ -94,12 +149,19 @@ class Game(IGameService):
             self.shuffle_players_order()
         self.shuffle_deck(None, seed)
         self.current_player_order_list = 0
+        self._end_game_scored = False
+        self._initialize_blitz_state()
         while self.get_current_player().is_ai_player():
+            if self.end_game():
+                break
             self.play_ai_turn()
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
         from .ai_model import is_ai_player
+
+        if not self._ensure_current_player_playable():
+            return
 
         if (
             self.rules_manager.current_player_is_human()
@@ -118,6 +180,9 @@ class Game(IGameService):
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
         from .ai_model import is_ai_player
+
+        if not self._ensure_current_player_playable():
+            return
 
         if (
             self.rules_manager.current_player_is_human()
@@ -167,6 +232,7 @@ class Game(IGameService):
         self.current_player_order_list = len(self.history.past_moves) % len(
             self.players_order
         )
+        self._ensure_current_player_playable()
 
     def get_history(self) -> List[str]:
         """Return the current play history."""
@@ -187,6 +253,10 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
+        self.tick_blitz()
+        if not self._ensure_current_player_playable():
+            return False
+
         if (
             self.players_order[self.current_player_order_list]
             != self.get_current_player().get_id()
@@ -215,6 +285,7 @@ class Game(IGameService):
 
         ok = self.rules_manager.check_move(move, self.graph)
         if ok:
+            current_player = self.get_current_player()
             self.board.add_tile_to_board(
                 move,
                 self.graph,
@@ -222,13 +293,14 @@ class Game(IGameService):
                 self.history,
                 self.players,
                 self.players_order,
-                self.get_current_player(),
+                current_player,
             )
             print(move + " placed successfully.")
             self.current_hand = None
             self.current_player_order_list = (
                 self.current_player_order_list + 1
             ) % self.get_number_of_players()
+            self._ensure_current_player_playable()
             """vertices = self.graph.get_verticies()
             for vertex in vertices.values():
                 print(vertex.get_neighbors())"""
@@ -243,34 +315,57 @@ class Game(IGameService):
         from .ai_model import RandomPlayer
         from .ai_model import ExpectimaxPlayer
         from .ai_model import MCTSPlayer
+
+        self.tick_blitz()
+        if not self._ensure_current_player_playable():
+            return
+        if not self.get_current_player().is_ai_player():
+            return
+
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.draw_tile()
+        if self.current_hand is None:
+            return
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
+        move = None
         if self.get_game_configuration().get("ai_mode") == "random":
             model = RandomPlayer()
             move = model.random_move(self.current_hand, self)
             print(
-                f"AI Player {ai_player.get_username()} chooses move: {move}")
+                f"AI Player {ai_player.get_username()} chooses move: {move}"
+            )
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth")
             model = ExpectimaxPlayer(self, start_time, ai_time, depth)
-            eval, move = model.search(self, depth=model.depth_max, alpha=float(
-                '-inf'), beta=float('inf'), player_to_max=ai_player.get_id(), next_player=ai_player.get_id())
+            eval, move = model.search(
+                self,
+                depth=model.depth_max,
+                alpha=float("-inf"),
+                beta=float("inf"),
+                player_to_max=ai_player.get_id(),
+                next_player=ai_player.get_id(),
+            )
             print(
-                f"AI Player {ai_player.get_username()} chooses move: {move} with evaluation score: {eval}")
+                f"AI Player {ai_player.get_username()} chooses move: {move} "
+                f"with evaluation score: {eval}"
+            )
         elif self.get_game_configuration().get("ai_mode") == "mcts":
             start_time = time.time()
-            eval_fn_name = self.get_game_configuration().get("ai_mcts_selection")
+            eval_fn_name = self.get_game_configuration().get(
+                "ai_mcts_selection"
+            )
             model = MCTSPlayer(self, start_time, ai_time, eval_fn_name)
             move = model.mcts(self)
             print(
-                f"AI Player {ai_player.get_username()} chooses move: {move}")
+                f"AI Player {ai_player.get_username()} chooses move: {move}"
+            )
+        if move is None:
+            return
         # print("main avant de jouer le coup" + self.current_hand)
-        res = self.play_move(move)
-        # print(res)
+        self.play_move(move)
 
     def get_game_configuration(self):
         return self.game_configuration.get_setting()
@@ -279,9 +374,17 @@ class Game(IGameService):
         self.game_configuration.save_config()
 
     def set_game_configuration(self, key: str, value) -> None:
+        if key == "timeout":
+            key = "time"
         self.game_configuration.settings[key] = value
+        if key in ("blitz", "time"):
+            self._initialize_blitz_state()
 
     def draw_tile(self) -> str | None:
+        self.tick_blitz()
+        if not self._ensure_current_player_playable():
+            return None
+
         if self.current_hand is not None:
             return self.current_hand
 
@@ -292,8 +395,11 @@ class Game(IGameService):
         return tile
 
     def end_game(self) -> bool:
-        if self.deck.is_empty():
+        if self._end_game_scored:
+            return True
+        if self.deck.is_empty() or not self._has_playable_player():
             self.score_manager.score_end_of_game(self.graph, self.players)
+            self._end_game_scored = True
             return True
         else:
             return False
@@ -333,6 +439,32 @@ class Game(IGameService):
         self.tiles_info = TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.current_player_order_list = 0
+        self._end_game_scored = False
+        self._initialize_blitz_state()
+
+    def tick_blitz(self) -> bool:
+        if not self._is_blitz_enabled():
+            return False
+        if not self._advance_to_next_playable_player():
+            return False
+
+        current_player_id = self.get_current_player().get_id()
+        if self.blitz_manager.active_player_id != current_player_id:
+            self.blitz_manager.start_turn(current_player_id)
+
+        timed_out_now = self.blitz_manager.tick()
+        if not timed_out_now:
+            return False
+
+        # A timed-out player cannot keep an in-progress tile.
+        self.current_hand = None
+        self._advance_to_next_playable_player()
+        if self._has_playable_player():
+            self.blitz_manager.start_turn(self.get_current_player().get_id())
+        return True
+
+    def get_timeout_message(self) -> str:
+        return self.blitz_manager.get_timeout_message()
 
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
@@ -496,10 +628,17 @@ class Game(IGameService):
         from .ai_model import RandomPlayer
         from .ai_model import ExpectimaxPlayer
 
+        self.tick_blitz()
+        if not self._ensure_current_player_playable():
+            return ""
+
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.draw_tile()
+        if self.current_hand is None:
+            return ""
         model = None
+        move = ""
         if self.ai_model == "random":
             model = RandomPlayer()
             move = model.random_move(self.current_hand, self)

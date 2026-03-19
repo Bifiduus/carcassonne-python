@@ -149,8 +149,15 @@ def play(self, move, game) -> None:
         game.clear_undo_history()
     if result:
         while game.get_current_player().is_ai_player():
+            if game.end_game():
+                break
+            previous_player_id = game.get_current_player().get_id()
             game.play_ai_turn()
             game.get_board()
+            if game.end_game():
+                break
+            if game.get_current_player().get_id() == previous_player_id:
+                break
 
 
 def show_board(self, game) -> None:
