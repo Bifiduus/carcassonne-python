@@ -167,6 +167,8 @@ class GameRepository(IGamesRepository):
             "SELECT host_player, group_id FROM pending_invitations NATURAL JOIN groups WHERE invited_player=?;",
             (client_id,)
         )
+        if rows == []:
+            return sqlite3.Row(self.db.cursor(), (None,))
         return rows[0]
 
     def accept_invitation(self, group_id: int, invited: str):

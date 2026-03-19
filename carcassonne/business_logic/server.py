@@ -369,7 +369,7 @@ class Server(IServerService):
         message = data.decode()
         if message.find("pong\n") != -1:
             end = time.time()
-            return message+f" Time={end - start}ms"
+            return f"pong\nTime={end - start}ms"
 
         return "No server response"  # Or implement actual ping logic
 
