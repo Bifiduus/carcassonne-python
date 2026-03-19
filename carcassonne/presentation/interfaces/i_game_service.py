@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.player import Player
 
 
 class IGameService(ABC):
@@ -69,14 +68,6 @@ class IGameService(ABC):
 
     @abstractmethod
     def get_tile_data(self, tile: str) -> None:
-        pass
-
-    @abstractmethod
-    def get_current_player(self) -> Player:
-        pass
-
-    @abstractmethod
-    def play_ai_turn(self):
         pass
 
     @abstractmethod
