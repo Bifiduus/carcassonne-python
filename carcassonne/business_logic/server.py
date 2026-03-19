@@ -1,3 +1,4 @@
+import ssl
 import sys
 import time
 import socket
@@ -58,14 +59,14 @@ class Server(IServerService):
         assert self.repo, "The database should not be None"
         return self.repo.create_online_player(username)
 
-    def list_available_servers(self, timeout: float = 5.0) -> list[int]:
+    def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
         Returns a list of server names that responded within the timeout.
         """
-        s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         try:
-            s.bind(('', 12346))
+            s.bind(("", 12346))
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
             print(f"Error binding socket: {e}")
@@ -98,7 +99,10 @@ class Server(IServerService):
 
         s.close()
         self.check_servers_last_time_sent()
-        return list(server[0] for server in self.available_servers.values())
+        available_servers = {}
+        for server in self.available_servers:
+            available_servers[server] = self.available_servers[server][0]
+        return available_servers
 
     def check_servers_last_time_sent(self):
         """
@@ -127,7 +131,7 @@ class Server(IServerService):
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            self.server.bind(('', int(port)))
+            self.server.bind(("", int(port)))
             self.server.listen(5)  # Allow up to 5 pending connections
             print(f"Server started on port {port}")
         except Exception as e:

@@ -158,10 +158,10 @@ def show_board(self, game) -> None:
 
 
 def show_server_list(self, server_service: IServerService):
-    server_list = server_service.list_available_servers()
+    server_dict = server_service.list_available_servers()
     print("Available servers list:")
-    for server in server_list:
-        print(server)
+    for server in server_dict:
+        print(f"{server}: {server_dict[server]}")
 
 
 def server_start(self, port: str, server_service: IServerService):
