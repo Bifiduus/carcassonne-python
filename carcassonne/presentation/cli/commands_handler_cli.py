@@ -213,7 +213,7 @@ def show_server_list(self, server_service: IServerService):
     server_list = server_service.list_available_servers()
     print("Available servers list:")
     for server in server_list:
-        print(server)
+        print(f"{server}:{server_list[server]}")
 
 
 def server_start(self, port: str, server_service: IServerService):

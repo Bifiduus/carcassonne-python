@@ -8,7 +8,7 @@ from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 class IServerService(ABC):
     # pylint: disable=missing-class-docstring
     @abstractmethod
-    def list_available_servers(self, timeout: float = 5.0) -> list[int]:
+    def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         pass
 
     @abstractmethod

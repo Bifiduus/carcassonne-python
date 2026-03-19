@@ -56,7 +56,7 @@ class Server(IServerService):
         assert self.repo, "The database should not be None"
         return self.repo.create_online_player(username)
 
-    def list_available_servers(self, timeout: float = 5.0) -> list[int]:
+    def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
         Returns a list of server names that responded within the timeout.
@@ -67,7 +67,7 @@ class Server(IServerService):
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
             print(f"Error binding socket: {e}")
-            return []
+            return {}
 
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -96,7 +96,10 @@ class Server(IServerService):
 
         s.close()
         self.check_servers_last_time_sent()
-        return list(server[0] for server in self.available_servers.values())
+        available_servers: dict[str, int] = {}
+        for server in self.available_servers:
+            available_servers[server] = self.available_servers[server][0]
+        return available_servers
 
     def check_servers_last_time_sent(self):
         """
@@ -166,7 +169,7 @@ class Server(IServerService):
                     self.INVITATION_TIMEOUT)
 
                 if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
-                    message = f"{self.server_name}:{port}"
+                    message = f"{socket.gethostbyname(socket.gethostname())}:{port}"
                     socket_message = socket.socket(
                         socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                     socket_message.setsockopt(
