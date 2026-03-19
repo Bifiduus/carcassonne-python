@@ -67,7 +67,8 @@ class GameGUI(Gtk.Application):
         background = Gtk.Picture.new_for_filename(
             utils.get_images_dir() + "/main_menu_background_test.png"
         )
-        background.set_content_fit(Gtk.ContentFit.COVER)
+        background.set_can_shrink(True)
+        background.set_keep_aspect_ratio(False)
 
         menu_overlay.set_child(background)
 
