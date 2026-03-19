@@ -106,7 +106,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_current_player_remaining_time_seconds(self) -> float | None:
+    def get_current_player_remaining_time_seconds(self) -> float:
         pass
 
     @abstractmethod

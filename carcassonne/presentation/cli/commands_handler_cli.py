@@ -122,15 +122,8 @@ def _format_clock(remaining_seconds: float) -> str:
 
 
 def show_time(self, player_id_raw: str | None = None) -> None:
-    if not self.game.get_game_configuration().get("blitz", False):
-        print("Mode blitz désactivé.")
-        return
-
     if player_id_raw is None or player_id_raw == "":
         players_times = self.game.get_all_players_remaining_time_seconds()
-        if not players_times:
-            print("Mode blitz désactivé.")
-            return
         print("Temps restants:")
         for player_id, remaining_seconds in players_times:
             print(

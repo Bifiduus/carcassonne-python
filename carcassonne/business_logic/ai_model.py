@@ -192,8 +192,6 @@ class ExpectimaxPlayer:
         if player_to_max == next_player:  # Max node
             max_eval = float("-inf")
             possible_moves = self.get_possible_moves(game.current_hand, game)
-            if not possible_moves:
-                return self.eval_fn(game, player_to_max, next_player), ""
             for move in possible_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
@@ -222,8 +220,6 @@ class ExpectimaxPlayer:
         else:  # Min node (opponent's turn)
             min_eval = float("inf")
             possible_moves = self.get_possible_moves(game.current_hand, game)
-            if not possible_moves:
-                return self.eval_fn(game, player_to_max, next_player), ""
             for move in possible_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
