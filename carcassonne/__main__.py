@@ -162,11 +162,10 @@ def main() -> int:
         config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
 
     game_data: IGraphData = GraphData()
-    if args.players:
-        game: IGameService = Game(
-            game_data, args.players if args.players > 1 and args.players <= 5 else 2)
-    else:
-        game: IGameService = Game(game_data, 1, config_overrides)
+    nb_players = (
+        args.players if args.players and 1 < args.players <= 5 else 2
+    )
+    game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
     server_service: IServerService = Server(game_repo)
     game.shuffle_algo = args.shuffle
