@@ -43,3 +43,6 @@ _minted-*/
 
 # OS
 .DS_Store
+
+# Database
+carcassonne/datas/carcassonne.db
