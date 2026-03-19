@@ -61,8 +61,23 @@ class GameGUI(Gtk.Application):
         # self.error_message.show_error("Welcome to Carcassonne!")
 
         # main menu is now produced by a small helper
-        self.menu_view = MainMenu.create(self)
-        window.stack.add_named(self.menu_view, "menu")
+        menu_overlay = Gtk.Overlay()
+
+        # 📸 Background
+        background = Gtk.Picture.new_for_filename(
+            utils.get_images_dir() + "/main_menu_background_test.png"
+        )
+        background.set_content_fit(Gtk.ContentFit.COVER)
+
+        menu_overlay.set_child(background)
+
+        # 📦 Ton menu actuel
+        menu = MainMenu.create(self)
+
+        menu_overlay.add_overlay(menu)
+
+        # 👉 on met l'overlay dans le stack
+        window.stack.add_named(menu_overlay, "menu")
 
         # options page is built once and kept around so that the user can
         # revisit it from either the *Options* button or after doing a
@@ -123,7 +138,7 @@ class GameGUI(Gtk.Application):
         back_button.set_margin_end(10)
         back_button.set_halign(Gtk.Align.END)
         back_button.set_valign(Gtk.Align.START)
-        back_button.add_css_class("back-button")
+        back_button.add_css_class("back-buttons")
         back_button.connect(
             "clicked", lambda b: self.window.stack.set_visible_child_name("menu"))
         overlay.add_overlay(back_button)

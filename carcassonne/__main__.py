@@ -119,7 +119,7 @@ def main() -> int:
         "--ai-mode",
         help="AI algorithm we use (default: star2.5 (= minimax with pruning))",
         type=str,
-        default="minimax",
+        default="random",
     )
 
     parser.add_argument(
