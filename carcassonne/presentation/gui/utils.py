@@ -65,7 +65,60 @@ def load_css() -> None:
     }
     .back-button:hover {
         background-color: rgba(255, 0, 0, 1.0);
-    }"""
+    }
+
+    /*Options buttons*/
+    .options-buttons {
+    background: linear-gradient(135deg, #F7B82F, #F54927);
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Hover */
+    .options-buttons:hover {
+        background: linear-gradient(135deg, #66bb6a, #388e3c);
+        transform: translateY(-2px);
+    }
+
+    /* Click */
+    .options-buttons:active {
+        transform: scale(0.96);
+    }
+
+    /* Focus (clavier) */
+    .options-buttons:focus {
+        outline: 2px solid white;
+        outline-offset: 2px;
+    }
+
+    /*Quit button*/
+    .quit-button {
+    background: #ff3d1d;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Hover */
+    .quit-button:hover {
+        background: linear-gradient(135deg, #66bb6a, #388e3c);
+        transform: translateY(-2px);
+    }
+
+    /* Click */
+    .quit-button:active {
+        transform: scale(0.96);
+    }
+    """
 
     provider = Gtk.CssProvider()
     provider.load_from_data(css.encode())
