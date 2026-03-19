@@ -18,7 +18,7 @@ class KeybindsMenu(Gtk.Box):
         self.set_margin_top(20)
 
         title = Gtk.Label(label="Keybinds")
-        title.add_css_class("title-2")
+        title.add_css_class("section-title")
         self.append(title)
 
         # --- keybinds button -------------------------------------------------
@@ -41,6 +41,7 @@ class KeybindsMenu(Gtk.Box):
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
         self.append(btn_box)

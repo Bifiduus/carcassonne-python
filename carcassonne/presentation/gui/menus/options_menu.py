@@ -18,22 +18,25 @@ class OptionsMenu(Gtk.Box):
         self.set_margin_top(20)
 
         title = Gtk.Label(label="Options")
-        title.add_css_class("title-2")
+        title.add_css_class("section-title")
         self.append(title)
 
         # --- game options button ---------------------------------------------
-        keybinds_button = Gtk.Button(label="Game Options")
+        keybinds_button = Gtk.Button(label="Game")
+        keybinds_button.add_css_class("options-buttons")
         keybinds_button.connect("clicked", self.on_game_options)
         self.append(keybinds_button)
 
         # --- keybinds button -------------------------------------------------
         keybinds_button = Gtk.Button(label="Keybinds")
+        keybinds_button.add_css_class("options-buttons")
         keybinds_button.connect("clicked", self.on_keybinds)
         self.append(keybinds_button)
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
         self.append(btn_box)
@@ -47,7 +50,7 @@ class OptionsMenu(Gtk.Box):
         options_box.append(self.fullscreen_cb)
         self.append(options_box)
 
-        res_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        res_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
         self.width_combo = Gtk.ComboBoxText()
         self.height_combo = Gtk.ComboBoxText()

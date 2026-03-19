@@ -52,20 +52,23 @@ def load_css() -> None:
         padding: 4px;
     }
     .main-title {
-        font-size: 24px;
+        font-size: 70px;
         font-weight: bold;
         color: orange;
+        letter-spacing: 2px;
+        text-shadow: 
+            2px 2px 0px #000,
+            4px 4px 6px rgba(0,0,0,0.5);
     }
-    .back-button {
-        background-color: rgba(255, 0, 0, 0.8);
-        border: 2px solid white;
-        border-radius: 8px;
-        color: red;
-        font-weight: bold;
+
+    .section-title {
+    font-size: 36px;
+    font-weight: 900;
+    color: #ff9800;
+    
     }
-    .back-button:hover {
-        background-color: rgba(255, 0, 0, 1.0);
-    }
+
+
 
     /*Options buttons*/
     .options-buttons {
@@ -81,7 +84,7 @@ def load_css() -> None:
 
     /* Hover */
     .options-buttons:hover {
-        background: linear-gradient(135deg, #66bb6a, #388e3c);
+        background: linear-gradient(135deg, #94FF4A, #30A61E);
         transform: translateY(-2px);
     }
 
@@ -110,7 +113,7 @@ def load_css() -> None:
 
     /* Hover */
     .quit-button:hover {
-        background: linear-gradient(135deg, #66bb6a, #388e3c);
+        background: linear-gradient(135deg, #94FF4A, #30A61E);
         transform: translateY(-2px);
     }
 
@@ -118,6 +121,69 @@ def load_css() -> None:
     .quit-button:active {
         transform: scale(0.96);
     }
+    /* Focus (clavier) */
+    .quit-button:focus {
+        outline: 2px solid white;
+        outline-offset: 2px;
+    }
+
+    /*Back buttons*/
+    .back-buttons {
+    background: #ab8ee7;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Hover */
+    .back-buttons:hover {
+        background: linear-gradient(135deg, #94FF4A, #30A61E);
+        transform: translateY(-2px);
+    }
+
+    /* Click */
+    .back-buttons:active {
+        transform: scale(0.96);
+    }
+    /* Focus (clavier) */
+    .back-buttons:focus {
+        outline: 2px solid white;
+        outline-offset: 2px;
+    }
+
+    /*game buttons*/
+    .game-buttons {
+    background: linear-gradient(135deg, #2FCCF7, #2F39F7);
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    border: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Hover */
+    .game-buttons:hover {
+        background: linear-gradient(135deg, #94FF4A, #30A61E);
+        transform: translateY(-2px);
+    }
+
+    /* Click */
+    .game-buttons:active {
+        transform: scale(0.96);
+    }
+    /* Focus (clavier) */
+    .game-buttons:focus {
+        outline: 2px solid white;
+        outline-offset: 2px;
+    }
+
+
     """
 
     provider = Gtk.CssProvider()
@@ -135,3 +201,13 @@ def register_action(application, name: str, callback) -> None:
     action = Gio.SimpleAction.new(name, None)
     action.connect("activate", callback)
     application.add_action(action)
+
+def set_background() -> None:
+        """Load a background image for the board."""
+        background_image = "main_menu_background_test.png"
+            
+        if os.path.exists(get_images_dir() + "/" + background_image):
+            background = GdkPixbuf.Pixbuf.new_from_file(image_path)
+        else:
+            background = None
+        print(image_path)

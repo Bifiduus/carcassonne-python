@@ -32,8 +32,8 @@ class SingleplayerMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Game options")
-        title.add_css_class("title-2")
+        title = Gtk.Label(label="Game")
+        title.add_css_class("section-title")
         self.append(title)
 
         # --- random seed --------------------------------------------------
@@ -85,6 +85,7 @@ class SingleplayerMenu(Gtk.Box):
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 
