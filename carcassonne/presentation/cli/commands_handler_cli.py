@@ -37,8 +37,8 @@ def help(self) -> None:
     )
     print("  show hand          - Affiche la main du joueur courant")
     print(
-        "  show time [ID]     - Affiche le temps restant du joueur courant "
-        "ou du joueur ID"
+        "  show time [ID]     - Affiche le temps restant de tous les "
+        "joueurs ou du joueur ID"
     )
     print("  show score         - Affiche le score des joueurs")
     print("  show history       - Affiche l'historique des coups joués")
@@ -123,14 +123,13 @@ def _format_clock(remaining_seconds: float) -> str:
 
 def show_time(self, player_id_raw: str | None = None) -> None:
     if player_id_raw is None or player_id_raw == "":
-        current_player_id = self.game.get_current_player().get_id()
-        remaining_seconds = float(
-            self.game.get_current_player_remaining_time_seconds()
-        )
-        print(
-            "Temps restant joueur "
-            f"{current_player_id}: {_format_clock(remaining_seconds)}"
-        )
+        players_times = self.game.get_all_players_remaining_time_seconds()
+        print("Temps restants:")
+        for player_id, remaining_seconds in players_times:
+            print(
+                f"- Joueur {player_id}: "
+                f"{_format_clock(float(remaining_seconds))}"
+            )
         return
 
     try:

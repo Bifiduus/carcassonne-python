@@ -49,6 +49,7 @@ class GameCLI:
         self.server = server_service
         self.game = game_service
         self.settings = self.game.get_game_configuration()
+        self.local_player_id = self.game.get_current_player().get_id()
         self.running = True
         self._tick_interval_seconds = 0.1
         self._tick_sleep_seconds = 0.01
@@ -61,6 +62,18 @@ class GameCLI:
         readline.parse_and_bind("tab: complete")
 
         readline.parse_and_bind("set show-all-if-ambiguous on")
+
+    def _is_turn_bound_command(self, command: str) -> bool:
+        return (
+            command == "draw"
+            or command == "hint"
+            or command == "undo"
+            or command == "redo"
+            or command.startswith("play")
+        )
+
+    def _local_player_can_act(self) -> bool:
+        return self.game.get_current_player().get_id() == self.local_player_id
 
     def run(self):
         print("Bienvenue dans Carcassonne")
@@ -116,17 +129,27 @@ class GameCLI:
         self.game.tick_blitz()
         timeout_message = str(self.game.get_timeout_message() or "")
         clean_message = timeout_message.strip()
-        if not clean_message or clean_message == self._tick_last_message:
-            return
+        if clean_message and clean_message != self._tick_last_message:
+            print(f"\n{clean_message}")
+            self._tick_last_message = clean_message
 
-        print(f"\n{clean_message}")
-        self._tick_last_message = clean_message
+        if (
+            not self._local_player_can_act()
+            and not self.game.end_game()
+            and self.game.get_current_player().is_ai_player()
+        ):
+            self.game.play_ai_turn()
+            self.game.get_board()
 
     def handle_command(self, command):
+        if self._is_turn_bound_command(command) and not self._local_player_can_act():
+            print("Commande refusée: ce n'est pas votre tour ou votre temps est écoulé.")
+            return
 
         if command.startswith("new"):
             args = command[4:].strip()
             commands_handler_cli.new_game(self, args, self.server)
+            self.local_player_id = self.game.get_current_player().get_id()
             self._tick_last_message = ""
         elif command == "help":
             commands_handler_cli.help(self)
@@ -135,6 +158,7 @@ class GameCLI:
         elif command.startswith("load "):
             filename = command[5:].strip()
             commands_handler_cli.load(self, filename)
+            self.local_player_id = self.game.get_current_player().get_id()
             self._tick_last_message = ""
         elif command.startswith("save "):
             filename = command[5:].strip()

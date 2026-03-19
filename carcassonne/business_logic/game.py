@@ -269,7 +269,9 @@ class Game(IGameService):
         - Tests if the move is legal in the current game state.
         - If all checks pass, places the tile in the game structures.
         """
-        self.tick_blitz()
+        timed_out_now = self.tick_blitz()
+        if timed_out_now:
+            return False
         if not self._ensure_current_player_playable():
             return False
 
@@ -397,7 +399,9 @@ class Game(IGameService):
             self._initialize_blitz_state()
 
     def draw_tile(self) -> str | None:
-        self.tick_blitz()
+        timed_out_now = self.tick_blitz()
+        if timed_out_now:
+            return None
         if not self._ensure_current_player_playable():
             return None
 
@@ -490,6 +494,18 @@ class Game(IGameService):
         if player_id not in self.players:
             return None
         return self.blitz_manager.get_remaining_seconds(player_id)
+
+    def get_all_players_remaining_time_seconds(
+        self,
+    ) -> list[tuple[int, float]]:
+        self.tick_blitz()
+        return [
+            (
+                player_id,
+                self.blitz_manager.get_remaining_seconds(player_id),
+            )
+            for player_id in self.players_order
+        ]
 
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
@@ -653,7 +669,9 @@ class Game(IGameService):
         from .ai_model import RandomPlayer
         from .ai_model import ExpectimaxPlayer
 
-        self.tick_blitz()
+        timed_out_now = self.tick_blitz()
+        if timed_out_now:
+            return ""
         if not self._ensure_current_player_playable():
             return ""
 

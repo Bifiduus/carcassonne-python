@@ -105,3 +105,9 @@ class IGameService(ABC):
         self, player_id: int
     ) -> float | None:
         pass
+
+    @abstractmethod
+    def get_all_players_remaining_time_seconds(
+        self,
+    ) -> list[tuple[int, float]]:
+        pass
