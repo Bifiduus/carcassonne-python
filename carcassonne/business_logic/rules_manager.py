@@ -59,7 +59,7 @@ class RulesManager:
             side=self.tiles_info.direction_dict[attach_direction],
         )
         if tile_pos is None:
-            print("Error in getting position")
+            # print("Error in getting position")
             return False
         turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
         # turn = graph_copy.get_turn_number()
@@ -92,7 +92,7 @@ class RulesManager:
                 if tileid == tile_id and land_pos in directions:
                     set_name_to_place = set_name
         if set_name_to_place is None:
-            print("Error in finding the land component to place the meeple on")
+            # print("Error in finding the land component to place the meeple on")
             graph_copy.remove_vertex(tile_id)
             return False
         for meeple in graph_copy.get_meeples():
@@ -142,6 +142,10 @@ class RulesManager:
 
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
                     if land1 != land2:
+                        '''print("position : " + str(tile1pos) + ", and land 1 of " + str(tile1) + " with orientation " +
+                              str(orientation) + " and direction " + str(dir) + " is " + land1)
+                        print("position : " + str(next_pos) + ", and land 2 of " + vertex.get_name() + " with orientation " +
+                              str(vertex.get_orientation()) + " and direction " + str((dir + 2) % 4) + " is " + land2)'''
                         return False
                     break
 
@@ -294,7 +298,7 @@ class RulesManager:
         This wraps `is_legal_move` and prints feedback for CLI usage.
         """
         if not self.is_correctly_formed_move(move, graph=graph):
-            print("failed at is_correct")
+            # print("failed at is_correct")
             return False
 
         if not self.is_legal_move(move.split("/"), graph):
