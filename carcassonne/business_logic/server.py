@@ -25,7 +25,7 @@ class Server(IServerService):
         # networking/server state
         self.server_name = "localhost"
         self.client = None
-        self.client_player = None
+        self.client_player = ""
         self.server = None
         self.has_joined_server = False
         self.should_stop = threading.Event()
@@ -52,6 +52,8 @@ class Server(IServerService):
             self.client_player = self.repo.get_online_player()
 
     def create_online_player(self, username: str) -> str:
+        if self.client_player != "":
+            return "You already have an account\n"
         self.client_player = username
         assert self.repo, "The database should not be None"
         return self.repo.create_online_player(username)
@@ -158,10 +160,6 @@ class Server(IServerService):
 
                 # Timeout to check pending invitations periodically
                 assert self.repo, "The database should not be None"
-                self.repo.check_all_invitations_timeout(
-                    self.INVITATION_TIMEOUT)
-
-                # Timeout to check pending invitations periodically
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
 
