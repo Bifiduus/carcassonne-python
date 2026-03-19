@@ -194,6 +194,8 @@ class Server(IServerService):
         try:
             while True:
                 data = client_socket.recv(1500)
+                if data.decode() == "":
+                    continue
                 client, message = data.decode().split(":")
                 message = message.strip()
                 if message == "quit":
@@ -459,7 +461,7 @@ class Server(IServerService):
                     self.create_new_party(
                         self.repo.get_party(client_id), client_id)
 
-    def get_game(self, client_username: str):
+    def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
         party_id = int(self.repo.get_game(client_id)[0])
         return self.current_games_list[party_id][1]
