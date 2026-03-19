@@ -27,7 +27,9 @@ class MainMenu:
         btn_single = Gtk.Button(label="Singleplayer")
         btn_multi = Gtk.Button(label="Multiplayer")
         btn_options = Gtk.Button(label="Options")
+        btn_options.add_css_class("options-buttons")
         btn_quit = Gtk.Button(label="Quit")
+        btn_quit.add_css_class("quit-button")
 
         btn_single.connect("clicked", gui.start_singleplayer)
         btn_multi.connect("clicked", gui.start_multiplayer)
