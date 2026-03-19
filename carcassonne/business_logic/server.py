@@ -15,8 +15,6 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 # players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
 
-# players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
-
 
 class Server(IServerService):
     SERVER_TIMEOUT = 30

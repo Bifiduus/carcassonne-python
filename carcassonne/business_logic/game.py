@@ -16,7 +16,7 @@ from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.rules_manager import RulesManager
 from carcassonne.business_logic.board import Board
-from carcassonne.datas.game_repository import GameRepository
+from carcassonne.datas.games_repository import GameRepository
 from carcassonne.datas.game_configuration import GameConfiguration
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.datas.history import History

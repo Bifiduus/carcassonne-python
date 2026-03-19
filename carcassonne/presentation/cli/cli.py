@@ -13,6 +13,8 @@ import os
 import atexit
 from pathlib import Path
 
+from carcassonne.presentation.interfaces.i_server_service import IServerService
+
 COMMANDS = [
     "new",
     "help",
@@ -44,7 +46,8 @@ def completer(texte, state):
 
 class GameCLI:
 
-    def __init__(self, game_service: IGameService):
+    def __init__(self, game_service: IGameService, server_service: IServerService):
+        self.server = server_service
         self.game = game_service
         self.settings = self.game.get_game_configuration()
         self.running = True
@@ -70,11 +73,11 @@ class GameCLI:
 
         if command.startswith("new"):
             args = command[4:].strip()
-            commands_handler_cli.new_game(self, args)
+            commands_handler_cli.new_game(self, args, self.server)
         elif command == "help":
             commands_handler_cli.help(self)
         elif command == "quit":
-            commands_handler_cli.quit(self)
+            commands_handler_cli.quit(self, self.server)
         elif command.startswith("load "):
             filename = command[5:].strip()
             commands_handler_cli.load(self, filename)

@@ -1,15 +1,22 @@
 import pytest
 
+<<<<<<< HEAD
 from carcassonne.BusinessLogic.Game import Game
 from carcassonne.Datas.GraphData import GraphData
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+from carcassonne.business_logic.game import Game
+from carcassonne.datas.graph_data import GraphData
+
+>>>>>>> c68e817a063496ba4381991499534e3d7781749c
 
 class TestGame:
     def test_init_game(self):
         graphData = GraphData()
         game = Game(graphData, 2)
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 8a27fa1 (pytest working thanks to better names for files)
@@ -25,6 +32,8 @@ class TestGame:
 =======
         game = Game(graphData, 2)
 >>>>>>> d609d99 (changes in test, because of new implementations in Game)
+=======
+>>>>>>> c68e817a063496ba4381991499534e3d7781749c
         assert game.game_configuration is not None, "The game must have a configuration"
         assert game.game_repository is not None, "The game muste have a repository"
         assert game.graph is not None, "The game must have a graph"
@@ -38,6 +47,9 @@ class TestGame:
         assert game.current_hand is None, "The game cannot have a current game at initialisation"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c68e817a063496ba4381991499534e3d7781749c
         assert game.players is not [], "The game must have a player at start"  # May change
 
     def test_start_new_game(self):
@@ -59,6 +71,7 @@ class TestGame:
         )[0] != None, "The vertices of the board must be cleared"
         assert new_graph.get_turn_number() == 1, "The turn number must be re-initialized"
         assert players_order != [], "There must be a players order when you start a new game"
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 8a27fa1 (pytest working thanks to better names for files)
@@ -87,3 +100,5 @@ class TestGame:
 >>>>>>> 5c81d16 (pytest working thanks to better names for files)
 =======
 >>>>>>> 8a27fa1 (pytest working thanks to better names for files)
+=======
+>>>>>>> c68e817a063496ba4381991499534e3d7781749c
