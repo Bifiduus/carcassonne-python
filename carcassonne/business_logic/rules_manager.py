@@ -9,7 +9,6 @@ import re
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
-from carcassonne.datas.meeple_data import Meeple
 from carcassonne.datas.tiles_info import Tile
 
 NORTHWEST_MATRIX = (0, 0)

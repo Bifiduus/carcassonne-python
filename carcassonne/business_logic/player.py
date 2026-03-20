@@ -50,7 +50,7 @@ class Player:
 
     def is_ai_player(self) -> bool:
         return self.is_ai
-    
+
     def get_meeples(self) -> int:
         return self.meeples
 

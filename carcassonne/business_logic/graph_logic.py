@@ -4,7 +4,7 @@ The GraphLogic class finds tile connections and connected components while
 interacting with `IGraphData`.
 """
 
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 

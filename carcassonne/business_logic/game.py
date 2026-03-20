@@ -11,7 +11,7 @@ from typing import Any, List
 from carcassonne.business_logic.score_manager import ScoreManager
 from carcassonne.datas.deck import Deck
 from carcassonne.datas.seed import Seed
-from carcassonne.datas.serializer import parse_move, build_str
+from carcassonne.datas.serializer import parse_move
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.rules_manager import RulesManager

@@ -220,7 +220,7 @@ class GraphData(IGraphData):
         bidirectional: bool = True,
     ) -> None:
         if vertex_id not in self.vertices or neighbor_id not in self.vertices:
-            raise ValueError(f"Vertex ID or neighbor ID not found")
+            raise ValueError("Vertex ID or neighbor ID not found")
         self.vertices[vertex_id].set_neighbor(orientation, neighbor_id)
         if bidirectional:
             opposite_ori = (orientation + (ORIENTATIONS // 2)) % ORIENTATIONS

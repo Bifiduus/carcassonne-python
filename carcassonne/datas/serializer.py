@@ -13,8 +13,18 @@ if TYPE_CHECKING:
 PLACEMENT_RE: re.Pattern[str] = re.compile(
     r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$"
 )
-# Allowed meeple placement sides in the move format.
-MEEPLE_SET: set[str] = {"N", "E", "S", "W"}
+# Allowed meeple placement positions in the move format.
+MEEPLE_SET: set[str] = {
+    "N",
+    "NE",
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "C",
+}
 
 
 def parse_move(move: str) -> dict:
@@ -66,7 +76,7 @@ def parse_move(move: str) -> dict:
     meeple = ""
     if placement_index + 1 < len(parts):
         candidate: str = parts[placement_index + 1]
-        # Meeple position is optional but must be one of the cardinal sides.
+        # Meeple position is optional but must be one of the 9 tile positions.
         if candidate in MEEPLE_SET:
             meeple: str = candidate
         else:

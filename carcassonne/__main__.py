@@ -4,11 +4,12 @@ import argparse
 import sys
 
 from carcassonne import __version__
-from carcassonne.business_logic.interfaces.i_games_repository import IGamesRepository
+from carcassonne.business_logic.interfaces.i_games_repository import (
+    IGamesRepository
+)
 from carcassonne.business_logic.server import Server
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.presentation.gui.create_gui import CreateGui
-from carcassonne.presentation.gui.gui import GameGUI
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
@@ -125,7 +126,10 @@ def main() -> int:
     parser.add_argument(
         "-amd",
         "--ai-minimax-depth",
-        help="depth of the ai tree search (default: maximum depth = 80 playable tiles)",
+        help=(
+            "depth of the ai tree search "
+            "(default: maximum depth = 80 playable tiles)"
+        ),
         type=int,
         default=83,
     )
