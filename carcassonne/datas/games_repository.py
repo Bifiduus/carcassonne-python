@@ -15,7 +15,7 @@ class GameRepository(IGamesRepository):
     logic do not need to know about the underlying database.
     """
 
-    db_path: str = "carcassonne.db"
+    db_path: str = "carcassonne/datas/carcassonne.db"
 
     def __init__(self):
         self.closed = False
