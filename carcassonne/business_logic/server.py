@@ -24,6 +24,7 @@ class Server(IServerService):
         self.server_name = "local"
         self.client = None
         self.client_player = None
+        self.temporary_username = ""
         self.server = None
         self.has_joined_server = False
         self.should_stop = threading.Event()
@@ -38,21 +39,24 @@ class Server(IServerService):
         self.client_sockets: dict[int, socket.socket] = {}
         self.player_clients: dict[socket.socket,
                                   int] = {}  # Map socket -> client_id
+        self.registered_clients: dict[int, bool] = {}
         self.client_id = None
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         assert self.repo, "The database should not be None"
         self.handle_communication = OnlineCommunication(self)
         if not self.repo.is_accounted_for():
-            print("You should create an online account.\n")
-            print("Type: create <username>")
+            print(f"You should create an online account.\n")
+            username = input(">> Your username is: ")
+            password = input(">> Your password is: ")
+            self.create_default_online_player(username, password)
         else:
-            self.client_player = self.repo.get_online_player()
+            self.client_player = self.repo.get_online_player("default")
 
-    def create_online_player(self, username: str) -> str:
+    def create_default_online_player(self, username: str, password: str) -> str:
         self.client_player = username
         assert self.repo, "The database should not be None"
-        return self.repo.create_online_player(username)
+        return self.repo.create_default_online_player(username, password)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
@@ -152,6 +156,10 @@ class Server(IServerService):
                         # Add client to the list
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
+                            id = len(self.client_sockets)
+                            self.client_sockets[id] = client_socket
+                            self.player_clients[client_socket] = id
+                            self.registered_clients[id] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,))
@@ -189,6 +197,9 @@ class Server(IServerService):
     def is_server_running(self) -> bool:
         return self.should_stop.is_set()
 
+    def client_is_registered(self, client_index: int) -> bool:
+        return self.registered_clients[client_index]
+
     def handle_client(self, client_socket: socket.socket):
         """
         Handle communication with a single client.
@@ -201,19 +212,25 @@ class Server(IServerService):
                     continue
                 client, message = data.decode().split(":")
                 message = message.strip()
-                if message == "quit":
-                    answer = self.handle_communication.command_quit(
-                        client)
-                    client_id = self.connected_clients.index(client_socket)
-                    answer = f"Server -> Client{client_id}: {answer}"
+                client_index = self.connected_clients.index(client_socket)
+                if self.client_is_registered(client_index):
+                    if message == "quit":
+                        answer = self.handle_communication.command_quit(
+                            client)
+                        answer = f"Server -> Client{client_index}: {answer}"
+                        client_socket.send(answer.encode())
+                        self.has_joined_server = False
+                        break
+
+                    # Process data (e.g., echo back for now; replace with game logic)
+
+                    response = self.process_message(client, message)
+                    # fonction qui check le statut d'une invitation et l'envoie à l'host
+                    answer = f"Server -> Client{client_index}: {response}\n"
                     client_socket.send(answer.encode())
-                    self.has_joined_server = False
-                    break
-                # Process data
-                response = self.process_message(client, message)
-                client_id = self.connected_clients.index(client_socket)
-                answer = f"Server -> Client{client_id}: {response}\n"
-                client_socket.send(answer.encode())
+                else:
+                    self.handle_client_registering(
+                        message, client_socket, client_index)
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
@@ -226,12 +243,41 @@ class Server(IServerService):
                     client_id = self.player_clients[client_socket]
                     del self.client_sockets[client_id]
                     del self.player_clients[client_socket]
+                    del self.registered_clients[client_id]
+
+    def handle_client_registering(self, message: str, client_socket: socket.socket, client_index: int):
+        """
+        Process client registering and return a response.
+        """
+        preface = f"Server -> Client{client_index}: "
+        if message.find("username=") == -1:
+            answer = f"{preface}You should send your username and password !\n"
+            answer += "Type: username=<your username> password=<your password>\n"
+            answer += "If it is your first time connecting, you can create one.\n"
+        else:
+            if message.find("username=") != -1 and message.find("password=") != -1:
+                start_password: int = message.find("password=")
+                username: str = message.removeprefix(
+                    "username=")[:start_password]
+                password: str = message[start_password:]
+                success = self.repo.registering(username, password)
+                if success:
+                    answer = f"{preface}Successfull registering !\n"
+                    self.registered_clients[client_index] = True
+                else:
+                    answer = f"{preface}Your registration has failed...\n"
+            else:
+                answer = f"{preface}You should send your username and password !\n"
+        client_socket.send(answer.encode())
+
+    def check_username_taken(self, username: str):
+        answer: bool = self.repo.player_exists(username)
+        return answer
 
     def process_message(self, client_id: str, message: str) -> str:
         """
         Process incoming message (from a client) and return a response.
         """
-        # TODO: Integrate with game logic, e.g., handle moves, queries
         answer = ""
         if self.server is not None:
             if message == "ping":
@@ -420,14 +466,18 @@ class Server(IServerService):
         # clear the timeout for normal operation
         self.client.settimeout(None)
 
+        # send useful informations to the server
+        information = f"username={self.repo.get_online_player(ip)} password={self.repo.get_password(0)}"
+        self.send_to_server(information)
+
         # start a listener thread so the caller can interact without blocking
         self._recv_thread = threading.Thread(
-            target=self._receive_loop, daemon=True)
+            target=self._receive_loop, args=(ip,),  daemon=True)
         self._recv_thread.start()
         self.has_joined_server = True
         return True
 
-    def _receive_loop(self):
+    def _receive_loop(self, server: str):
         """
         Internal helper that runs in a thread to read data from the server and
         dispatch it to `handle_server_message`.
@@ -438,7 +488,7 @@ class Server(IServerService):
                 if data.decode().endswith("Server Shutdown\n"):
                     print("Server closed the connection")
                     break
-                self.handle_server_message(data.decode())
+                self.handle_server_message(data.decode(), server)
                 if (not self.has_joined_server):
                     break
         except Exception as e:
@@ -448,7 +498,7 @@ class Server(IServerService):
                 self.client.close()
             self.client = None
 
-    def handle_server_message(self, message: str):
+    def handle_server_message(self, message: str, server: str):
         """
         Override or extend this method to process messages received from the
         server.
@@ -473,6 +523,16 @@ class Server(IServerService):
                     #  change ce qu'il faut et lance
                     self.create_new_party(
                         self.repo.get_party(client_id), client_id)
+
+            # not own server
+            if message == "Your registration has failed...":
+                username = input("You must send another username:\n>> ")
+                self.temporary_username = username
+                message = f"username={username} password={self.repo.get_password(0)}\n"
+                self.send_to_server(message)
+            if message == "Successfull registering !" and self.temporary_username != "":
+                self.repo.set_new_username_for_server(
+                    server, self.temporary_username)
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
