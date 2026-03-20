@@ -43,6 +43,12 @@ class RandomPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = game.graph.get_verticies()
+        can_place_meeple = game.get_current_player().get_meeples() > 0
+        meeple_indices = (
+            range(-1, len(self.meeple_placement_list))
+            if can_place_meeple
+            else (-1,)
+        )
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
@@ -55,9 +61,7 @@ class RandomPlayer:
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
-                        for meeple in range(
-                            -1, len(self.meeple_placement_list)
-                        ):
+                        for meeple in meeple_indices:
                             if meeple == -1:
                                 move = (
                                     f"{tile}/{vertex_id}{direction}{rotation}"
@@ -68,14 +72,12 @@ class RandomPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            move_parts = move.split("/")
-                            if game.rules_manager.is_correctly_formed_move(
-                                move, game.graph
+                            if game.rules_manager.check_move(
+                                move,
+                                game.graph,
+                                current_player_id=game.get_current_player().get_id(),
                             ):
-                                if game.rules_manager.is_legal_move(
-                                    move_parts, game.graph
-                                ):
-                                    possible_moves.append(move)
+                                possible_moves.append(move)
         return possible_moves
 
     def random_move(self, tile, game: "Game") -> str:
@@ -112,6 +114,8 @@ class ExpectimaxPlayer:
         self.depth = depth
         self.is_maximizing = is_maximizing
         self.nodes_explored = 0
+        # Stack used to save/restore scoring state around each simulation step
+        self._sim_state_stack = []
         # evaluation function (callable(graph, ai_score, opponent_score) ->
         # float)
         if eval_fn is not None:
@@ -153,6 +157,12 @@ class ExpectimaxPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = copy.deepcopy(game.graph.get_verticies())
+        can_place_meeple = game.get_current_player().get_meeples() > 0
+        meeple_indices = (
+            range(-1, len(self.meeple_placement_list))
+            if can_place_meeple
+            else (-1,)
+        )
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
@@ -165,9 +175,7 @@ class ExpectimaxPlayer:
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
-                        for meeple in range(
-                            -1, len(self.meeple_placement_list)
-                        ):
+                        for meeple in meeple_indices:
                             if meeple == -1:
                                 move = (
                                     f"{tile}/{vertex_id}{direction}{rotation}"
@@ -178,7 +186,11 @@ class ExpectimaxPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            if game.rules_manager.check_move(move, game.graph):
+                            if game.rules_manager.check_move(
+                                move,
+                                game.graph,
+                                current_player_id=game.get_current_player().get_id(),
+                            ):
                                 possible_moves.append(move)
 
         return possible_moves
@@ -434,7 +446,18 @@ class ExpectimaxPlayer:
                 game.current_player_order_list - 1
             ) % game.get_number_of_players()
             game.deck.tiles.append(previous_play.move_str.split("/")[0])
-            # print(game.graph.get_verticies())
+            # Restore player scores, meeple counts and scored_components to
+            # their exact state before this simulation step so that AI
+            # exploration never permanently modifies the real game state.
+            if self._sim_state_stack:
+                saved_scores, saved_meeples, saved_scored = (
+                    self._sim_state_stack.pop()
+                )
+                for pid, score in saved_scores.items():
+                    game.players[pid].get_score().set_points(score)
+                for pid, meeples in saved_meeples.items():
+                    game.players[pid].meeples = meeples
+                game.board.scored_components = saved_scored
 
     def play_move_for_ai(self, game: "Game", move: str) -> None:
         """Play move for AI exploring the possibilities."""
@@ -443,8 +466,21 @@ class ExpectimaxPlayer:
             print(f"Vous devez jouer la tuile en main: {game.current_hand}")
             return False
 
-        ok = game.rules_manager.check_move(move, game.graph)
+        ok = game.rules_manager.check_move(
+            move,
+            game.graph,
+            current_player_id=game.get_current_player().get_id(),
+        )
         if ok:
+            # Snapshot scoring state before modifying it so undo_for_ai can
+            # fully restore the real game state.
+            saved_scores = {
+                pid: p.get_score_int() for pid, p in game.players.items()
+            }
+            saved_meeples = {
+                pid: p.get_meeples() for pid, p in game.players.items()
+            }
+            saved_scored = set(game.board.scored_components)
             game.board.add_tile_to_board(
                 move,
                 game.graph,
@@ -458,10 +494,10 @@ class ExpectimaxPlayer:
             game.current_player_order_list = (
                 game.current_player_order_list + 1
             ) % game.get_number_of_players()
-            # game.get_board()
-            # print("----------------------------------------------------")
+            self._sim_state_stack.append(
+                (saved_scores, saved_meeples, saved_scored)
+            )
             return True
-        # print("THINGD WENT WRONG")
         return False
 
 
@@ -568,6 +604,12 @@ class MCTSPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = game.graph.get_verticies()
+        can_place_meeple = game.get_current_player().get_meeples() > 0
+        meeple_indices = (
+            range(-1, len(self.meeple_placement_list))
+            if can_place_meeple
+            else (-1,)
+        )
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
@@ -578,16 +620,18 @@ class MCTSPlayer:
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
-                        for meeple in range(-1, len(self.meeple_placement_list)):
+                        for meeple in meeple_indices:
                             if meeple == -1:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}"
                             else:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
-                            move_parts = move.split('/')
-                            if game.rules_manager.is_correctly_formed_move(move, game.graph):
-                                if game.rules_manager.is_legal_move(move_parts, game.graph):
-                                    possible_moves.append(move)
+                            if game.rules_manager.check_move(
+                                move,
+                                game.graph,
+                                current_player_id=game.get_current_player().get_id(),
+                            ):
+                                possible_moves.append(move)
         return possible_moves
 
     def terminal(self, tiles_info: ITilesInfo) -> bool:
@@ -709,7 +753,11 @@ class MCTSPlayer:
             print(f"Vous devez jouer la tuile en main: {game.current_hand}")
             return False
 
-        ok = game.rules_manager.check_move(move, game.graph)
+        ok = game.rules_manager.check_move(
+            move,
+            game.graph,
+            current_player_id=game.get_current_player().get_id(),
+        )
         if ok:
             game.board.add_tile_to_board(move, game.graph, game.tiles_info, game.history,
                                          game.players, game.players_order, game.get_current_player())
@@ -826,6 +874,12 @@ class MCTSPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = game.graph.get_verticies()
+        can_place_meeple = game.get_current_player().get_meeples() > 0
+        meeple_indices = (
+            range(-1, len(self.meeple_placement_list))
+            if can_place_meeple
+            else (-1,)
+        )
 
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
@@ -836,16 +890,18 @@ class MCTSPlayer:
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
                         # -1 means no meeple placement
-                        for meeple in range(-1, len(self.meeple_placement_list)):
+                        for meeple in meeple_indices:
                             if meeple == -1:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}"
                             else:
                                 move = f"{tile}/{vertex_id}{direction}{rotation}/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
-                            move_parts = move.split('/')
-                            if game.rules_manager.is_correctly_formed_move(move, game.graph):
-                                if game.rules_manager.is_legal_move(move_parts, game.graph):
-                                    possible_moves.append(move)
+                            if game.rules_manager.check_move(
+                                move,
+                                game.graph,
+                                current_player_id=game.get_current_player().get_id(),
+                            ):
+                                possible_moves.append(move)
         return possible_moves
 
     def terminal(self, tiles_info: ITilesInfo) -> bool:
@@ -967,7 +1023,11 @@ class MCTSPlayer:
             print(f"Vous devez jouer la tuile en main: {game.current_hand}")
             return False
 
-        ok = game.rules_manager.check_move(move, game.graph)
+        ok = game.rules_manager.check_move(
+            move,
+            game.graph,
+            current_player_id=game.get_current_player().get_id(),
+        )
         if ok:
             game.board.add_tile_to_board(move, game.graph, game.tiles_info, game.history,
                                          game.players, game.players_order, game.get_current_player())

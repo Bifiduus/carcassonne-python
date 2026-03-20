@@ -8,11 +8,11 @@ these helpers without holding too much implementation detail.
 
 import math
 from typing import Any, Dict, Tuple
-from gi.repository import Gdk
 
 import gi
 gi.require_version("Gdk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk
 
 color_map = {
     "red": (1, 0, 0),

@@ -98,11 +98,15 @@ class ScoreManager:
         if tile_def is None:
             return raw_direction
 
-        i, j = {"N": (0, 1), "E": (1, 2), "S": (2, 1), "W": (1, 0)}[
-            raw_direction
-        ]
-        oriented = tile_def.direction_matrix[vertex.orientation][i][j]
-        return oriented if oriented in ["N", "E", "S", "W"] else None
+        # direction_matrix[orientation][bi][bj] gives the tile-label at board
+        # position (bi,bj). We need the inverse lookup: for a raw tile-label
+        # direction, find which board cardinal it maps to after rotation.
+        board_cardinals = {"N": (0, 1), "E": (1, 2), "S": (2, 1), "W": (1, 0)}
+        matrix = tile_def.direction_matrix[vertex.orientation]
+        for board_dir, (bi, bj) in board_cardinals.items():
+            if matrix[bi][bj] == raw_direction:
+                return board_dir
+        return None
 
     @staticmethod
     def is_component_complete(
@@ -131,9 +135,11 @@ class ScoreManager:
         component = graph.lands_components[terrain_type][component_name]
 
         if terrain_type == "M":  # Monastery
-            return ScoreManager._is_monastery_complete(component, graph)
+            is_complete = ScoreManager._is_monastery_complete(component, graph)
         else:  # Road, City, Stream
-            return ScoreManager._is_edge_component_complete(component, graph)
+            is_complete = ScoreManager._is_edge_component_complete(component, graph)
+
+        return is_complete
 
     @staticmethod
     def _is_monastery_complete(component: List[Tuple], graph) -> bool:
@@ -155,9 +161,31 @@ class ScoreManager:
         if vertex is None:
             return False
 
-        # Count adjacent tiles (should be exactly 8 for complete monastery)
-        adjacent_count = len(vertex.neighbors)
-        return adjacent_count >= 8
+        # Count surrounding tiles in all 8 directions around the monastery.
+        adjacent_count = ScoreManager._count_surrounding_tiles(tile_id, graph)
+        is_complete = adjacent_count >= 8
+        return is_complete
+
+    @staticmethod
+    def _count_surrounding_tiles(tile_id: int, graph) -> int:
+        """Count tiles on the 8 surrounding positions of a tile."""
+        vertex = graph.vertices.get(tile_id)
+        if vertex is None:
+            return 0
+
+        x, y = vertex.get_position()
+        occupied_positions = {
+            v.get_position() for v in graph.vertices.values() if v is not None
+        }
+
+        surrounding_positions = {
+            (x + dx, y + dy)
+            for dx in (-1, 0, 1)
+            for dy in (-1, 0, 1)
+            if not (dx == 0 and dy == 0)
+        }
+
+        return sum(1 for pos in surrounding_positions if pos in occupied_positions)
 
     @staticmethod
     def _is_edge_component_complete(component: List[Tuple], graph) -> bool:
@@ -255,7 +283,7 @@ class ScoreManager:
         banner_count = 0
         for tile_id in tile_ids:
             vertex = graph.vertices.get(tile_id)
-            if vertex and "/b" in vertex.name:
+            if vertex and vertex.middle == "b":
                 banner_count += 1
         return banner_count
 
@@ -372,7 +400,7 @@ class ScoreManager:
         Returns:
             None. Updates player scores in place.
         """
-        tile_ids = [tid for tid, _ in component]
+        tile_ids = list({tid for tid, _ in component})
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
 
@@ -417,7 +445,7 @@ class ScoreManager:
         Returns:
             None. Updates player scores in place.
         """
-        tile_ids = [tid for tid, _ in component]
+        tile_ids = list({tid for tid, _ in component})
         points_per_tile = 2
         points_per_banner = 2
 
@@ -558,7 +586,7 @@ class ScoreManager:
         Returns:
             None. Updates player scores in place.
         """
-        tile_ids = [tid for tid, _ in component]
+        tile_ids = list({tid for tid, _ in component})
         points_per_tile = 1
         total_points = len(tile_ids) * points_per_tile
 
@@ -601,7 +629,7 @@ class ScoreManager:
         Returns:
             None. Updates player scores in place.
         """
-        tile_ids = [tid for tid, _ in component]
+        tile_ids = list({tid for tid, _ in component})
         points_per_tile = 1
         points_per_banner = 1
 
@@ -656,8 +684,8 @@ class ScoreManager:
         if vertex is None:
             return
 
-        # Monastery scores 1 point for itself + 1 per adjacent tile.
-        points = 1 + len(vertex.neighbors)
+        # Monastery scores 1 point for itself + 1 per surrounding tile.
+        points = 1 + ScoreManager._count_surrounding_tiles(tile_id, graph)
 
         meeple_count = ScoreManager.get_meeples_on_component(
             component_name, graph

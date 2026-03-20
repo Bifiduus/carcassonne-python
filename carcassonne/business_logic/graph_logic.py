@@ -101,10 +101,12 @@ class GraphLogic:
 
         groups_left = {}
         groups_apparition = {}
+        group_land_type = {}
         for land_type, direction_groups in tile_def.tiles_lands.items():
             for drg in direction_groups:
                 groups_left[tuple(drg)] = False
                 groups_apparition[tuple(drg)] = 0
+                group_land_type[tuple(drg)] = land_type
 
         tile_orientation = vertex.orientation
 
@@ -232,33 +234,35 @@ class GraphLogic:
         # Merge the sets that are connected thanks to the tile we just placed
         for grp, apparition in groups_apparition.items():
             if apparition > 1:
-                # We need to merge the sets that have the same grp
+                # Merge only components of the same land type that were
+                # connected through this newly placed tile and this exact
+                # direction group.
+                land_type = group_land_type.get(grp)
+                if land_type is None:
+                    continue
+
                 sets_to_merge = []
-                for land_type, sets in graph.lands_components.items():
-                    for set_name, set_list in sets.items():
-                        for _, drg in set_list:
-                            # grp keys are tuples while stored direction groups
-                            # are lists
-                            if tuple(drg) == grp:
-                                sets_to_merge.append((land_type, set_name))
-                                break
+                for set_name, set_list in graph.lands_components.get(
+                    land_type, {}
+                ).items():
+                    for tid, drg in set_list:
+                        if tid == tile_id and tuple(drg) == grp:
+                            sets_to_merge.append(set_name)
+                            break
                 # Nothing to merge (defensive guard for inconsistent
                 # intermediate states)
                 if len(sets_to_merge) < 2:
                     continue
                 # Merge all sets in sets_to_merge into the first one
-                main_set = sets_to_merge[0]
-                for other_set in sets_to_merge[1:]:
-                    graph.lands_components[main_set[0]][main_set[1]].extend(
-                        graph.lands_components[other_set[0]][other_set[1]]
+                main_set_name = sets_to_merge[0]
+                for other_set_name in sets_to_merge[1:]:
+                    graph.lands_components[land_type][main_set_name].extend(
+                        graph.lands_components[land_type][other_set_name]
                     )
-                    for set_name in list(
-                        graph.lands_components[other_set[0]].keys()
-                    ):
-                        for meeple in graph.get_meeples():
-                            if meeple.lands_components == other_set[1]:
-                                meeple.lands_components = main_set[1]
-                    del graph.lands_components[other_set[0]][other_set[1]]
+                    for meeple in graph.get_meeples():
+                        if meeple.lands_components == other_set_name:
+                            meeple.lands_components = main_set_name
+                    del graph.lands_components[land_type][other_set_name]
 
     @staticmethod
     def _get_next_set_name(land_type: str, graph: IGraphData) -> str:
@@ -356,6 +360,8 @@ class GraphLogic:
             existing_set = self._find_lands_set(
                 special_land, neighbor_id, neighbor_dir_group, graph
             )
+            if existing_set is None:
+                return
             existing_set.append((tile_id, corner_grp))
             groups_left[tuple(corner_grp)] = True
             groups_apparition[tuple(corner_grp)] += 1
@@ -412,6 +418,8 @@ class GraphLogic:
             existing_set = self._find_lands_set(
                 land, neighbor_id, neighbor_dir_group, graph
             )
+            if existing_set is None:
+                return
             existing_set.append((tile_id, corner_grp))
             groups_left[tuple(corner_grp)] = True
             groups_apparition[tuple(corner_grp)] += 1
@@ -463,6 +471,8 @@ class GraphLogic:
             existing_set = self._find_lands_set(
                 land, neighbor_id, neighbor_dir_group, graph
             )
+            if existing_set is None:
+                return
             existing_set.append((tile_id, card_grp))
             groups_left[tuple(card_grp)] = True
             groups_apparition[tuple(card_grp)] += 1

@@ -161,7 +161,6 @@ class GraphData(IGraphData):
                 land_id = land + str(self.next_set_id[land])
                 self.lands_components[land][land_id] = [(0, connected)]
                 self.next_set_id[land] += 1
-        print(self.lands_components)
         # Legacy initialization draft kept for reference:
         # for tile_type, components in tile.items():
         #     for component in components:
@@ -235,6 +234,18 @@ class GraphData(IGraphData):
                     vertex.remove_neighbor(ori)
                     self.turn -= 1
         del self.vertices[vertex_id]
+        # Remove all lands_components entries referencing this tile so that
+        # the same tile ID can be reused on the next placement without causing
+        # duplicate component entries and inflated scores.
+        for land_type in list(self.lands_components.keys()):
+            for comp_name in list(self.lands_components[land_type].keys()):
+                self.lands_components[land_type][comp_name] = [
+                    (tid, drg)
+                    for tid, drg in self.lands_components[land_type][comp_name]
+                    if tid != vertex_id
+                ]
+                if not self.lands_components[land_type][comp_name]:
+                    del self.lands_components[land_type][comp_name]
 
     def remove_meeple(self, tile_id: int, players: dict[int, Player]) -> None:
         for meeple in self.meeples:
