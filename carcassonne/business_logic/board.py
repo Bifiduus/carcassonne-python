@@ -106,6 +106,7 @@ class Board:
 
                         if set_name_to_place is not None and not any(
                             meeple.lands_components == set_name_to_place
+                            and meeple.player_id != current_player_id
                             for meeple in graph.get_meeples()
                         ):
                             meeple = Meeple(
