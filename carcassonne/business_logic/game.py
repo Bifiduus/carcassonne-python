@@ -170,7 +170,12 @@ class Game(IGameService):
         while self.get_current_player().is_ai_player():
             if self.end_game():
                 break
+            previous_player_id = self.get_current_player().get_id()
             self.play_ai_turn()
+            if self.end_game():
+                break
+            if self.get_current_player().get_id() == previous_player_id:
+                break
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -385,10 +390,8 @@ class Game(IGameService):
             move = model.mcts(self)
         if not move:
             print(
-                f"AI Player {ai_player.get_username()} has no legal move. "
-                "Passing turn."
+                f"AI Player {ai_player.get_username()} has no legal move."
             )
-            self.skip_current_player()
             return
         if eval_score is None:
             print(
@@ -421,9 +424,9 @@ class Game(IGameService):
             if not fallback_played:
                 print(
                     f"AI Player {ai_player.get_username()} produced an "
-                    "invalid move. Passing turn."
+                    "invalid move."
                 )
-                self.skip_current_player()
+                return
 
     def get_game_configuration(self):
         return self.game_configuration.get_setting()
