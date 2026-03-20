@@ -182,8 +182,8 @@ def set_parameter(self, param, value) -> None:
     print(f"Paramètre '{param}' défini à '{value}'.")
 
 
-def create(self, username: str, server_service: IServerService):
-    answer = server_service.create_online_player(username)
+def connect(self, username: str, password: str, server_service: IServerService):
+    answer = server_service.create_default_online_player(username, password)
     print(answer)
 
 

@@ -20,7 +20,7 @@ class IServerService(ABC):
         pass
 
     @abstractmethod
-    def create_online_player(self, username: str) -> str:
+    def create_default_online_player(self, username: str, password: str) -> str:
         pass
 
     @abstractmethod

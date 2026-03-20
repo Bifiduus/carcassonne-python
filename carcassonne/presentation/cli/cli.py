@@ -176,7 +176,7 @@ class GameCLI:
         elif command == "show hand":
             commands_handler_cli.show_hand(self)
         elif command == "show time" or command.startswith("show time "):
-            player_id_arg = command[len("show time") :].strip()
+            player_id_arg = command[len("show time"):].strip()
             commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
             commands_handler_cli.show_score(self)
@@ -217,9 +217,9 @@ class GameCLI:
                 commands_handler_cli.join(self, self.server, addresse)
         elif command == "ping":
             commands_handler_cli.ping(self, self.server)
-        elif command.startswith("create"):
-            command = command[7:].strip()
-            commands_handler_cli.create(self, command, self.server)
+        elif command.startswith("connect"):
+            username, password = command[7:].split(" ").strip()
+            commands_handler_cli.connect(self, username, password, self.server)
         elif command == "server status":
             commands_handler_cli.server_status(self, self.server)
         elif command == "scoreboard":

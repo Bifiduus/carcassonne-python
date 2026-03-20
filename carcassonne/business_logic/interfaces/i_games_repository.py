@@ -18,7 +18,15 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_online_player(self) -> str:
+    def get_password(self, player_id: int) -> str:
+        pass
+
+    @abstractmethod
+    def get_online_player(self, server: str) -> str:
+        pass
+
+    @abstractmethod
+    def registering(self, username: str, password: str) -> bool:
         pass
 
     @abstractmethod
@@ -94,7 +102,11 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_online_player(self, username: str) -> str:
+    def create_default_online_player(self, username: str, password: str) -> str:
+        pass
+
+    @abstractmethod
+    def set_new_username_for_server(self, server: str, username: str):
         pass
 
     @abstractmethod

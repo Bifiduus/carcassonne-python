@@ -34,6 +34,7 @@ class GameRepository(IGamesRepository):
         table_players += f" status varchar(10) CONSTRAINT player_status CHECK(status IN (\"idle\",\"ingame\", \"away\",\"waitgame\")),"
         # can be null ? group_id
         table_players += " group_id INTEGER CONSTRAINT group_id_c REFERENCES groups(group_id),"
+        table_players += " password varchar(20) CONSTRAINT password NOT NULL,"
         table_players += " connected boolean);"
         rows = self._execute_non_query(table_players)
 
@@ -58,6 +59,10 @@ class GameRepository(IGamesRepository):
         table_invitations += f" invitation_status varchar(20) CONSTRAINT invitation_status CHECK(invitation_status IN (\"waiting\",\"accepted\")),"
         table_invitations += " sending_time float CONSTRAINT sending_time NOT NULL);"
         rows = self._execute_non_query(table_invitations)
+
+        usernames_table = "CREATE TABLE IF NOT EXISTS usernames(server varchar(30) CONSTRAINT server PRIMARY KEY,"
+        usernames_table += "username varchar(30) CONSTRAINT usernames_table NOT NULL);"
+        rows = self._execute_non_query(usernames_table)
 
     # low-level helpers
     def _execute_query(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
@@ -87,24 +92,35 @@ class GameRepository(IGamesRepository):
         )
         return len(rows) >= 1
 
-    def create_online_player(self, username: str) -> str:
-        if len(username) <= 30:
+    def create_default_online_player(self, username: str, password: str) -> str:
+        if 3 <= len(username) <= 30:
             rows = self._execute_non_query(
-                "INSERT INTO players(username, status, connected) VALUES(?, ?, ?);",
-                (username, "idle", True)
+                "INSERT INTO players(username, status, password, connected) VALUES(?, ?, ?, ?);",
+                (username, "idle", password, True)
             )
             player_id: int = self.get_id_from_username(username)
             rows = self._execute_non_query(
                 "INSERT INTO scoreboard(player_id, victories, defeats) VALUES(?, 0, 0);",
                 (player_id,)
             )
+            rows = self._execute_non_query(
+                "INSERT INTO usernames(server, username) VALUES(?, ?);",
+                ("default", username)
+            )
             return "Account successfully created."
         else:
             return "Error creating the account, username too long (max 30 characters)."
 
-    def get_online_player(self) -> str:
+    def set_new_username_for_server(self, server: str, username: str):
+        rows = self._execute_non_query(
+            "INSERT INTO usernames(server, username) VALUES(?, ?);",
+            (server, username)
+        )
+
+    def get_online_player(self, server: str) -> str:
         rows = self._execute_query(
-            "SELECT username FROM players;"
+            "SELECT username FROM usernames WHERE server=?;",
+            (server,)
         )
         return rows[0][0]
 
@@ -114,6 +130,35 @@ class GameRepository(IGamesRepository):
             (player_name,),
         )
         return bool(rows)
+
+    def registering(self, username: str, password: str):
+        if self.player_exists(username):
+            rows = self._execute_query(
+                "SELECT username, password FROM players WHERE username=?;",
+                (username,)
+            )
+            real_password: str = rows[0]['password']
+            if real_password == password:
+                return True
+            return False
+        else:
+            rows_players = self._execute_non_query(
+                "INSERT INTO players(username, status, password, connected) VALUES(?, ?, ?, ?);",
+                (username, "idle", password, True)
+            )
+            player_id: int = self.get_id_from_username(username)
+            rows_scoreboard = self._execute_non_query(
+                "INSERT INTO scoreboard(player_id, victories, defeats) VALUES(?, 0, 0);",
+                (player_id,)
+            )
+            return True if bool(rows_players) and bool(rows_scoreboard) else False
+
+    def get_password(self, player_id: int) -> str:
+        rows = self._execute_query(
+            "SELECT password FROM players WHERE player_id=?;",
+            (player_id,)
+        )
+        return rows[0][0]
 
     def get_player_profile(self, player_id: int) -> dict[str, Any]:
         rows = self._execute_query(
