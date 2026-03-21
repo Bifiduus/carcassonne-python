@@ -625,6 +625,46 @@ class Game(IGameService):
                 print("   ".join(line))
             print()  # espace entre lignes de tuiles
 
+    def get_printed_board(self) -> str:
+        vertices = list(self.graph.get_verticies().values())
+
+        if not vertices:
+            return "No vertices."
+
+        positions = [v.get_position() for v in vertices]
+
+        min_x = min(x for x, y in positions)
+        min_y = min(y for x, y in positions)
+        max_x = max(x for x, y in positions)
+        max_y = max(y for x, y in positions)
+
+        width = max_x - min_x + 1
+        height = max_y - min_y + 1
+
+        board = [[None for _ in range(width)] for _ in range(height)]
+
+        for v in vertices:
+            x, y = v.get_position()
+            nx = x - min_x
+            ny = y - min_y
+            board[ny][nx] = self.generate_tile_ascii(v)
+
+        TILE_HEIGHT = 3
+        EMPTY_TILE = [" " * 9] * TILE_HEIGHT
+        board_str = ""
+        for row in board:  # chaque ligne de tuiles
+            for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
+                board_line = ""
+                for tile in row:
+                    if tile is None:
+                        board_line = EMPTY_TILE[i]
+                    else:
+                        board_line = tile[i]
+                board_str += "   ".join(board_line)
+            # espace entre lignes de tuiles
+            board_str += ""
+        return board_str
+
     def get_close_neighbors(
         self, x: int, y: int
     ) -> tuple[int | None, int | None]:

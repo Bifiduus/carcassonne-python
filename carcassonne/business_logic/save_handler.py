@@ -53,11 +53,11 @@ class SaveHandler:
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.game.get_history()
+        moves_history.reverse()
         while moves_history is not None and len(moves_history) > 0:
             for player in range(self.game.get_number_of_players()):
-                if moves_history:
-                    move = moves_history.pop()
-                    file.write(move + " ")
+                move = moves_history.pop()
+                file.write(move + " ")
         file.write("\n")
         file.close()
         return 0
@@ -220,7 +220,7 @@ class SaveHandler:
                     print(
                         "Warning: no game score found in [GameState] section."
                     )
-                for player_move in reversed(line.strip(" ").split(" ")):
+                for player_move in line.strip(" ").split(" "):
                     move = (
                         player_move.split(":")[1]
                         if ":" in player_move
@@ -228,7 +228,7 @@ class SaveHandler:
                     )
                     self.game.current_hand = move
                     if move != self.game.draw_tile():
-                        print("The mode doesn't match the seed !")
+                        print("The move doesn't match the seed !")
                     # Assuming line is in the format "player_id:details"
                     self.game.play_move(move)
 

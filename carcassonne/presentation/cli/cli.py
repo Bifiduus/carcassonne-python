@@ -196,7 +196,7 @@ class GameCLI:
             commands_handler_cli.set_parameter(self, param, value)
         elif command.startswith("players"):
             commands_handler_cli.players(self, self.server, command)
-        elif command.startswith("play"):
+        elif command.startswith("play "):
             move = command[5:].strip()
             commands_handler_cli.play(self, move, game=self.game)
         elif command.startswith("board"):

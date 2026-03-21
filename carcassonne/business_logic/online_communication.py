@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from carcassonne.business_logic.game import Game
+
 if TYPE_CHECKING:
     from carcassonne.business_logic.server import Server
 
@@ -129,5 +131,15 @@ class OnlineCommunication:
         return self.server.repo.change_status(client_username, "away")
 
     def command_back(self, client_username):
-        # change to previous status ?
         return self.server.repo.change_status(client_username, "idle")
+
+    def command_play(self, message: str, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        move: str = message.removeprefix("play ").strip()
+        game: Game = self.server.current_games_list[game_id][1]
+        board: str = game.get_printed_board()
+        if game.end_game():
+            return "You cannot play when the game is ended.\n" + board + "\n"
+        if game.play_move(move):
+            return "Move played.\n" + board + "\n"
+        return "Move not played.\n" + board + "\n"
