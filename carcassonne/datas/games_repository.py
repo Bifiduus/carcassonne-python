@@ -152,6 +152,13 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
+    def has_no_special_username(self, server: str) -> bool:
+        rows = self._execute_query(
+            "SELECT username FROM usernames WHERE server=?",
+            (server,)
+        )
+        return not bool(rows)
+
     def player_exists(self, player_name: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM players WHERE username=?;",
@@ -266,13 +273,13 @@ class GameRepository(IGamesRepository):
             (group_id, group_id)
         )
 
-    def get_game(self, client_id: str):
+    def get_game(self, client_id: str) -> int:
         rows = self._execute_query(
             "SELECT game_id FROM current_games NATURAL JOIN groups"
             " NATURAL JOIN players WHERE player_id=?;",
             (int(client_id),)
         )
-        return rows[0]
+        return rows[0][0]
 
     # possible to change return type to tuple(int, message)
     def check_all_invitations_resolved(self, client_id: str):

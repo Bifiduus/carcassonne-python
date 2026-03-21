@@ -289,6 +289,9 @@ class Server(IServerService):
                     message, client_id)
             if message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
+            if message.startswith("play"):
+                answer = self.handle_communication.command_play(
+                    message, client_id)
             if message == "scoreboard":
                 answer = self.handle_communication.command_scoreboard()
             if message == "accept":
@@ -467,7 +470,12 @@ class Server(IServerService):
         self.client.settimeout(None)
 
         # send useful informations to the server
-        information = f"username={self.repo.get_online_player(ip)} password={self.repo.get_password(0)}"
+        username = ""
+        if self.repo.has_no_special_username(ip):
+            username = self.repo.get_online_player("default")
+        else:
+            username = self.repo.get_online_player(ip)
+        information = f"username={username} password={self.repo.get_password(0)}"
         self.send_to_server(information)
 
         # start a listener thread so the caller can interact without blocking
@@ -536,7 +544,7 @@ class Server(IServerService):
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
-        party_id = int(self.repo.get_game(client_id)[0])
+        party_id = int(self.repo.get_game(client_id))
         return self.current_games_list[party_id][1]
 
     def connected_to_a_server(self) -> bool:
