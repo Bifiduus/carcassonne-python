@@ -69,6 +69,15 @@ class TilePreview(Gtk.Picture):
 
     # internal helpers -------------------------------------------------------
     def _setup_drag_source(self):
+        # Set up proper GTK drag source for native drag and drop
+        drag_source = Gtk.DragSource.new()
+        drag_source.set_actions(Gdk.DragAction.MOVE)
+        drag_source.connect("prepare", self._on_drag_prepare)
+        drag_source.connect("drag-begin", self._on_drag_begin)
+        drag_source.connect("drag-end", self._on_drag_end)
+        self.add_controller(drag_source)
+
+        # Keep click gesture for immediate visual feedback
         click = Gtk.GestureClick()
         click.connect("pressed", self._on_pressed)
         click.connect("released", self._on_released)
