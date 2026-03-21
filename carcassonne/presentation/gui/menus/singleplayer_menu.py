@@ -36,11 +36,17 @@ class SingleplayerMenu(Gtk.Box):
         title.add_css_class("section-title")
         self.append(title)
 
+        ai_button = Gtk.Button(label="Ai")
+        ai_button.add_css_class("options-buttons")
+        ai_button.connect("clicked", self.on_ai_options)
+        self.append(ai_button)
+
         # --- random seed --------------------------------------------------
         seed_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         seed_label = Gtk.Label(label="Random seed:")
         self.entry_seed = Gtk.Entry()
         self.entry_seed.set_placeholder_text("(leave blank for random)")
+        self.entry_seed.connect("changed", self.on_seed_changed)
         seed_box.append(seed_label)
         seed_box.append(self.entry_seed)
         self.append(seed_box)
@@ -54,33 +60,28 @@ class SingleplayerMenu(Gtk.Box):
         self.file_button = Gtk.Button(label="Choose contest file")
         self.file_button.connect("clicked", self.on_choose_file)
 
+        self.time_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        entry_label = Gtk.Label(label="Time limit (minutes):")
+        self.entry_time = Gtk.Entry()
+        self.entry_time.connect("changed", self.on_time_changed)
+        self.time_box.append(entry_label)
+        self.time_box.append(self.entry_time)
+
         self.file_button.set_visible(False)  # hidden by default
+        self.time_box.set_visible(False)  # hidden by default
         self.selected_file = None
 
         mode_box.append(self.blitz_cb)
+        mode_box.append(self.time_box)
         mode_box.append(self.contest_cb)
         mode_box.append(self.file_button)
+
         self.append(mode_box)
 
-        # when one mode is toggled the other must be cleared and the chooser
-        # enabled/disabled appropriately
-        def on_mode_toggle(button):
-            if button is self.blitz_cb and button.get_active():
-                self.contest_cb.set_active(False)
-
-                self.file_button.set_visible(False)
-                self.selected_file = None
-
-            elif button is self.contest_cb and button.get_active():
-                self.blitz_cb.set_active(False)
-                self.file_button.set_visible(True)
-
-            else:
-                self.file_button.set_visible(False)
-                self.selected_file = None
-
-        self.blitz_cb.connect("toggled", on_mode_toggle)
-        self.contest_cb.connect("toggled", on_mode_toggle)
+        # Connect mode toggle to apply configuration immediately
+        self.blitz_cb.connect("toggled", self.on_mode_toggle)
+        self.contest_cb.connect("toggled", self.on_mode_toggle)
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
@@ -95,60 +96,86 @@ class SingleplayerMenu(Gtk.Box):
         self.append(btn_box)
 
     # ------------------------------------------------------------------
+
+    def on_ai_options(self, button):
+        self.gui.window.stack.set_visible_child_name("ai_menu")
+
     def on_choose_file(self, button):
         self.gui.window.window.present()
         dialog = Gtk.FileDialog(title="Select contest file")
 
         dialog.open(self.gui.window.window, None, self.on_file_selected)
 
+    def on_seed_changed(self, entry):
+        """Apply seed configuration when it changes"""
+        seed_str = self.entry_seed.get_text().strip()
+        # Store seed for later use (will be passed to new_game)
+        self.seed_value = None
+        if seed_str:
+            try:
+                self.seed_value = int(seed_str)
+            except ValueError:
+                pass
+
+    def on_time_changed(self, entry):
+        """Apply time configuration when it changes"""
+        time_str = self.entry_time.get_text().strip() or "30"
+        self.gui.game_data.game.set_game_configuration("time", time_str)
+        self.gui.game_data.game.save_config()
+
+    def on_mode_toggle(self, button):
+        """Apply mode configuration when it changes"""
+        # Update UI visibility
+        if button is self.blitz_cb and button.get_active():
+            self.contest_cb.set_active(False)
+            self.time_box.set_visible(True)
+            self.file_button.set_visible(False)
+            self.selected_file = None
+
+            # Apply blitz mode
+            self.gui.game_data.game.set_game_configuration("blitz", True)
+            self.gui.game_data.game.set_game_configuration("contest_file", "")
+
+        elif button is self.contest_cb and button.get_active():
+            self.blitz_cb.set_active(False)
+            self.file_button.set_visible(True)
+            self.time_box.set_visible(False)
+            self.selected_file = None
+
+            # Apply contest mode
+            self.gui.game_data.game.set_game_configuration("blitz", False)
+
+        else:
+            self.file_button.set_visible(False)
+            self.time_box.set_visible(False)
+            self.selected_file = None
+
+            # Clear both modes
+            self.gui.game_data.game.set_game_configuration("blitz", False)
+
+        self.gui.game_data.game.save_config()
+
     def on_file_selected(self, dialog, result):
         try:
             file = dialog.open_finish(result)
             self.selected_file = file.get_path()
             self.file_button.set_label(os.path.basename(self.selected_file))
+            # Apply contest file configuration immediately
+            self.gui.game_data.game.set_game_configuration(
+                "contest_file", self.selected_file
+            )
+            self.gui.game_data.game.save_config()
         except Exception:
             pass
 
     def on_back(self, button):
-        """Return to the main menu without applying any settings."""
-        seed_str = self.entry_seed.get_text().strip()
-        seed = None
-        if seed_str:
-            try:
-                seed = int(seed_str)
-            except ValueError:
-                # ignore invalid input and treat as no seed
-                seed = None
-
-        # determine mode (only one may be selected)
-        mode = None
-        contest_file = None
-        if self.blitz_cb.get_active():
-            mode = "blitz"
-        elif self.contest_cb.get_active():
-            mode = "contest"
-            contest_file = self.selected_file
-        if mode == "contest" and not contest_file:
+        """Validate configuration and start a new game."""
+        # Validate contest file if contest mode is selected
+        if self.contest_cb.get_active() and not self.selected_file:
             print("Please select a contest file")
             return
 
-        # Apply selected settings and start a new game.
-        # (seed is passed to the game logic; mode is stored as a setting).
-        if mode == "blitz":
-            self.gui.game_data.game.set_game_configuration("blitz", True)
-            # clear contest file if any
-            self.gui.game_data.game.set_game_configuration("contest_file", "")
-        else:
-            self.gui.game_data.game.set_game_configuration("blitz", False)
-
-        if contest_file:
-            self.gui.game_data.game.set_game_configuration(
-                "contest_file", contest_file
-            )
-
-        # persist configuration to disk
-        self.gui.game_data.game.save_config()
-
-        # start the new game (players order is handled internally by Game)
+        # Start the new game with the seed value
+        seed = getattr(self, 'seed_value', None)
         self.gui.game_data.new_game(None, seed)
         self.gui.window.stack.set_visible_child_name("options_menu")

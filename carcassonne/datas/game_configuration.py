@@ -8,6 +8,7 @@ DEFAULT_SETTINGS = {
     "verbose": False,
     "blitz": False,
     "time": 30,
+    "num_ai_players": 1,
     "ai_time": 5,
     "ai_mode": "minimax",
     "ai_minimax_depth": 80,
@@ -48,6 +49,7 @@ class GameConfiguration:
             "verbose": "false",
             "blitz": "false",
             "time": "30",
+            "num_ai_players": "1",
             "ai_time": 5,
             "ai_mode": "minimax",
             "ai_minimax_depth": 83,
@@ -85,6 +87,10 @@ class GameConfiguration:
             elif config.has_option("defaults", "timeout"):
                 # backward compatibility with previous setting name
                 settings["time"] = config.getint("defaults", "timeout")
+            if config.has_option("defaults", "num_ai_players"):
+                settings["num_ai_players"] = config.getint(
+                    "defaults", "num_ai_players"
+                )
             # optional contest file
             if config.has_option("defaults", "contest_file"):
                 settings["contest_file"] = config.get(
@@ -114,6 +120,7 @@ class GameConfiguration:
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
             "time": str(self.settings["time"]),
+            "num_ai_players": str(self.settings.get("num_ai_players", 1)),
             "ai_time": str(self.settings["ai_time"]),
             "ai_mode": str(self.settings["ai_mode"]),
             "ai_minimax_depth": str(self.settings["ai_minimax_depth"]),

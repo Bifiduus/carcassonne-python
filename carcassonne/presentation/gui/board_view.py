@@ -68,12 +68,12 @@ class BoardView(Gtk.DrawingArea):
         self.add_controller(key_controller)
 
         # accept drops from the preview widget (tile name strings)
-        """drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
+        drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
         drop.connect("drop", self.on_drop)
         drop.connect("enter", self.on_drag_enter)
         drop.connect("motion", self.on_drag_motion)
         drop.connect("leave", self.on_drag_leave)
-        self.add_controller(drop)"""
+        self.add_controller(drop)
 
     def _normalize_name(self, name: str) -> str:
         """Turn a tile identifier into the key used in ``self.textures``.
