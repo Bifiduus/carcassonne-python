@@ -66,7 +66,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_game(self, client_id: str) -> Row:
+    def get_game(self, client_id: str) -> int:
         pass
 
     @abstractmethod
@@ -110,6 +110,10 @@ class IGamesRepository(ABC):
 
     @abstractmethod
     def set_new_username_for_server(self, server: str, username: str):
+        pass
+
+    @abstractmethod
+    def has_no_special_username(self, server: str) -> bool:
         pass
 
     @abstractmethod
