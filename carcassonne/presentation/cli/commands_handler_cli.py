@@ -53,6 +53,9 @@ def help(self) -> None:
 def quit(self, server_service: IServerService) -> None:
     if server_service.connected_to_a_server():
         server_service.send_to_server("quit")
+    if server_service.is_server_running():
+        print("You should close your server first.")
+        return
     else:
         saved = -1
         while saved == -1:
