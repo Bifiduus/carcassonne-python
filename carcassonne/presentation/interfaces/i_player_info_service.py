@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player, PlayerScore
 
 

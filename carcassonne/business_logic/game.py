@@ -311,7 +311,8 @@ class Game(IGameService):
             parsed_move = parse_move(move)
         except ValueError:
             return False
-        if parsed_move.get("meeple") and self.get_current_player().get_meeples() <= 0:
+        current_player_meeples = self.get_current_player().get_meeples()
+        if parsed_move.get("meeple") and current_player_meeples <= 0:
             print("No meeple remaining")
             return False
 

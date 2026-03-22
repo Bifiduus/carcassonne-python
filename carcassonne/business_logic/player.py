@@ -116,7 +116,8 @@ class Player:
     def set_color(self, color: str) -> None:
         """Set the player's meeple color if it is a valid choice.
 
-        Valid colors: ``"red"``, ``"blue"``, ``"yellow"``, ``"black"``, ``"white"``.
+        Valid colors: ``"red"``, ``"blue"``, ``"yellow"``, ``"black"``,
+          ``"white"``.
         Silently ignores invalid values.
 
         Args:

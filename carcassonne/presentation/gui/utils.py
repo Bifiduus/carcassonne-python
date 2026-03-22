@@ -69,7 +69,6 @@ def load_css() -> None:
     font-size: 36px;
     font-weight: 900;
     color: #ff9800;
-    
     }
 
 
