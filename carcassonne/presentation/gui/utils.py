@@ -1,13 +1,12 @@
 """Utility helpers shared by several GUI modules."""
 
+from gi.repository import Gtk, Gdk, Gio
 import os
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gio", "2.0")
-
-from gi.repository import Gtk, Gdk, Gio
 
 
 def get_images_dir() -> str:
@@ -70,7 +69,6 @@ def load_css() -> None:
     font-size: 36px;
     font-weight: 900;
     color: #ff9800;
-
     }
 
 

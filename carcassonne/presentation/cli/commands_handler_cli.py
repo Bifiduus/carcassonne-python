@@ -1,11 +1,14 @@
 """This module defines the command handler functions for the Carcassonne game.
-Each function corresponds to a specific command that can be entered by the player in the command-line interface.
-The functions interact with the game service and the game state to perform actions such as starting a new game, loading and saving game states,
-shuffling the tiles, providing hints, undoing and redoing moves, and displaying game information.
-The command handler functions are designed to be called from the GameCLI class when the corresponding commands are entered by the player.
+Each function corresponds to a specific command that can be entered by the
+ player in the command-line interface.
+The functions interact with the game service and the game state to perform
+ actions such as starting a new game, loading and saving game states,
+shuffling the tiles, providing hints, undoing and redoing moves,
+ and displaying game information.
+The command handler functions are designed to be called from the GameCLI class
+ when the corresponding commands are entered by the player.
 """
 
-from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
@@ -95,7 +98,7 @@ def draw(self) -> None:
 
 def hint(self) -> None:
     # hint = self.game.getPlacementHint()
-    print(f"Indice pour le placement de la tuile: ")
+    print("Indice pour le placement de la tuile: ")
 
 
 def undo(self, N) -> None:
@@ -224,7 +227,8 @@ def stop_server(self, server_service: IServerService):
     server_service.server_stop()
 
 
-def join(self, server_service: IServerService, ip: str | None = None, port: str | None = None):
+def join(self, server_service: IServerService,
+         ip: str | None = None, port: str | None = None):
     if port is None and ip is None:
         server_service.join_server()
     if port is not None:

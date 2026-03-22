@@ -1,5 +1,4 @@
-from gi.repository import Gtk, Gdk, GdkPixbuf
-from carcassonne import __version__
+from gi.repository import Gtk
 import gi
 
 gi.require_version("Gtk", "4.0")

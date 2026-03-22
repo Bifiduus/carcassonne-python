@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from sqlite3 import Row
-from typing import Any, List
+from typing import Any
 
 
 class IGamesRepository(ABC):
@@ -74,7 +74,8 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def send_invitation(self, invited_player: str, invitee_player: str) -> bool:
+    def send_invitation(self, invited_player: str,
+                        invitee_player: str) -> bool:
         pass
 
     @abstractmethod
@@ -82,11 +83,13 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def cancel_invitation_from(self, client_id: str, players: list[str]) -> str:
+    def cancel_invitation_from(self, client_id: str,
+                               players: list[str]) -> str:
         pass
 
     @abstractmethod
-    def create_party(self, name: str, player_names: list[str], client_username: str) -> int | None:
+    def create_party(self, name: str, player_names: list[str],
+                     client_username: str) -> int | None:
         pass
 
     @abstractmethod

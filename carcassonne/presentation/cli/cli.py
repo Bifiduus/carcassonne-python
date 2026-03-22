@@ -45,7 +45,8 @@ def completer(texte, state):
 
 class GameCLI:
 
-    def __init__(self, game_service: IGameService, server_service: IServerService):
+    def __init__(self, game_service: IGameService,
+                 server_service: IServerService):
         self.server = server_service
         self.game = game_service
         self.settings = self.game.get_game_configuration()
@@ -142,8 +143,10 @@ class GameCLI:
             self.game.get_board()
 
     def handle_command(self, command):
-        if self._is_turn_bound_command(command) and not self._local_player_can_act():
-            print("Commande refusée: ce n'est pas votre tour ou votre temps est écoulé.")
+        is_turn_bound_command = self._is_turn_bound_command(command)
+        if is_turn_bound_command and not self._local_player_can_act():
+            print("Commande refusée: ce n'est pas votre tour"
+                  " ou votre temps est écoulé.")
             return
 
         if command.startswith("new"):
@@ -176,7 +179,7 @@ class GameCLI:
         elif command == "show hand":
             commands_handler_cli.show_hand(self)
         elif command == "show time" or command.startswith("show time "):
-            player_id_arg = command[len("show time") :].strip()
+            player_id_arg = command[len("show time"):].strip()
             commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
             commands_handler_cli.show_score(self)

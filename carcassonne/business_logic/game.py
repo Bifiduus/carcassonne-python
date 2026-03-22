@@ -80,7 +80,8 @@ class Game(IGameService):
             enabled=self._is_blitz_enabled(),
             minutes=self._configured_blitz_minutes(),
         )
-        if self._is_blitz_enabled() and self._advance_to_next_playable_player():
+        condition = self._advance_to_next_playable_player()
+        if self._is_blitz_enabled() and condition:
             self.blitz_manager.start_turn(self.get_current_player().get_id())
 
     def _has_playable_player(self) -> bool:
@@ -129,11 +130,10 @@ class Game(IGameService):
             self.blitz_manager.start_turn(current_player_id)
         return True
 
-    # new method qui:
-    # recréer players avec données de repo ( dans attributs de fonction ), nb de players
     def start_online_game(self, players: list[Player]):
         if len(players) > self.get_maximum_number_of_players():
-            return f"Error, too many players: Maximum players is {self.get_maximum_number_of_players()}"
+            return "Error, too many players: Maximum players" \
+                f" is {self.get_maximum_number_of_players()}"
         self.history.clear_history()
         self.graph.reset_graph()
         self.current_hand = None
@@ -148,8 +148,9 @@ class Game(IGameService):
         self.current_player_order_list = 0
         return "Starting the game."
 
-    def start_new_game(self, players_order: list[int] | None = None, seed: int | None = None) -> None:
-        """Start a new game by clearing the play history, undo history, 
+    def start_new_game(self, players_order: list[int] | None = None,
+                       seed: int | None = None) -> None:
+        """Start a new game by clearing the play history, undo history,
         and resetting the graph and game repository.
         """
         self.history.clear_history()

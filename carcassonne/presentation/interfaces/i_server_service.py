@@ -1,8 +1,5 @@
 """Module providing an interface between Présentation and Logique Métier"""
 from abc import ABC, abstractmethod
-from typing import Any
-
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 
 
 class IServerService(ABC):
@@ -40,7 +37,8 @@ class IServerService(ABC):
         pass
 
     @abstractmethod
-    def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
+    def join_server(self, ip: str | None = None, port:
+                    int | None = None, timeout: float = 5.0) -> bool:
         pass
 
     @abstractmethod

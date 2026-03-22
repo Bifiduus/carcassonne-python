@@ -1,6 +1,5 @@
 import math
 
-import gi
 
 from gi.repository import Gio, Gtk, GLib
 
@@ -61,7 +60,7 @@ class WindowView:
         self.window.set_child(self.stack)
 
         # header and menus
-    
+
         header = Gtk.HeaderBar()
         self.window.set_titlebar(header)
         header.add_css_class("headers")
@@ -129,7 +128,7 @@ class WindowView:
             self.file_button.set_visible(True)
         if self.game_button:
             self.game_button.set_visible(True)
-            
+
     def _setup_header_animation(self):
         self._t = 0
 
@@ -141,7 +140,6 @@ class WindowView:
         )
 
         GLib.timeout_add(50, self._animate_header)
-
 
     def _animate_header(self):
         self._t += 0.02

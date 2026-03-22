@@ -18,8 +18,7 @@ it could be reused in other contexts or driven by a mock service in tests.
 """
 
 from typing import Any
-import cairo
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk
 import gi
 
 gi.require_version("Gtk", "4.0")

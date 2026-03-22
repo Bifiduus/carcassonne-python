@@ -1,6 +1,6 @@
 """This module implements the BoardView class for displaying the game board."""
 
-from carcassonne.presentation.gui import board_utils, utils
+from carcassonne.presentation.gui import board_utils
 from typing import Dict, Any, Tuple
 import os
 from gi.repository import Gtk, Gdk, GdkPixbuf
@@ -154,8 +154,6 @@ class BoardView(Gtk.DrawingArea):
 
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
-
-        num_players = len(self.game_data.game.players)
 
         # compute last tile index for each player
         player_last_i = {}

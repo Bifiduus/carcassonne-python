@@ -1,4 +1,3 @@
-from carcassonne.presentation.gui import utils
 from gi.repository import Gtk
 import os
 

@@ -1,4 +1,3 @@
-import sys
 import time
 import socket
 import select
@@ -10,10 +9,9 @@ from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.game import Game
 from carcassonne.datas.graph_data import GraphData
 from carcassonne.datas.games_repository import GameRepository
-from carcassonne.business_logic.interfaces.i_games_repository import IGamesRepository
+from carcassonne.business_logic.interfaces.i_games_repository \
+    import IGamesRepository
 from carcassonne.presentation.interfaces.i_server_service import IServerService
-
-# players_id de client_socket <-> db <-> id de players_clients | Unique par serveur
 
 
 class Server(IServerService):
@@ -46,7 +44,7 @@ class Server(IServerService):
         assert self.repo, "The database should not be None"
         self.handle_communication = OnlineCommunication(self)
         if not self.repo.is_accounted_for():
-            print(f"You should create an online account.\n")
+            print("You should create an online account.\n")
             print("Type: create <username>")
         else:
             self.client_player = self.repo.get_online_player()
@@ -58,7 +56,8 @@ class Server(IServerService):
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
-        Listen for available servers via UDP broadcasts for a specified timeout period.
+        Listen for available servers via UDP broadcasts
+        for a specified timeout period.
         Returns a list of server names that responded within the timeout.
         """
         s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -157,7 +156,7 @@ class Server(IServerService):
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,))
                         client_thread.start()
-                        print(f"Accepted connection from a client.")
+                        print("Accepted connection from a client.")
 
                 # Timeout to check pending invitations periodically
                 assert self.repo, "The database should not be None"
@@ -167,9 +166,10 @@ class Server(IServerService):
                 # Timeout to check pending invitations periodically
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
-
-                if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
-                    message = f"{socket.gethostbyname(socket.gethostname())}:{port}"
+                diffusion_period = self.SERVER_DIFFUSION_PERIOD
+                if time.time() - server_last_diffusion >= diffusion_period:
+                    message = f"{socket.gethostbyname(socket.gethostname())}:"
+                    f"{port}"
                     socket_message = socket.socket(
                         socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                     socket_message.setsockopt(
@@ -204,14 +204,15 @@ class Server(IServerService):
                 if message == "quit":
                     answer = self.handle_communication.command_quit(
                         client)
-                    answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {answer}"
+                    client_id = self.connected_clients.index(client_socket)
+                    answer = f"Server -> Client{client_id}: {answer}"
                     client_socket.send(answer.encode())
                     self.has_joined_server = False
                     break
-                # Process data (e.g., echo back for now; replace with game logic)
+                # Process data
                 response = self.process_message(client, message)
-                # fonction qui check le statut d'une invitation et l'envoie à l'host
-                answer = f"Server -> Client{self.connected_clients.index(client_socket)}: {response}\n"
+                client_id = self.connected_clients.index(client_socket)
+                answer = f"Server -> Client{client_id}: {response}\n"
                 client_socket.send(answer.encode())
         except Exception as e:
             print(f"Error handling client: {e}")
@@ -261,12 +262,16 @@ class Server(IServerService):
                     client_id)
         return answer
 
-    def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:
-        """Verify that each client id refers to an existing player via the repository."""
+    def check_clients_list_validity(self,
+                                    clients_list: list[str]) -> list[str]:
+        """Verify that each client id refers to
+          an existing player via the repository."""
         assert self.repo is not None, "No games repository."
-        return [c for c in clients_list if self.repo.player_exists(self.repo.get_username(c))]
+        return [c for c in clients_list if
+                self.repo.player_exists(self.repo.get_username(c))]
 
-    def create_new_party(self, clients_list: list[str], client_id: str,  party_name: str = "") -> str:
+    def create_new_party(self, clients_list: list[str],
+                         client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
         if party_name == "":
             party_name = self.repo.get_party_name(client_id)
@@ -281,12 +286,12 @@ class Server(IServerService):
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)
-            # création approfondit de la game ( new method avec données de repo (groups et players ) )
         except Exception as e:
             print(f"Error creating party in repository: {e}")
         return "Your party has been created successfully !\n"
 
-    def create_players_from_list(self, clients_list: list[str]) -> list[Player]:
+    def create_players_from_list(self,
+                                 clients_list: list[str]) -> list[Player]:
         players_list = []
         assert self.repo, "The database should not be None"
         for client in clients_list:
@@ -300,15 +305,17 @@ class Server(IServerService):
         profile = self.repo.get_player_profile(player_id)
         if profile is None:
             return "Player not found\n"
-        return f"Player profile:\n username={profile['username']}\n status={profile['status']}\n score={profile['score']}\n "\
+        return f"Player profile:\n username={profile['username']}\n"\
+            "status={profile['status']}\n score={profile['score']}\n "\
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
         invited_client: socket.socket = self.client_sockets[int(
             invited_player_id)]
         host_name: str = self.repo.get_username(invitee_player_id)
-        message = f"Server: You have received an invitation from {host_name}.\n"
-        message += f"Expires in 300s.\n"
+        message = "Server: You have received an invitation"\
+            f"from {host_name}.\n"
+        message += "Expires in 300s.\n"
         with self.clients_lock:
             try:
                 invited_client.sendall(message.encode())
@@ -350,7 +357,7 @@ class Server(IServerService):
         """
         Quit the server and clean up resources.
         """
-        if self.client == None:
+        if self.client is None:
             print("Error: no client socket found.")
             return -1
         data = "quit\n".encode()
@@ -366,7 +373,7 @@ class Server(IServerService):
         """
         start = time.time()
         self.send_to_server("ping")
-        if self.client == None:
+        if self.client is None:
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
@@ -376,7 +383,8 @@ class Server(IServerService):
 
         return "No server response"  # Or implement actual ping logic
 
-    def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
+    def join_server(self, ip: str | None = None,
+                    port: int | None = None, timeout: float = 5.0) -> bool:
         """
         Connect to a remote server identified by name (and optional port).
 
@@ -446,7 +454,8 @@ class Server(IServerService):
         server.
         """
         assert self.repo is not None, "No games repository."
-        if self.client:  # check what you do, if you have the server or if you only receive
+        # check what you do, if you have the server or if you only receive
+        if self.client:
             message = message.removeprefix("Server -> ")
             client_id, message = message.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()
@@ -460,7 +469,8 @@ class Server(IServerService):
             if message.startswith("INVITATION_ACCEPTED"):
                 # accepted or not or timed_out
                 if self.repo.check_all_invitations_resolved(client_id):
-                    # ajoute la party dans party_list, change ce qu'il faut et lance
+                    # ajoute la party dans party_list,
+                    #  change ce qu'il faut et lance
                     self.create_new_party(
                         self.repo.get_party(client_id), client_id)
 
