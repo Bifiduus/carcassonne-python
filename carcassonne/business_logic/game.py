@@ -23,7 +23,7 @@ from carcassonne.datas.history import History
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.business_logic.save_handler import SaveHandler
-from carcassonne.business_logic.blitz_manager import BlitzManager
+from carcassonne.business_logic.game_mode_manager import GameModeManager
 
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
@@ -58,82 +58,44 @@ class Game(IGameService):
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.error_message = ""
-        self.blitz_manager = BlitzManager()
         self._end_game_scored = False
-        self._initialize_blitz_state()
+        self.game_mode_manager = GameModeManager(self)
+        self._initialize_mode_state()
 
     def _configured_blitz_minutes(self) -> int:
-        settings = self.get_game_configuration()
-        raw_value = settings.get("time", 30)
-        try:
-            minutes = int(raw_value)
-        except (TypeError, ValueError):
-            minutes = 30
-        return minutes if minutes > 0 else 30
+        return self.game_mode_manager.get_configured_blitz_minutes()
 
     def _is_blitz_enabled(self) -> bool:
-        return bool(self.get_game_configuration().get("blitz", False))
+        return self.game_mode_manager.get_mode() == "blitz"
+
+    def _initialize_mode_state(self) -> None:
+        self.game_mode_manager.reset_for_current_state()
 
     def _initialize_blitz_state(self) -> None:
-        self.blitz_manager.reset(
-            player_ids=self.players_order,
-            enabled=self._is_blitz_enabled(),
-            minutes=self._configured_blitz_minutes(),
-        )
-        condition = self._advance_to_next_playable_player()
-        if self._is_blitz_enabled() and condition:
-            self.blitz_manager.start_turn(self.get_current_player().get_id())
+        self._initialize_mode_state()
 
     def _has_playable_player(self) -> bool:
-        for player_id in self.players_order:
-            if not self.blitz_manager.is_player_timed_out(player_id):
-                return True
-        return False
+        return self.game_mode_manager.has_playable_player()
 
     def _advance_to_next_playable_player(self) -> bool:
-        if not self.players_order:
-            return False
-
-        for _ in range(len(self.players_order)):
-            player_id = self.players_order[self.current_player_order_list]
-            if not self.blitz_manager.is_player_timed_out(player_id):
-                return True
-            self.current_player_order_list = (
-                self.current_player_order_list + 1
-            ) % len(self.players_order)
-        return False
+        return self.game_mode_manager.advance_to_next_playable_player()
 
     def skip_current_player(self) -> bool:
-        """Skip current player and advance to the next playable player."""
-        if not self.players_order:
-            return False
-
-        self.current_hand = None
-        self.current_player_order_list = (
-            self.current_player_order_list + 1
-        ) % len(self.players_order)
-
-        if not self._advance_to_next_playable_player():
-            return False
-        if self._is_blitz_enabled():
-            self.blitz_manager.start_turn(self.get_current_player().get_id())
-        return True
+        return self.game_mode_manager.skip_current_player()
 
     def _ensure_current_player_playable(self) -> bool:
-        if not self._is_blitz_enabled():
-            return True
-        if not self._advance_to_next_playable_player():
-            return False
+        return self.game_mode_manager.ensure_current_player_playable()
 
-        current_player_id = self.get_current_player().get_id()
-        if self.blitz_manager.active_player_id != current_player_id:
-            self.blitz_manager.start_turn(current_player_id)
-        return True
-
+    # new method qui:
+    # recréer players avec données de repo
+    # (dans attributs de fonction), nb de players
     def start_online_game(self, players: list[Player]):
         if len(players) > self.get_maximum_number_of_players():
-            return "Error, too many players: Maximum players" \
-                f" is {self.get_maximum_number_of_players()}"
+            max_players = self.get_maximum_number_of_players()
+            return (
+                "Error, too many players: "
+                f"Maximum players is {max_players}"
+            )
         self.history.clear_history()
         self.graph.reset_graph()
         self.current_hand = None
@@ -146,10 +108,15 @@ class Game(IGameService):
         self.shuffle_deck()
         self.shuffle_players_order()
         self.current_player_order_list = 0
+        self._end_game_scored = False
+        self._initialize_mode_state()
         return "Starting the game."
 
-    def start_new_game(self, players_order: list[int] | None = None,
-                       seed: int | None = None) -> None:
+    def start_new_game(
+        self,
+        players_order: list[int] | None = None,
+        seed: int | None = None,
+    ) -> None:
         """Start a new game by clearing the play history, undo history,
         and resetting the graph and game repository.
         """
@@ -167,7 +134,7 @@ class Game(IGameService):
         self.shuffle_deck(None, seed)
         self.current_player_order_list = 0
         self._end_game_scored = False
-        self._initialize_blitz_state()
+        self._initialize_mode_state()
         while self.get_current_player().is_ai_player():
             if self.end_game():
                 break
@@ -440,8 +407,8 @@ class Game(IGameService):
         if key == "timeout":
             key = "time"
         self.game_configuration.settings[key] = value
-        if key in ("blitz", "time"):
-            self._initialize_blitz_state()
+        if key in ("blitz", "time", "contest_file"):
+            self._initialize_mode_state()
 
     def draw_tile(self) -> str | None:
         timed_out_now = self.tick_blitz()
@@ -505,58 +472,31 @@ class Game(IGameService):
         self.rules_manager = RulesManager(self.tiles_info)
         self.current_player_order_list = 0
         self._end_game_scored = False
-        self._initialize_blitz_state()
+        self._initialize_mode_state()
 
     def tick_blitz(self) -> bool:
-        if not self._is_blitz_enabled():
-            return False
-        if not self._advance_to_next_playable_player():
-            return False
-
-        current_player_id = self.get_current_player().get_id()
-        if self.blitz_manager.active_player_id != current_player_id:
-            self.blitz_manager.start_turn(current_player_id)
-
-        timed_out_now = self.blitz_manager.tick()
-        if not timed_out_now:
-            return False
-
-        self.skip_current_player()
-        return True
+        return self.game_mode_manager.tick()
 
     def get_timeout_message(self) -> str:
-        return self.blitz_manager.get_timeout_message()
+        return self.game_mode_manager.get_timeout_message()
 
     def get_current_player_remaining_time_seconds(self) -> float | None:
-        if not self._is_blitz_enabled():
-            return None
-        self.tick_blitz()
-        current_player_id = self.get_current_player().get_id()
-        return self.blitz_manager.get_remaining_seconds(current_player_id)
+        return (
+            self.game_mode_manager
+            .get_current_player_remaining_time_seconds()
+        )
 
     def get_player_remaining_time_seconds(
         self, player_id: int
     ) -> float | None:
-        if not self._is_blitz_enabled():
-            return None
-        self.tick_blitz()
-        if player_id not in self.players:
-            return None
-        return self.blitz_manager.get_remaining_seconds(player_id)
+        return self.game_mode_manager.get_player_remaining_time_seconds(
+            player_id
+        )
 
     def get_all_players_remaining_time_seconds(
         self,
     ) -> list[tuple[int, float]]:
-        if not self._is_blitz_enabled():
-            return []
-        self.tick_blitz()
-        return [
-            (
-                player_id,
-                self.blitz_manager.get_remaining_seconds(player_id),
-            )
-            for player_id in self.players_order
-        ]
+        return self.game_mode_manager.get_all_players_remaining_time_seconds()
 
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
