@@ -91,6 +91,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_id_from_username(self, player_username: str) -> int:
+        pass
+
+    @abstractmethod
     def cancel_invitation_from(self, client_id: str,
                                players: list[str]) -> str:
         pass
@@ -105,7 +109,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_default_online_player(self, username: str, password: str) -> str:
+    def create_default_online_player(self, username: str, password: str, server: str) -> str:
         pass
 
     @abstractmethod
