@@ -958,7 +958,6 @@ def get_ai_move(
     Returns:
         The best move found, or None if no moves available
     """
-    global _ai_manager
 
     if _ai_manager is None:
         initialize_ai()

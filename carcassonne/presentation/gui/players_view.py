@@ -94,10 +94,11 @@ class PlayersView(Gtk.Box):
             # Build the display text with blitz time if enabled
             base_text = f"{name} : {score} | {meeple}x"
             if is_blitz:
-                remaining_time = game.blitz_manager.remaining_time_seconds_by_player.get(
-                    player_id, 0
-                )
-                time_str = self._format_time(remaining_time)
+                remaining = game.blitz_manager.\
+                    remaining_time_seconds_by_player.get(
+                        player_id, 0
+                    )
+                time_str = self._format_time(remaining)
                 base_text += f" | {time_str}"
 
             if p is current:

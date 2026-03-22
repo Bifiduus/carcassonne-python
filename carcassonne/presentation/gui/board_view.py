@@ -101,7 +101,8 @@ class BoardView(Gtk.DrawingArea):
         return (f"{self.game_data.current_tile.current_tile}/{vertex_id}"
                 f"{['N', 'E', 'S', 'W'][side]}{orientation}")
 
-    def _set_tile_placement(self, grid_x: int, grid_y: int, move_str: str) -> None:
+    def _set_tile_placement(self, grid_x: int,
+                            grid_y: int, move_str: str) -> None:
         """Set the current tile's placement data."""
         self.game_data.current_tile.move = move_str
         self.game_data.current_tile.x = grid_x
@@ -284,7 +285,8 @@ class BoardView(Gtk.DrawingArea):
             cx, cy = x + col * cell, y + row * cell
             padding = cell * 0.2
             r, g, b = board_utils.color_map.get(
-                self.game_data.game.get_current_player().get_color(), (1, 0, 0))
+                self.game_data.game.get_current_player().get_color(),
+                (1, 0, 0))
             cr.set_source_rgba(r, g, b, 0.7)
             cr.set_line_width(3)
             cr.move_to(cx + padding, cy + padding)
@@ -323,14 +325,17 @@ class BoardView(Gtk.DrawingArea):
             self.queue_draw()
             return
 
-        # if the tile already has a move string, treat this as a meeple‑selection click
+        # if the tile already has a move string
+        # treat this as a meeple‑selection click
         if self.game_data.current_tile.move:
             offsets = self.get_board_offsets()
             if board_utils.click_within_current_tile(
-                mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile
+                mouse_x, mouse_y, offsets, self.tile_size,
+                self.game_data.current_tile
             ):
                 result = board_utils.meeple_zone(
-                    mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile
+                    mouse_x, mouse_y, offsets, self.tile_size,
+                    self.game_data.current_tile
                 )
                 self.game_data.current_tile.meeple_pos = result
                 self.queue_draw()
@@ -405,7 +410,8 @@ class BoardView(Gtk.DrawingArea):
         w, h = self.get_allocated_width(), self.get_allocated_height()
         board_w, board_h = (max_x - min_x + 1) * \
             size, (max_y - min_y + 1) * size
-        return ((w - board_w) // 2 + self.offset_x, (h - board_h) // 2 + self.offset_y, min_x, min_y)
+        return ((w - board_w) // 2 + self.offset_x,
+                (h - board_h) // 2 + self.offset_y, min_x, min_y)
 
     def pixel_to_grid(self, mouse_x: float, mouse_y: float) -> Tuple[int, int]:
         """Convert pixel coordinates to grid coordinates."""
@@ -414,7 +420,8 @@ class BoardView(Gtk.DrawingArea):
             return 0, 0
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
-        return int((mouse_x - offset_x) // size) + min_x, int((mouse_y - offset_y) // size) + min_y
+        return (int((mouse_x - offset_x) // size) + min_x,
+                int((mouse_y - offset_y) // size) + min_y)
 
     # =========================
     # 🔄 REFRESH

@@ -20,7 +20,7 @@ class OnlineCommunication:
         assert (
             self.server.server
             is not None), "No server to execute the command on..."
-        answer = f"Port: { self.server.server.getsockname()[1]}, "
+        answer = f"Port: {self.server.server.getsockname()[1]}, "
         answer += f"Clients: {len(self.server.connected_clients)}, "
         answer += f"Current Parties: {len(self.server.current_games_list)}\n"
         return answer

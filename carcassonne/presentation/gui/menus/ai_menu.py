@@ -34,7 +34,7 @@ class AiMenu(Gtk.Box):
         self.ai_choice.connect("changed", self.on_ai_selected)
         self.append(ai_choice_box)
 
-        # --- Numbers of AI players --------------------------------------------------
+        # --- Numbers of AI players ---------------------------------------
         ai_players_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.ai_players_entry = Gtk.Entry()
