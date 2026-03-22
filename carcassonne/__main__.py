@@ -125,8 +125,10 @@ def main() -> int:
     parser.add_argument(
         "-amd",
         "--ai-minimax-depth",
-        help="depth of the ai tree search (default: maximum depth ="
-        " 80 playable tiles)",
+        help=(
+            "depth of the ai tree search "
+            "(default: maximum depth = 80 playable tiles)"
+        ),
         type=int,
         default=83,
     )

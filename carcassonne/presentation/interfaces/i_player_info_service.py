@@ -2,8 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from carcassonne.business_logic.player import Player
-from carcassonne.business_logic.score_manager import PlayerScore
+from carcassonne.business_logic.player import Player, PlayerScore
 
 
 class IPlayerInfoService(ABC):

@@ -72,10 +72,11 @@ class RandomPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
+                            id_player = game.get_current_player().get_id()
                             if game.rules_manager.check_move(
                                 move,
                                 game.graph,
-                                current_player_id=game.get_current_player().get_id(),
+                                current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
         return possible_moves
@@ -188,10 +189,11 @@ class ExpectimaxPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
+                            id_player = game.get_current_player().get_id()
                             if game.rules_manager.check_move(
                                 move,
                                 game.graph,
-                                current_player_id=game.get_current_player().get_id(),
+                                current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
 
@@ -642,18 +644,11 @@ class MCTSPlayer:
                                     f"{rotation}"\
                                     f"/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
-                            move_parts = move.split('/')
-                            rules_manager = game.rules_manager
-                            graph = game.graph
-                            if rules_manager.is_correctly_formed_move(move,
-                                                                      graph):
-                                if rules_manager.is_legal_move(move_parts,
-                                                               game.graph):
-                                    possible_moves.append(move)
+                            id_player = game.get_current_player().get_id()
                             if game.rules_manager.check_move(
                                 move,
                                 game.graph,
-                                current_player_id=game.get_current_player().get_id(),
+                                current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
         return possible_moves
@@ -845,6 +840,9 @@ class MCTSNode:
 
     def add_reward(self, reward):
         self.total_reward += reward
+
+
+<< << << < HEAD
 
 
 class MCTSPlayer:
@@ -1070,6 +1068,10 @@ class MCTSPlayer:
             return True
         # print("THINGD WENT WRONG")
         return False
+
+
+== == == =
+>>>>>> > e9ef874(changes pep8)
 
 
 class AIModelManager:

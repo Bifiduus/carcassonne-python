@@ -87,7 +87,8 @@ class Board:
                     land_type = vertex.get_matrix()[side_x][side_y]
 
                     if land_type and land_type in graph.lands_components:
-                        land_pos = Tile.direction_matrix[integers_placement[1]][
+                        integer_placement_1 = integers_placement[1]
+                        land_pos = Tile.direction_matrix[integer_placement_1][
                             side_x
                         ][side_y]
                         set_name_to_place = None
@@ -112,7 +113,8 @@ class Board:
                             meeple = Meeple(
                                 player_id=current_player_id,
                                 tile_id=tile_id,
-                                position=tiles_info.meeple_placement_list.index(
+                                position=tiles_info.meeple_placement_list.
+                                index(
                                     move_parts[counter]
                                 ),
                                 lands_components=set_name_to_place,
