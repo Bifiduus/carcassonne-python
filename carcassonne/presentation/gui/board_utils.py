@@ -6,13 +6,13 @@ preview grids.  The idea is that ``BoardView`` can simply delegate to
 these helpers without holding too much implementation detail.
 """
 
+from gi.repository import Gdk
 import math
 from typing import Any, Dict, Tuple
 
 import gi
 gi.require_version("Gdk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk
 
 color_map = {
     "red": (1, 0, 0),
@@ -20,6 +20,18 @@ color_map = {
     "yellow": (1, 1, 0),
     "white": (0.9, 0.9, 0.9),
     "green": (0, 1, 0),
+}
+
+# Meeple position mappings (9-position grid)
+MEEPLE_POS_GRID = {
+    "NW": (0, 0), "N": (0, 1), "NE": (0, 2),
+    "W": (1, 0), "C": (1, 1), "E": (1, 2),
+    "SW": (2, 0), "S": (2, 1), "SE": (2, 2),
+}
+
+# Directional meeple positions (4-position compass)
+MEEPLE_POS_CARDINAL = {
+    "N": (0, 1), "E": (1, 2), "S": (2, 1), "W": (1, 0),
 }
 
 
