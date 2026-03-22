@@ -23,7 +23,7 @@ class Server(IServerService):
 
     def __init__(self, repo: IGamesRepository | None = None):
         # networking/server state
-        self.server_name = "local"
+        self.server_name = socket.gethostbyname(socket.gethostname())
         self.client = None
         self.client_player = None
         self.temporary_username = ""
@@ -38,11 +38,12 @@ class Server(IServerService):
         # Needed to keep track of the different games
         self.current_games_list: dict[int, tuple[str, Game]] = {}
         # Map client_id -> socket
-        self.client_sockets: dict[int, socket.socket] = {}
+        self.client_sockets: dict[str, socket.socket] = {}
         self.player_clients: dict[socket.socket,
-                                  int] = {}  # Map socket -> client_id
+                                  str] = {}  # Map socket -> client_id
         self.registered_clients: dict[int, bool] = {}
         self.client_id = None
+        self.connected_server = ""
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         assert self.repo, "The database should not be None"
@@ -51,21 +52,22 @@ class Server(IServerService):
             print(f"You should create an online account.\n")
             username = input(">> Your username is: ")
             password = input(">> Your password is: ")
-            self.create_default_online_player(username, password)
+            self.create_default_online_player(
+                username, password, self.server_name)
         else:
-            self.client_player = self.repo.get_online_player("default")
+            self.client_player = self.repo.get_online_player(self.server_name)
 
-    def create_default_online_player(self, username: str, password: str) -> str:
+    def create_default_online_player(self, username: str, password: str, server: str = "127.0.1.1") -> str:
         self.client_player = username
         assert self.repo, "The database should not be None"
-        return self.repo.create_default_online_player(username, password)
+        return self.repo.create_default_online_player(username, password, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
         Listen for available servers via UDP broadcasts for a specified timeout period.
         Returns a list of server names that responded within the timeout.
         """
-        s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.bind(('', 12346))
             s.settimeout(timeout)  # Set socket timeout
@@ -129,11 +131,11 @@ class Server(IServerService):
             self.repo.reopen()
         if port == "":
             port = "12345"
-        self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             self.server.bind(('', int(port)))
-            self.server.listen(5)  # Allow up to 5 pending connections
+            self.server.listen()
             print(f"Server started on port {port}")
         except Exception as e:
             print(f"Error starting server: {e}")
@@ -145,6 +147,7 @@ class Server(IServerService):
 
     def server_running(self, port):
         assert self.server
+        first_diffusion = True
         server_last_diffusion = time.time()
         while self.should_stop.is_set():
             try:
@@ -157,9 +160,7 @@ class Server(IServerService):
                         # Add client to the list
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
-                            id = len(self.client_sockets)
-                            self.client_sockets[id] = client_socket
-                            self.player_clients[client_socket] = id
+                            id = len(self.client_sockets)+1
                             self.registered_clients[id] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
@@ -172,19 +173,26 @@ class Server(IServerService):
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
 
-                # Timeout to check pending invitations periodically
-                self.repo.check_all_invitations_timeout(
-                    self.INVITATION_TIMEOUT)
+                # Determine if a party can be launched, and if so, do it
+                self.launch_availables_games()
 
-                if time.time() - server_last_diffusion >= self.SERVER_DIFFUSION_PERIOD:
-                    message = f"{socket.gethostbyname(socket.gethostname())}:{port}"
+                time_passed = time.time() - server_last_diffusion
+                clock = self.SERVER_DIFFUSION_PERIOD
+                if time_passed >= clock or first_diffusion:
+                    server_last_diffusion = time.time()
+                    host_name = socket.gethostname()
+                    message = f"{socket.gethostbyname(host_name)}:{port}"
                     socket_message = socket.socket(
-                        socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+                        socket.AF_INET, socket.SOCK_DGRAM,
+                        socket.IPPROTO_UDP)
                     socket_message.setsockopt(
                         socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                     broadcast_addr = ('<broadcast>', 12346)
                     socket_message.sendto(message.encode(), broadcast_addr)
                     socket_message.close()
+                    if first_diffusion:
+                        first_diffusion = False
+
             except socket.timeout:
                 continue  # Check self.running again
             except Exception as e:
@@ -193,6 +201,11 @@ class Server(IServerService):
                 break
         self.server.close()
         print("Server stopped")
+
+    def launch_availables_games(self):
+        # For all parties, check if game can be launched
+        # If so launch it, and handle_party() ( like handle_client but for a game )
+        pass
 
     def is_server_running(self) -> bool:
         return self.should_stop.is_set()
@@ -212,7 +225,7 @@ class Server(IServerService):
                     continue
                 client, message = data.decode().split(":")
                 message = message.strip()
-                client_index = self.connected_clients.index(client_socket)
+                client_index = self.repo.get_id_from_username(client)
                 if self.client_is_registered(client_index):
                     if message == "quit":
                         answer = self.handle_communication.command_quit(
@@ -223,7 +236,6 @@ class Server(IServerService):
                         break
 
                     # Process data (e.g., echo back for now; replace with game logic)
-
                     response = self.process_message(client, message)
                     # fonction qui check le statut d'une invitation et l'envoie à l'host
                     answer = f"Server -> Client{client_index}: {response}\n"
@@ -240,8 +252,9 @@ class Server(IServerService):
                 if client_socket in self.connected_clients:
                     self.connected_clients.remove(client_socket)
                 if client_socket in self.player_clients:
-                    client_id = self.player_clients[client_socket]
-                    del self.client_sockets[client_id]
+                    username = self.player_clients[client_socket]
+                    client_id = self.repo.get_id_from_username(username)
+                    del self.client_sockets[username]
                     del self.player_clients[client_socket]
                     del self.registered_clients[client_id]
 
@@ -256,18 +269,19 @@ class Server(IServerService):
             answer += "If it is your first time connecting, you can create one.\n"
         else:
             if message.find("username=") != -1 and message.find("password=") != -1:
-                start_password: int = message.find("password=")
-                username: str = message.removeprefix(
-                    "username=")[:start_password]
-                password: str = message[start_password:]
+                username, password = message.split("password=")
+                username: str = username.removeprefix(
+                    "username=")
                 success = self.repo.registering(username, password)
                 if success:
-                    answer = f"{preface}Successfull registering !\n"
+                    answer = f"{preface}\nSuccessfull registering !\n"
                     self.registered_clients[client_index] = True
+                    self.client_sockets[username] = client_socket
+                    self.player_clients[client_socket] = username
                 else:
-                    answer = f"{preface}Your registration has failed...\n"
+                    answer = f"{preface}\nYour registration has failed...\n"
             else:
-                answer = f"{preface}You should send your username and password !\n"
+                answer = f"{preface}\nYou should send your username and password !\n"
         client_socket.send(answer.encode())
 
     def check_username_taken(self, username: str):
@@ -354,8 +368,8 @@ class Server(IServerService):
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
-        invited_client: socket.socket = self.client_sockets[int(
-            invited_player_id)]
+        username: str = self.repo.get_username(invited_player_id)
+        invited_client: socket.socket = self.client_sockets[username]
         host_name: str = self.repo.get_username(invitee_player_id)
         message = f"Server: You have received an invitation from {host_name}.\n"
         message += f"Expires in 300s.\n"
@@ -445,14 +459,15 @@ class Server(IServerService):
             return False
 
         server_port, _ = self.available_servers[ip]
-        self.connected_to_server_index = ip
+
         if port is None:
             port = server_port
 
-        self.client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.settimeout(timeout)
         try:
             self.client.connect((ip, port))
+            self.connected_to_server = ip
         except Exception as e:
             print(f"Unable to connect to {ip}:{port} -> {e}")
             self.client.close()
@@ -465,10 +480,10 @@ class Server(IServerService):
         # send useful informations to the server
         username = ""
         if self.repo.has_no_special_username(ip):
-            username = self.repo.get_online_player("default")
+            username = self.repo.get_online_player(self.server_name)
         else:
             username = self.repo.get_online_player(ip)
-        information = f"username={username} password={self.repo.get_password(0)}"
+        information = f"username={username} password={self.repo.get_password(1)}"
         self.send_to_server(information)
 
         # start a listener thread so the caller can interact without blocking
@@ -553,7 +568,9 @@ class Server(IServerService):
             if self.client_id is None:
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
-            text = f"{self.client_player}: " + text
+            server = self.connected_to_server
+            username = self.repo.get_online_player(server)
+            text = f"{username}: " + text
             self.client.sendall(text.encode())
             return True
         except Exception as e:

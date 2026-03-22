@@ -92,7 +92,7 @@ class GameRepository(IGamesRepository):
         )
         return len(rows) >= 1
 
-    def create_default_online_player(self, username: str, password: str) -> str:
+    def create_default_online_player(self, username: str, password: str, server: str) -> str:
         if 3 <= len(username) <= 30:
             rows = self._execute_non_query(
                 "INSERT INTO players(username, status, password, connected) VALUES(?, ?, ?, ?);",
@@ -105,7 +105,7 @@ class GameRepository(IGamesRepository):
             )
             rows = self._execute_non_query(
                 "INSERT INTO usernames(server, username) VALUES(?, ?);",
-                ("default", username)
+                (server, username)
             )
             return "Account successfully created."
         else:
@@ -141,10 +141,10 @@ class GameRepository(IGamesRepository):
     def registering(self, username: str, password: str):
         if self.player_exists(username):
             rows = self._execute_query(
-                "SELECT username, password FROM players WHERE username=?;",
+                "SELECT password FROM players WHERE username=?;",
                 (username,)
             )
-            real_password: str = rows[0]['password']
+            real_password: str = rows[0][0]
             if real_password == password:
                 return True
             return False
@@ -291,7 +291,7 @@ class GameRepository(IGamesRepository):
         )
         for row in rows:
             id, t = row
-            if time.time() - t < timeout:
+            if time.time() - t > timeout:
                 self.cancel_invitation(id)
 
     def cancel_invitation(self, invitation_id) -> bool:
