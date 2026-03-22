@@ -22,6 +22,18 @@ color_map = {
     "green": (0, 1, 0),
 }
 
+# Meeple position mappings (9-position grid)
+MEEPLE_POS_GRID = {
+    "NW": (0, 0), "N": (0, 1), "NE": (0, 2),
+    "W": (1, 0), "C": (1, 1), "E": (1, 2),
+    "SW": (2, 0), "S": (2, 1), "SE": (2, 2),
+}
+
+# Directional meeple positions (4-position compass)
+MEEPLE_POS_CARDINAL = {
+    "N": (0, 1), "E": (1, 2), "S": (2, 1), "W": (1, 0),
+}
+
 
 def normalize_name(name: str) -> str:
     """Return the key used in texture cache for a given tile identifier."""

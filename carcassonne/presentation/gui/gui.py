@@ -4,6 +4,7 @@ from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.board_view import BoardView
 from carcassonne.presentation.gui.error_message_view import ErrorMessageView
 from carcassonne.presentation.gui.info_message import InfoMessage
+from carcassonne.presentation.gui.menus.ai_menu import AiMenu
 from carcassonne.presentation.gui.menus.keybinds_menu import KeybindsMenu
 from carcassonne.presentation.gui.window_view import WindowView
 from carcassonne.presentation.gui import utils
@@ -89,6 +90,8 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
         window.stack.add_named(self.keybinds_view, "keybinds_menu")
+        self.ai_view = AiMenu(self)
+        window.stack.add_named(self.ai_view, "ai_menu")
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
@@ -226,6 +229,7 @@ class GameGUI(Gtk.Application):
     def start_singleplayer(self, button):
         # self.game.start_new_game(mode="single")
         self.window.stack.set_visible_child_name("game")
+        commands_handler_gui.on_new_gui(self)
         self.board_view.grab_focus()
 
     def start_multiplayer(self, button):

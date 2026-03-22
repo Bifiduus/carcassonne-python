@@ -12,10 +12,8 @@ gi.require_version("Gtk", "4.0")
 class BoardView(Gtk.DrawingArea):
     def __init__(self, game_data: Any, tile_size: int = 100) -> None:
         super().__init__()
-
         self.game_data = game_data
         self.tile_size = tile_size
-        # content dimensions are arbitrary; the drawing code will adapt
         self.set_content_width(900)
         self.set_content_height(700)
         self.set_draw_func(self.on_draw)
@@ -23,21 +21,14 @@ class BoardView(Gtk.DrawingArea):
         self.textures: Dict[str, GdkPixbuf.Pixbuf] = {}
         self.load_textures()
 
-        self.offset_x = 0
-        self.offset_y = 0
-        self.ghost_x = None
-        self.ghost_y = None
+        self.offset_x = self.offset_y = 0
+        self.ghost_x = self.ghost_y = None
+        self.background: GdkPixbuf.Pixbuf | None = None
 
         self._setup_input_controllers()
-        # flag used by the drag/ghost logic; set by GameGUI when the
-        # preview is pressed
         self.game_data.is_dragging = False
-
-        # ensure keyboard events can be received
         self.set_focusable(True)
         self.grab_focus()
-
-        self.background: GdkPixbuf.Pixbuf | None = None
 
     def set_background(self, image_path: str) -> None:
         """Load a background image for the board."""
@@ -49,6 +40,7 @@ class BoardView(Gtk.DrawingArea):
         self.queue_draw()
 
     # ---------- internal helpers ----------------------------------------
+
     def _setup_input_controllers(self) -> None:
         """Create and attach the various GTK event controllers used by the
         board (mouse motion, clicks, key presses).
@@ -68,22 +60,12 @@ class BoardView(Gtk.DrawingArea):
         self.add_controller(key_controller)
 
         # accept drops from the preview widget (tile name strings)
-        """drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
+        drop = Gtk.DropTarget.new(str, Gdk.DragAction.MOVE)
         drop.connect("drop", self.on_drop)
         drop.connect("enter", self.on_drag_enter)
         drop.connect("motion", self.on_drag_motion)
         drop.connect("leave", self.on_drag_leave)
-        self.add_controller(drop)"""
-
-    def _normalize_name(self, name: str) -> str:
-        """Turn a tile identifier into the key used in ``self.textures``.
-
-        A name like "XX/NN" becomes "XXNN"; others are left unchanged.
-        """
-        if "/" in name:
-            parts = name.split("/")
-            return f"{parts[0]}{parts[1]}"
-        return name
+        self.add_controller(drop)
 
     def load_textures(self) -> None:
         """Populate ``self.textures`` with all PNG images found in the
@@ -102,6 +84,28 @@ class BoardView(Gtk.DrawingArea):
                 name = os.path.splitext(file)[0]
                 full_path = os.path.join(images_dir, file)
                 self.textures[name] = GdkPixbuf.Pixbuf.new_from_file(full_path)
+
+    def _reset_ghost(self) -> None:
+        """Reset ghost tile state and redraw."""
+        self.game_data.is_dragging = False
+        self.ghost_x = self.ghost_y = None
+        self.queue_draw()
+
+    def _create_move_str(self, grid_x: int, grid_y: int) -> str | None:
+        """Create a move string if placement is valid, else return None."""
+        vertex_id, side = self.game_data.game.get_close_neighbors(
+            grid_x, grid_y)
+        if vertex_id is None or side is None:
+            return None
+        orientation = self.game_data.current_orientation
+        return (f"{self.game_data.current_tile.current_tile}/{vertex_id}"
+                f"{['N', 'E', 'S', 'W'][side]}{orientation}")
+
+    def _set_tile_placement(self, grid_x: int, grid_y: int, move_str: str) -> None:
+        """Set the current tile's placement data."""
+        self.game_data.current_tile.move = move_str
+        self.game_data.current_tile.x = grid_x
+        self.game_data.current_tile.y = grid_y
 
     # =========================
     # 🎨 DRAW
@@ -127,8 +131,6 @@ class BoardView(Gtk.DrawingArea):
         else:
             cr.set_source_rgb(0.6, 0.6, 0.6)
             cr.paint()
-        """cr.set_source_rgb(0.6, 0.6, 0.6)
-        cr.paint()"""
 
         board_data = self.game_data.game.get_board_data()
         if not board_data:
@@ -276,27 +278,14 @@ class BoardView(Gtk.DrawingArea):
             and current_tile.meeple_pos
             and board_utils.is_previewed_tile(current_tile, tile_data)
         ):
-            string_to_pos = {
-                "NW": (0, 0),
-                "N": (0, 1),
-                "NE": (0, 2),
-                "W": (1, 0),
-                "C": (1, 1),
-                "E": (1, 2),
-                "SW": (2, 0),
-                "S": (2, 1),
-                "SE": (2, 2),
-            }
-            row, col = string_to_pos.get(
-                self.game_data.current_tile.meeple_pos, (1, 1))
+            row, col = board_utils.MEEPLE_POS_GRID.get(
+                current_tile.meeple_pos, (1, 1))
             cell = size / 3
-            cx = x + col * cell
-            cy = y + row * cell
+            cx, cy = x + col * cell, y + row * cell
             padding = cell * 0.2
-            current_player = self.game_data.game.get_current_player()
-            color = current_player.get_color()
-            r, g, b = board_utils.color_map.get(color, (1, 0, 0))
-            cr.set_source_rgba(r, g, b, 0.7)  # Semi-transparent for preview
+            r, g, b = board_utils.color_map.get(
+                self.game_data.game.get_current_player().get_color(), (1, 0, 0))
+            cr.set_source_rgba(r, g, b, 0.7)
             cr.set_line_width(3)
             cr.move_to(cx + padding, cy + padding)
             cr.line_to(cx + cell - padding, cy + cell - padding)
@@ -304,21 +293,13 @@ class BoardView(Gtk.DrawingArea):
             cr.line_to(cx + padding, cy + cell - padding)
             cr.stroke()
 
-        # Draw hint meeple if this is the hint tile and meeple is set
         if is_hint and tile_data.get("meeple"):
-            string_to_pos = {
-                "N": (0, 1),
-                "E": (1, 2),
-                "S": (2, 1),
-                "W": (1, 0),
-            }
-            row, col = string_to_pos.get(tile_data["meeple"], (1, 1))
+            row, col = board_utils.MEEPLE_POS_CARDINAL.get(
+                tile_data["meeple"], (1, 1))
             cell = size / 3
-            cx = x + col * cell
-            cy = y + row * cell
+            cx, cy = x + col * cell, y + row * cell
             padding = cell * 0.2
-            # Use gray color for hint meeple
-            cr.set_source_rgba(0.5, 0.5, 0.5, 0.8)  # Gray semi-transparent
+            cr.set_source_rgba(0.5, 0.5, 0.5, 0.8)
             cr.set_line_width(3)
             cr.move_to(cx + padding, cy + padding)
             cr.line_to(cx + cell - padding, cy + cell - padding)
@@ -337,117 +318,45 @@ class BoardView(Gtk.DrawingArea):
     # =========================
 
     def on_click(self, gesture, n_press, mouse_x, mouse_y):
-        """Handle left‑button clicks on the board.
-
-        There are two distinct interactions:
-
-        1. **Placement click** – the first click when a tile is held will
-           record the destination but *not* select a meeple.  If the tile
-           arrived via a drag operation, we ignore this event entirely and
-           let ``on_mouse_release`` or ``on_drop`` do the work.
-        2. **Meeple click** – any subsequent click inside the already‑placed
-           tile simply chooses a meeple position without altering the move.
-        """
-        # ignore clicks while we're already dragging; placement happens on
-        # release instead
-        if self.game_data.is_dragging:
-            return
-
-        if not self.game_data.current_tile:
+        """Handle left‑button clicks on the board."""
+        if self.game_data.is_dragging or not self.game_data.current_tile:
             self.queue_draw()
             return
 
-        # if the tile already has a move string, treat this as a
-        # meeple‑selection click
+        # if the tile already has a move string, treat this as a meeple‑selection click
         if self.game_data.current_tile.move:
-            if self._click_within_current_tile(mouse_x, mouse_y):
-                result = self._meeple_zone(mouse_x, mouse_y)
+            offsets = self.get_board_offsets()
+            if board_utils.click_within_current_tile(
+                mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile
+            ):
+                result = board_utils.meeple_zone(
+                    mouse_x, mouse_y, offsets, self.tile_size, self.game_data.current_tile
+                )
                 self.game_data.current_tile.meeple_pos = result
                 self.queue_draw()
             return
 
-        # otherwise this is the first placement click
+        # First placement click
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
-        vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y
-        )
-        if vertex_id is None or side is None:
-            self.queue_draw()
-            return
-
-        orientation = self.game_data.current_orientation
-        move_str = (
-            f"{self.game_data.current_tile.current_tile}/"
-            f"{vertex_id}{['N', 'E', 'S', 'W'][side]}{orientation}"
-        )
-        self.game_data.current_tile.move = move_str
-        self.game_data.current_tile.x = grid_x
-        self.game_data.current_tile.y = grid_y
-        # stop any ghost; tile has been dropped by click
-        self.game_data.is_dragging = False
-
-        self.ghost_x = None
-        self.ghost_y = None
-        self.queue_draw()
-
-    def _click_within_current_tile(self, mouse_x, mouse_y) -> bool:
-        offsets = self.get_board_offsets()
-        return board_utils.click_within_current_tile(
-            mouse_x,
-            mouse_y,
-            offsets,
-            self.tile_size,
-            self.game_data.current_tile,
-        )
-
-    def _meeple_zone(self, mouse_x, mouse_y) -> str:
-        offsets = self.get_board_offsets()
-        return board_utils.meeple_zone(
-            mouse_x,
-            mouse_y,
-            offsets,
-            self.tile_size,
-            self.game_data.current_tile,
-        )
+        move_str = self._create_move_str(grid_x, grid_y)
+        if move_str:
+            self._set_tile_placement(grid_x, grid_y, move_str)
+        self._reset_ghost()
 
     def on_drop(self, controller, value, x, y):
-        """Handle a tile name string dropped on the board.
-
-        The preview widget already implements a Gtk.DragSource, so this
-        method is the corresponding destination handler.  We translate the
-        pointer coordinates to a grid location exactly as the click/release
-        handlers do, storing the move string and tile coordinates.  Meeple
-        placement remains a separate click after the drop.
-        """
+        """Handle a tile name string dropped on the board."""
         grid_x, grid_y = self.pixel_to_grid(x, y)
-        vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y
-        )
-        if vertex_id is not None and side is not None:
-            orientation = self.game_data.current_orientation
-            move_str = (
-                f"{self.game_data.current_tile.current_tile}/"
-                f"{vertex_id}{['N', 'E', 'S', 'W'][side]}{orientation}"
-            )
-            self.game_data.current_tile.move = move_str
-            self.game_data.current_tile.x = grid_x
-            self.game_data.current_tile.y = grid_y
-            # keep the tile in place so the player can pick a meeple later
-
-        # Stop ghost regardless of whether the drop was valid
-        self.game_data.is_dragging = False
-        self.ghost_x = None
-        self.ghost_y = None
-
-        self.queue_draw()
+        move_str = self._create_move_str(grid_x, grid_y)
+        if move_str:
+            self._set_tile_placement(grid_x, grid_y, move_str)
+        self._reset_ghost()
         return True
 
     def on_drag_enter(self, controller, x, y):
         """Handle drag entering the board area."""
         if self.game_data.current_tile:
             self.game_data.is_dragging = True
-            self.ghost_x = x
-            self.ghost_y = y
+            self.ghost_x, self.ghost_y = x, y
             self.queue_draw()
             self.grab_focus()
             return Gdk.DragAction.MOVE
@@ -456,60 +365,47 @@ class BoardView(Gtk.DrawingArea):
     def on_drag_motion(self, controller, x, y):
         """Handle drag motion over the board."""
         if self.game_data.is_dragging:
-            self.ghost_x = x
-            self.ghost_y = y
+            self.ghost_x, self.ghost_y = x, y
             self.queue_draw()
             self.grab_focus()
         return Gdk.DragAction.MOVE
 
     def on_drag_leave(self, controller):
         """Handle drag leaving the board area."""
-        self.game_data.is_dragging = False
-        self.ghost_x = None
-        self.ghost_y = None
+        self._reset_ghost()
         self.grab_focus()
-        self.queue_draw()
 
     def on_key_press(self, controller, keyval, keycode, state):
         step = 20
-        if keyval == Gdk.KEY_z:  # up
-            self.offset_y += step
-        elif keyval == Gdk.KEY_s:  # down
-            self.offset_y -= step
-        elif keyval == Gdk.KEY_q:  # left
-            self.offset_x += step
-        elif keyval == Gdk.KEY_d:  # right
-            self.offset_x -= step
+        key_map = {
+            Gdk.KEY_z: (0, step),     # up
+            Gdk.KEY_s: (0, -step),    # down
+            Gdk.KEY_q: (step, 0),     # left
+            Gdk.KEY_d: (-step, 0),    # right
+        }
+        if keyval in key_map:
+            dx, dy = key_map[keyval]
+            self.offset_x += dx
+            self.offset_y += dy
+            self.queue_draw()
+            return True
         elif keyval == Gdk.KEY_r:
             self.game_data.rotate_current_tile()
-        else:
-            return False
-
-        self.queue_draw()
-        return True
+            self.queue_draw()
+            return True
+        return False
 
     def get_board_offsets(self) -> Tuple[int, int, int, int]:
         tiles = self.game_data.game.get_board_data()
         if not tiles:
             return 0, 0, 0, 0
-        positions = [(t["x"], t["y"]) for t in tiles]
-        min_x = min(x for x, y in positions)
-        min_y = min(y for x, y in positions)
-        max_x = max(x for x, y in positions)
-        max_y = max(y for x, y in positions)
-        tile = self.tile_size
-        width = self.get_allocated_width()
-        height = self.get_allocated_height()
-        board_width = (max_x - min_x + 1) * tile
-        board_height = (max_y - min_y + 1) * tile
-        base_offset_x = (width - board_width) // 2
-        base_offset_y = (height - board_height) // 2
-        return (
-            base_offset_x + self.offset_x,
-            base_offset_y + self.offset_y,
-            min_x,
-            min_y,
-        )
+        xs, ys = zip(*[(t["x"], t["y"]) for t in tiles])
+        min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
+        size = self.tile_size
+        w, h = self.get_allocated_width(), self.get_allocated_height()
+        board_w, board_h = (max_x - min_x + 1) * \
+            size, (max_y - min_y + 1) * size
+        return ((w - board_w) // 2 + self.offset_x, (h - board_h) // 2 + self.offset_y, min_x, min_y)
 
     def pixel_to_grid(self, mouse_x: float, mouse_y: float) -> Tuple[int, int]:
         """Convert pixel coordinates to grid coordinates."""
@@ -517,10 +413,8 @@ class BoardView(Gtk.DrawingArea):
         if not tiles:
             return 0, 0
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
-        tile = self.tile_size
-        grid_x = int((mouse_x - offset_x) // tile) + min_x
-        grid_y = int((mouse_y - offset_y) // tile) + min_y
-        return grid_x, grid_y
+        size = self.tile_size
+        return int((mouse_x - offset_x) // size) + min_x, int((mouse_y - offset_y) // size) + min_y
 
     # =========================
     # 🔄 REFRESH
@@ -537,27 +431,8 @@ class BoardView(Gtk.DrawingArea):
     def on_mouse_release(self, gesture, n_press, mouse_x, mouse_y):
         if not self.game_data.is_dragging or not self.game_data.current_tile:
             return
-
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)
-
-        vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y
-        )
-
-        if vertex_id is not None and side is not None:
-            orientation = self.game_data.current_orientation
-            move_str = (
-                f"{self.game_data.current_tile.current_tile}/{vertex_id}"
-                f"{['N', 'E', 'S', 'W'][side]}{orientation}"
-            )
-            self.game_data.current_tile.move = move_str
-            self.game_data.current_tile.x = grid_x
-            self.game_data.current_tile.y = grid_y
-            # keep the tile in place so the player can pick a meeple later
-
-        # Stop ghost regardless of whether the drop was valid
-        self.game_data.is_dragging = False
-        self.ghost_x = None
-        self.ghost_y = None
-
-        self.queue_draw()
+        move_str = self._create_move_str(grid_x, grid_y)
+        if move_str:
+            self._set_tile_placement(grid_x, grid_y, move_str)
+        self._reset_ghost()

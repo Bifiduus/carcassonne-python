@@ -51,6 +51,13 @@ class PlayersView(Gtk.Box):
 
     # -------------------------------------------------
 
+    def _format_time(self, seconds: float) -> str:
+        """Format seconds as mm:ss."""
+        total_seconds = max(0, int(seconds))
+        minutes = total_seconds // 60
+        secs = total_seconds % 60
+        return f"{minutes}:{secs:02d}"
+
     def refresh(self) -> None:
         """Rebuild players list."""
 
@@ -68,6 +75,9 @@ class PlayersView(Gtk.Box):
         players = list(game.players.values())
         current = game.get_current_player()
 
+        # Check if blitz mode is enabled
+        is_blitz = game.get_game_configuration().get("blitz", False)
+
         for p in players:
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
@@ -75,22 +85,29 @@ class PlayersView(Gtk.Box):
             score = p.get_score_int()
             color = p.get_color()
             meeple = p.get_meeples()
+            player_id = p.get_id()
 
             label = Gtk.Label()
             label.set_use_markup(True)
             label.set_xalign(0)
 
+            # Build the display text with blitz time if enabled
+            base_text = f"{name} : {score} | {meeple}x"
+            if is_blitz:
+                remaining_time = game.blitz_manager.remaining_time_seconds_by_player.get(
+                    player_id, 0
+                )
+                time_str = self._format_time(remaining_time)
+                base_text += f" | {time_str}"
+
             if p is current:
                 label.set_markup(
-                    f'<span foreground="{color}"><b>{name} :'
-                    f'{score} | {meeple}x </b>'
-                    "</span>"
+                    f'<span foreground="{color}"><b>{base_text}</b></span>'
                 )
                 row.add_css_class("current-player")
             else:
                 label.set_markup(
-                    f'<span foreground="{color}">{name} :'
-                    f' {score} | {meeple}x</span>'
+                    f'<span foreground="{color}">{base_text}</span>'
                 )
 
             row.append(label)
