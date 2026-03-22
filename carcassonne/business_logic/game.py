@@ -171,7 +171,12 @@ class Game(IGameService):
         while self.get_current_player().is_ai_player():
             if self.end_game():
                 break
+            previous_player_id = self.get_current_player().get_id()
             self.play_ai_turn()
+            if self.end_game():
+                break
+            if self.get_current_player().get_id() == previous_player_id:
+                break
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -302,7 +307,19 @@ class Game(IGameService):
             print(f"Vous devez jouer la tuile en main: {self.current_hand}")
             return False
 
-        ok = self.rules_manager.check_move(move, self.graph)
+        try:
+            parsed_move = parse_move(move)
+        except ValueError:
+            return False
+        if parsed_move.get("meeple") and self.get_current_player().get_meeples() <= 0:
+            print("No meeple remaining")
+            return False
+
+        ok = self.rules_manager.check_move(
+            move,
+            self.graph,
+            current_player_id=self.get_current_player().get_id(),
+        )
         if ok:
             current_player = self.get_current_player()
             self.board.add_tile_to_board(
@@ -374,10 +391,8 @@ class Game(IGameService):
             move = model.mcts(self)
         if not move:
             print(
-                f"AI Player {ai_player.get_username()} has no legal move. "
-                "Passing turn."
+                f"AI Player {ai_player.get_username()} has no legal move."
             )
-            self.skip_current_player()
             return
         if eval_score is None:
             print(
@@ -389,7 +404,30 @@ class Game(IGameService):
                 f"with evaluation score: {eval_score}"
             )
         # print("main avant de jouer le coup" + self.current_hand)
-        self.play_move(move)
+        move_played = self.play_move(move)
+        if not move_played:
+            fallback_played = False
+            try:
+                parsed = parse_move(move)
+            except ValueError:
+                parsed = {}
+
+            # AI can still produce meeple moves from simulations where stock
+            # differs from the live state. Retry once without meeple.
+            if parsed.get("meeple") and ai_player.get_meeples() <= 0:
+                fallback_move = move.rsplit("/", 1)[0]
+                print(
+                    "AI move rejected (no meeples left). "
+                    f"Retrying without meeple: {fallback_move}"
+                )
+                fallback_played = self.play_move(fallback_move)
+
+            if not fallback_played:
+                print(
+                    f"AI Player {ai_player.get_username()} produced an "
+                    "invalid move."
+                )
+                return
 
     def get_game_configuration(self):
         return self.game_configuration.get_setting()
@@ -654,7 +692,7 @@ class Game(IGameService):
     def add_online_players(self, players: list[Player]):
         colors = ["red", "blue", "yellow", "black", "white"]
         for i in range(0, len(players)+1):
-            players[i].set_color(colors[i-1] % len(colors))
+            players[i].set_color(colors[(i - 1) % len(colors)])
             self.players[i] = players[i]
 
     def add_players(self, nb_players: int) -> None:

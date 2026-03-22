@@ -41,7 +41,11 @@ class RulesManager:
         self.tiles_info = tiles_info
 
     def can_place_meeple_on_tile_side(
-        self, move_parts: list[str], counter: int, graph: IGraphData
+        self,
+        move_parts: list[str],
+        counter: int,
+        graph: IGraphData,
+        current_player_id: int | None = None,
     ) -> bool:
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
@@ -97,7 +101,11 @@ class RulesManager:
             return False
         for meeple in graph_copy.get_meeples():
             if meeple.lands_components == set_name_to_place:
-                # print("A meeple is already present on this land component.")
+                if (
+                    current_player_id is not None
+                    and meeple.player_id == current_player_id
+                ):
+                    continue
                 graph_copy.remove_vertex(tile_id)
                 return False
         graph_copy.remove_vertex(tile_id)
@@ -157,7 +165,12 @@ class RulesManager:
 
         return True
 
-    def is_legal_move(self, move_parts: list[str], graph: IGraphData) -> bool:
+    def is_legal_move(
+        self,
+        move_parts: list[str],
+        graph: IGraphData,
+        current_player_id: int | None = None,
+    ) -> bool:
         """
         Checks if the given move is legal in the current game state.
 
@@ -207,7 +220,7 @@ class RulesManager:
         counter += 1
         if len(move_parts) - 1 == counter:
             if not self.can_place_meeple_on_tile_side(
-                move_parts, counter, graph
+                move_parts, counter, graph, current_player_id
             ):
                 # print("Meeple cannot be placed on that side.")
                 return False
@@ -297,7 +310,12 @@ class RulesManager:
 
         return True
 
-    def check_move(self, move: str, graph: IGraphData) -> bool:
+    def check_move(
+        self,
+        move: str,
+        graph: IGraphData,
+        current_player_id: int | None = None,
+    ) -> bool:
         """
         Check whether a move is valid in the current game state.
 
@@ -307,7 +325,9 @@ class RulesManager:
             # print("failed at is_correct")
             return False
 
-        if not self.is_legal_move(move.split("/"), graph):
+        if not self.is_legal_move(
+            move.split("/"), graph, current_player_id
+        ):
             return False
 
         return True

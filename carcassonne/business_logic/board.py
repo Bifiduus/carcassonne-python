@@ -78,31 +78,47 @@ class Board:
             tile_id=turn, graph=graph, tiles_info=tiles_info
         )
 
-        # print(f"Updated lands components after adding tile {turn}")
         if counter == len(move_parts) - 1:
-            # meeple
-            land_pos = Tile.direction_matrix[integers_placement[1]][
-                GraphLogic.match_matrix[move_parts[counter]][0]
-            ][GraphLogic.match_matrix[move_parts[counter]][1]]
-            set_name_to_place = None
-            for land_type in graph.lands_components:
-                for set_name, sets in graph.lands_components.get(
-                    land_type
-                ).items():
-                    for tileid, directions in sets:
-                        if tileid == tile_id and land_pos in directions:
-                            set_name_to_place = set_name
-            meeple = Meeple(
-                player_id=current_player_id,
-                tile_id=tile_id,
-                position=tiles_info.meeple_placement_list.index(
-                    move_parts[counter]
-                ),
-                lands_components=set_name_to_place,
-            )
-            graph.add_meeple(meeple)
-            players[current_player_id].remove_meeple()
-        # print(f"Updated meeples after adding tile {turn}: {graph.meeples}")
+            if current_player.get_meeples() > 0:
+                vertex = graph.get_vertex(tile_id)
+                if vertex is not None:
+                    side_placement = move_parts[counter]
+                    side_x, side_y = GraphLogic.match_matrix[side_placement]
+                    land_type = vertex.get_matrix()[side_x][side_y]
+
+                    if land_type and land_type in graph.lands_components:
+                        land_pos = Tile.direction_matrix[integers_placement[1]][
+                            side_x
+                        ][side_y]
+                        set_name_to_place = None
+                        for set_name, sets in graph.lands_components[
+                            land_type
+                        ].items():
+                            for tileid, directions in sets:
+                                if (
+                                    tileid == tile_id
+                                    and land_pos in directions
+                                ):
+                                    set_name_to_place = set_name
+                                    break
+                            if set_name_to_place is not None:
+                                break
+
+                        if set_name_to_place is not None and not any(
+                            meeple.lands_components == set_name_to_place
+                            and meeple.player_id != current_player_id
+                            for meeple in graph.get_meeples()
+                        ):
+                            meeple = Meeple(
+                                player_id=current_player_id,
+                                tile_id=tile_id,
+                                position=tiles_info.meeple_placement_list.index(
+                                    move_parts[counter]
+                                ),
+                                lands_components=set_name_to_place,
+                            )
+                            graph.add_meeple(meeple)
+                            players[current_player_id].remove_meeple()
 
         # Score completed components at end of turn
         # Map player_id (0-based) to Player object
