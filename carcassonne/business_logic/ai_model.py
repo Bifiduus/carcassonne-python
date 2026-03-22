@@ -635,22 +635,22 @@ class MCTSPlayer:
                         # -1 means no meeple placement
                         for meeple in range(-1,
                                             len(self.meeple_placement_list)):
-                        for meeple in meeple_indices:
-                            if meeple == -1:
-                                move = f"{tile}/{vertex_id}{direction}"\
-                                    f"{rotation}"
-                            else:
-                                move = f"{tile}/{vertex_id}{direction}"\
-                                    f"{rotation}"\
-                                    f"/{self.meeple_placement_list[meeple]}"
-                            # Verify the move is legal
-                            id_player = game.get_current_player().get_id()
-                            if game.rules_manager.check_move(
-                                move,
-                                game.graph,
-                                current_player_id=id_player,
-                            ):
-                                possible_moves.append(move)
+                            for meeple in meeple_indices:
+                                if meeple == -1:
+                                    move = f"{tile}/{vertex_id}{direction}"\
+                                        f"{rotation}"
+                                else:
+                                    move = f"{tile}/{vertex_id}{direction}"\
+                                        f"{rotation}"\
+                                        f"/{self.meeple_placement_list[meeple]}"
+                                # Verify the move is legal
+                                id_player = game.get_current_player().get_id()
+                                if game.rules_manager.check_move(
+                                    move,
+                                    game.graph,
+                                    current_player_id=id_player,
+                                ):
+                                    possible_moves.append(move)
         return possible_moves
 
     def terminal(self, tiles_info: ITilesInfo) -> bool:
@@ -840,9 +840,6 @@ class MCTSNode:
 
     def add_reward(self, reward):
         self.total_reward += reward
-
-
-<< << << < HEAD
 
 
 class MCTSPlayer:
@@ -1068,10 +1065,6 @@ class MCTSPlayer:
             return True
         # print("THINGD WENT WRONG")
         return False
-
-
-== == == =
->>>>>> > e9ef874(changes pep8)
 
 
 class AIModelManager:
