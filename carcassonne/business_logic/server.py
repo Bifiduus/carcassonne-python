@@ -41,7 +41,7 @@ class Server(IServerService):
         self.client_sockets: dict[str, socket.socket] = {}
         self.player_clients: dict[socket.socket,
                                   str] = {}  # Map socket -> client_id
-        self.registered_clients: dict[int, bool] = {}
+        self.registered_clients: dict[socket.socket, bool] = {}
         self.client_id = None
         self.connected_server = ""
         # repository for persistence
@@ -160,8 +160,8 @@ class Server(IServerService):
                         # Add client to the list
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
-                            id = len(self.client_sockets)+1
-                            self.registered_clients[id] = False
+                            id = len(self.connected_clients)+1
+                            self.registered_clients[client_socket] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,))
@@ -210,8 +210,8 @@ class Server(IServerService):
     def is_server_running(self) -> bool:
         return self.should_stop.is_set()
 
-    def client_is_registered(self, client_index: int) -> bool:
-        return self.registered_clients[client_index]
+    def client_is_registered(self, client_socket: socket.socket) -> bool:
+        return self.registered_clients[client_socket]
 
     def handle_client(self, client_socket: socket.socket):
         """
@@ -226,16 +226,16 @@ class Server(IServerService):
                 client, message = data.decode().split(":")
                 message = message.strip()
                 client_index = self.repo.get_id_from_username(client)
-                if self.client_is_registered(client_index):
+                if self.client_is_registered(client_socket):
                     if message == "quit":
                         answer = self.handle_communication.command_quit(
                             client)
-                        answer = f"Server -> Client{client_index}: {answer}"
+                        answer = f"Server -> Client{client_index}: {answer}\n"
                         client_socket.send(answer.encode())
                         self.has_joined_server = False
                         break
 
-                    # Process data (e.g., echo back for now; replace with game logic)
+                    # Process data
                     response = self.process_message(client, message)
                     # fonction qui check le statut d'une invitation et l'envoie à l'host
                     answer = f"Server -> Client{client_index}: {response}\n"
@@ -253,10 +253,9 @@ class Server(IServerService):
                     self.connected_clients.remove(client_socket)
                 if client_socket in self.player_clients:
                     username = self.player_clients[client_socket]
-                    client_id = self.repo.get_id_from_username(username)
                     del self.client_sockets[username]
                     del self.player_clients[client_socket]
-                    del self.registered_clients[client_id]
+                    del self.registered_clients[client_socket]
 
     def handle_client_registering(self, message: str, client_socket: socket.socket, client_index: int):
         """
@@ -275,7 +274,7 @@ class Server(IServerService):
                 success = self.repo.registering(username, password)
                 if success:
                     answer = f"{preface}\nSuccessfull registering !\n"
-                    self.registered_clients[client_index] = True
+                    self.registered_clients[client_socket] = True
                     self.client_sockets[username] = client_socket
                     self.player_clients[client_socket] = username
                 else:
@@ -296,31 +295,31 @@ class Server(IServerService):
         if self.server is not None:
             if message == "ping":
                 answer = self.handle_communication.command_ping()
-            if message == "server status":
+            elif message == "server status":
                 answer = self.handle_communication.command_server_status()
-            if message.startswith("new"):
+            elif message.startswith("new"):
                 answer = self.handle_communication.command_new(
                     message, client_id)
-            if message.startswith("players"):
+            elif message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
-            if message.startswith("play"):
+            elif message.startswith("play"):
                 answer = self.handle_communication.command_play(
                     message, client_id)
-            if message == "scoreboard":
+            elif message == "scoreboard":
                 answer = self.handle_communication.command_scoreboard()
-            if message == "accept":
+            elif message == "accept":
                 answer = self.handle_communication.command_accept(
                     client_id)
-            if message == "decline":
+            elif message == "decline":
                 answer = self.handle_communication.command_decline(
                     client_id)
-            if message.startswith("cancel"):
+            elif message.startswith("cancel"):
                 answer = self.handle_communication.command_cancel(
                     client_id, message.strip("cancel"))
-            if message == "away":
+            elif message == "away":
                 answer = self.handle_communication.command_away(
                     client_id)
-            if message == "back":
+            elif message == "back":
                 answer = self.handle_communication.command_back(
                     client_id)
         return answer
@@ -525,7 +524,8 @@ class Server(IServerService):
             client_id, message = message.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()
             message = message.strip()
-            print(message, end="")
+            print()
+            print(message)
             if message.startswith("OPPONENT_MOVE"):
                 move = message.split("OPPONENT_MOVE")
                 # will check in the database for the game id and
