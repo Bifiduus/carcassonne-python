@@ -1,6 +1,5 @@
 """Utility helpers shared by several GUI modules."""
 
-import math
 import os
 
 from gi.repository import Gtk, Gdk, Gio
@@ -57,7 +56,7 @@ def load_css() -> None:
         font-weight: bold;
         color: orange;
         letter-spacing: 2px;
-        text-shadow: 
+        text-shadow:
             2px 2px 0px #000,
             4px 4px 6px rgba(0,0,0,0.5);
     }
@@ -66,7 +65,6 @@ def load_css() -> None:
     font-size: 36px;
     font-weight: 900;
     color: #ff9800;
-    
     }
 
 

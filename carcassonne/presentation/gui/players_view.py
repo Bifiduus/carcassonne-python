@@ -18,8 +18,7 @@ it could be reused in other contexts or driven by a mock service in tests.
 """
 
 from typing import Any
-import cairo
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -83,13 +82,15 @@ class PlayersView(Gtk.Box):
 
             if p is current:
                 label.set_markup(
-                    f'<span foreground="{color}"><b>{name} : {score} | {meeple}x </b>'
+                    f'<span foreground="{color}"><b>{name} :'
+                    f'{score} | {meeple}x </b>'
                     "</span>"
                 )
                 row.add_css_class("current-player")
             else:
                 label.set_markup(
-                    f'<span foreground="{color}">{name} : {score} | {meeple}x</span>'
+                    f'<span foreground="{color}">{name} :'
+                    f' {score} | {meeple}x</span>'
                 )
 
             row.append(label)

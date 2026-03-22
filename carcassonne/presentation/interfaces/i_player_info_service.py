@@ -1,9 +1,7 @@
 """Module providing an interface between Présentation and Logique Métier"""
 
 from abc import ABC, abstractmethod
-from typing import Any
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
 from carcassonne.business_logic.score_manager import PlayerScore
 

@@ -1,5 +1,4 @@
 from gi.repository import GLib, Gtk, Gio, Gdk, GdkPixbuf
-import os
 
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.board_view import BoardView
@@ -141,7 +140,8 @@ class GameGUI(Gtk.Application):
         back_button.set_valign(Gtk.Align.START)
         back_button.add_css_class("back-buttons")
         back_button.connect(
-            "clicked", lambda b: self.window.stack.set_visible_child_name("menu"))
+            "clicked", lambda b:
+            self.window.stack.set_visible_child_name("menu"))
         overlay.add_overlay(back_button)
 
         # end-turn button in a semi-transparent panel

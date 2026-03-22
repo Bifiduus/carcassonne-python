@@ -1,5 +1,5 @@
 from carcassonne.presentation.gui import utils
-from gi.repository import Gio, Gtk
+from gi.repository import Gtk
 
 """
 Lists of commands that can be triggered from the GUI, and their handlers.

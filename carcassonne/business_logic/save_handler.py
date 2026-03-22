@@ -88,13 +88,23 @@ class SaveHandler:
         game_score = False
         sections_parsed = 0
         for line in lines:
-            # Strip whitespace and remove inline comments (after '#').
-            line = line.strip()
-            if not line or line.startswith("#"):
+            # Remove comments and strip whitespace
+            line = line.strip().split("#")[0]
+
+            # Handle cases where comments are inline with data
+            if line.find("{") != -1 and line.find("}") == -1:
+                line1 = line.split("{")[0]
+                line2 = line.split("{")[1]
+                line = line1 + line2
+
+            if line.find("{") != -1:
+                line = line.split("{")[0]
+                commentary = True
                 continue
-            if "#" in line:
-                line = line.split("#", 1)[0].rstrip()
-            if not line:
+            if line.find("}") != -1:
+                line = line.split("}")[1]
+                commentary = False
+            if commentary:
                 continue
 
             if line == "[Settings]":

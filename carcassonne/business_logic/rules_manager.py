@@ -9,7 +9,6 @@ import re
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
-from carcassonne.datas.meeple_data import Meeple
 from carcassonne.datas.tiles_info import Tile
 
 NORTHWEST_MATRIX = (0, 0)
@@ -92,7 +91,8 @@ class RulesManager:
                 if tileid == tile_id and land_pos in directions:
                     set_name_to_place = set_name
         if set_name_to_place is None:
-            # print("Error in finding the land component to place the meeple on")
+            # print("Error in finding the land component
+            #  to place the meeple on")
             graph_copy.remove_vertex(tile_id)
             return False
         for meeple in graph_copy.get_meeples():
@@ -142,10 +142,16 @@ class RulesManager:
 
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
                     if land1 != land2:
-                        '''print("position : " + str(tile1pos) + ", and land 1 of " + str(tile1) + " with orientation " +
-                              str(orientation) + " and direction " + str(dir) + " is " + land1)
-                        print("position : " + str(next_pos) + ", and land 2 of " + vertex.get_name() + " with orientation " +
-                              str(vertex.get_orientation()) + " and direction " + str((dir + 2) % 4) + " is " + land2)'''
+                        '''print("position : " + str(tile1pos) + ",
+                          and land 1 of " + str(tile1) +
+                          " with orientation " +
+                              str(orientation) + " and direction "
+                                + str(dir) + " is " + land1)
+                        print("position : " +
+                        str(next_pos) + ", and land 2 of "
+                          + vertex.get_name() + " with orientation " +
+                              str(vertex.get_orientation()) + " and direction "
+                                + str((dir + 2) % 4) + " is " + land2)'''
                         return False
                     break
 

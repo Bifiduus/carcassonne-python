@@ -13,7 +13,6 @@ from carcassonne.business_logic.graph_logic import GraphLogic
 from carcassonne.business_logic.score_manager import ScoreManager
 from carcassonne.datas.meeple_data import Meeple
 from carcassonne.datas.tiles_info import Tile
-from carcassonne.datas.serializer import parse_move, build_str
 
 NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)

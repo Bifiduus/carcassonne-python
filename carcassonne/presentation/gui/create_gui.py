@@ -1,4 +1,3 @@
-from carcassonne.presentation.gui.board_view import BoardView
 from carcassonne.presentation.gui.gui import GameGUI
 from carcassonne.presentation.gui.game_data_gui import GameDataGui
 
