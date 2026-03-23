@@ -242,6 +242,8 @@ class Client(IClientService):
                 self.client_id = self.repo.get_next_available_id()
             server = self.connected_to_server
             username = self.repo.get_online_player(server)
+            if text == "quit":
+                self.has_joined_server = False
             text = f"{username}: " + text
             self.client.sendall(text.encode())
             return True
