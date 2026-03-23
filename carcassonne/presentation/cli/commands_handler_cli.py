@@ -17,6 +17,7 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 def new_game(self, args, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("new "+args)
+        return
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
 
@@ -50,6 +51,24 @@ def help(self) -> None:
     print("  show configuration - Affiche la configuration actuelle du jeu")
     print("  set (PARAM=VALUE)  - Définit un paramètre de configuration")
     print("  play <move>        - Joue le coup spécifié par <move>")
+    print("  server start [PORT] - Lance le serveur sur le port [PORT]")
+    print("  server list        - Affiche la liste des serveurs disponible")
+    print("  server stop        - Arrête le serveur")
+    print(
+        "  join [IP[:PORT]]   - Connecte le client au serveur à l'adresse"
+        " donnée ou à son propre serveur")
+    print("  quit               - Quitte le serveur")
+    print("  ping               - Affiche le ping du serveur")
+    print("  server status      - Affiche le status du serveur")
+    print("  players [PLAYER_ID] - Affiche les joueurs connectés ou"
+          " des informations sur le joueur [PLAYER_ID] si [PLAYER_ID]")
+    print("  scoreboard         - Affiche le scoreboard du serveur")
+    print("  new PLAYER_ID ..   - Commence une partie avec le ou les joueurs proposé(s)")
+    print("  accept             - Accepte l'invitation reçu")
+    print("  decline            - Refuse l'invitation reçu")
+    print("  cancel             - Annule l'invitation envoyée")
+    print("  away               - Change le status en \"away\"")
+    print("  back               - Change le status en \"idle\"")
 
 
 def quit(self, server_service: IServerService, client_service: IClientService) -> None:
