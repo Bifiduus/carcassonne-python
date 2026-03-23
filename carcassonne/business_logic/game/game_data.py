@@ -1,3 +1,4 @@
+from carcassonne.business_logic.game.river_manager import RiverManager
 from carcassonne.business_logic.score_manager import ScoreManager
 from carcassonne.datas.deck import Deck
 from carcassonne.datas.seed import Seed
@@ -48,8 +49,7 @@ class GameData():
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.error_message = ""
-        self.blitz_manager = BlitzManager(self)
-        self.deck_manager = DeckManager(self)
+
         self._end_game_scored = False
         self._initialize_blitz_state()
         self.reset()

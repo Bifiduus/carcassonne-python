@@ -82,15 +82,18 @@ class Deck:
             "CRRR",
             "CRRR",
             "RRRR",
-            # "FSRS/m",
-            # "FFSF", "FFSF",
-            # "FSFS", "FSFS",
-            # "FFSS", "FFSS",
-            # "CSCS",
-            # "CCSS",
-            # "CSRS",
-            # "RSRS",
-            # "RRSS",
+
+        ]
+        self.river_tiles = [
+            "FSRS/m",
+            "FFSF", "FFSF",
+            "FSFS", "FSFS",
+            "FFSS", "FFSS",
+            "CSCS",
+            "CCSS",
+            "CSRS",
+            "RSRS",
+            "RRSS"
         ]
 
     def draw(self) -> str | None:
@@ -104,6 +107,18 @@ class Deck:
             print("Deck is empty, cannot draw a tile.")
             return None
         return self.tiles.pop()
+
+    def draw_river_tile(self) -> str | None:
+        """
+        Draw and return the next river tile from the river tile list.
+
+        Returns:
+            The drawn river tile string, or None if no river tiles remain
+        """
+        if not self.river_tiles:
+            print("No more river tiles available.")
+            return None
+        return self.river_tiles.pop(0)
 
     def len(self) -> int:
         """Return the number of tiles currently left in the deck."""

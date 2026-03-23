@@ -107,6 +107,13 @@ def main() -> int:
     )
 
     parser.add_argument(
+        "-r",
+        "--river",
+        help="enable river mode",
+        action="store_true",
+    )
+
+    parser.add_argument(
         "-at",
         "--ai-time",
         help="max seconds for AI moves (default: 5s)",
@@ -175,8 +182,8 @@ def main() -> int:
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
     server_service: IServerService = Server(game_repo)
-    game.shuffle_algo = args.shuffle
-    game.default_seed = args.seed
+    game.game_data.shuffle_algo = args.shuffle
+    game.game_data.default_seed = args.seed
     if args.version:
         print(f"Carcassonne: version {__version__}")
     if args.debug:
@@ -185,6 +192,9 @@ def main() -> int:
         print(f"Loading game from file: {args.file}")
     if args.verbose:
         print("Verbose mode enabled.")
+    if args.river:
+        print("River mode enabled.")
+        game.game_data.river_manager.initialize_river()
     if args.gui:
         print("GUI mode enabled.")
         CreateGui(game)

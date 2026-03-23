@@ -8,6 +8,15 @@ from carcassonne.datas.meeple_data import Meeple
 
 class IGraphData(ABC):
     # pylint: disable=missing-class-docstring
+
+    @abstractmethod
+    def initialize_starting_tile(self) -> None:
+        pass
+
+    @abstractmethod
+    def initialize_starting_tile_river(self) -> None:
+        pass
+
     @abstractmethod
     def add_vertex(
         self,

@@ -210,3 +210,15 @@ class Game(IGameService):
 
     def end_game(self) -> bool:
         return self.end_game_manager.end_game()
+
+    def undo(self) -> None:
+        self.undo_redo_manager.undo()
+
+    def redo(self) -> None:
+        self.undo_redo_manager.redo()
+
+    def provide_hint(self) -> str:
+        return self.commands.provide_hint()
+
+    def get_all_players_remaining_time_seconds(self) -> List[tuple[int, float]]:
+        return self.blitz_manager.get_all_players_remaining_time_seconds()
