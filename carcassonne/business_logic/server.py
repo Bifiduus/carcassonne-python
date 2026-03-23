@@ -153,7 +153,6 @@ class Server(IServerService):
                             client)
                         answer = f"Server -> Client{client_index}: {answer}\n"
                         client_socket.send(answer.encode())
-                        self.has_joined_server = False
                         break
 
                     # Process data
