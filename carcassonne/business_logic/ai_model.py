@@ -511,14 +511,16 @@ class ExpectimaxPlayer:
 
 
 class MCTSNode:
-    def __init__(self, game: 'Game', parent=None, move=None, player=None):
+    def __init__(self, game: 'Game', mcts_player: 'MCTSPlayer',
+                 parent=None, move=None, player=None):
         self.state = game
         self.parent = parent
         self.move = move  # coup qui mène à ce noeud
         self.player = player  # joueur qui a joué ce coup
+        self.mcts_player = mcts_player
 
         self.children = []
-        self.untried_moves = MCTSPlayer.get_possible_moves(
+        self.untried_moves = mcts_player.get_possible_moves(
             game.current_hand, game)
 
         self.visits = 0
@@ -580,6 +582,7 @@ class MCTSPlayer:
             self.set_evaluation_method(eval_name)
         self.start_time = start_time
         self.max_time = max_time
+        self.end_time = self.start_time + self.max_time
 
     def set_evaluation_method(self, name_or_fn):
         """Set evaluation by name or by callable.
@@ -676,10 +679,11 @@ class MCTSPlayer:
     def expand(self, node: MCTSNode):
         move = node.get_untried_moves().pop()
         self.play_move_for_ai(
-            node.get_state(), node.get_move())
+            node.get_state(), move)
 
         child = MCTSNode(
-            state=node.get_state(),
+            game=node.get_state(),
+            mcts_player=self,
             parent=node,
             move=move,
             player=node.get_state().get_current_player(),
@@ -690,20 +694,28 @@ class MCTSPlayer:
 
     def rollout(self, state: 'Game'):
         counter = 0
-        while not self.terminal(state.tiles_info):
+        while not self.terminal(
+                state.tiles_info) and time.time() < self.end_time:
             moves = self.get_possible_moves(state.current_hand, state)
+            while not moves:
+                state.deck.append(state.current_hand)
+                state.current_hand = None
+                state.draw_tile()
+                moves = self.get_possible_moves(state.current_hand, state)
+
             move = random.choice(moves)
-            state = self.play_move_for_ai(
+            self.play_move_for_ai(
                 state, move)
             counter += 1
 
         return counter
 
-    def compute_reward(self, state: 'Game', root_player):
-        scores = state.get_scores()
+    def compute_reward(self, state: 'Game', root_player_id):
+        scores = {i: state.players[i].get_score().score
+                  for i in range(len(state.players))}
 
-        vp1 = scores[root_player]
-        vp2 = max(v for p, v in scores.items() if p != root_player)
+        vp1 = scores[root_player_id]
+        vp2 = max(v for p, v in scores.items() if p != root_player_id)
 
         return vp1 - vp2
 
@@ -712,19 +724,21 @@ class MCTSPlayer:
         while counter > 0:
             self.undo_for_ai(state)
             counter -= 1
-        while node is not None:
+        while node.get_parent() is not None:
             node.add_visitor(1)
             node.add_reward(reward)
             node = node.get_parent()
             self.undo_for_ai(state)
 
     def mcts(self, game_root: 'Game'):
-        root = MCTSNode(game_root)
+        root = MCTSNode(game_root, self)
         root_player = game_root.get_current_player()
 
-        end_time = time.time() + self.max_time
+        hand_to_restore: str = game_root.current_hand
 
-        while time.time() < end_time:
+        deck_to_restore: list[str] = game_root.deck.tiles.copy()
+
+        while time.time() < self.end_time:
             node: MCTSNode = root
             state = game_root
 
@@ -742,15 +756,21 @@ class MCTSPlayer:
             counter: int = self.rollout(state)
 
             # 🧮 REWARD
-            reward = self.compute_reward(state, root_player)
+            reward = self.compute_reward(state, root_player.get_id())
 
             # 🔁 BACKPROP
             self.backpropagate(node, reward, counter)
+
+            game_root.current_hand = hand_to_restore
+
+            game_root.deck.tiles = deck_to_restore
 
         # 🏁 Choisir le meilleur coup
         best_child: MCTSNode = max(
             root.children, key=lambda c: c.get_total_reward()
             / float(c.get_visits()))
+
+        game_root.current_hand = hand_to_restore
         return best_child.get_move()
 
     def undo_for_ai(self, game: 'Game') -> None:
@@ -793,51 +813,6 @@ class MCTSPlayer:
             return True
         # print("THINGD WENT WRONG")
         return False
-
-
-class MCTSNode:
-    def __init__(self, game: 'Game', parent=None, move=None, player=None):
-        self.state = game
-        self.parent = parent
-        self.move = move  # coup qui mène à ce noeud
-        self.player = player  # joueur qui a joué ce coup
-
-        self.children = []
-        self.untried_moves = MCTSPlayer.get_possible_moves(
-            game.current_hand, game)
-
-        self.visits = 0
-        self.total_reward = 0.0  # somme des récompenses
-
-    def get_state(self):
-        return self.state
-
-    def get_parent(self):
-        return self.parent
-
-    def get_move(self):
-        return self.move
-
-    def get_player(self):
-        return self.player
-
-    def get_children(self):
-        return self.children
-
-    def get_untried_moves(self):
-        return self.untried_moves
-
-    def get_visits(self):
-        return self.visits
-
-    def get_total_reward(self):
-        return self.total_reward
-
-    def add_visitor(self, number):
-        self.visits += number
-
-    def add_reward(self, reward):
-        self.total_reward += reward
 
 
 class AIModelManager:

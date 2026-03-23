@@ -132,7 +132,7 @@ class TilesInfo(ITilesInfo):
             "CCCR/b": 2,
             "FRFR": 8,
             "FFRR": 9,
-            "CRFR": 4,
+            "CRFR": 3,
             "CFRR": 3,
             "CRRF": 3,
             "CCRR": 3,
@@ -141,15 +141,15 @@ class TilesInfo(ITilesInfo):
             "CRRR": 3,
             "RRRR": 1,
             # 'The River' Expansion
-            "FSRS/m": 1,
-            "FFSF": 2,
-            "FSFS": 2,
-            "FFSS": 2,
-            "CSCS": 1,
-            "CCSS": 1,
-            "CSRS": 1,
-            "RSRS": 1,
-            "RRSS": 1,
+            # "FSRS/m": 1,
+            # "FFSF": 2,
+            # "FSFS": 2,
+            # "FFSS": 2,
+            # "CSCS": 1,
+            # "CCSS": 1,
+            # "CSRS": 1,
+            # "RSRS": 1,
+            # "RRSS": 1,
         }
 
         self.tiles_lands = {
