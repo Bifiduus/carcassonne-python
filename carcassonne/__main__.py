@@ -4,11 +4,14 @@ import argparse
 import sys
 
 from carcassonne import __version__
+from carcassonne.business_logic.client import Client
 from carcassonne.business_logic.interfaces.i_games_repository\
     import IGamesRepository
 from carcassonne.business_logic.server import Server
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.presentation.gui.create_gui import CreateGui
+from carcassonne.presentation.gui.gui import GameGUI
+from carcassonne.presentation.interfaces.i_client_service import IClientService
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
@@ -175,6 +178,8 @@ def main() -> int:
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
     server_service: IServerService = Server(game_repo)
+    client_service: IClientService = Client(game_repo, server_service)
+    # mettre en place client_service dans le reste
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
     if args.version:
@@ -189,7 +194,7 @@ def main() -> int:
         print("GUI mode enabled.")
         CreateGui(game)
     else:
-        game_cli = GameCLI(game, server_service)
+        game_cli = GameCLI(game, server_service, client_service)
         game_cli.run()
 
     # Call a function to start the game
