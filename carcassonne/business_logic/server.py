@@ -244,6 +244,45 @@ class Server(IServerService):
             elif message == "back":
                 answer = self.handle_communication.command_back(
                     client_id)
+            elif message.startswith("board"):
+                answer = self.handle_communication.command_board(
+                    client_id)
+            elif message.startswith("set"):
+                answer = self.handle_communication.command_set(
+                    client_id, message)
+            elif message == "show configuration":
+                answer = self.handle_communication.command_config(
+                    client_id)
+            elif message == "show history":
+                answer = self.handle_communication.command_history(
+                    client_id)
+            elif message == "show score":
+                answer = self.handle_communication.command_score(
+                    client_id)
+            elif message == "show hand":
+                answer = self.handle_communication.command_hand(
+                    client_id)
+            elif message == "redo":
+                answer = self.handle_communication.command_redo(
+                    client_id)
+            elif message == "undo":
+                answer = self.handle_communication.command_undo(
+                    client_id)
+            elif message == "hint":
+                answer = self.handle_communication.command_hint(
+                    client_id)
+            elif message == "draw":
+                answer = self.handle_communication.command_draw(
+                    client_id)
+            elif message == "shuffle":
+                answer = self.handle_communication.command_shuffle(
+                    client_id)
+            elif message.startswith("save "):
+                answer = self.handle_communication.command_save(
+                    client_id, message)
+            elif message.startswith("load "):
+                answer = self.handle_communication.command_load(
+                    client_id, message)
         return answer
 
     def check_clients_list_validity(self, clients_list: list[str]) -> list[str]:

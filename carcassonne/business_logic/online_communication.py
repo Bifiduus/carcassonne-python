@@ -143,3 +143,115 @@ class OnlineCommunication:
         if game.play_move(move):
             return "Move played.\n" + board + "\n"
         return "Move not played.\n" + board + "\n"
+
+    def command_board(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        return game.get_printed_board()
+
+    def command_set(self, client_id: str, message: str) -> str:
+        content = message[3:].strip()
+        if "=" in content:
+            param, value = content.split("=", 1)
+            param = param.strip()
+            value = value.strip()
+        else:
+            param = content
+            value = None
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        game.set_game_configuration(param, value)
+        return f"Paramètre '{param}' défini à '{value}'."
+
+    def command_config(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        config = game.get_game_configuration()
+        answer = "Configuration actuelle du jeu:"
+        for key, value in config.items():
+            answer += f"  {key}: {value}"
+        return answer
+
+    def command_history(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        history = game.get_history()
+        answer = "Current history:"
+        for move in history:
+            answer += f" {move}"
+        return answer
+
+    def command_score(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        if game.end_game():
+            game.score_manager.score_end_of_game(game.graph, game.players)
+        else:
+            game.score_manager.score_end_of_turn(game.graph, game.players)
+        answer = "Score:"
+        for player in game.players.values():
+            answer += f"{player.get_username()} {'AI' if player.is_ai else ''}: {player.score} points.\n"
+        return answer
+
+    def command_hand(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        answer = ""
+        if game.current_hand is None:
+            answer = "Aucune tuile en main."
+        else:
+            answer = f"Tuile en main: {game.current_hand}"
+        return answer
+
+    def command_redo(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        game.redo()
+        return "Derniers coups rétablis."
+
+    def command_undo(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        game.undo()
+        return "Derniers coups annulés."
+
+    def command_hint(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        return game.provide_hint()
+
+    def command_draw(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        already_had_tile: bool = game.current_hand is not None
+        tile = game.draw_tile()
+        answer = ""
+        if tile is None:
+            answer = "La pioche est vide!"
+        elif already_had_tile:
+            answer = "Vous avez déjà une tuile en main."
+        else:
+            answer = f"Tuile piochée: {tile}"
+        return answer
+
+    def command_shuffle(self, client_id: str) -> str:
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        seed = game.shuffle_deck()
+        return f"Pioche mélangée. Algo: {game.shuffle_algo}. Seed: {seed}"
+
+    def command_save(self, client_id: str, message: str) -> str:
+        filename = message[5:].strip()
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        if game.save_game_to_file(filename) == 0:
+            return f"Partie sauvegardée dans {filename}."
+        return f"Erreur de la sauvegarde dans {filename}."
+
+    def command_load(self, client_id: str, message: str) -> str:
+        filename = message[5:].strip()
+        game_id: int = self.server.repo.get_game(client_id)
+        game: Game = self.server.current_games_list[game_id][1]
+        if game.load_game_from_file(filename) == 0:
+            return f"Partie chargée depuis {filename}."
+        return f"Erreur du chargement depuis {filename}."
