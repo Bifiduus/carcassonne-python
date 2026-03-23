@@ -15,7 +15,7 @@ from carcassonne.business_logic.rules_manager import RulesManager
 from carcassonne.datas.serializer import build_str
 
 if TYPE_CHECKING:
-    from .game import Game
+    from carcassonne.business_logic.game.game import Game
 from carcassonne.business_logic.heuristic import (
     evaluate_state as heuristic_evaluate_state,
 )
@@ -42,8 +42,8 @@ class RandomPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = game.graph.get_verticies()
-        can_place_meeple = game.get_current_player().get_meeples() > 0
+        vertices = game.game_data.graph.get_verticies()
+        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -56,7 +56,7 @@ class RandomPlayer:
             for direction in ["N", "S", "E", "W"]:
                 # Check if this side is free
                 if vertex.is_neighbor_free(
-                    game.tiles_info.direction_dict.get(direction, 0)
+                    game.game_data.tiles_info.direction_dict.get(direction, 0)
                 ):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
@@ -72,10 +72,10 @@ class RandomPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.get_current_player().get_id()
-                            if game.rules_manager.check_move(
+                            id_player = game.game_data.get_current_player().get_id()
+                            if game.game_data.rules_manager.check_move(
                                 move,
-                                game.graph,
+                                game.game_data.graph,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -87,7 +87,7 @@ class RandomPlayer:
 
         possible_moves = self.get_possible_moves(tile, game)
 
-        return r.choice(possible_moves) if possible_moves else None
+        return r.choice(possible_moves) if possible_moves else ''
 
 
 class ExpectimaxPlayer:
@@ -159,8 +159,8 @@ class ExpectimaxPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = copy.deepcopy(game.graph.get_verticies())
-        can_place_meeple = game.get_current_player().get_meeples() > 0
+        vertices = copy.deepcopy(game.game_data.graph.get_verticies())
+        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -173,7 +173,7 @@ class ExpectimaxPlayer:
             for direction in ["N", "S", "E", "W"]:
                 # Check if this side is free
                 if vertex.is_neighbor_free(
-                    game.tiles_info.direction_dict.get(direction, 0)
+                    game.game_data.tiles_info.direction_dict.get(direction, 0)
                 ):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
@@ -189,10 +189,10 @@ class ExpectimaxPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.get_current_player().get_id()
-                            if game.rules_manager.check_move(
+                            id_player = game.game_data.get_current_player().get_id()
+                            if game.game_data.rules_manager.check_move(
                                 move,
-                                game.graph,
+                                game.game_data.graph,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -204,13 +204,14 @@ class ExpectimaxPlayer:
         """Recursive search function for Expectimax algorithm.
         Adapt between Max and Min nodes based on the player parameter."""
         check_time = time.time() - self.start_time > self.max_time
-        if self.terminal(game.tiles_info) or depth == 0 or check_time:
+        if self.terminal(game.game_data.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player), ''
-        restored_hand = game.current_hand
+        restored_hand = game.game_data.current_hand
         best_move = ""
         if player_to_max == next_player:  # Max node
             max_eval = float("-inf")
-            possible_moves = self.get_possible_moves(game.current_hand, game)
+            possible_moves = self.get_possible_moves(
+                game.game_data.current_hand, game)
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
             for move in possible_moves:
@@ -224,13 +225,13 @@ class ExpectimaxPlayer:
                     alpha,
                     beta,
                     player_to_max,
-                    (next_player + 1) % len(game.players),
+                    (next_player + 1) % len(game.game_data.players),
                 )
 
                 self.undo_for_ai(game)
                 # print("Move undone")
                 # game.get_board()
-                game.current_hand = restored_hand
+                game.game_data.current_hand = restored_hand
                 if eval_score > max_eval and depth == self.depth_max:
                     best_move = move
                 max_eval = max(max_eval, eval_score)
@@ -241,7 +242,8 @@ class ExpectimaxPlayer:
             return max_eval, best_move
         else:  # Min node (opponent's turn)
             min_eval = float("inf")
-            possible_moves = self.get_possible_moves(game.current_hand, game)
+            possible_moves = self.get_possible_moves(
+                game.game_data.current_hand, game)
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
             for move in possible_moves:
@@ -257,12 +259,12 @@ class ExpectimaxPlayer:
                     alpha,
                     beta,
                     player_to_max,
-                    (next_player + 1) % len(game.players),
+                    (next_player + 1) % len(game.game_data.players),
                 )
 
                 self.undo_for_ai(game)
                 # print("Move undone")
-                game.current_hand = restored_hand
+                game.game_data.current_hand = restored_hand
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
                 check_time = time.time() - self.start_time > self.max_time
@@ -288,7 +290,7 @@ class ExpectimaxPlayer:
         probingFactor: int = 1,
     ) -> float:
 
-        moves = self.get_possible_moves(game.current_hand, game)
+        moves = self.get_possible_moves(game.game_data.current_hand, game)
         # ordonner les moves selon un heuristique rapide à calculer
         # moves = sorted(
         #     moves,
@@ -298,7 +300,7 @@ class ExpectimaxPlayer:
 
         best = alpha
 
-        restored_hand = game.current_hand
+        restored_hand = game.game_data.current_hand
 
         for i in range(min(probingFactor, len(moves))):
             move = moves[i]
@@ -311,11 +313,11 @@ class ExpectimaxPlayer:
                 best,
                 beta,
                 player_to_max,
-                (next_player + 1) % len(game.players),
+                (next_player + 1) % len(game.game_data.players),
             )
 
             self.undo_for_ai(game)
-            game.current_hand = restored_hand
+            game.game_data.current_hand = restored_hand
 
             if value >= beta:
                 return beta
@@ -328,11 +330,11 @@ class ExpectimaxPlayer:
     def apply_chance_event(self, game: "Game", tile: str) -> None:
         """Apply a chance event (e.g., drawing a tile) to the game state."""
         # TODO: Make the next tile to draw the tile parameter
-        game.current_hand = tile
+        game.game_data.current_hand = tile
         # TODO: bug with river tiles when they are commented out in the deck.
         # game.deck.tiles.remove(tile)
 
-    def num_successors(self, tiles_info: ITilesInfo) -> int:
+    def num_successors(self, tiles_info: ITilesInfo) -> dict:
         """Return the number of possible chance events from this state."""
         N = {}
         for tile, tile_nb in tiles_info.tiles_count.items():
@@ -362,10 +364,10 @@ class ExpectimaxPlayer:
         next_player: int,
     ) -> float:
         check_time = time.time() - self.start_time > self.max_time
-        if self.terminal(game.tiles_info) or depth == 0 or check_time:
+        if self.terminal(game.game_data.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player)
 
-        successors = self.num_successors(game.tiles_info)
+        successors = self.num_successors(game.game_data.tiles_info)
 
         total_tiles = sum(successors.values())
 
@@ -442,19 +444,20 @@ class ExpectimaxPlayer:
     def undo_for_ai(self, game: 'Game') -> None:
         """Undo the last AI move."""
         if game.history.past_moves:
-            previous_play = game.history.pop_past()
-            game.history.push_future(previous_play)
-            game.board.remove_tile_from_board(
+            previous_play = game.game_data.history.pop_past()
+            game.game_data.history.push_future(previous_play)
+            game.game_data.board.remove_tile_from_board(
                 build_str(previous_play),
-                game.graph,
-                game.tiles_info,
-                game.history,
-                players=game.players,
+                game.game_data.graph,
+                game.game_data.tiles_info,
+                game.game_data.history,
+                players=game.game_data.players,
             )
-            game.current_player_order_list = (
-                game.current_player_order_list - 1
-            ) % game.get_number_of_players()
-            game.deck.tiles.append(previous_play.move_str.split("/")[0])
+            game.game_data.current_player_order_list = (
+                game.game_data.current_player_order_list - 1
+            ) % game.game_data.get_number_of_players()
+            game.game_data.deck.tiles.append(
+                previous_play.move_str.split("/")[0])
             # Restore player scores, meeple counts and scored_components to
             # their exact state before this simulation step so that AI
             # exploration never permanently modifies the real game state.
@@ -463,46 +466,47 @@ class ExpectimaxPlayer:
                     self._sim_state_stack.pop()
                 )
                 for pid, score in saved_scores.items():
-                    game.players[pid].get_score().set_points(score)
+                    game.game_data.players[pid].get_score().set_points(score)
                 for pid, meeples in saved_meeples.items():
-                    game.players[pid].meeples = meeples
-                game.board.scored_components = saved_scored
+                    game.game_data.players[pid].meeples = meeples
+                game.game_data.board.scored_components = saved_scored
 
     def play_move_for_ai(self, game: "Game", move: str) -> None:
         """Play move for AI exploring the possibilities."""
-        tile_code = game.extract_tile_code(move)
-        if tile_code is not None and tile_code != game.current_hand:
-            print(f"Vous devez jouer la tuile en main: {game.current_hand}")
+        tile_code = game.game_data.extract_tile_code(move)
+        if tile_code is not None and tile_code != game.game_data.current_hand:
+            print(
+                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
             return False
 
-        ok = game.rules_manager.check_move(
+        ok = game.game_data.rules_manager.check_move(
             move,
-            game.graph,
-            current_player_id=game.get_current_player().get_id(),
+            game.game_data.graph,
+            current_player_id=game.game_data.get_current_player().get_id(),
         )
         if ok:
             # Snapshot scoring state before modifying it so undo_for_ai can
             # fully restore the real game state.
             saved_scores = {
-                pid: p.get_score_int() for pid, p in game.players.items()
+                pid: p.get_score_int() for pid, p in game.game_data.players.items()
             }
             saved_meeples = {
-                pid: p.get_meeples() for pid, p in game.players.items()
+                pid: p.get_meeples() for pid, p in game.game_data.players.items()
             }
-            saved_scored = set(game.board.scored_components)
-            game.board.add_tile_to_board(
+            saved_scored = set(game.game_data.board.scored_components)
+            game.game_data.board.add_tile_to_board(
                 move,
-                game.graph,
-                game.tiles_info,
-                game.history,
-                game.players,
-                game.players_order,
-                game.get_current_player(),
+                game.game_data.graph,
+                game.game_data.tiles_info,
+                game.game_data.history,
+                game.game_data.players,
+                game.game_data.players_order,
+                game.game_data.get_current_player(),
             )
-            game.current_hand = None
-            game.current_player_order_list = (
-                game.current_player_order_list + 1
-            ) % game.get_number_of_players()
+            game.game_data.current_hand = None
+            game.game_data.current_player_order_list = (
+                game.game_data.current_player_order_list + 1
+            ) % game.game_data.get_number_of_players()
             self._sim_state_stack.append(
                 (saved_scores, saved_meeples, saved_scored)
             )
@@ -615,7 +619,7 @@ class MCTSPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = game.graph.get_verticies()
+        vertices = game.game_data.graph.get_verticies()
         can_place_meeple = game.get_current_player().get_meeples() > 0
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
@@ -628,7 +632,7 @@ class MCTSPlayer:
             # Try each direction (North, South, East, West)
             for direction in ['N', 'S', 'E', 'W']:
                 # Check if this side is free
-                directions = game.tiles_info.direction_dict
+                directions = game.game_data.tiles_info.direction_dict
                 if vertex.is_neighbor_free(directions.get(direction, 0)):
                     # Try each rotation (0, 90, 180, 270 degrees)
                     for rotation in range(4):
@@ -643,9 +647,9 @@ class MCTSPlayer:
                                     f"/{self.meeple_placement_list[meeple]}"
                             # Verify the move is legal
                             id_player = game.get_current_player().get_id()
-                            if game.rules_manager.check_move(
+                            if game.game_data.rules_manager.check_move(
                                 move,
-                                game.graph,
+                                game.game_data.graph,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -690,8 +694,9 @@ class MCTSPlayer:
 
     def rollout(self, state: 'Game'):
         counter = 0
-        while not self.terminal(state.tiles_info):
-            moves = self.get_possible_moves(state.current_hand, state)
+        while not self.terminal(state.game_data.tiles_info):
+            moves = self.get_possible_moves(
+                state.game_data.current_hand, state)
             move = random.choice(moves)
             state = self.play_move_for_ai(
                 state, move)

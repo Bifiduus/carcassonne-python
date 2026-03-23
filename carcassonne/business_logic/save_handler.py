@@ -27,7 +27,7 @@ class SaveHandler:
         number_of_ai_players = self.game.get_number_of_ai_players()
         file.write(
             "NumberOfPlayers: "
-            + str(len(self.game.players) - number_of_ai_players)
+            + str(len(self.game.game_data.players) - number_of_ai_players)
             + ","
             + str(number_of_ai_players)
             + "\n"
@@ -35,7 +35,7 @@ class SaveHandler:
         file.write(
             "PlayersOrder: ["
             + ", ".join(
-                [f"{player_id} " for player_id in self.game.players_order]
+                [f"{player_id} " for player_id in self.game.game_data.players_order]
             )
             + "]\n"
         )
@@ -44,12 +44,12 @@ class SaveHandler:
             + ", ".join(
                 [
                     f"{player.get_id()}: {player.get_score().score} "
-                    for player in self.game.players.values()
+                    for player in self.game.game_data.players.values()
                 ]
             )
             + "]\n"
         )
-        file.write("Seed: " + str(self.game.seed) + "\n")
+        file.write("Seed: " + str(self.game.game_data.seed) + "\n")
         file.write("\n")
         file.write("[History]\n")
         moves_history = self.game.get_history()
@@ -183,11 +183,12 @@ class SaveHandler:
                     if line == "":
                         print("Warning: Players order not specified.")
                         continue
-                    self.game.players_order = [
+                    self.game.game_data.players_order = [
                         int(player_id.strip())
                         for player_id in line.strip("[]").split(",")
                     ]
-                    print(f"Players order set to {self.game.players_order}.")
+                    print(
+                        f"Players order set to {self.game.game_data.players_order}.")
 
                 if line.startswith("GameScore:"):
                     # Assuming the format is "GameScore: [Player1ID: 10,
@@ -198,14 +199,14 @@ class SaveHandler:
                         continue
                     line = line.split("[")[1].strip("]")
                     scores = line.split(",")
-                    if len(scores) > len(self.game.players):
+                    if len(scores) > len(self.game.game_data.players):
                         print("Warning: More scores than players.")
                     for score in scores:
                         playerID, points = score.split(":")
-                        for player in self.game.players.values():
+                        for player in self.game.game_data.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
-                                player_number = self.game.players_order.index(
+                                player_number = self.game.game_data.players_order.index(
                                     player.get_id()
                                 )
                                 print(
@@ -221,9 +222,10 @@ class SaveHandler:
                     if line == "":
                         print("Warning: No seed.")
                         continue
-                    self.game.seed = int(line)
-                    self.game.shuffle_deck("fisher-yates", self.game.seed)
-                    print(self.game.deck.tiles)
+                    self.game.game_data.seed = int(line)
+                    self.game.shuffle_deck(
+                        "fisher-yates", self.game.game_data.seed)
+                    print(self.game.game_data.deck.tiles)
 
             elif history_section:
                 if not game_score:

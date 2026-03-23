@@ -9,19 +9,13 @@ import time
 from typing import Any, List
 
 from carcassonne.business_logic.game.commands_game import CommandsGame
-from carcassonne.business_logic.game.deck_manager import DeckManager
 from carcassonne.business_logic.game.end_game import EndGame
 from carcassonne.business_logic.game.game_data import GameData
 from carcassonne.business_logic.game.new_game import NewGame
 from carcassonne.business_logic.game.undo_redo_manager import UndoRedoManager
-
-from carcassonne.datas.serializer import parse_move
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
-
 from carcassonne.presentation.interfaces.i_game_service import IGameService
-
-from carcassonne.business_logic.game.blitz_manager import BlitzManager
 
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
@@ -32,64 +26,59 @@ class Game(IGameService):
         self, graphData: IGraphData, nb_players: int, config_overrides=None
     ) -> None:
         self.game_data = GameData(graphData, nb_players, config_overrides)
-        self.commansds = CommandsGame(self.game_data)
-        self.end_game = EndGame(self.game_data)
+        self.commands = CommandsGame(self.game_data, self)
+        self.end_game_manager = EndGame(self.game_data)
         self.undo_redo_manager = UndoRedoManager(self.game_data)
-        self.new_game = NewGame(self.game_data)
-        self.deck_manager = DeckManager(self.game_data)
-        self.blitz_manager = BlitzManager(self.game_data)
+        self.new_game = NewGame(self.game_data, self)
         self.river = None
 
     def get_history(self) -> List[str]:
         """Return the current play history."""
-        return self.history.list_history()
+        return self.game_data.history.list_history()
 
     def clear_undo_history(self) -> None:
-        self.history.clear_future()
+        self.game_data.history.clear_future()
 
     def is_undo_history_empty(self) -> bool:
-        return len(self.history.future_moves) == 0
+        return len(self.game_data.history.future_moves) == 0
 
     def get_game_configuration(self):
-        return self.game_configuration.get_setting()
+        return self.game_data.get_game_configuration()
 
     def save_config(self) -> None:
-        self.game_configuration.save_config()
+        self.game_data.game_configuration.save_config()
 
     def set_game_configuration(self, key: str, value) -> None:
         if key == "timeout":
             key = "time"
-        self.game_configuration.settings[key] = value
+        self.game_data.game_configuration.settings[key] = value
         if key in ("blitz", "time"):
-            self._initialize_blitz_state()
+            self.game_data._initialize_blitz_state()
 
     def get_maximum_number_of_players(self) -> int:
-        return self.maximum_number_of_players
+        return self.game_data.get_maximum_number_of_players()
 
     def get_minimum_number_of_players(self) -> int:
-        return self.minimum_number_of_players
+        return self.game_data.get_minimum_number_of_players()
 
     def get_number_of_players(self) -> int:
-        return len(self.players)
+        return self.game_data.get_number_of_players()
 
     def set_number_of_ai_players(self, num_players: int) -> None:
-        self.add_players(num_players)
-        self.number_of_ai_players = num_players
+        self.game_data.add_players(num_players)
+        self.game_data.number_of_ai_players = num_players
 
     def get_number_of_ai_players(self) -> int:
-        return self.number_of_ai_players
+        return self.game_data.number_of_ai_players
 
     def get_current_player(self) -> Player:
-        current_player_id = self.players_order[
-            self.current_player_order_list
-        ]
-        return self.players[current_player_id]
+        return self.game_data.get_current_player()
 
     def save_game_to_file(self, filename: str) -> int:
-        return self.save_handler.save_game_to_file(filename)
+        return self.game_data.save_handler.save_game_to_file(filename)
 
     def load_game_from_file(self, filename: str) -> int:
-        return self.save_handler.load_game_from_file(filename)
+        return self.game_data.save_handler.load_game_from_file(filename)
 
     def rotate_dirs(self, dirs: str | list, rotation: int) -> str | list:
         rotation = rotation % 4
@@ -97,8 +86,9 @@ class Game(IGameService):
 
     def generate_tile_ascii(self, vertex: Any) -> list[str]:
         dirs = list(vertex.get_name())  # [N, E, S, W]
-        rotation = self.graph.get_vertex_orientation(vertex.get_id())  # 0 à 3
-        meeples = self.graph.get_meeples()
+        rotation = self.game_data.graph.get_vertex_orientation(
+            vertex.get_id())  # 0 à 3
+        meeples = self.game_data.graph.get_meeples()
         for meeple in meeples:
             if meeple.tile_id == vertex.get_id():
                 pos_label = meeple.get_position_label()
@@ -114,7 +104,6 @@ class Game(IGameService):
         n, e, s, w = self.rotate_dirs(dirs, rotation)
         m = "{:^3}".format(vertex.get_id())
         if vertex.get_middle() != "":
-
             m = "{:^5}".format(
                 "[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]"
             )
@@ -129,7 +118,7 @@ class Game(IGameService):
         ]
 
     def get_board(self) -> list[Any] | None:
-        vertices = list(self.graph.get_verticies().values())
+        vertices = list(self.game_data.graph.get_verticies().values())
 
         if not vertices:
             print("No vertices.")
@@ -160,7 +149,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        vertices = self.graph.get_vertices_data()
+        vertices = self.game_data.graph.get_vertices_data()
 
         return list(vertices.values())
 
@@ -168,7 +157,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        vertice = self.graph.get_vertice_data(tile)
+        vertice = self.game_data.graph.get_vertice_data(tile)
 
         return vertice
 
@@ -176,7 +165,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        meeples = self.graph.get_meeples()
+        meeples = self.game_data.graph.get_meeples()
 
         return [vars(meeple) for meeple in meeples]
 
@@ -198,30 +187,26 @@ class Game(IGameService):
     def get_close_neighbors(
         self, x: int, y: int
     ) -> tuple[int | None, int | None]:
-        return self.graph.find_neighbor_at(x, y)
+        return self.game_data.graph.find_neighbor_at(x, y)
 
-    def add_online_players(self, players: list[Player]):
-        colors = ["red", "blue", "yellow", "black", "white"]
-        for i in range(0, len(players)+1):
-            players[i].set_color(colors[(i - 1) % len(colors)])
-            self.players[i] = players[i]
+    def add_online_players(self, players: list[Player]) -> str:
+        return self.new_game.start_online_game(players)
 
-    def add_players(self, nb_players: int) -> None:
-        colors = ["red", "blue", "yellow", "black", "white"]
-        for i in range(1, nb_players + 1):
-            self.players[i] = Player(
-                i, f"Player {i}", colors[(i - 2) % len(colors)], True
-            )
-            self.players_order.append(i)
-            self.number_of_ai_players += 1
+    def draw_tile(self) -> str | None:
+        return self.game_data.deck_manager.draw_tile()
 
-    def extract_tile_code(self, move):
-        try:
-            parsed = parse_move(move)
-        except ValueError:
-            return None
+    def shuffle_deck(self, algo=None, seed=None) -> int:
+        return self.game_data.deck_manager.shuffle_deck(algo, seed)
 
-        tile_code = parsed["tile_sides"]
-        if parsed.get("center"):
-            tile_code = f"{tile_code}/{parsed['center']}"
-        return tile_code
+    def play_move(self, move: str) -> bool:
+        return self.game_data.play_move(move)
+
+    def play_ai_turn(self) -> None:
+        self.game_data.play_ai_turn(self)
+
+    def start_new_game(self, players_order: list[int] | None = None,
+                       seed: int | None = None) -> None:
+        return self.new_game.start_new_game(players_order, seed)
+
+    def end_game(self) -> bool:
+        return self.end_game_manager.end_game()
