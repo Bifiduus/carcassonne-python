@@ -128,7 +128,7 @@ class BlitzManager:
         )
 
     def _configured_blitz_minutes(self) -> int:
-        settings = self.get_game_configuration()
+        settings = self.game_data.get_game_configuration()
         raw_value = settings.get("time", 30)
         try:
             minutes = int(raw_value)
@@ -137,51 +137,51 @@ class BlitzManager:
         return minutes if minutes > 0 else 30
 
     def _is_blitz_enabled(self) -> bool:
-        return bool(self.get_game_configuration().get("blitz", False))
+        return bool(self.game_data.get_game_configuration().get("blitz", False))
 
     def _initialize_blitz_state(self) -> None:
         self.reset(
-            player_ids=self.game_data.player_order,
+            player_ids=self.game_data.players_order,
             enabled=self._is_blitz_enabled(),
             minutes=self._configured_blitz_minutes(),
         )
         condition = self._advance_to_next_playable_player()
         if self._is_blitz_enabled() and condition:
-            self.start_turn(self.get_current_player().get_id())
+            self.start_turn(self.game_data.get_current_player().get_id())
 
     def _has_playable_player(self) -> bool:
-        for player_id in self.game_data.player_order:
+        for player_id in self.game_data.players_order:
             if not self.is_player_timed_out(player_id):
                 return True
         return False
 
     def _advance_to_next_playable_player(self) -> bool:
-        if not self.game_data.player_order:
+        if not self.game_data.players_order:
             return False
 
-        for _ in range(len(self.game_data.player_order)):
-            player_id = self.game_data.player_order[self.current_player_order_list]
+        for _ in range(len(self.game_data.players_order)):
+            player_id = self.game_data.players_order[self.game_data.current_player_order_list]
             if not self.is_player_timed_out(player_id):
                 return True
-            self.current_player_order_list = (
-                self.current_player_order_list + 1
-            ) % len(self.game_data.player_order)
+            self.game_data.current_player_order_list = (
+                self.game_data.current_player_order_list + 1
+            ) % len(self.game_data.players_order)
         return False
 
     def skip_current_player(self) -> bool:
         """Skip current player and advance to the next playable player."""
-        if not self.game_data.player_order:
+        if not self.game_data.players_order:
             return False
 
-        self.current_hand = None
-        self.current_player_order_list = (
-            self.current_player_order_list + 1
-        ) % len(self.game_data.player_order)
+        self.game_data.current_hand = None
+        self.game_data.current_player_order_list = (
+            self.game_data.current_player_order_list + 1
+        ) % len(self.game_data.players_order)
 
         if not self._advance_to_next_playable_player():
             return False
         if self._is_blitz_enabled():
-            self.start_turn(self.get_current_player().get_id())
+            self.start_turn(self.game_data.get_current_player().get_id())
         return True
 
     def tick_blitz(self) -> bool:
@@ -190,7 +190,7 @@ class BlitzManager:
         if not self._advance_to_next_playable_player():
             return False
 
-        current_player_id = self.get_current_player().get_id()
+        current_player_id = self.game_data.get_current_player().get_id()
         if self.active_player_id != current_player_id:
             self.start_turn(current_player_id)
 
@@ -205,7 +205,7 @@ class BlitzManager:
         if not self._is_blitz_enabled():
             return None
         self.tick_blitz()
-        current_player_id = self.get_current_player().get_id()
+        current_player_id = self.game_data.get_current_player().get_id()
         return self.get_remaining_seconds(current_player_id)
 
     def get_player_remaining_time_seconds(
@@ -214,7 +214,7 @@ class BlitzManager:
         if not self._is_blitz_enabled():
             return None
         self.tick_blitz()
-        if player_id not in self.players:
+        if player_id not in self.game_data.players:
             return None
         return self.get_remaining_seconds(player_id)
 
@@ -229,5 +229,5 @@ class BlitzManager:
                 player_id,
                 self.get_remaining_seconds(player_id),
             )
-            for player_id in self.game_data.game_data.player_order
+            for player_id in self.game_data.players_order
         ]

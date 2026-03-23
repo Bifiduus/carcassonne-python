@@ -10,7 +10,7 @@ from carcassonne.business_logic.server import Server
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.presentation.gui.create_gui import CreateGui
 from carcassonne.presentation.interfaces.i_game_service import IGameService
-from carcassonne.business_logic.game import Game
+from carcassonne.business_logic.game.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.graph_data import GraphData

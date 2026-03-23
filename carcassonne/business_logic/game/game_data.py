@@ -14,6 +14,9 @@ from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.business_logic.save_handler import SaveHandler
 from carcassonne.business_logic.game.blitz_manager import BlitzManager
+from carcassonne.business_logic.game.deck_manager import DeckManager
+import time
+import random as r
 
 
 class GameData():
@@ -27,13 +30,14 @@ class GameData():
         self.rules_manager: RulesManager = RulesManager(self.tiles_info)
         self.board: Board = Board()
         self.deck = Deck()
+        self.history = History()
         self.seed = None
         self.maximum_number_of_players = 5
         self.minimum_number_of_players = 2
         self.number_of_ai_players = 0
         self.default_seed = None
         self.shuffle_algo = "fisher-yates"
-        self.current_hand = None
+        self.current_hand: str | None = None
         self.save_file = None
         self.players: dict[int, Player] = {}
         self.players[0] = Player(0, "Player 0", "green")
@@ -44,9 +48,10 @@ class GameData():
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.error_message = ""
-        self.blitz_manager = BlitzManager()
+        self.blitz_manager = BlitzManager(self)
+        self.deck_manager = DeckManager(self)
         self._end_game_scored = False
-        # self._initialize_blitz_state()
+        self._initialize_blitz_state()
         self.reset()
 
     def reset(self):
@@ -56,6 +61,7 @@ class GameData():
         self.tiles_info = TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
         self.current_hand = None
+        self.history = History()
 
     def start_load_game(self):
         self.history.clear_history()
@@ -69,6 +75,77 @@ class GameData():
         self.current_player_order_list = 0
         self._end_game_scored = False
         self._initialize_blitz_state()
+
+    def add_players(self, nb_players: int) -> None:
+        """Add AI players to the game."""
+        colors = ["red", "blue", "yellow", "black", "white"]
+        for i in range(1, nb_players + 1):
+            self.players[i] = Player(
+                i, f"Player {i}", colors[(i - 2) % len(colors)], True
+            )
+            self.players_order.append(i)
+            self.number_of_ai_players += 1
+
+    def add_online_players(self, players: list[Player]) -> None:
+        """Add online players to the game."""
+        colors = ["red", "blue", "yellow", "black", "white"]
+        for i in range(len(players)):
+            players[i].set_color(colors[i % len(colors)])
+            self.players[i] = players[i]
+
+    def shuffle_players_order(self) -> None:
+        """Shuffle the players order."""
+        others = [player for player in self.players_order if player != 0]
+        r.shuffle(others)
+        self.players_order = [0] + others
+
+    def get_current_player(self) -> Player:
+        """Get the current player."""
+        current_player_id = self.players_order[self.current_player_order_list]
+        return self.players[current_player_id]
+
+    def get_number_of_players(self) -> int:
+        return len(self.players)
+
+    def get_maximum_number_of_players(self) -> int:
+        return self.maximum_number_of_players
+
+    def get_minimum_number_of_players(self) -> int:
+        return self.minimum_number_of_players
+
+    def get_game_configuration(self):
+        return self.game_configuration.get_setting()
+
+    def extract_tile_code(self, move):
+        """Extract the tile code from a move."""
+        try:
+            parsed = parse_move(move)
+        except ValueError:
+            return None
+
+        tile_code = parsed["tile_sides"]
+        if parsed.get("center"):
+            tile_code = f"{tile_code}/{parsed['center']}"
+        return tile_code
+
+    def tick_blitz(self) -> bool:
+        """Tick the blitz timer and return True if timeout occurred."""
+        if self.blitz_manager is None:
+            return False
+        return self.blitz_manager.tick_blitz()
+
+    def _ensure_current_player_playable(self) -> bool:
+        """Ensure the current player is playable (not timed out)."""
+        if self.blitz_manager is None:
+            return True
+        if not self.blitz_manager._has_playable_player():
+            return False
+        return self.blitz_manager._advance_to_next_playable_player()
+
+    def _initialize_blitz_state(self) -> None:
+        """Initialize the blitz state."""
+        if self.blitz_manager is not None:
+            self.blitz_manager._initialize_blitz_state()
 
     def play_move(self, move: str) -> bool:
         """
@@ -152,10 +229,13 @@ class GameData():
         print('i failed the test')"""
         return False
 
-    def play_ai_turn(self) -> None:
-        from .ai_model import RandomPlayer
-        from .ai_model import ExpectimaxPlayer
-        from .ai_model import MCTSPlayer
+    def play_ai_turn(self, game=None) -> None:
+        from carcassonne.business_logic.ai_model import RandomPlayer
+        from carcassonne.business_logic.ai_model import ExpectimaxPlayer
+        from carcassonne.business_logic.ai_model import MCTSPlayer
+
+        if game is None:
+            raise ValueError("game parameter is required for play_ai_turn")
 
         self.tick_blitz()
         if not self._ensure_current_player_playable():
@@ -165,7 +245,7 @@ class GameData():
 
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        self.draw_tile()
+        self.deck_manager.draw_tile()
         if self.current_hand is None:
             return
         ai_time = self.get_game_configuration().get("ai_time")
@@ -174,13 +254,13 @@ class GameData():
         eval_score = None
         if self.get_game_configuration().get("ai_mode") == "random":
             model = RandomPlayer()
-            move = model.random_move(self.current_hand, self)
+            move = model.random_move(self.current_hand, game)
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth")
-            model = ExpectimaxPlayer(self, start_time, ai_time, depth)
+            model = ExpectimaxPlayer(game, start_time, ai_time, depth)
             eval_score, move = model.search(
-                self,
+                game,
                 depth=model.depth_max,
                 alpha=float("-inf"),
                 beta=float("inf"),
@@ -192,8 +272,8 @@ class GameData():
             eval_fn_name = self.get_game_configuration().get(
                 "ai_mcts_selection"
             )
-            model = MCTSPlayer(self, start_time, ai_time, eval_fn_name)
-            move = model.mcts(self)
+            model = MCTSPlayer(game, start_time, ai_time, eval_fn_name)
+            move = model.mcts(game)
         if not move:
             print(
                 f"AI Player {ai_player.get_username()} has no legal move."

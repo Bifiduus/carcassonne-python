@@ -1,5 +1,6 @@
 class CommandsGame():
-    def __init__(self, game):
+    def __init__(self, game_data, game=None):
+        self.game_data = game_data
         self.game = game
 
     def place_tile(self, tile, position):
@@ -15,30 +16,36 @@ class CommandsGame():
         pass
 
     def provide_hint(self) -> str:
-        from .ai_model import RandomPlayer
-        from .ai_model import ExpectimaxPlayer
+        import time
+        from carcassonne.business_logic.ai_model import RandomPlayer
+        from carcassonne.business_logic.ai_model import ExpectimaxPlayer
 
-        timed_out_now = self.tick_blitz()
+        timed_out_now = self.game_data.tick_blitz()
         if timed_out_now:
             return ""
-        if not self._ensure_current_player_playable():
+        if not self.game_data._ensure_current_player_playable():
             return ""
 
-        ai_player = self.get_current_player()
+        ai_player = self.game_data.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        self.draw_tile()
-        if self.current_hand is None:
+        self.game_data.deck_manager.draw_tile()
+        if self.game_data.current_hand is None:
             return ""
         model = None
         move = ""
-        if self.ai_model == "random":
+        ai_mode = self.game_data.get_game_configuration().get("ai_mode", "random")
+        if ai_mode == "random":
             model = RandomPlayer()
-            move = model.random_move(self.current_hand, self)
+            move = model.random_move(
+                self.game_data.current_hand, self.game)
             print(f"AI Player {ai_player.get_username()} chooses move: {move}")
-        elif self.ai_model == "expectimax":
-            model = ExpectimaxPlayer(self)
-            eval, move = model.search(
-                self,
+        elif ai_mode == "expectimax":
+            start_time = time.time()
+            ai_time = self.game_data.get_game_configuration().get("ai_time")
+            depth = self.game_data.get_game_configuration().get("ai_minimax_depth")
+            model = ExpectimaxPlayer(self.game, start_time, ai_time, depth)
+            eval_score, move = model.search(
+                self.game,
                 depth=model.depth_max,
                 alpha=float("-inf"),
                 beta=float("inf"),
@@ -47,12 +54,9 @@ class CommandsGame():
             )
             print(
                 f"AI Player {ai_player.get_username()} chooses move: {move} "
-                f"with evaluation score: {eval}"
+                f"with evaluation score: {eval_score}"
             )
-        # print("main avant de jouer le coup" + self.current_hand)
         return move
 
     def shuffle_players_order(self) -> None:
-        others = [player for player in self.players if player != 0]
-        r.shuffle(others)
-        self.players_order = [0] + others
+        self.game_data.shuffle_players_order()

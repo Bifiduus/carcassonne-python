@@ -3,10 +3,10 @@ import socket
 import select
 import threading
 
+from carcassonne.business_logic.game.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.online_communication import OnlineCommunication
 from carcassonne.business_logic.player import Player
-from carcassonne.business_logic.game import Game
 from carcassonne.datas.graph_data import GraphData
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.business_logic.interfaces.i_games_repository \

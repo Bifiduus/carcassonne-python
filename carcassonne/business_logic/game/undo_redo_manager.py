@@ -10,11 +10,12 @@ class UndoRedoManager:
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
 
-        if not self._ensure_current_player_playable():
+        if not self.game_data._ensure_current_player_playable():
             return
 
+        current_player = self.game_data.get_current_player()
         if (
-            self.game_data.rules_manager.current_player_is_human()
+            not current_player.is_ai_player()
             and self.history.past_moves
         ):
             previous_play = self.history.pop_past()
@@ -30,11 +31,12 @@ class UndoRedoManager:
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
 
-        if not self._ensure_current_player_playable():
+        if not self.game_data._ensure_current_player_playable():
             return
 
+        current_player = self.game_data.get_current_player()
         if (
-            self.game_data.current_player_is_human()
+            not current_player.is_ai_player()
             and self.history.future_moves
         ):
             last_unplayed_move = self.history.pop_future()
@@ -56,7 +58,7 @@ class UndoRedoManager:
             player.get_score().set_points(0)
             player.meeples = 7
 
-        self.game_data.shuffle_deck(
+        self.game_data.deck_manager.shuffle_deck(
             self.game_data.shuffle_algo, self.game_data.seed)
 
         for record in past_moves:
@@ -75,18 +77,7 @@ class UndoRedoManager:
                 record_history=False,
             )
 
-        self.current_player_order_list = len(self.history.past_moves) % len(
+        self.game_data.current_player_order_list = len(self.history.past_moves) % len(
             self.game_data.players_order
         )
-        self._ensure_current_player_playable()
-
-    def _ensure_current_player_playable(self) -> bool:
-        if not self._is_blitz_enabled():
-            return True
-        if not self._advance_to_next_playable_player():
-            return False
-
-        current_player_id = self.get_current_player().get_id()
-        if self.blitz_manager.active_player_id != current_player_id:
-            self.blitz_manager.start_turn(current_player_id)
-        return True
+        self.game_data._ensure_current_player_playable()
