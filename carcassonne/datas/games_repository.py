@@ -225,6 +225,8 @@ class GameRepository(IGamesRepository):
             "SELECT player_id FROM players WHERE username=?;",
             (player_username,)
         )
+        if not rows:
+            return -1
         return rows[0][0]
 
     def change_status(self, client_username: str, status: str) -> str:

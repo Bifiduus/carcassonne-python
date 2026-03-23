@@ -9,12 +9,14 @@ The command handler functions are designed to be called from the GameCLI class
  when the corresponding commands are entered by the player.
 """
 
+from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
-def new_game(self, args, server_service: IServerService) -> None:
-    if server_service.connected_to_a_server():
-        server_service.send_to_server("new "+args)
+def new_game(self, args, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("new "+args)
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
 
@@ -50,9 +52,10 @@ def help(self) -> None:
     print("  play <move>        - Joue le coup spécifié par <move>")
 
 
-def quit(self, server_service: IServerService) -> None:
-    if server_service.connected_to_a_server():
-        server_service.send_to_server("quit")
+def quit(self, server_service: IServerService, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("quit")
+        return
     if server_service.is_server_running():
         print("You should close your server first.")
         return
@@ -66,59 +69,80 @@ def quit(self, server_service: IServerService) -> None:
                 saved = 0
             else:
                 filename: str = input("Nom du fichier de sauvegarde: ")
-                saved: None = save(self, filename)
+                saved: None = save(self, filename, client_service)
         print("Quitte le jeu. À bientôt!")
         self.running = False
 
 
-def load(self, filename) -> None:
-    if self.game.load_game_from_file(filename) == 0:
-        print(f"Partie chargée depuis {filename}.")
+def load(self, filename, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server(f"load {filename}")
     else:
-        print(f"Erreur lors du chargement de la partie depuis {filename}.")
+        if self.game.load_game_from_file(filename) == 0:
+            print(f"Partie chargée depuis {filename}.")
+        else:
+            print(f"Erreur lors du chargement de la partie depuis {filename}.")
 
 
-def save(self, filename) -> None:
-    if self.game.save_game_to_file(filename) == 0:
-        print(f"Partie sauvegardée dans {filename}.")
-
-
-def shuffle(self) -> None:
-    seed = self.game.shuffle_deck()
-    print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
-
-
-def draw(self) -> None:
-    already_had_tile: bool = self.game.current_hand is not None
-    tile = self.game.draw_tile()
-    if tile is None:
-        print("La pioche est vide!")
-    elif already_had_tile:
-        print("Vous avez déjà une tuile en main.")
+def save(self, filename, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server(f"save {filename}")
     else:
-        print(f"Tuile piochée: {tile}")
+        if self.game.save_game_to_file(filename) == 0:
+            print(f"Partie sauvegardée dans {filename}.")
 
 
-def hint(self) -> None:
+def shuffle(self, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("shuffle")
+    else:
+        seed = self.game.shuffle_deck()
+        print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+
+
+def draw(self, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("draw")
+    else:
+        already_had_tile: bool = self.game.current_hand is not None
+        tile = self.game.draw_tile()
+        if tile is None:
+            print("La pioche est vide!")
+        elif already_had_tile:
+            print("Vous avez déjà une tuile en main.")
+        else:
+            print(f"Tuile piochée: {tile}")
+
+
+def hint(self, client_service) -> None:
     # hint = self.game.getPlacementHint()
     print("Indice pour le placement de la tuile: ")
 
 
-def undo(self, N) -> None:
-    self.game.undo()
-    print(f"Derniers {N} coups annulés.")
-
-
-def redo(self, N) -> None:
-    self.game.redo()
-    print(f"Derniers {N} coups rétablis.")
-
-
-def show_hand(self) -> None:
-    if self.game.current_hand is None:
-        print("Aucune tuile en main.")
+def undo(self, N, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("undo")
     else:
-        print(f"Tuile en main: {self.game.current_hand}")
+        self.game.undo()
+        print(f"Derniers {N} coups annulés.")
+
+
+def redo(self, N, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("redo")
+    else:
+        self.game.redo()
+        print(f"Derniers {N} coups rétablis.")
+
+
+def show_hand(self, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("show hand")
+    else:
+        if self.game.current_hand is None:
+            print("Aucune tuile en main.")
+        else:
+            print(f"Tuile en main: {self.game.current_hand}")
 
 
 def _format_clock(remaining_seconds: float) -> str:
@@ -162,38 +186,45 @@ def show_time(self, player_id_raw: str | None = None) -> None:
     )
 
 
-def show_score(self) -> None:
+def show_score(self, client_service: IClientService) -> None:
     # scores = self.game.getPlayerScores()
     print("Scores des joueurs:")
     # for player, score in scores.items():
     #    print(f"  {player}: {score}")
 
 
-def show_history(self, game) -> None:
-    history = game.get_history()
-    print("Historique des coups joués:")
-    for move in history:
-        print(f" {move}")
+def show_history(self, game, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("show history")
+    else:
+        history = game.get_history()
+        print("Historique des coups joués:")
+        for move in history:
+            print(f" {move}")
 
 
-def show_configuration(self, game) -> None:
-    config = game.get_game_configuration()
-    print("Configuration actuelle du jeu:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
+def show_configuration(self, game, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("show configuration")
+    else:
+        config = game.get_game_configuration()
+        print("Configuration actuelle du jeu:")
+        for key, value in config.items():
+            print(f"  {key}: {value}")
 
 
-def set_parameter(self, param, value) -> None:
-    # self.game.setGameParameter(param, value)
-    print(f"Paramètre '{param}' défini à '{value}'.")
+def set_parameter(self, param, value, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server(f"set {param}={value}")
+    else:
+        # self.game.setGameParameter(param, value)
+        print(f"Paramètre '{param}' défini à '{value}'.")
 
 
-def connect(self, username: str, password: str, server_service: IServerService):
-    answer = server_service.create_default_online_player(username, password)
-    print(answer)
-
-
-def play(self, move, game) -> None:
+def play(self, move, game, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server(f"play {move}")
+        return
     result = game.play_move(move)
     game.get_board()
     if not game.is_undo_history_empty():
@@ -211,12 +242,15 @@ def play(self, move, game) -> None:
                 break
 
 
-def show_board(self, game) -> None:
-    game.get_board()
+def show_board(self, game, client_service: IClientService) -> None:
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("board")
+    else:
+        game.get_board()
 
 
-def show_server_list(self, server_service: IServerService):
-    server_list = server_service.list_available_servers()
+def show_server_list(self, client_service: IClientService):
+    server_list = client_service.list_available_servers()
     print("Available servers list:")
     for server in server_list:
         print(f"{server}:{server_list[server]}")
@@ -230,47 +264,46 @@ def stop_server(self, server_service: IServerService):
     server_service.server_stop()
 
 
-def join(self, server_service: IServerService,
-         ip: str | None = None, port: str | None = None):
+def join(self, client_service: IClientService, ip: str | None = None, port: str | None = None):
     if port is None and ip is None:
-        server_service.join_server()
+        client_service.join_server()
     if port is not None:
-        server_service.join_server(ip, int(port))
+        client_service.join_server(ip, int(port))
     else:
-        server_service.join_server(ip)
+        client_service.join_server(ip)
 
 
-def ping(self, server_service: IServerService):
-    print(server_service.ping())
+def ping(self, client_service: IClientService):
+    print(client_service.ping())
 
 
-def server_status(self, server_service: IServerService):
-    server_service.send_to_server("server status")
+def server_status(self, client_service: IClientService):
+    client_service.send_to_server("server status")
 
 
-def players(self, server_service: IServerService, message: str):
-    server_service.send_to_server(message)
+def players(self, client_service: IClientService, message: str):
+    client_service.send_to_server(message)
 
 
-def scoreboard(self, server_service: IServerService):
-    server_service.send_to_server("scoreboard")
+def scoreboard(self, client_service: IClientService):
+    client_service.send_to_server("scoreboard")
 
 
-def accept(self, server_service: IServerService):
-    server_service.send_to_server("accept")
+def accept(self, client_service: IClientService):
+    client_service.send_to_server("accept")
 
 
-def decline(self, server_service: IServerService):
-    server_service.send_to_server("decline")
+def decline(self, client_service: IClientService):
+    client_service.send_to_server("decline")
 
 
-def cancel(self, server_service: IServerService):
-    server_service.send_to_server("cancel")
+def cancel(self, client_service: IClientService):
+    client_service.send_to_server("cancel")
 
 
-def back(self, server_service: IServerService):
-    server_service.send_to_server("back")
+def back(self, client_service: IClientService):
+    client_service.send_to_server("back")
 
 
-def away(self, server_service: IServerService):
-    server_service.send_to_server("away")
+def away(self, client_service: IClientService):
+    client_service.send_to_server("away")
