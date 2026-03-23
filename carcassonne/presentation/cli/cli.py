@@ -4,6 +4,7 @@ GameCLI accepts commands to start/load/save games, draw and place tiles,
 undo/redo turns, and display game state information.
 """
 
+from carcassonne.presentation.interfaces.i_client_service import IClientService
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.presentation.cli import commands_handler_cli
 
@@ -45,8 +46,11 @@ def completer(texte, state):
 
 class GameCLI:
 
-    def __init__(self, game_service: IGameService, server_service: IServerService):
+    def __init__(self, game_service: IGameService,
+                 server_service: IServerService,
+                 client_service: IClientService):
         self.server = server_service
+        self.client = client_service
         self.game = game_service
         self.settings = self.game.get_game_configuration()
         self.local_player_id = self.game.get_current_player().get_id()
@@ -148,42 +152,44 @@ class GameCLI:
 
         if command.startswith("new"):
             args = command[4:].strip()
-            commands_handler_cli.new_game(self, args, self.server)
+            commands_handler_cli.new_game(self, args, self.client)
             self.local_player_id = self.game.get_current_player().get_id()
             self._tick_last_message = ""
         elif command == "help":
             commands_handler_cli.help(self)
         elif command == "quit":
-            commands_handler_cli.quit(self, self.server)
+            commands_handler_cli.quit(self, self.server, self.client)
         elif command.startswith("load "):
             filename = command[5:].strip()
-            commands_handler_cli.load(self, filename)
+            commands_handler_cli.load(self, filename, self.client)
             self.local_player_id = self.game.get_current_player().get_id()
             self._tick_last_message = ""
         elif command.startswith("save "):
             filename = command[5:].strip()
-            commands_handler_cli.save(self, filename)
+            commands_handler_cli.save(self, filename, self.client)
         elif command == "shuffle":
-            commands_handler_cli.shuffle(self)
+            commands_handler_cli.shuffle(self, self.client)
         elif command == "draw":
-            commands_handler_cli.draw(self)
+            commands_handler_cli.draw(self, self.client)
         elif command == "hint":
-            commands_handler_cli.hint(self)
+            commands_handler_cli.hint(self, self.client)
         elif command == "undo":
-            commands_handler_cli.undo(self, 1)
+            commands_handler_cli.undo(self, 1, self.client)
         elif command == "redo":
-            commands_handler_cli.redo(self, 1)
+            commands_handler_cli.redo(self, 1, self.client)
         elif command == "show hand":
-            commands_handler_cli.show_hand(self)
+            commands_handler_cli.show_hand(self, self.client)
         elif command == "show time" or command.startswith("show time "):
             player_id_arg = command[len("show time"):].strip()
             commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
-            commands_handler_cli.show_score(self)
+            commands_handler_cli.show_score(self, self.client)
         elif command == "show history":
-            commands_handler_cli.show_history(self, game=self.game)
+            commands_handler_cli.show_history(
+                self, game=self.game, client_service=self.client)
         elif command == "show configuration":
-            commands_handler_cli.show_configuration(self, game=self.game)
+            commands_handler_cli.show_configuration(
+                self, game=self.game, client_service=self.client)
         elif command.startswith("set"):
             content = command[3:].strip()
             if "=" in content:
@@ -193,16 +199,21 @@ class GameCLI:
             else:
                 param = content
                 value = None
-            commands_handler_cli.set_parameter(self, param, value)
+            commands_handler_cli.set_parameter(
+                self, param, value, self.client)
         elif command.startswith("players"):
-            commands_handler_cli.players(self, self.server, command)
+            commands_handler_cli.players(
+                self, self.client, command)
         elif command.startswith("play "):
             move = command[5:].strip()
-            commands_handler_cli.play(self, move, game=self.game)
+            commands_handler_cli.play(
+                self, move, game=self.game, client_service=self.client)
         elif command.startswith("board"):
-            commands_handler_cli.show_board(self, game=self.game)
+            commands_handler_cli.show_board(
+                self, game=self.game, client_service=self.client)
         elif command == "server list":
-            commands_handler_cli.show_server_list(self, self.server)
+            commands_handler_cli.show_server_list(
+                self, self.client)
         elif command.startswith("server start"):
             port = command.strip("server start")
             commands_handler_cli.server_start(self, port, self.server)
@@ -212,28 +223,27 @@ class GameCLI:
             addresse = command[5:].strip()
             if ":" in addresse:
                 ip, port = addresse.split(":")
-                commands_handler_cli.join(self, self.server, ip, port)
+                commands_handler_cli.join(
+                    self, self.client, ip, port)
             else:
-                commands_handler_cli.join(self, self.server, addresse)
+                commands_handler_cli.join(
+                    self, self.client, addresse)
         elif command == "ping":
-            commands_handler_cli.ping(self, self.server)
-        elif command.startswith("connect"):
-            username, password = command[7:].split(" ").strip()
-            commands_handler_cli.connect(self, username, password, self.server)
+            commands_handler_cli.ping(self, self.client)
         elif command == "server status":
-            commands_handler_cli.server_status(self, self.server)
+            commands_handler_cli.server_status(self, self.client)
         elif command == "scoreboard":
-            commands_handler_cli.scoreboard(self, self.server)
+            commands_handler_cli.scoreboard(self, self.client)
         elif command == "accept":
-            commands_handler_cli.accept(self, self.server)
+            commands_handler_cli.accept(self, self.client)
         elif command == "decline":
-            commands_handler_cli.decline(self, self.server)
+            commands_handler_cli.decline(self, self.client)
         elif command == "cancel":
-            commands_handler_cli.cancel(self, self.server)
+            commands_handler_cli.cancel(self, self.client)
         elif command == "back":
-            commands_handler_cli.back(self, self.server)
+            commands_handler_cli.back(self, self.client)
         elif command == "away":
-            commands_handler_cli.away(self, self.server)
+            commands_handler_cli.away(self, self.client)
 
         else:
             print(
