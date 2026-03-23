@@ -190,7 +190,7 @@ class Server(IServerService):
             answer += "If it is your first time connecting, you can create one.\n"
         else:
             if message.find("username=") != -1 and message.find("password=") != -1:
-                username, password = message.split("password=")
+                username, password = message.split(" password=")
                 username: str = username.removeprefix(
                     "username=")
                 success = self.repo.registering(username, password)
