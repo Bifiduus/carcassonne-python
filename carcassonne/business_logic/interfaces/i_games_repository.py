@@ -116,7 +116,12 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_default_online_player(self, username: str, password: str, server: str) -> str:
+    def create_default_online_player(self, username: str, password: str,
+                                     server: str) -> str:
+        pass
+
+    @abstractmethod
+    def create_party(self, client_username: str) -> int | None:
         pass
 
     @abstractmethod

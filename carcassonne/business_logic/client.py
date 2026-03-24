@@ -32,7 +32,7 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         # Registering phase
         if not self.repo.is_accounted_for():
-            print(f"You should create an online account.\n")
+            print("You should create an online account.\n")
             username = input(">> Your username is: ")
             password = input(">> Your password is: ")
             self.create_default_online_player(
@@ -41,7 +41,8 @@ class Client(IClientService):
             self.client_player = self.repo.get_online_player(self.server_name)
 
     # Client side
-    def join_server(self, ip: str | None = None, port: int | None = None, timeout: float = 5.0) -> bool:
+    def join_server(self, ip: str | None = None, port: int | None = None,
+                    timeout: float = 5.0) -> bool:
         """
         Connect to a remote server identified by name (and optional port).
 
@@ -137,16 +138,19 @@ class Client(IClientService):
             if message == "Your registration has failed...":
                 username = input("You must send another username:\n>> ")
                 self.temporary_username = username
-                message = f"username={username} password={self.repo.get_password(0)}\n"
+                message = f"username={username} password="\
+                    f"{self.repo.get_password(0)}\n"
                 self.send_to_server(message)
-            if message == "Successfull registering !" and self.temporary_username != "":
+            if (message == "Successfull registering !" and
+                    self.temporary_username != ""):
                 self.repo.set_new_username_for_server(
                     server, self.temporary_username)
                 self.temporary_username = ""
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
-        Listen for available servers via UDP broadcasts for a specified timeout period.
+        Listen for available servers via UDP broadcasts for a specified
+          timeout period.
         Returns a list of server names that responded within the timeout.
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -203,10 +207,12 @@ class Client(IClientService):
             del self.available_servers[name]
         return self.available_servers
 
-    def create_default_online_player(self, username: str, password: str, server: str = "127.0.1.1") -> str:
+    def create_default_online_player(self, username: str, password: str,
+                                     server: str = "127.0.1.1") -> str:
         self.client_player = username
         assert self.repo, "The database should not be None"
-        return self.repo.create_default_online_player(username, password, server)
+        return self.repo.create_default_online_player(username, password,
+                                                      server)
 
     def ping(self) -> str:
         """
@@ -215,7 +221,7 @@ class Client(IClientService):
         """
         start = time.time()
         self.send_to_server("ping")
-        if self.client == None:
+        if self.client is None:
             return "Error: no client socket found."
         data = self.client.recv(1500)
         message = data.decode()
