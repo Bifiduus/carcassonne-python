@@ -44,7 +44,7 @@ class GameRepository(IGamesRepository):
         self._execute_non_query(table_players)
 
         table_groups = "CREATE TABLE IF NOT EXISTS groups"\
-            "(group_id int CONSTRAINT group_id_c PRIMARY KEY AUTOINCREMENT,"
+            "(group_id INTEGER CONSTRAINT group_id_c PRIMARY KEY AUTOINCREMENT,"
         table_groups += " number_of_players int CONSTRAINT"\
             " number_of_players CHECK(number_of_players >= 0),"
         table_groups += "host_player int CONSTRAINT host_player"\
@@ -61,7 +61,7 @@ class GameRepository(IGamesRepository):
         self._execute_non_query(table_scoreboard)
 
         table_games = "CREATE TABLE IF NOT EXISTS current_games"\
-            "(game_id int CONSTRAINT game_id PRIMARY KEY AUTOINCREMENT,"
+            "(game_id INTEGER CONSTRAINT game_id PRIMARY KEY AUTOINCREMENT,"
         table_games += " game_name varchar(30) CONSTRAINT"\
             " game_name NOT NULL,"
         table_games += " group_id int CONSTRAINT group_id_game"\
@@ -107,9 +107,9 @@ class GameRepository(IGamesRepository):
 
     def get_next_available_id(self) -> int:
         rows = self._execute_query(
-            "SELECT * FROM players;"
+            "SELECT player_id FROM players ORDER BY player_id DESC LIMIT 1;"
         )
-        return len(rows) + 1
+        return rows[0]['player_id'] + 1
 
     def is_accounted_for(self):
         rows = self._execute_query(
@@ -150,7 +150,7 @@ class GameRepository(IGamesRepository):
             "SELECT username FROM usernames WHERE server=?;",
             (server,)
         )
-        return rows[0][0]
+        return rows[0]['username']
 
     def has_no_special_username(self, server: str) -> bool:
         rows = self._execute_query(
@@ -247,15 +247,15 @@ class GameRepository(IGamesRepository):
         answer = ([(r['player_id'], r['username'], r['status']) for r in rows])
         return f"List of current players: {answer}"
 
-    def invitation_received(self, client_id: str):
+    def invitation_received(self, client_id: str) -> tuple[int, int]:
         rows = self._execute_query(
             "SELECT host_player, group_id FROM pending_invitations"
             " NATURAL JOIN groups WHERE invited_player=?;",
             (client_id,)
         )
         if rows == []:
-            return sqlite3.Row(self.db.cursor(), (None,))
-        return rows[0]
+            return (-1, -1)
+        return rows[0]['host_player'], rows[0]['group_id']
 
     def accept_invitation(self, group_id: int, invited: str):
         invited_id = self.get_id_from_username(invited)
@@ -268,11 +268,13 @@ class GameRepository(IGamesRepository):
             "DELETE FROM pending_invitations WHERE invited_player=?;",
             (int(invited),)
         )
-        self._execute_non_query(
-            "UPDATE groups SET number_of_players=(SELECT"
-            " number_of_players FROM groups WHERE group_id=?;)+1"
-            " WHERE group_id=?;",
-            (group_id, group_id)
+        rows = self._execute_query(
+            "SELECT number_of_players FROM groups WHERE group_id=?;",
+            (group_id,)
+        )
+        rows = self._execute_non_query(
+            "UPDATE groups SET number_of_players=?+1 WHERE group_id=?;",
+            (rows[0][0], group_id)
         )
 
     def get_game(self, client_id: str) -> int:
