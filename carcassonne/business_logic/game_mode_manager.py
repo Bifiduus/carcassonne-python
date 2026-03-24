@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from carcassonne.business_logic.blitz_manager import BlitzManager
+from carcassonne.business_logic.contest_manager import ContestManager
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.game import Game
@@ -20,20 +21,29 @@ class GameModeManager:
     def __init__(self, game: Game) -> None:
         self.game = game
         self.blitz_manager = BlitzManager()
+        self.contest_manager = ContestManager(game)
 
     def get_mode(self) -> str:
         """Return the current mode resolved from the existing config keys."""
         settings = self.game.game_configuration.settings
+        contest_enabled = bool(settings.get("contest", False))
         contest_file = str(settings.get("contest_file", "") or "").strip()
         blitz_enabled = bool(settings.get("blitz", False))
 
-        # Contest wins when a file is configured; this keeps compatibility
-        # with the current GUI without introducing a new configuration key.
-        if contest_file:
+        # Contest is explicitly enabled by CLI, with `contest_file` kept as a
+        # compatibility fallback for existing GUI configuration.
+        if contest_enabled or contest_file:
             return "contest"
         if blitz_enabled:
             return "blitz"
         return "default"
+
+    def run_contest(self) -> str:
+        """Execute the contest flow and return the move to print."""
+        filename = str(
+            self.game.game_configuration.settings.get("contest_file", "")
+        )
+        return self.contest_manager.run(filename)
 
     def get_configured_blitz_minutes(self) -> int:
         raw_value = self.game.game_configuration.settings.get("time", 30)

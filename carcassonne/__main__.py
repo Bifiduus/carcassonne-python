@@ -142,18 +142,28 @@ def main() -> int:
     )
 
     args: argparse.Namespace = parser.parse_args()
+    if args.version:
+        print(f"Carcassonne: version {__version__}")
+        return 0
+
+    if args.contest and not args.file:
+        parser.error("--file is required when --contest is enabled")
+
     config_overrides = {}
     # CLI contract: blitz mode is enabled only when -b/--blitz is passed.
     config_overrides["blitz"] = bool(args.blitz)
+    config_overrides["contest"] = bool(args.contest)
     if args.verbose:
         config_overrides["verbose"] = True
     if args.blitz:
         config_overrides["time"] = (
             args.time if args.time is not None else 30
         )
+    if args.file:
+        config_overrides["contest_file"] = args.file
     # map -p/--players to num_ai_players for AI settings
     if args.players and 1 <= args.players <= 5:
-        config_overrides["num_ai_players"] = args.players-1
+        config_overrides["num_ai_players"] = args.players - 1
     elif args.time is not None:
         print(
             "Warning: --time is ignored because --blitz is not enabled.",
@@ -177,10 +187,15 @@ def main() -> int:
     server_service: IServerService = Server(game_repo)
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed
-    if args.version:
-        print(f"Carcassonne: version {__version__}")
     if args.debug:
         print("Debug mode enabled.", file=sys.stderr)
+    if args.contest:
+        try:
+            move = game.game_mode_manager.run_contest()
+        except ValueError as exc:
+            print(f"Contest error: {exc}", file=sys.stderr)
+            return 1
+        print(move)
     if args.file:
         print(f"Loading game from file: {args.file}")
     if args.verbose:

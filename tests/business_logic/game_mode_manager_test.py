@@ -47,6 +47,20 @@ class GameModeManagerTestCase(unittest.TestCase):
 
         self.assertEqual(manager.get_mode(), "blitz")
 
+    def test_get_mode_returns_contest_when_contest_is_enabled(self):
+        game = DummyGame(
+            {
+                "blitz": False,
+                "contest": True,
+                "contest_file": "/tmp/contest.txt",
+                "time": 30,
+            }
+        )
+
+        manager = GameModeManager(game)
+
+        self.assertEqual(manager.get_mode(), "contest")
+
     def test_get_mode_prefers_contest_when_contest_file_is_set(self):
         game = DummyGame(
             {

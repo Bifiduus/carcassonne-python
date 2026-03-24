@@ -7,6 +7,7 @@ CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".carcassonnerc")
 DEFAULT_SETTINGS = {
     "verbose": False,
     "blitz": False,
+    "contest": False,
     "time": 30,
     "num_ai_players": 1,
     "ai_time": 5,

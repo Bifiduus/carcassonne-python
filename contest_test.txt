@@ -1,0 +1,22 @@
+[Settings]
+verbose: False
+blitz: True
+contest: False
+time: 30
+num_ai_players: 1
+ai_time: 5
+ai_mode: random
+ai_minimax_depth: 80
+ai_mcts_selection: UCT
+contest_file: 
+file_keybinds: {'app.new': 'n', 'app.load': 'l', 'app.save': 's', 'app.config': 'comma', 'app.info': 'i', 'app.quit': 'q'}
+game_keybinds: {'app.undo': 'u', 'app.redo': 'r', 'app.pause': 'p', 'app.hint': 'h'}
+
+[GameState]
+NumberOfPlayers: 1,1
+PlayersOrder: [0 , 1 ]
+GameScore: [0: 0 , 1: 0 ]
+Seed: 123
+
+[History]
+
