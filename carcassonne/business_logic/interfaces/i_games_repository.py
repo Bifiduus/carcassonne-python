@@ -58,6 +58,14 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_parties(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_host_from_party(self, party_id: int) -> int:
+        pass
+
+    @abstractmethod
     def invitation_received(self, client_id: str) -> Row:
         pass
 
@@ -98,11 +106,11 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_party(self, name: str, player_names: list[str], client_username: str) -> int | None:
+    def create_party(self, client_username: str) -> int | None:
         pass
 
     @abstractmethod
-    def get_party(self, client_id: str) -> list[str]:
+    def get_party(self, client_id: str) -> list[int]:
         pass
 
     @abstractmethod
@@ -118,7 +126,15 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_party_name(self, client_id: str) -> str:
+    def client_quit(self, client_username: str):
+        pass
+
+    @abstractmethod
+    def get_party_id(self, client_id: str) -> int:
+        pass
+
+    @abstractmethod
+    def clean_party(self, party: int):
         pass
 
     @abstractmethod

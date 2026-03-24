@@ -16,6 +16,7 @@ class OnlineCommunication:
         return "pong\n"
 
     def command_quit(self, client_username: str) -> str:
+        self.server.repo.client_quit(client_username)
         return f"Bye {client_username}!\n"
 
     def command_server_status(self):
@@ -28,7 +29,9 @@ class OnlineCommunication:
 
     def command_new(self, message: str, client_id: str) -> str:
         message = message.split("new")[1]
-        party_name = f"Party {len(self.server.current_games_list)}"
+        client_username = self.server.repo.get_username(client_id)
+        # Create the group
+        self.server.repo.create_party(client_username)
         clients_list = message.split(" ")
         # Check if the clients exist and are available, remove the ones that cannot be invited
         clients_list_checked = self.server.check_clients_list_validity(
