@@ -87,6 +87,10 @@ class GameRepository(IGamesRepository):
         usernames_table += "username varchar(30) CONSTRAINT usernames_table NOT NULL);"
         rows = self._execute_non_query(usernames_table)
 
+        usernames_table = "CREATE TABLE IF NOT EXISTS usernames(server varchar(30) CONSTRAINT server PRIMARY KEY,"
+        usernames_table += "username varchar(30) CONSTRAINT usernames_table NOT NULL);"
+        rows = self._execute_non_query(usernames_table)
+
     # low-level helpers
     def _execute_query(self, query: str,
                        params: tuple = ()) -> list[sqlite3.Row]:
