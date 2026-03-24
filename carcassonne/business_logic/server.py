@@ -95,6 +95,9 @@ class Server(IServerService):
                 # Determine if a party can be launched, and if so, do it
                 self.launch_availables_games()
 
+                # Determine if a party ended, and if so, clean it
+                self.clean_finished_games()
+
                 time_passed = time.time() - server_last_diffusion
                 clock = self.SERVER_DIFFUSION_PERIOD
                 if time_passed >= clock or first_diffusion:
@@ -124,7 +127,31 @@ class Server(IServerService):
     def launch_availables_games(self):
         # For all parties, check if game can be launched
         # If so launch it, and handle_party() ( like handle_client but for a game )
-        pass
+        for party in range(1, self.repo.get_parties() + 1):
+            check = self.party_can_be_launched(party)
+            # Check if players are ok for party to be launched
+            if check:
+                host_id: int = self.repo.get_host_from_party(party)
+                players = self.repo.get_party(str(host_id))
+                self.create_new_party(players, str(host_id))
+
+    def party_can_be_launched(self, party_number: int) -> bool:
+        host_id: int = self.repo.get_host_from_party(party_number)
+        check = self.repo.check_all_invitations_resolved(str(host_id))
+        return check
+
+    def clean_finished_games(self):
+        for party in range(1, self.repo.get_parties() + 1):
+            check = self.party_is_finished(party)
+            if check:
+                self.repo.clean_party(party)
+                host_id: int = self.repo.get_host_from_party(party)
+                party_id = self.repo.get_party_id(str(host_id))
+                assert party_id == party, "Error in creation of parties.."
+                del self.current_games_list[party_id]
+
+    def party_is_finished(self, party: int) -> bool:
+        return self.current_games_list[party][1].end_game()
 
     def is_server_running(self) -> bool:
         return self.should_stop.is_set()
@@ -156,7 +183,7 @@ class Server(IServerService):
                         break
 
                     # Process data
-                    response = self.process_message(client, message)
+                    response = self.process_message(str(client_index), message)
                     # fonction qui check le statut d'une invitation et l'envoie à l'host
                     answer = f"Server -> Client{client_index}: {response}\n"
                     client_socket.send(answer.encode())
@@ -291,19 +318,19 @@ class Server(IServerService):
         return [c for c in clients_list if
                 self.repo.player_exists(self.repo.get_username(c))]
 
-    def create_new_party(self, clients_list: list[str],
+    def create_new_party(self, clients_list: list[int],
                          client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
+        party_id = self.repo.get_party_id(client_id)
         if party_name == "":
-            party_name = self.repo.get_party_name(client_id)
+            party_name = f"Party {party_id}"
 
-        # should be done after, because don't know how many
+        # Initialize the game
         number_of_players_in_group: int = len(clients_list)
         graph: IGraphData = GraphData()
         new_party = Game(graph, number_of_players_in_group)
         try:
-            self.repo.create_party(party_name, clients_list, client_id)
-            self.current_games_list[len(self.current_games_list)] = (
+            self.current_games_list[party_id] = (
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)
@@ -312,11 +339,11 @@ class Server(IServerService):
         return "Your party has been created successfully !\n"
 
     def create_players_from_list(self,
-                                 clients_list: list[str]) -> list[Player]:
+                                 clients_list: list[int]) -> list[Player]:
         players_list = []
         assert self.repo, "The database should not be None"
         for client in clients_list:
-            username = self.repo.get_username(client)
+            username = self.repo.get_username(str(client))
             players_list.append(Player(int(client), username, "None"))
         return players_list
 
