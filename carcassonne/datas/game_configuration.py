@@ -9,6 +9,7 @@ DEFAULT_SETTINGS = {
     "blitz": False,
     "contest": False,
     "time": 30,
+    "river": False,
     "num_ai_players": 1,
     "ai_time": 5,
     "ai_mode": "minimax",
@@ -50,6 +51,7 @@ class GameConfiguration:
             "verbose": "false",
             "blitz": "false",
             "time": "30",
+            "river": "false",
             "num_ai_players": "1",
             "ai_time": 5,
             "ai_mode": "minimax",
@@ -81,8 +83,13 @@ class GameConfiguration:
             if "defaults" not in config:
                 raise ValueError("Section [defaults] manquante")
 
-            settings["verbose"] = config.getboolean("defaults", "verbose")
-            settings["blitz"] = config.getboolean("defaults", "blitz")
+            if config.has_option("defaults", "verbose"):
+                settings["verbose"] = config.getboolean("defaults", "verbose")
+            if config.has_option("defaults", "blitz"):
+                settings["blitz"] = config.getboolean("defaults", "blitz")
+            if config.has_option("defaults", "river"):
+                settings["river"] = config.getboolean("defaults", "river")
+
             if config.has_option("defaults", "time"):
                 settings["time"] = config.getint("defaults", "time")
             elif config.has_option("defaults", "timeout"):
@@ -121,6 +128,7 @@ class GameConfiguration:
             "verbose": str(self.settings["verbose"]).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
             "time": str(self.settings["time"]),
+            "river": str(self.settings.get("river")).lower(),
             "num_ai_players": str(self.settings.get("num_ai_players", 1)),
             "ai_time": str(self.settings["ai_time"]),
             "ai_mode": str(self.settings["ai_mode"]),
@@ -143,3 +151,6 @@ class GameConfiguration:
 
     def get_setting(self):
         return self.settings.copy()
+
+    def get_setting_value(self, key):
+        return self.settings.get(key)

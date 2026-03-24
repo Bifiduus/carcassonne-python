@@ -236,6 +236,7 @@ def main() -> int:
     if args.river:
         print("River mode enabled.")
         game.game_data.river_manager.initialize_river()
+        config_overrides["river"] = True
     if args.gui:
         print("GUI mode enabled.")
         CreateGui(game)

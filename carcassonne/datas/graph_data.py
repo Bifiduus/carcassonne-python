@@ -144,48 +144,12 @@ class GraphData(IGraphData):
         self.lands_components["R"] = {}
         self.lands_components["F"] = {}
         self.lands_components["M"] = {}
+        self.lands_components["S"] = {}
         self.next_set_id["C"] = 1  # Next set ID for cities
         self.next_set_id["R"] = 1  # Next set ID for roads
         self.next_set_id["F"] = 1  # Next set ID for fields
         self.next_set_id["M"] = 1  # Next set ID for monasteries
-
-    def initialize_starting_tile(self) -> None:
-        # Define the lands components for each tile type, including the
-        # starting tile
-        self.add_vertex(
-            vertex_id=0, name="CRFR", middle="", orientation=0, position=(0, 0)
-        )
-        tile = self.tiles_dict["CRFR"]
-        for land in tile.tiles_lands.keys():
-            for connected in tile.tiles_lands[land]:
-                land_id = land + str(self.next_set_id[land])
-                self.lands_components[land][land_id] = [(0, connected)]
-                self.next_set_id[land] += 1
-        # Legacy initialization draft kept for reference:
-        # for tile_type, components in tile.items():
-        #     for component in components:
-        #         set_name = f"{tile_type}{self.next_set_id[tile_type]}"
-        #         self.lands_components[tile_type][set_name] = [(0, component)]
-        #         self.next_set_id[tile_type] += 1
-
-    def initialize_starting_tile_river(self) -> None:
-        # Define the lands components for each tile type, including the
-        # starting tile
-        self.add_vertex(
-            vertex_id=0, name="FFSF", middle="", orientation=0, position=(0, 0)
-        )
-        tile = self.tiles_dict["FFSF"]
-        for land in tile.tiles_lands.keys():
-            for connected in tile.tiles_lands[land]:
-                land_id = land + str(self.next_set_id[land])
-                self.lands_components[land][land_id] = [(0, connected)]
-                self.next_set_id[land] += 1
-        # Legacy initialization draft kept for reference:
-        # for tile_type, components in tile.items():
-        #     for component in components:
-        #         set_name = f"{tile_type}{self.next_set_id[tile_type]}"
-        #         self.lands_components[tile_type][set_name] = [(0, component)]
-        #         self.next_set_id[tile_type] += 1
+        self.next_set_id["S"] = 1  # Next set ID for streams
 
     def add_vertex(
         self,
@@ -367,7 +331,6 @@ class GraphData(IGraphData):
         # Resetting the graph with the starting tile (CRFR) as a vertex in the
         # graph
         self.initialize_land_components()
-        self.initialize_starting_tile()
 
     def get_vertex_orientation(self, vertex_id: int) -> int:
         vertex = self.get_vertex(vertex_id)

@@ -15,7 +15,7 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 def new_game(self, args, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
-        client_service.send_to_server("new "+args)
+        client_service.send_to_server("new " + args)
         return
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
@@ -80,7 +80,7 @@ def quit(self, server_service: IServerService,
         print("You should close your server first.")
         return
     else:
-        saved = -1
+        saved: int | None = -1
         while saved == -1:
             confirm: str = input("Save the game before quitting?[y/N] ")
             if confirm != 'y':

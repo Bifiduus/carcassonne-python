@@ -86,7 +86,7 @@ class Deck:
         ]
         self.river_tiles = [
             "FSRS/m",
-            "FFSF", "FFSF",
+            "FFSF",  # "FFSF",
             "FSFS", "FSFS",
             "FFSS", "FFSS",
             "CSCS",

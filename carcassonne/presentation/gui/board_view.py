@@ -160,8 +160,8 @@ class BoardView(Gtk.DrawingArea):
         player_last_i = {}
         for i in range(1, len(board_data)):  # start from 1
             turn = i - 1  # turn 0 for i=1
-            player_id = self.game_data.game.players_order[turn % len(
-                self.game_data.game.players_order)]
+            player_id = self.game_data.game.game_data.players_order[turn % len(
+                self.game_data.game.game_data.players_order)]
             player_last_i[player_id] = i
 
         for i, t in enumerate(tiles):
@@ -170,10 +170,10 @@ class BoardView(Gtk.DrawingArea):
             border_color = None
             if i < len(board_data) and i > 0:
                 turn = i - 1
-                player_id = self.game_data.game.players_order[turn % len(
-                    self.game_data.game.players_order)]
+                player_id = self.game_data.game.game_data.players_order[turn % len(
+                    self.game_data.game.game_data.players_order)]
                 if i == player_last_i.get(player_id):
-                    player = self.game_data.game.players[player_id]
+                    player = self.game_data.game.game_data.players[player_id]
                     color_str = player.get_color()
                     border_color = board_utils.color_map.get(
                         color_str, (1, 0, 0))
@@ -268,7 +268,7 @@ class BoardView(Gtk.DrawingArea):
                 size,
                 self.game_data.game.get_meeples_data(),
                 tile_data["id"],
-                self.game_data.game.players,
+                self.game_data.game.game_data.players,
             )
         # Draw preview meeple if this is the previewed tile and meeple_pos is
         # set
