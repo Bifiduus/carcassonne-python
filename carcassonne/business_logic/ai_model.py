@@ -760,35 +760,37 @@ class MCTSPlayer:
 
     def undo_for_ai(self, game: 'Game') -> None:
         """Undo the last AI move."""
-        if game.history.past_moves:
-            previous_play = game.history.pop_past()
-            game.history.push_future(previous_play)
-            game.board.remove_tile_from_board(build_str(
-                previous_play), game.graph, game.tiles_info, game.history,
-                players=game.players)
+        if game.game_data.history.past_moves:
+            previous_play = game.game_data.history.pop_past()
+            game.game_data.history.push_future(previous_play)
+            game.game_data.board.remove_tile_from_board(build_str(
+                previous_play), game.game_data.graph, game.game_data.tiles_info, game.game_data.history,
+                players=game.game_data.players)
             number_of_players = game.get_number_of_players()
-            game.current_player_order_list = (
-                game.current_player_order_list - 1) % number_of_players
-            game.deck.tiles.append(previous_play.move_str.split('/')[0])
+            game.game_data.current_player_order_list = (
+                game.game_data.current_player_order_list - 1) % number_of_players
+            game.game_data.deck.tiles.append(
+                previous_play.move_str.split('/')[0])
             # print(game.graph.get_verticies())
 
     def play_move_for_ai(self, game: 'Game', move: str) -> None:
         """Play move for AI exploring the possibilities."""
         tile_code = game.extract_tile_code(move)
-        if tile_code is not None and tile_code != game.current_hand:
-            print(f"Vous devez jouer la tuile en main: {game.current_hand}")
+        if tile_code is not None and tile_code != game.game_data.current_hand:
+            print(
+                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
             return False
 
-        ok = game.rules_manager.check_move(
+        ok = game.game_data.rules_manager.check_move(
             move,
-            game.graph,
+            game.game_data.graph,
             current_player_id=game.get_current_player().get_id(),
         )
         if ok:
-            game.board.add_tile_to_board(move, game.graph, game.tiles_info,
-                                         game.history,
-                                         game.players, game.players_order,
-                                         game.get_current_player())
+            game.game_data.board.add_tile_to_board(move, game.game_data.graph, game.game_data.tiles_info,
+                                                   game.history,
+                                                   game.game_data.players, game.game_data.players_order,
+                                                   game.get_current_player())
             game.current_hand = None
             number_of_players = game.get_number_of_players()
             game.current_player_order_list = (

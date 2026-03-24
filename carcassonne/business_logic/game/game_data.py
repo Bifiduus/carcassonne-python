@@ -16,6 +16,10 @@ from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.business_logic.save_handler import SaveHandler
 from carcassonne.business_logic.game.blitz_manager import BlitzManager
 from carcassonne.business_logic.game.deck_manager import DeckManager
+from carcassonne.datas.starting_tile import (
+    initialize_starting_tile,
+    initialize_starting_tile_river,
+)
 import time
 import random as r
 
@@ -49,14 +53,20 @@ class GameData():
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.error_message = ""
-
+        self.blitz_manager = BlitzManager(self)
+        self.deck_manager = DeckManager(self)
+        self.river_manager = RiverManager(self)
         self._end_game_scored = False
         self._initialize_blitz_state()
-        self.reset()
 
     def reset(self):
         """Reset all game data to start a new game."""
         self.graph.reset_graph()
+        # Initialize the starting tile on the graph after reset
+        if self.game_configuration.get_setting_value("river"):
+            initialize_starting_tile_river(self.graph)
+        else:
+            initialize_starting_tile(self.graph)
         self.board = Board()
         self.tiles_info = TilesInfo()
         self.rules_manager = RulesManager(self.tiles_info)
@@ -66,6 +76,11 @@ class GameData():
     def start_load_game(self):
         self.history.clear_history()
         self.graph.reset_graph()
+        # ensure starting tile present after reset
+        if self.game_configuration.get_setting_value("river"):
+            initialize_starting_tile_river(self.graph)
+        else:
+            initialize_starting_tile(self.graph)
         self.game_repository = GameRepository()
         self.board = Board()
         self.deck = Deck()
@@ -257,8 +272,9 @@ class GameData():
             move = model.random_move(self.current_hand, game)
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
-            depth = self.get_game_configuration().get("ai_minimax_depth")
-            model = ExpectimaxPlayer(game, start_time, ai_time, depth)
+            depth = self.get_game_configuration().get("ai_minimax_depth", 5)
+            model = ExpectimaxPlayer(
+                game, start_time, ai_time or 10.0, depth or 5)
             eval_score, move = model.search(
                 game,
                 depth=model.depth_max,
@@ -270,9 +286,10 @@ class GameData():
         elif self.get_game_configuration().get("ai_mode") == "mcts":
             start_time = time.time()
             eval_fn_name = self.get_game_configuration().get(
-                "ai_mcts_selection"
+                "ai_mcts_selection", "uct"
             )
-            model = MCTSPlayer(game, start_time, ai_time, eval_fn_name)
+            model = MCTSPlayer(
+                game, start_time, ai_time or 10.0, eval_fn_name or "uct")
             move = model.mcts(game)
         if not move:
             print(

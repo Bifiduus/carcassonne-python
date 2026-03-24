@@ -4,6 +4,10 @@ from carcassonne.business_logic.game.board import Board
 from carcassonne.datas.deck import Deck
 from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.business_logic.rules_manager import RulesManager
+from carcassonne.datas.starting_tile import (
+    initialize_starting_tile,
+    initialize_starting_tile_river,
+)
 
 
 class NewGame():
@@ -17,6 +21,11 @@ class NewGame():
                 f" is {self.game_data.get_maximum_number_of_players()}"
         self.game_data.history.clear_history()
         self.game_data.graph.reset_graph()
+        # ensure starting tile present after reset
+        if self.game_data.game_configuration.get_setting_value("river"):
+            initialize_starting_tile_river(self.game_data.graph)
+        else:
+            initialize_starting_tile(self.game_data.graph)
         self.game_data.current_hand = None
         self.game_data.board = Board()
         self.game_data.deck = Deck()
@@ -36,6 +45,11 @@ class NewGame():
         """
         self.game_data.history.clear_history()
         self.game_data.graph.reset_graph()
+        # ensure starting tile present after reset
+        if self.game_data.game_configuration.get_setting_value("river"):
+            initialize_starting_tile_river(self.game_data.graph)
+        else:
+            initialize_starting_tile(self.game_data.graph)
         self.game_data.board = Board()
         self.game_data.deck = Deck()
         self.game_data.current_hand = None

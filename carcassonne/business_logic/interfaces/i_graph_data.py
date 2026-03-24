@@ -10,14 +10,6 @@ class IGraphData(ABC):
     # pylint: disable=missing-class-docstring
 
     @abstractmethod
-    def initialize_starting_tile(self) -> None:
-        pass
-
-    @abstractmethod
-    def initialize_starting_tile_river(self) -> None:
-        pass
-
-    @abstractmethod
     def add_vertex(
         self,
         vertex_id: int,

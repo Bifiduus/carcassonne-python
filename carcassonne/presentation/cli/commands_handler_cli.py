@@ -54,7 +54,7 @@ def quit(self, server_service: IServerService) -> None:
     if server_service.connected_to_a_server():
         server_service.send_to_server("quit")
     else:
-        saved = -1
+        saved: int | None = -1
         while saved == -1:
             confirm: str = input("Save the game before quitting?[y/N] ")
             if confirm != 'y':
@@ -63,7 +63,7 @@ def quit(self, server_service: IServerService) -> None:
                 saved = 0
             else:
                 filename: str = input("Nom du fichier de sauvegarde: ")
-                saved: None = save(self, filename)
+                saved = save(self, filename)
         print("Quitte le jeu. À bientôt!")
         self.running = False
 
@@ -75,9 +75,11 @@ def load(self, filename) -> None:
         print(f"Erreur lors du chargement de la partie depuis {filename}.")
 
 
-def save(self, filename) -> None:
-    if self.game.save_game_to_file(filename) == 0:
+def save(self, filename) -> int:
+    result = self.game.save_game_to_file(filename)
+    if result == 0:
         print(f"Partie sauvegardée dans {filename}.")
+    return result
 
 
 def shuffle(self) -> None:
@@ -86,7 +88,7 @@ def shuffle(self) -> None:
 
 
 def draw(self) -> None:
-    already_had_tile: bool = self.game.current_hand is not None
+    already_had_tile: bool = self.game.game_data.current_hand is not None
     tile = self.game.draw_tile()
     if tile is None:
         print("La pioche est vide!")

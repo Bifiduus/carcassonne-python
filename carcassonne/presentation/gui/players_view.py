@@ -72,7 +72,7 @@ class PlayersView(Gtk.Box):
         if not game:
             return
 
-        players = list(game.players.values())
+        players = list(game.game_data.players.values())
         current = game.get_current_player()
 
         # Check if blitz mode is enabled

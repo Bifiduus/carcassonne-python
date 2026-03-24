@@ -1,5 +1,6 @@
 
 from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.datas.starting_tile import initialize_starting_tile_river
 
 
 class RiverManager():
@@ -9,7 +10,7 @@ class RiverManager():
         self.river_active = False
 
     def initialize_river(self) -> None:
-        self.game_data.graph.initialize_starting_tile_river()
+        initialize_starting_tile_river(self.game_data.graph)
         self.river_active = True
 
     def is_river_active(self) -> bool:

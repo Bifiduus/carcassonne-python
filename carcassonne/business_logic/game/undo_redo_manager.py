@@ -5,7 +5,6 @@ from carcassonne.datas.history import History
 class UndoRedoManager:
     def __init__(self, game_data):
         self.game_data = game_data
-        self.history: History = History()
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -16,15 +15,15 @@ class UndoRedoManager:
         current_player = self.game_data.get_current_player()
         if (
             not current_player.is_ai_player()
-            and self.history.past_moves
+            and self.game_data.history.past_moves
         ):
-            previous_play = self.history.pop_past()
-            self.history.push_future(previous_play)
-            while self.history.past_moves and is_ai_player(
-                self.history.past_moves[-1]
+            previous_play = self.game_data.history.pop_past()
+            self.game_data.history.push_future(previous_play)
+            while self.game_data.history.past_moves and is_ai_player(
+                self.game_data.history.past_moves[-1]
             ):
-                previous_play = self.history.pop_past()
-                self.history.push_future(previous_play)
+                previous_play = self.game_data.history.pop_past()
+                self.game_data.history.push_future(previous_play)
 
             self._rebuild_state_from_history()
 
@@ -37,20 +36,21 @@ class UndoRedoManager:
         current_player = self.game_data.get_current_player()
         if (
             not current_player.is_ai_player()
-            and self.history.future_moves
+            and self.game_data.history.future_moves
         ):
-            last_unplayed_move = self.history.pop_future()
-            self.history.push_past(last_unplayed_move)
-            while self.history.future_moves and is_ai_player(
-                self.history.future_moves[-1]
+            last_unplayed_move = self.game_data.history.pop_future()
+            self.game_data.history.push_past(last_unplayed_move)
+            while self.game_data.history.future_moves and is_ai_player(
+                self.game_data.history.future_moves[-1]
             ):
-                self.history.push_past(self.history.pop_future())
+                self.game_data.history.push_past(
+                    self.game_data.history.pop_future())
 
             self._rebuild_state_from_history()
 
     def _rebuild_state_from_history(self) -> None:
         """Rebuild full game state from past moves to keep data coherent."""
-        past_moves = list(self.history.past_moves)
+        past_moves = list(self.game_data.history.past_moves)
 
         self.game_data.reset()
 
@@ -70,14 +70,14 @@ class UndoRedoManager:
                 record.move_str,
                 self.game_data.graph,
                 self.game_data.tiles_info,
-                self.history,
+                self.game_data.history,
                 self.game_data.players,
                 self.game_data.players_order,
                 player,
                 record_history=False,
             )
 
-        self.game_data.current_player_order_list = len(self.history.past_moves) % len(
+        self.game_data.current_player_order_list = len(self.game_data.history.past_moves) % len(
             self.game_data.players_order
         )
         self.game_data._ensure_current_player_playable()

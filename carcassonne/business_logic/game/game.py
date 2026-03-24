@@ -29,6 +29,7 @@ class Game(IGameService):
         self.commands = CommandsGame(self.game_data, self)
         self.end_game_manager = EndGame(self.game_data)
         self.undo_redo_manager = UndoRedoManager(self.game_data)
+        self.blitz_manager = self.game_data.blitz_manager
         self.new_game = NewGame(self.game_data, self)
         self.river = None
 
@@ -80,7 +81,7 @@ class Game(IGameService):
     def load_game_from_file(self, filename: str) -> int:
         return self.game_data.save_handler.load_game_from_file(filename)
 
-    def rotate_dirs(self, dirs: str | list, rotation: int) -> str | list:
+    def rotate_dirs(self, dirs: list, rotation: int) -> list:
         rotation = rotation % 4
         return dirs[-rotation:] + dirs[:-rotation]
 
@@ -153,13 +154,13 @@ class Game(IGameService):
 
         return list(vertices.values())
 
-    def get_tile_data(self, tile: int) -> dict | None:
+    def get_tile_data(self, tile: str) -> None:
         """
         Retourne une liste exploitable directement par la GUI.
         """
         vertice = self.game_data.graph.get_vertice_data(tile)
 
-        return vertice
+        return None
 
     def get_meeples_data(self) -> list[dict]:
         """
@@ -221,4 +222,16 @@ class Game(IGameService):
         return self.commands.provide_hint()
 
     def get_all_players_remaining_time_seconds(self) -> List[tuple[int, float]]:
-        return self.blitz_manager.get_all_players_remaining_time_seconds()
+        return self.game_data.blitz_manager.get_all_players_remaining_time_seconds()
+
+    def get_current_player_remaining_time_seconds(self) -> float | None:
+        return self.game_data.blitz_manager.get_player_remaining_time_seconds(self.game_data.get_current_player().get_id())
+
+    def get_player_remaining_time_seconds(self, player_id: int) -> float | None:
+        return self.game_data.blitz_manager.get_player_remaining_time_seconds(player_id)
+
+    def tick_blitz(self) -> bool:
+        return self.game_data.blitz_manager.tick_blitz()
+
+    def get_timeout_message(self) -> str:
+        return self.game_data.blitz_manager.get_timeout_message()
