@@ -65,7 +65,7 @@ class OnlineCommunication:
 
     def command_accept(self, client_id: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) != None:
+        if self.server.repo.invitation_received(client_id) == (0, 0):
             answer = f"You have no invitation to accept.\n"
         else:
             sender_id, party_id = self.server.repo.invitation_received(
@@ -79,11 +79,10 @@ class OnlineCommunication:
 
     def command_decline(self, client_id: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) != None:
+        if self.server.repo.invitation_received(client_id) == (0, 0):
             answer = f"You have no invitation to decline.\n"
         else:
-            host_id: int = self.server.repo.invitation_received(client_id)[
-                'host_player']
+            host_id: int = self.server.repo.invitation_received(client_id)[0]
             # envoie à {self.invitation_received(client_id)}
             self.notify_host_of_rejection(host_id, client_id)
             answer = ""
