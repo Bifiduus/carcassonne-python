@@ -70,7 +70,7 @@ class OnlineCommunication:
     def command_accept(self, client_id: str) -> str:
         answer = ""
         if self.server.repo.invitation_received(client_id) == (0, 0):
-            answer = f"You have no invitation to accept.\n"
+            answer = "You have no invitation to accept.\n"
         else:
             sender_id, party_id = self.server.repo.invitation_received(
                 client_id)
@@ -84,7 +84,7 @@ class OnlineCommunication:
     def command_decline(self, client_id: str) -> str:
         answer = ""
         if self.server.repo.invitation_received(client_id) == (0, 0):
-            answer = f"You have no invitation to decline.\n"
+            answer = "You have no invitation to decline.\n"
         else:
             host_id: int = self.server.repo.invitation_received(client_id)[0]
             # envoie à {self.invitation_received(client_id)}
@@ -198,7 +198,8 @@ class OnlineCommunication:
             game.score_manager.score_end_of_turn(game.graph, game.players)
         answer = "Score:"
         for player in game.players.values():
-            answer += f"{player.get_username()} {'AI' if player.is_ai else ''}: {player.score} points.\n"
+            answer += f"{player.get_username()} "\
+                f"{'AI' if player.is_ai else ''}: {player.score} points.\n"
         return answer
 
     def command_hand(self, client_id: str) -> str:

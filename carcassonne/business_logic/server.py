@@ -79,7 +79,6 @@ class Server(IServerService):
                         # Add client to the list
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
-                            id = len(self.connected_clients)+1
                             self.registered_clients[client_socket] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
@@ -126,7 +125,8 @@ class Server(IServerService):
 
     def launch_availables_games(self):
         # For all parties, check if game can be launched
-        # If so launch it, and handle_party() ( like handle_client but for a game )
+        # If so launch it, and handle_party() ( like handle_client but
+        #  for a game )
         for party in range(1, self.repo.get_parties() + 1):
             check = self.party_can_be_launched(party)
             # Check if players are ok for party to be launched
@@ -184,7 +184,8 @@ class Server(IServerService):
 
                     # Process data
                     response = self.process_message(str(client_index), message)
-                    # fonction qui check le statut d'une invitation et l'envoie à l'host
+                    # fonction qui check le statut d'une invitation et
+                    #  l'envoie à l'host
                     answer = f"Server -> Client{client_index}: {response}\n"
                     client_socket.send(answer.encode())
                 else:
@@ -204,17 +205,23 @@ class Server(IServerService):
                     del self.player_clients[client_socket]
                     del self.registered_clients[client_socket]
 
-    def handle_client_registering(self, message: str, client_socket: socket.socket, client_index: int):
+    def handle_client_registering(self, message: str,
+                                  client_socket: socket.socket,
+                                  client_index: int):
         """
         Process client registering and return a response.
         """
         preface = f"Server -> Client{client_index}: "
         if message.find("username=") == -1:
-            answer = f"{preface}You should send your username and password !\n"
-            answer += "Type: username=<your username> password=<your password>\n"
-            answer += "If it is your first time connecting, you can create one.\n"
+            answer = f"{preface}You should send your username "\
+                "and password !\n"
+            answer += "Type: username=<your username> password="\
+                "<your password>\n"
+            answer += "If it is your first time connecting, you"\
+                " can create one.\n"
         else:
-            if message.find("username=") != -1 and message.find("password=") != -1:
+            if (message.find("username=") != -1 and
+                    message.find("password=") != -1):
                 username, password = message.split(" password=")
                 username: str = username.removeprefix(
                     "username=")
@@ -227,7 +234,8 @@ class Server(IServerService):
                 else:
                     answer = f"{preface}\nYour registration has failed...\n"
             else:
-                answer = f"{preface}\nYou should send your username and password !\n"
+                answer = f"{preface}\nYou should send your username"\
+                    " and password !\n"
         client_socket.send(answer.encode())
 
     def check_username_taken(self, username: str):

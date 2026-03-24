@@ -44,7 +44,8 @@ class GameRepository(IGamesRepository):
         self._execute_non_query(table_players)
 
         table_groups = "CREATE TABLE IF NOT EXISTS groups"\
-            "(group_id INTEGER CONSTRAINT group_id_c PRIMARY KEY AUTOINCREMENT,"
+            "(group_id INTEGER CONSTRAINT group_id_c PRIMARY KEY"\
+            " AUTOINCREMENT,"
         table_groups += " number_of_players int CONSTRAINT"\
             " number_of_players CHECK(number_of_players >= 0),"
         table_groups += "host_player int CONSTRAINT host_player"\
@@ -84,12 +85,15 @@ class GameRepository(IGamesRepository):
 
         usernames_table = "CREATE TABLE IF NOT EXISTS usernames(server "\
             "varchar(30) CONSTRAINT server PRIMARY KEY,"
-        usernames_table += "username varchar(30) CONSTRAINT usernames_table NOT NULL);"
-        rows = self._execute_non_query(usernames_table)
+        usernames_table += "username varchar(30) CONSTRAINT usernames_table"\
+            " NOT NULL);"
+        self._execute_non_query(usernames_table)
 
-        usernames_table = "CREATE TABLE IF NOT EXISTS usernames(server varchar(30) CONSTRAINT server PRIMARY KEY,"
-        usernames_table += "username varchar(30) CONSTRAINT usernames_table NOT NULL);"
-        rows = self._execute_non_query(usernames_table)
+        usernames_table = "CREATE TABLE IF NOT EXISTS usernames(server "\
+            "varchar(30) CONSTRAINT server PRIMARY KEY,"
+        usernames_table += "username varchar(30) CONSTRAINT usernames_table"\
+            " NOT NULL);"
+        self._execute_non_query(usernames_table)
 
     # low-level helpers
     def _execute_query(self, query: str,
@@ -121,7 +125,8 @@ class GameRepository(IGamesRepository):
         )
         return len(rows) >= 1
 
-    def create_default_online_player(self, username: str, password: str, server: str) -> str:
+    def create_default_online_player(self, username: str, password: str,
+                                     server: str) -> str:
         if 3 <= len(username) <= 30:
             self._execute_non_query(
                 "INSERT INTO players(username, status, password, connected)"
@@ -134,7 +139,7 @@ class GameRepository(IGamesRepository):
                 " VALUES(?, 0, 0);",
                 (player_id,)
             )
-            rows = self._execute_non_query(
+            self._execute_non_query(
                 "INSERT INTO usernames(server, username) VALUES(?, ?);",
                 (server, username)
             )
@@ -144,7 +149,7 @@ class GameRepository(IGamesRepository):
                 " (max 30 characters)."
 
     def set_new_username_for_server(self, server: str, username: str):
-        rows = self._execute_non_query(
+        self._execute_non_query(
             "INSERT INTO usernames(server, username) VALUES(?, ?);",
             (server, username)
         )
@@ -182,15 +187,19 @@ class GameRepository(IGamesRepository):
             return False
         else:
             rows_players = self._execute_non_query(
-                "INSERT INTO players(username, status, password, connected) VALUES(?, ?, ?, ?);",
+                "INSERT INTO players(username, status, password, connected)"
+                " VALUES(?, ?, ?, ?);",
                 (username, "idle", password, True)
             )
             player_id: int = self.get_id_from_username(username)
             rows_scoreboard = self._execute_non_query(
-                "INSERT INTO scoreboard(player_id, victories, defeats) VALUES(?, 0, 0);",
+                "INSERT INTO scoreboard(player_id, victories, defeats)"
+                " VALUES(?, 0, 0);",
                 (player_id,)
             )
-            return True if bool(rows_players) and bool(rows_scoreboard) else False
+            if bool(rows_players) and bool(rows_scoreboard):
+                return True
+            return False
 
     def get_password(self, player_id: int) -> str:
         rows = self._execute_query(
@@ -292,7 +301,8 @@ class GameRepository(IGamesRepository):
     # possible to change return type to tuple(int, message)
     def check_all_invitations_resolved(self, client_id: str):
         rows = self._execute_query(
-            "SELECT invited_player, username, invitation_status FROM pending_invitations"
+            "SELECT invited_player, username, invitation_status FROM"
+            " pending_invitations"
             " NATURAL JOIN players NATURAL JOIN groups WHERE host_player=?;",
             (int(client_id),)
         )
@@ -389,17 +399,17 @@ class GameRepository(IGamesRepository):
         if not check:
             print("Error cleaning the party's players !")
             return
-        rows = self._execute_non_query(
+        self._execute_non_query(
             "DELETE FROM current_games WHERE group_id=?;",
             (party,)
         )
-        rows = self._execute_non_query(
+        self._execute_non_query(
             "DELETE FROM groups WHERE group_id=?;",
             (party,)
         )
 
     def client_quit(self, client_username: str):
-        rows = self._execute_non_query(
+        self._execute_non_query(
             "UPDATE players SET connected=? WHERE username=?;",
             (False, client_username)
         )
