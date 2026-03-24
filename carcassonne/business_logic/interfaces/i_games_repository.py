@@ -66,7 +66,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def invitation_received(self, client_id: str) -> Row:
+    def invitation_received(self, client_id: str) -> tuple[int, int]:
         pass
 
     @abstractmethod
