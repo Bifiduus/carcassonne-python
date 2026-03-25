@@ -92,7 +92,6 @@ class Server(IServerService):
                     self.INVITATION_TIMEOUT)
                 # Determine if a party can be launched, and if so, do it
                 self.launch_availables_games()
-
                 # Determine if a party ended, and if so, clean it
                 self.clean_finished_games()
 
@@ -126,7 +125,7 @@ class Server(IServerService):
         # For all parties, check if game can be launched
         # If so launch it, and handle_party() ( like handle_client but
         #  for a game )
-        for party in range(1, self.repo.get_parties() + 1):
+        for party in self.repo.get_parties():
             check = self.party_can_be_launched(party)
             # Check if players are ok for party to be launched
             if check:
@@ -142,7 +141,7 @@ class Server(IServerService):
         return check
 
     def clean_finished_games(self):
-        for party in range(1, self.repo.get_parties() + 1):
+        for party in self.repo.get_parties():
             check = self.party_is_finished(party)
             if check:
                 self.repo.clean_party(party)

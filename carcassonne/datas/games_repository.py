@@ -245,11 +245,18 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
+    def get_group(self, host_id) -> int:
+        rows = self._execute_query(
+            "SELECT group_id FROM groups WHERE host_player=?;",
+            (int(host_id),)
+        )
+        return rows[0]['group_id']
+
     def party_is_launched(self, host_id) -> bool:
-        group_id = self.get_game(host_id)
+        group_id = self.get_group(host_id)
         rows = self._execute_query(
             "SELECT game_id FROM current_games WHERE group_id=?;",
-            (host_id,)
+            (group_id,)
         )
         return bool(rows)
 
@@ -380,7 +387,6 @@ class GameRepository(IGamesRepository):
             "SELECT invitation_id, sending_time FROM pending_invitations;"
         )
         for row in rows:
-            print(rows)
             id, t = row
             if time.time() - t > timeout:
                 self.cancel_invitation(id)
@@ -392,11 +398,14 @@ class GameRepository(IGamesRepository):
         )
         return bool(rows)
 
-    def get_parties(self) -> int:
+    def get_parties(self) -> list[int]:
         rows = self._execute_query(
-            "SELECT COUNT(group_id) AS parties_number FROM groups;"
+            "SELECT group_id FROM groups;"
         )
-        return rows[0]['parties_number']
+        parties: list[int] = []
+        for row in rows:
+            parties.append(row['group_id'])
+        return parties
 
     def create_party(self, client_username: str) -> int | None:
         host_id: int = self.get_id_from_username(client_username)
