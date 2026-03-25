@@ -53,10 +53,10 @@ class Client(IClientService):
           from the server and dispatch them to `handle_server_message`.
         """
         # refresh discovery cache first
-        self.list_available_servers()
         if ip is (None or ""):
             ip = self.server_service.server_name
-        if ip not in self.available_servers:
+        if (ip not in self.available_servers or not
+        self.server_service.is_server_running()):
             print("Error: There is no server with such an ip.")
             return False
 
