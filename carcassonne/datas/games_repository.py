@@ -318,6 +318,13 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
+    def get_game_id(self, group_id) -> int:
+        rows = self._execute_query(
+            "SELECT game_id FROM current_games WHERE group_id=?;",
+            (group_id,)
+        )
+        return rows[0]['game_id']
+
     # possible to change return type to tuple(int, message)
     def check_all_invitations_resolved(self, client_id: str):
         rows = self._execute_query(
@@ -450,6 +457,13 @@ class GameRepository(IGamesRepository):
             (int(client_id),)
         )
         return rows[0][0]
+
+    def create_game(self, game_name: str, group_id: int):
+        rows = self._execute_non_query(
+            "INSERT INTO current_games(game_name, group_id)"
+            " VALUES(?, ?);",
+            (game_name, group_id)
+        )
 
     def send_invitation(self, invited_player: str,
                         invitee_player: str) -> bool:

@@ -287,7 +287,7 @@ class Server(IServerService):
             elif message == "back":
                 answer = self.handle_communication.command_back(
                     client_id)
-            elif message.startswith("board"):
+            elif message == "board":
                 answer = self.handle_communication.command_board(
                     client_id)
             elif message.startswith("set"):
@@ -348,7 +348,9 @@ class Server(IServerService):
         graph: IGraphData = GraphData()
         new_party = Game(graph, number_of_players_in_group)
         try:
-            self.current_games_list[party_id] = (
+            self.repo.create_game(party_name, party_id)
+            game_id: int = self.repo.get_game_id(party_id)
+            self.current_games_list[game_id] = (
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)

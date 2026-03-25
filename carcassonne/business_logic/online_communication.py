@@ -144,7 +144,8 @@ class OnlineCommunication:
         return self.server.repo.change_status(client_username, "idle")
 
     def command_play(self, message: str, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         move: str = message.removeprefix("play ").strip()
         game: Game = self.server.current_games_list[game_id][1]
         board: str = game.get_printed_board()
@@ -158,7 +159,8 @@ class OnlineCommunication:
         return "Move not played.\n" + board + "\n"
 
     def command_board(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         return game.get_printed_board()
 
@@ -171,13 +173,15 @@ class OnlineCommunication:
         else:
             param = content
             value = None
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         game.set_game_configuration(param, value)
         return f"Paramètre '{param}' défini à '{value}'."
 
     def command_config(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         config = game.get_game_configuration()
         answer = "Configuration actuelle du jeu:"
@@ -186,7 +190,8 @@ class OnlineCommunication:
         return answer
 
     def command_history(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         history = game.get_history()
         answer = "Current history:"
@@ -195,7 +200,8 @@ class OnlineCommunication:
         return answer
 
     def command_score(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         if game.end_game():
             game.score_manager.score_end_of_game(game.graph, game.players)
@@ -208,7 +214,8 @@ class OnlineCommunication:
         return answer
 
     def command_hand(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         answer = ""
         if game.current_hand is None:
@@ -218,24 +225,28 @@ class OnlineCommunication:
         return answer
 
     def command_redo(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         game.redo()
         return "Derniers coups rétablis."
 
     def command_undo(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         game.undo()
         return "Derniers coups annulés."
 
     def command_hint(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         return game.provide_hint()
 
     def command_draw(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         already_had_tile: bool = game.current_hand is not None
         tile = game.draw_tile()
@@ -249,14 +260,16 @@ class OnlineCommunication:
         return answer
 
     def command_shuffle(self, client_id: str) -> str:
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         seed = game.shuffle_deck()
         return f"Pioche mélangée. Algo: {game.shuffle_algo}. Seed: {seed}"
 
     def command_save(self, client_id: str, message: str) -> str:
         filename = message[5:].strip()
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         if game.save_game_to_file(filename) == 0:
             return f"Partie sauvegardée dans {filename}."
@@ -264,7 +277,8 @@ class OnlineCommunication:
 
     def command_load(self, client_id: str, message: str) -> str:
         filename = message[5:].strip()
-        game_id: int = self.server.repo.get_game(client_id)
+        party_id = self.server.repo.get_party_id(client_id)
+        game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         if game.load_game_from_file(filename) == 0:
             return f"Partie chargée depuis {filename}."
