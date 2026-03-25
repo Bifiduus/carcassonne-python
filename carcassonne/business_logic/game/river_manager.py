@@ -10,7 +10,6 @@ class RiverManager():
         self.river_active = False
 
     def initialize_river(self) -> None:
-        initialize_starting_tile_river(self.game_data.graph)
         self.river_active = True
 
     def is_river_active(self) -> bool:

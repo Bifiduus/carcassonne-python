@@ -1,6 +1,8 @@
 class CommandsGame():
-    def __init__(self, game_data, game=None):
+    def __init__(self, blitz_manager, deck_manager, game_data, game=None):
         self.game_data = game_data
+        self.blitz_manager = blitz_manager
+        self.deck_manager = deck_manager
         self.game = game
 
     def place_tile(self, tile, position):
@@ -20,15 +22,15 @@ class CommandsGame():
         from carcassonne.business_logic.ai_model import RandomPlayer
         from carcassonne.business_logic.ai_model import ExpectimaxPlayer
 
-        timed_out_now = self.game_data.tick_blitz()
+        timed_out_now = self.blitz_manager.tick_blitz()
         if timed_out_now:
             return ""
-        if not self.game_data._ensure_current_player_playable():
+        if not self.blitz_manager._ensure_current_player_playable():
             return ""
 
         ai_player = self.game_data.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        self.game_data.deck_manager.draw_tile()
+        self.deck_manager.draw_tile()
         if self.game_data.current_hand is None:
             return ""
         model = None

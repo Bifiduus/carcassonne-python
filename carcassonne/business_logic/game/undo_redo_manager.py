@@ -3,13 +3,14 @@ from carcassonne.datas.history import History
 
 
 class UndoRedoManager:
-    def __init__(self, game_data):
+    def __init__(self, blitz_manager, game_data):
         self.game_data = game_data
+        self.blitz_manager = blitz_manager
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
 
-        if not self.game_data._ensure_current_player_playable():
+        if not self.blitz_manager._ensure_current_player_playable():
             return
 
         current_player = self.game_data.get_current_player()
@@ -30,7 +31,7 @@ class UndoRedoManager:
     def redo(self) -> None:
         """Redo the last undone human move and subsequent AI moves."""
 
-        if not self.game_data._ensure_current_player_playable():
+        if not self.blitz_manager._ensure_current_player_playable():
             return
 
         current_player = self.game_data.get_current_player()
@@ -80,4 +81,4 @@ class UndoRedoManager:
         self.game_data.current_player_order_list = len(self.game_data.history.past_moves) % len(
             self.game_data.players_order
         )
-        self.game_data._ensure_current_player_playable()
+        self.blitz_manager._ensure_current_player_playable()

@@ -59,7 +59,7 @@ class GameDataGui:
             self.game.clear_undo_history()
         if result:
             while self.game.get_current_player().is_ai_player():
-                self.game.play_ai_turn()
+                self.game.play_ai_turn(self.game)
 
         self.reset()
 

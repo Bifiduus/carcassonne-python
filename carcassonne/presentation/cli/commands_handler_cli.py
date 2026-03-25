@@ -254,7 +254,7 @@ def play(self, move, game, client_service: IClientService) -> None:
             if game.end_game():
                 break
             previous_player_id = game.get_current_player().get_id()
-            game.play_ai_turn()
+            game.play_ai_turn(game)
             game.get_board()
             if game.end_game():
                 break

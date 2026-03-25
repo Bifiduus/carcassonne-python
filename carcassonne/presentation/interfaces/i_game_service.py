@@ -75,6 +75,10 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def get_players_order(self) -> list[int]:
+        pass
+
+    @abstractmethod
     def play_ai_turn(self):
         pass
 

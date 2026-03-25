@@ -32,16 +32,17 @@ class Game(IGameService):
         self, graphData: IGraphData, nb_players: int, config_overrides=None
     ) -> None:
         self.game_data = GameData(graphData, nb_players, config_overrides)
-        self.commands = CommandsGame(self.game_data, self)
-        self.end_game_manager = EndGame(self.game_data)
-        self.undo_redo_manager = UndoRedoManager(self.game_data)
-        self.new_game = NewGame(self.game_data, self)
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
-        self.blitz_manager = BlitzManager(self)
-        self.deck_manager = DeckManager(self)
-        self.river_manager = RiverManager(self)
+        self.blitz_manager = BlitzManager(self.game_data)
+        self.undo_redo_manager = UndoRedoManager(self.blitz_manager, self.game_data)
+        self.end_game_manager = EndGame(self.game_data, self.blitz_manager, self.score_manager)
+        self.river_manager = RiverManager(self.game_data)
+        self.deck_manager = DeckManager(self.game_data, self.blitz_manager, self.river_manager)
+        self.commands = CommandsGame(self.blitz_manager, self.deck_manager, self.game_data, self)
+        self.new_game = NewGame(self.river_manager, self.deck_manager, self.blitz_manager, self.game_data, self)
         self.river = None
+        self.start_new_game()
 
     def get_history(self) -> List[str]:
         """Return the current play history."""
@@ -81,6 +82,9 @@ class Game(IGameService):
 
     def get_number_of_ai_players(self) -> int:
         return self.game_data.number_of_ai_players
+    
+    def get_players_order(self) -> list[int]:
+        return self.game_data.players_order
 
     def get_current_player(self) -> Player:
         return self.game_data.get_current_player()
@@ -226,7 +230,7 @@ class Game(IGameService):
             return False
 
         if (
-            self.game_data.players_order[self.current_player_order_list]
+            self.game_data.players_order[self.game_data.current_player_order_list]
             != self.get_current_player().get_id()
         ):
             print("It is not your turn to play.")
@@ -243,12 +247,12 @@ class Game(IGameService):
             print(f"turn:{turn}")
             print(self.game_data.players_order)
             return False
-        if self.current_hand is None:
+        if self.game_data.current_hand is None:
             print("Vous devez piocher une tuile avant de jouer.")
             return False
 
         tile_code = self.game_data.extract_tile_code(move)
-        if tile_code is not None and tile_code != self.current_hand:
+        if tile_code is not None and tile_code != self.game_data.current_hand:
             print(f"Vous devez jouer la tuile en main: {self.current_hand}")
             return False
 
@@ -278,9 +282,9 @@ class Game(IGameService):
                 current_player,
             )
             print(move + " placed successfully.")
-            self.current_hand = None
-            self.current_player_order_list = (
-                self.current_player_order_list + 1
+            self.game_data.current_hand = None
+            self.game_data.current_player_order_list = (
+                self.game_data.current_player_order_list + 1
             ) % self.get_number_of_players()
             self.blitz_manager._ensure_current_player_playable()
             """vertices = self.graph.get_verticies()
@@ -310,7 +314,7 @@ class Game(IGameService):
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.deck_manager.draw_tile()
-        if self.current_hand is None:
+        if self.game_data.current_hand is None:
             return
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
@@ -318,7 +322,7 @@ class Game(IGameService):
         eval_score = None
         if self.get_game_configuration().get("ai_mode") == "random":
             model = RandomPlayer()
-            move = model.random_move(self.current_hand, game)
+            move = model.random_move(self.game_data.current_hand, game)
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth", 5)

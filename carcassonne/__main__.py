@@ -113,6 +113,7 @@ def main() -> int:
         "--river",
         help="enable river mode",
         action="store_true",
+        default=False
     )
 
     parser.add_argument(
@@ -202,6 +203,9 @@ def main() -> int:
         config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
     if args.ai_mcts_selection == "UCT" or args.ai_mcts_selection == "ML":
         config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
+    if args.river:
+        print("River mode enabled.")
+        config_overrides["river"] = True
 
     game_data: IGraphData = GraphData()
     nb_players = (
@@ -233,10 +237,6 @@ def main() -> int:
         print(f"Loading game from file: {args.file}")
     if args.verbose:
         print("Verbose mode enabled.")
-    if args.river:
-        print("River mode enabled.")
-        game.game_data.river_manager.initialize_river()
-        config_overrides["river"] = True
     if args.gui:
         print("GUI mode enabled.")
         CreateGui(game)
