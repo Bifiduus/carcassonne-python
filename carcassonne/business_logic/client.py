@@ -92,7 +92,6 @@ class Client(IClientService):
 
         self.send_to_server(information)
 
-
         # start a listener thread so the caller can interact without blocking
         self._recv_thread = threading.Thread(
             target=self._receive_loop, args=(ip,),  daemon=True)
@@ -250,7 +249,6 @@ class Client(IClientService):
             if self.client_id is None:
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
-            server = self.connected_to_server
             ip = self.connected_to_server
             if self.repo.has_no_special_username(ip):
                 username = self.repo.get_online_player(

@@ -90,7 +90,6 @@ class Server(IServerService):
                 assert self.repo, "The database should not be None"
                 self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
-
                 # Determine if a party can be launched, and if so, do it
                 self.launch_availables_games()
 
@@ -234,7 +233,7 @@ class Server(IServerService):
                     self.registered_clients[client_socket] = True
                     self.client_sockets[username] = client_socket
                     self.player_clients[client_socket] = username
-                    self.send_to_clients(f"{username} is now connected!\n")
+                    self.send_to_clients(f"{username} is now connected !\n")
                 else:
                     answer = f"{preface}\nYour registration has failed...\n"
             else:
@@ -265,7 +264,6 @@ class Server(IServerService):
             elif message == "server status":
                 answer = self.handle_communication.command_server_status()
             elif message.startswith("new"):
-                print(message)
                 answer = self.handle_communication.command_new(
                     message, client_id)
             elif message.startswith("players"):
@@ -382,7 +380,7 @@ class Server(IServerService):
         username: str = self.repo.get_username(invited_player_id)
         invited_client: socket.socket = self.client_sockets[username]
         host_name: str = self.repo.get_username(invitee_player_id)
-        message = "Server: You have received an invitation"\
+        message = "Server: You have received an invitation "\
             f"from {host_name}.\n"
         message += "Expires in 300s.\n"
         with self.clients_lock:
