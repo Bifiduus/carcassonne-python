@@ -138,7 +138,7 @@ class Server(IServerService):
     def party_can_be_launched(self, party_number: int) -> bool:
         host_id: int = self.repo.get_host_from_party(party_number)
         check = self.repo.check_all_invitations_resolved(str(host_id))
-        if self.repo.party_launched(str(host_id)):
+        if self.repo.party_is_launched(str(host_id)):
             check = False
         return check
 
@@ -265,6 +265,7 @@ class Server(IServerService):
             elif message == "server status":
                 answer = self.handle_communication.command_server_status()
             elif message.startswith("new"):
+                print(message)
                 answer = self.handle_communication.command_new(
                     message, client_id)
             elif message.startswith("players"):
