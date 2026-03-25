@@ -155,6 +155,7 @@ class GameRepository(IGamesRepository):
         )
 
     def get_online_player(self, server: str) -> str:
+        print("dfgfd")
         rows = self._execute_query(
             "SELECT username FROM usernames WHERE server=?;",
             (server,)
