@@ -11,8 +11,11 @@ from carcassonne.datas.starting_tile import (
 
 
 class NewGame():
-    def __init__(self, game_data: GameData, game=None):
+    def __init__(self, river_manager, deck_manager, blitz_manager, game_data: GameData, game=None):
         self.game_data = game_data
+        self.river_manager = river_manager
+        self.deck_manager = deck_manager
+        self.blitz_manager = blitz_manager
         self.game = game
 
     def start_online_game(self, players: list[Player]):
@@ -33,7 +36,7 @@ class NewGame():
         self.game_data.rules_manager = RulesManager(self.game_data.tiles_info)
         self.game_data.players.clear()
         self.game_data.add_online_players(players)
-        self.game_data.deck_manager.shuffle_deck()
+        self.deck_manager.shuffle_deck()
         self.game_data.shuffle_players_order()
         self.game_data.current_player_order_list = 0
         return "Starting the game."
@@ -47,6 +50,7 @@ class NewGame():
         self.game_data.graph.reset_graph()
         # ensure starting tile present after reset
         if self.game_data.game_configuration.get_setting_value("river"):
+            self.river_manager.initialize_river()
             initialize_starting_tile_river(self.game_data.graph)
         else:
             initialize_starting_tile(self.game_data.graph)
@@ -59,17 +63,17 @@ class NewGame():
             self.game_data.players_order = players_order
         else:
             self.game_data.shuffle_players_order()
-        self.game_data.deck_manager.shuffle_deck(None, seed)
+        self.deck_manager.shuffle_deck(None, seed)
         self.game_data.current_player_order_list = 0
         self.game_data._end_game_scored = False
-        self.game_data._initialize_blitz_state()
+        self.blitz_manager._initialize_blitz_state()
         while self.game_data.get_current_player().is_ai_player():
             from .end_game import EndGame
             end_game = EndGame(self.game_data)
             if end_game.end_game():
                 break
             previous_player_id = self.game_data.get_current_player().get_id()
-            self.game_data.play_ai_turn(self.game)
+            self.game.play_ai_turn(self.game)
             if end_game.end_game():
                 break
             if self.game_data.get_current_player().get_id() == previous_player_id:
