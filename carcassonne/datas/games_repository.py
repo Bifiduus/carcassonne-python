@@ -246,6 +246,15 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
+    def party_is_launched(self, host_id) -> bool:
+        group_id = self.get_game(host_id)
+        rows = self._execute_query(
+            "SELECT game_id FROM current_games WHERE group_id=?;",
+            (host_id,)
+        )
+        return bool(rows)
+
+
     def get_id_from_username(self, player_username: str) -> int:
         rows = self._execute_query(
             "SELECT player_id FROM players WHERE username=?;",
