@@ -370,7 +370,7 @@ class Server(IServerService):
         if profile is None:
             return "Player not found\n"
         return f"Player profile:\n username={profile['username']}\n"\
-            "status={profile['status']}\n score={profile['score']}\n "\
+            f"status={profile['status']}\n score={profile['score']}\n "\
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):

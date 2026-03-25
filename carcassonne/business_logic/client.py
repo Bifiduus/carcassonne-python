@@ -209,7 +209,7 @@ class Client(IClientService):
 
     def create_default_online_player(self, username: str, password: str,
                                      server: str = "127.0.1.1") -> str:
-        self.client_player = username
+        self.client_player = username.strip()
         assert self.repo, "The database should not be None"
         return self.repo.create_default_online_player(username, password,
                                                       server)
