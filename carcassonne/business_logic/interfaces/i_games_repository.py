@@ -14,6 +14,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def party_is_launched(self, host_id) -> bool:
+        pass
+
+    @abstractmethod
     def is_accounted_for(self) -> bool:
         pass
 

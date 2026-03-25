@@ -678,7 +678,7 @@ class Game(IGameService):
 
     def add_players(self, nb_players: int) -> None:
         colors = ["red", "blue", "yellow", "black", "white"]
-        for i in range(1, nb_players + 1):
+        for i in range(1, nb_players):
             self.players[i] = Player(
                 i, f"Player {i}", colors[(i - 2) % len(colors)], True
             )
