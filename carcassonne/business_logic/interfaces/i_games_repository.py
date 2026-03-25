@@ -66,6 +66,14 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def create_game(self, game_name: str, group_id: int):
+        pass
+
+    @abstractmethod
+    def get_game_id(self, group_id) -> int:
+        pass
+
+    @abstractmethod
     def get_host_from_party(self, party_id: int) -> int:
         pass
 
