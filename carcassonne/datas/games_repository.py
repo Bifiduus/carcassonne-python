@@ -131,7 +131,7 @@ class GameRepository(IGamesRepository):
             self._execute_non_query(
                 "INSERT INTO players(username, status, password, connected)"
                 " VALUES(?, ?, ?, ?);",
-                (username, "idle", password, True)
+                (username, "idle", password, False)
             )
             player_id: int = self.get_id_from_username(username)
             self._execute_non_query(
@@ -184,6 +184,10 @@ class GameRepository(IGamesRepository):
             real_password: str = rows[0]['password']
             connected: bool = rows[0]['connected']
             if real_password == password and not connected:
+                self._execute_non_query(
+                    "UPDATE players SET connected=? WHERE username=?;",
+                    (True, username)
+                )
                 return True
             return False
         else:
