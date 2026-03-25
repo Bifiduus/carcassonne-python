@@ -154,7 +154,7 @@ class Server(IServerService):
         return self.current_games_list[party][1].end_game()
 
     def is_server_running(self) -> bool:
-        return self.should_stop.is_set()
+        return not self.should_stop.is_set()
 
     def client_is_registered(self, client_socket: socket.socket) -> bool:
         return self.registered_clients[client_socket]
@@ -193,6 +193,8 @@ class Server(IServerService):
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
+            username: str = self.player_clients[client_socket]
+            self.handle_communication.command_quit(username)
             client_socket.close()
             # Remove client from the list
             with self.clients_lock:
@@ -369,7 +371,7 @@ class Server(IServerService):
         profile = self.repo.get_player_profile(player_id)
         if profile is None:
             return "Player not found\n"
-        return f"Player profile:\n username={profile['username']}\n"\
+        return f"Player profile:\n username={profile['username']}\n "\
             f"status={profile['status']}\n score={profile['score']}\n "\
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
 

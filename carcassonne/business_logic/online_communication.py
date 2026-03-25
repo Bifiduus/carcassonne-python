@@ -30,6 +30,8 @@ class OnlineCommunication:
 
     def command_new(self, message: str, client_id: str) -> str:
         message = message.split("new")[1]
+        if message == "":
+            return "You cannot create an empty party !"
         client_username = self.server.repo.get_username(client_id)
         # Create the group
         self.server.repo.create_party(client_username)
@@ -62,7 +64,7 @@ class OnlineCommunication:
         for row in rows:
             scoreboard += f"Id: {row['id']}, username: {row['username']},"\
                 f" victories: {row['victories']}, defeats: {row['defeats']},"\
-                f"total games: {row['total_games']}\n"
+                f" total games: {row['total_games']}\n"
         return scoreboard  # Affiche le tableau des scores
         # joueurs qui ont joué sur le serveur (nombre de
         # victoires, défaites, parties jouées) de la db.
