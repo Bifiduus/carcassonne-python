@@ -53,13 +53,12 @@ class Client(IClientService):
           from the server and dispatch them to `handle_server_message`.
         """
         # refresh discovery cache first
+        self.list_available_servers()
         if ip is (None or ""):
             ip = self.server_service.server_name
-        if (ip not in self.available_servers or not
-        self.server_service.is_server_running()):
+        if (ip not in self.available_servers):
             print("Error: There is no server with such an ip.")
             return False
-
         server_port, _ = self.available_servers[ip]
 
         if port is None:
@@ -81,14 +80,18 @@ class Client(IClientService):
 
         # send useful informations to the server
         username = ""
+
         if self.repo.has_no_special_username(ip):
             username = self.repo.get_online_player(
                 self.server_service.server_name)
+
         else:
             username = self.repo.get_online_player(ip)
         information = f"username={username} "\
             f"password={self.repo.get_password(1)}"
+
         self.send_to_server(information)
+
 
         # start a listener thread so the caller can interact without blocking
         self._recv_thread = threading.Thread(
@@ -243,11 +246,18 @@ class Client(IClientService):
             print("Not connected to any server")
             return False
         try:
+
             if self.client_id is None:
                 assert self.repo, "The database should not be None"
                 self.client_id = self.repo.get_next_available_id()
             server = self.connected_to_server
-            username = self.repo.get_online_player(server)
+            ip = self.connected_to_server
+            if self.repo.has_no_special_username(ip):
+                username = self.repo.get_online_player(
+                    self.server_service.server_name)
+            else:
+                username = self.repo.get_online_player(ip)
+
             if text == "quit":
                 self.has_joined_server = False
             text = f"{username}: " + text
