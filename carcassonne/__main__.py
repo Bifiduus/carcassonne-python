@@ -144,7 +144,7 @@ def main() -> int:
     )
 
     parser.add_argument(
-        "-s",
+        "-S",
         "--server",
         help=(
             "join a server "
@@ -154,7 +154,7 @@ def main() -> int:
     )
 
     parser.add_argument(
-        "-d",
+        "-D",
         "--daemon",
         help="Lance le serveur en mode sans interface.",
     )
