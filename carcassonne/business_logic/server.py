@@ -154,7 +154,7 @@ class Server(IServerService):
         return self.current_games_list[party][1].end_game()
 
     def is_server_running(self) -> bool:
-        return not self.should_stop.is_set()
+        return self.should_stop.is_set()
 
     def client_is_registered(self, client_socket: socket.socket) -> bool:
         return self.registered_clients[client_socket]
