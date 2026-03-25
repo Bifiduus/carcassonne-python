@@ -231,3 +231,14 @@ class BlitzManager:
             )
             for player_id in self.game_data.players_order
         ]
+
+    def _ensure_current_player_playable(self) -> bool:
+        if not self._is_blitz_enabled():
+            return True
+        if not self._advance_to_next_playable_player():
+            return False
+
+        current_player_id = self.game_data.get_current_player().get_id()
+        if self.active_player_id != current_player_id:
+            self.start_turn(current_player_id)
+        return True
