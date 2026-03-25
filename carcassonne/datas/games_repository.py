@@ -441,6 +441,18 @@ class GameRepository(IGamesRepository):
         )
         return bool(rows)
 
+    def get_players_from_group(self, group_id: int) -> list[str]:
+        rows = self._execute_query(
+            "SELECT username FROM players WHERE group_id=?;",
+            (group_id,)
+        )
+        players: list[str] = []
+        if len(rows) <= 1:
+            return players
+        for row in rows:
+            players.append(row['username'])
+        return players
+
     def close(self):
         try:
             self.db.close()

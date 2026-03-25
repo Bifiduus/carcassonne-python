@@ -143,6 +143,22 @@ def main() -> int:
         default="UCT",
     )
 
+    parser.add_argument(
+        "-s",
+        "--server",
+        help=(
+            "join a server "
+            "(default: localhost:1235)"
+        ),
+        type=str,
+    )
+
+    parser.add_argument(
+        "-d",
+        "--daemon",
+        help="Lance le serveur en mode sans interface.",
+    )
+
     args: argparse.Namespace = parser.parse_args()
     config_overrides = {}
     # CLI contract: blitz mode is enabled only when -b/--blitz is passed.
@@ -176,8 +192,12 @@ def main() -> int:
     )
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
+    daemon: bool = bool(args.daemon)
+    # Daemon dans server init ?
     server_service: IServerService = Server(game_repo)
     client_service: IClientService = Client(game_repo, server_service)
+    if args.server:
+        client_service.join_server(args.server)
     # mettre en place client_service dans le reste
     game.shuffle_algo = args.shuffle
     game.default_seed = args.seed

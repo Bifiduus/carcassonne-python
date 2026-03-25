@@ -413,3 +413,21 @@ class Server(IServerService):
         assert self.repo is not None, "No games repository."
         party_id = int(self.repo.get_game(client_id))
         return self.current_games_list[party_id][1]
+
+    def send_to_group(self, group_id: int, message: str) -> bool:
+        players: list[str] = self.repo.get_players_from_group(group_id)
+        ok = True
+        for player in players:
+            ok = self.send_to_client(player, message)
+        return ok
+
+    def send_to_client(self, username: str, message: str) -> bool:
+        client_socket = self.client_sockets[username]
+        client_index = self.repo.get_id_from_username(username)
+        preface = f"Server -> Client{client_index}: "
+        try:
+            client_socket.send(f"{preface}: {message}\n".encode())
+        except Exception as e:
+            print(f"Error handling client: {e}")
+            return False
+        return True
