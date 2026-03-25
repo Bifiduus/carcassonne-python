@@ -86,7 +86,6 @@ class Deck:
         ]
         self.river_tiles = [
             "FSRS/m",
-            "FFSF",  # "FFSF",
             "FSFS", "FSFS",
             "FFSS", "FFSS",
             "CSCS",
@@ -94,6 +93,7 @@ class Deck:
             "CSRS",
             "RSRS",
             "RRSS"
+            "FFSF",  # "FFSF",
         ]
 
     def draw(self) -> str | None:
@@ -123,6 +123,10 @@ class Deck:
     def len(self) -> int:
         """Return the number of tiles currently left in the deck."""
         return len(self.tiles)
+    
+    def len_river(self) -> int:
+        """Return the number of tiles currently left in the river deck."""
+        return len(self.river_tiles)
 
     def shuffle_fisher_yates(self, seed: int) -> None:
         """

@@ -20,10 +20,12 @@ class DeckManager():
         if self.game_data.current_hand is not None:
             return self.game_data.current_hand
 
-        if self.river_manager.is_river_active():
-            return self.river_manager.draw_river_tile()
+        if self.river_manager.is_river_active() and not self.game_data.is_river_over():
+            tile = self.game_data.deck.draw_river_tile()
 
-        tile = self.game_data.deck.draw()
+        else :
+            tile = self.game_data.deck.draw()
+
         if tile is None:
             return None
         self.game_data.current_hand = tile
