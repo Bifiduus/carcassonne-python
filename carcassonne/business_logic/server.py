@@ -138,6 +138,8 @@ class Server(IServerService):
     def party_can_be_launched(self, party_number: int) -> bool:
         host_id: int = self.repo.get_host_from_party(party_number)
         check = self.repo.check_all_invitations_resolved(str(host_id))
+        if self.repo.party_launched(str(host_id)):
+            check = False
         return check
 
     def clean_finished_games(self):
