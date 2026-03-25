@@ -135,3 +135,8 @@ class GameData():
         if parsed.get("center"):
             tile_code = f"{tile_code}/{parsed['center']}"
         return tile_code
+    
+    def is_river_over(self):
+        if self.deck.len_river() == 0:
+            return True
+        return False
