@@ -185,11 +185,12 @@ class GameRepository(IGamesRepository):
     def registering(self, username: str, password: str):
         if self.player_exists(username):
             rows = self._execute_query(
-                "SELECT password FROM players WHERE username=?;",
+                "SELECT password, connected FROM players WHERE username=?;",
                 (username,)
             )
-            real_password: str = rows[0][0]
-            if real_password == password:
+            real_password: str = rows[0]['password']
+            connected: bool = rows[0]['connected']
+            if real_password == password and not connected:
                 return True
             return False
         else:
