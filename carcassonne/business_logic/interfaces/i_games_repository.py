@@ -121,6 +121,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_players_from_group(self, group_id: int) -> list[str]:
+        pass
+
+    @abstractmethod
     def create_party(self, client_username: str) -> int | None:
         pass
 

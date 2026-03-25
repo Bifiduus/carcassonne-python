@@ -31,6 +31,18 @@ COMMANDS = [
     "show history",
     "show configuration",
     "set",
+    "server start",
+    "server stop",
+    "join",
+    "players",
+    "server list",
+    "ping",
+    "scoreboard",
+    "accept",
+    "decline",
+    "cancel",
+    "away",
+    "back"
 ]
 
 
