@@ -62,7 +62,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def get_parties(self) -> int:
+    def get_parties(self) -> list[int]:
         pass
 
     @abstractmethod

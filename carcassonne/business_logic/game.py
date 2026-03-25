@@ -732,7 +732,7 @@ class Game(IGameService):
 
     def add_online_players(self, players: list[Player]):
         colors = ["red", "blue", "yellow", "black", "white"]
-        for i in range(0, len(players)+1):
+        for i in range(0, len(players)):
             players[i].set_color(colors[(i - 1) % len(colors)])
             self.players[i] = players[i]
 
