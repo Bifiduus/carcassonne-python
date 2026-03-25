@@ -178,8 +178,7 @@ class Server(IServerService):
                     if message == "quit":
                         answer = self.handle_communication.command_quit(
                             client)
-                        answer = f"Server -> Client{client_index}: {answer}\n"
-                        client_socket.send(answer.encode())
+                        self.send_to_clients(answer)
                         break
 
                     # Process data
@@ -231,12 +230,21 @@ class Server(IServerService):
                     self.registered_clients[client_socket] = True
                     self.client_sockets[username] = client_socket
                     self.player_clients[client_socket] = username
+                    self.send_to_clients(f"{username} is now connected!\n")
                 else:
                     answer = f"{preface}\nYour registration has failed...\n"
             else:
                 answer = f"{preface}\nYou should send your username"\
                     " and password !\n"
         client_socket.send(answer.encode())
+
+    def send_to_clients(self, message: str):
+        preface: str = "Server -> Client"
+        for client_socket in self.client_sockets.values():
+            username: str = self.player_clients[client_socket]
+            id = self.repo.get_id_from_username(username)
+            message = preface + f"{id}: " + message
+            client_socket.send(message.encode())
 
     def check_username_taken(self, username: str):
         answer: bool = self.repo.player_exists(username)
