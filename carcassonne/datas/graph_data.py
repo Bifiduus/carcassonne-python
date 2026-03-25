@@ -338,6 +338,9 @@ class GraphData(IGraphData):
 
     def get_meeples(self) -> List[Meeple]:
         return self.meeples
+    
+    def set_meeples(self, meeples_list : List[Meeple]) -> None:
+        self.meeples = meeples_list
 
     def reset_graph(self):
         self.vertices.clear()

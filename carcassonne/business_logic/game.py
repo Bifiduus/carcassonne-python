@@ -333,6 +333,7 @@ class Game(IGameService):
                 current_player,
             )
             print(move + " placed successfully.")
+            print(self.graph.get_meeples())
             self.current_hand = None
             self.current_player_order_list = (
                 self.current_player_order_list + 1

@@ -738,6 +738,10 @@ class MCTSPlayer:
 
         deck_to_restore: list[str] = game_root.deck.tiles.copy()
 
+        score_to_restore: list[int] = [game_root.players[i].score.score for i in range(len(game_root.players))]
+
+        meeples_to_restore = [game_root.graph.get_meeples()[i] for i in range(len(game_root.graph.get_meeples()))]
+
         while time.time() < self.end_time:
             node: MCTSNode = root
             state = game_root
@@ -764,6 +768,11 @@ class MCTSPlayer:
             game_root.current_hand = hand_to_restore
 
             game_root.deck.tiles = deck_to_restore
+
+            for i in range(len(game_root.players)):
+                game_root.players[i].score.score = score_to_restore[i]
+
+            game_root.graph.set_meeples(meeples_to_restore)
 
         # 🏁 Choisir le meilleur coup
         best_child: MCTSNode = max(
