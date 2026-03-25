@@ -35,7 +35,7 @@ class OnlineCommunication:
         client_username = self.server.repo.get_username(client_id)
         # Create the group
         self.server.repo.create_party(client_username)
-        clients_list = message.split(" ")
+        clients_list = message.strip().split(" ")
         # Check if the clients exist and are available,
         #  remove the ones that cannot be invited
         clients_list_checked = self.server.check_clients_list_validity(

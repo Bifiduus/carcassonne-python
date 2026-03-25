@@ -155,7 +155,6 @@ class GameRepository(IGamesRepository):
         )
 
     def get_online_player(self, server: str) -> str:
-        print("dfgfd")
         rows = self._execute_query(
             "SELECT username FROM usernames WHERE server=?;",
             (server,)
@@ -253,7 +252,6 @@ class GameRepository(IGamesRepository):
             (host_id,)
         )
         return bool(rows)
-
 
     def get_id_from_username(self, player_username: str) -> int:
         rows = self._execute_query(
@@ -382,6 +380,7 @@ class GameRepository(IGamesRepository):
             "SELECT invitation_id, sending_time FROM pending_invitations;"
         )
         for row in rows:
+            print(rows)
             id, t = row
             if time.time() - t > timeout:
                 self.cancel_invitation(id)
@@ -458,7 +457,7 @@ class GameRepository(IGamesRepository):
         )[0][0]
         rows = self._execute_non_query(
             "INSERT INTO pending_invitations(group_id, invited_player,"
-            " invitation_status, sending_time) VALUES(?, ?, ?);",
+            " invitation_status, sending_time) VALUES(?, ?, ?, ?);",
             (group_id, int(invited_player), "waiting", time.time())
         )
         return bool(rows)
