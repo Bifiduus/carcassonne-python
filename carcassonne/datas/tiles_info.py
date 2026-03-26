@@ -142,7 +142,7 @@ class TilesInfo(ITilesInfo):
             "RRRR": 1,
             # 'The River' Expansion
             "FSRS/m": 1,
-            "FFSF": 2,
+            "FFSF": 1,
             "FSFS": 2,
             "FFSS": 2,
             "CSCS": 1,

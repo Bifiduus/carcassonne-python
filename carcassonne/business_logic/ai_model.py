@@ -76,6 +76,7 @@ class RandomPlayer:
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
+                                game.river_manager,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -193,6 +194,7 @@ class ExpectimaxPlayer:
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
+                                game.river_manager,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -204,7 +206,8 @@ class ExpectimaxPlayer:
         """Recursive search function for Expectimax algorithm.
         Adapt between Max and Min nodes based on the player parameter."""
         check_time = time.time() - self.start_time > self.max_time
-        if self.terminal(game.game_data.tiles_info) or depth == 0 or check_time:
+        if self.terminal(
+                game.game_data.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player), ''
         restored_hand = game.game_data.current_hand
         best_move = ""
@@ -364,7 +367,8 @@ class ExpectimaxPlayer:
         next_player: int,
     ) -> float:
         check_time = time.time() - self.start_time > self.max_time
-        if self.terminal(game.game_data.tiles_info) or depth == 0 or check_time:
+        if self.terminal(
+                game.game_data.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player)
 
         successors = self.num_successors(game.game_data.tiles_info)
@@ -482,17 +486,18 @@ class ExpectimaxPlayer:
         ok = game.game_data.rules_manager.check_move(
             move,
             game.game_data.graph,
+            game.river_manager,
             current_player_id=game.game_data.get_current_player().get_id(),
         )
         if ok:
             # Snapshot scoring state before modifying it so undo_for_ai can
             # fully restore the real game state.
             saved_scores = {
-                pid: p.get_score_int() for pid, p in game.game_data.players.items()
-            }
+                pid: p.get_score_int() for pid,
+                p in game.game_data.players.items()}
             saved_meeples = {
-                pid: p.get_meeples() for pid, p in game.game_data.players.items()
-            }
+                pid: p.get_meeples() for pid,
+                p in game.game_data.players.items()}
             saved_scored = set(game.game_data.board.scored_components)
             game.game_data.board.add_tile_to_board(
                 move,
@@ -650,6 +655,7 @@ class MCTSPlayer:
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
+                                game.river_manager,
                                 current_player_id=id_player,
                             ):
                                 possible_moves.append(move)
@@ -763,8 +769,11 @@ class MCTSPlayer:
         if game.game_data.history.past_moves:
             previous_play = game.game_data.history.pop_past()
             game.game_data.history.push_future(previous_play)
-            game.game_data.board.remove_tile_from_board(build_str(
-                previous_play), game.game_data.graph, game.game_data.tiles_info, game.game_data.history,
+            game.game_data.board.remove_tile_from_board(
+                build_str(previous_play),
+                game.game_data.graph,
+                game.game_data.tiles_info,
+                game.game_data.history,
                 players=game.game_data.players)
             number_of_players = game.get_number_of_players()
             game.game_data.current_player_order_list = (
@@ -784,13 +793,18 @@ class MCTSPlayer:
         ok = game.game_data.rules_manager.check_move(
             move,
             game.game_data.graph,
+            game.river_manager,
             current_player_id=game.get_current_player().get_id(),
         )
         if ok:
-            game.game_data.board.add_tile_to_board(move, game.game_data.graph, game.game_data.tiles_info,
-                                                   game.history,
-                                                   game.game_data.players, game.game_data.players_order,
-                                                   game.get_current_player())
+            game.game_data.board.add_tile_to_board(
+                move,
+                game.game_data.graph,
+                game.game_data.tiles_info,
+                game.history,
+                game.game_data.players,
+                game.game_data.players_order,
+                game.get_current_player())
             game.current_hand = None
             number_of_players = game.get_number_of_players()
             game.current_player_order_list = (

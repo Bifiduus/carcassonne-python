@@ -35,12 +35,28 @@ class Game(IGameService):
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.blitz_manager = BlitzManager(self.game_data)
-        self.undo_redo_manager = UndoRedoManager(self.blitz_manager, self.game_data)
-        self.end_game_manager = EndGame(self.game_data, self.blitz_manager, self.score_manager)
+        self.undo_redo_manager = UndoRedoManager(
+            self.blitz_manager, self.game_data)
+        self.end_game_manager = EndGame(
+            self.game_data,
+            self.blitz_manager,
+            self.score_manager)
         self.river_manager = RiverManager(self.game_data)
-        self.deck_manager = DeckManager(self.game_data, self.blitz_manager, self.river_manager)
-        self.commands = CommandsGame(self.blitz_manager, self.deck_manager, self.game_data, self)
-        self.new_game = NewGame(self.river_manager, self.deck_manager, self.blitz_manager, self.game_data, self)
+        self.deck_manager = DeckManager(
+            self.game_data,
+            self.blitz_manager,
+            self.river_manager)
+        self.commands = CommandsGame(
+            self.blitz_manager,
+            self.deck_manager,
+            self.game_data,
+            self)
+        self.new_game = NewGame(
+            self.river_manager,
+            self.deck_manager,
+            self.blitz_manager,
+            self.game_data,
+            self)
         self.river = None
         self.start_new_game()
 
@@ -82,7 +98,7 @@ class Game(IGameService):
 
     def get_number_of_ai_players(self) -> int:
         return self.game_data.number_of_ai_players
-    
+
     def get_players_order(self) -> list[int]:
         return self.game_data.players_order
 
@@ -253,7 +269,8 @@ class Game(IGameService):
 
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
-            print(f"Vous devez jouer la tuile en main: {self.current_hand}")
+            print(
+                f"Vous devez jouer la tuile en main: {self.game_data.current_hand}")
             return False
 
         try:
@@ -268,6 +285,7 @@ class Game(IGameService):
         ok = self.game_data.rules_manager.check_move(
             move,
             self.game_data.graph,
+            self.river_manager,
             current_player_id=self.get_current_player().get_id(),
         )
         if ok:
@@ -348,6 +366,8 @@ class Game(IGameService):
             print(
                 f"AI Player {ai_player.get_username()} has no legal move."
             )
+            print(self.game_data.current_hand)
+            exit(1)
             return
         if eval_score is None:
             print(
@@ -400,13 +420,16 @@ class Game(IGameService):
     def provide_hint(self) -> str:
         return self.commands.provide_hint()
 
-    def get_all_players_remaining_time_seconds(self) -> List[tuple[int, float]]:
+    def get_all_players_remaining_time_seconds(
+            self) -> List[tuple[int, float]]:
         return self.blitz_manager.get_all_players_remaining_time_seconds()
 
     def get_current_player_remaining_time_seconds(self) -> float | None:
-        return self.blitz_manager.get_player_remaining_time_seconds(self.game_data.get_current_player().get_id())
+        return self.blitz_manager.get_player_remaining_time_seconds(
+            self.game_data.get_current_player().get_id())
 
-    def get_player_remaining_time_seconds(self, player_id: int) -> float | None:
+    def get_player_remaining_time_seconds(
+            self, player_id: int) -> float | None:
         return self.blitz_manager.get_player_remaining_time_seconds(player_id)
 
     def tick_blitz(self) -> bool:
