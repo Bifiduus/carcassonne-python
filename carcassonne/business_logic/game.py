@@ -637,12 +637,12 @@ class Game(IGameService):
                 board_line = ""
                 for tile in row:
                     if tile is None:
-                        board_line = EMPTY_TILE[i]
+                        board_line += EMPTY_TILE[i]
                     else:
-                        board_line = tile[i]
+                        board_line += tile[i]
                 board_str += "   ".join(board_line)
             # espace entre lignes de tuiles
-            board_str += ""
+            board_str += "\n"
         return board_str
 
     def get_close_neighbors(

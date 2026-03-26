@@ -16,6 +16,10 @@ class OnlineCommunication:
         return "pong\n"
 
     def command_quit(self, client_username: str) -> str:
+        id = self.server.repo.get_id_from_username(client_username)
+        group_id = self.server.repo.get_party_id(str(id))
+        game_id = self.server.repo.get_game_id(group_id)
+        del self.server.current_games_list[game_id]
         self.server.repo.client_quit(client_username)
         return f"Bye {client_username}!\n"
 
@@ -148,6 +152,8 @@ class OnlineCommunication:
         game_id: int = self.server.repo.get_game_id(party_id)
         move: str = message.removeprefix("play ").strip()
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         board: str = game.get_printed_board()
         if game.end_game():
             return "You cannot play when the game is ended.\n" + board + "\n"
@@ -165,6 +171,7 @@ class OnlineCommunication:
         return game.get_printed_board()
 
     def command_set(self, client_id: str, message: str) -> str:
+        # peut faire en sorte que seul le chef de groupe puisse la faire
         content = message[3:].strip()
         if "=" in content:
             param, value = content.split("=", 1)
@@ -228,6 +235,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         game.redo()
         return "Derniers coups rétablis."
 
@@ -235,6 +244,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         game.undo()
         return "Derniers coups annulés."
 
@@ -248,6 +259,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         already_had_tile: bool = game.current_hand is not None
         tile = game.draw_tile()
         answer = ""
@@ -263,6 +276,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         seed = game.shuffle_deck()
         return f"Pioche mélangée. Algo: {game.shuffle_algo}. Seed: {seed}"
 
@@ -271,6 +286,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         if game.save_game_to_file(filename) == 0:
             return f"Partie sauvegardée dans {filename}."
         return f"Erreur de la sauvegarde dans {filename}."
@@ -280,6 +297,8 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        if game.get_current_player().get_id() != int(client_id):
+            return "It is not your turn to play"
         if game.load_game_from_file(filename) == 0:
             return f"Partie chargée depuis {filename}."
         return f"Erreur du chargement depuis {filename}."

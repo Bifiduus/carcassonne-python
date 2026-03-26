@@ -94,7 +94,6 @@ class Server(IServerService):
                 self.launch_availables_games()
                 # Determine if a party ended, and if so, clean it
                 self.clean_finished_games()
-
                 time_passed = time.time() - server_last_diffusion
                 clock = self.SERVER_DIFFUSION_PERIOD
                 if time_passed >= clock or first_diffusion:
@@ -140,18 +139,27 @@ class Server(IServerService):
             check = False
         return check
 
-    def clean_finished_games(self):
-        for party in self.repo.get_parties():
-            check = self.party_is_finished(party)
-            if check:
-                self.repo.clean_party(party)
-                host_id: int = self.repo.get_host_from_party(party)
-                party_id = self.repo.get_party_id(str(host_id))
-                assert party_id == party, "Error in creation of parties.."
-                del self.current_games_list[party_id]
 
-    def party_is_finished(self, party: int) -> bool:
-        return self.current_games_list[party][1].end_game()
+# a vérifier, puis board
+
+    def clean_finished_games(self):
+        games = self.current_games_list
+        for game in games:
+            check = self.game_is_finished(
+                game)
+            party = self.repo.get_group_from_game(game)
+            check_2 = not self.repo.check_party_is_alive(party)
+            if check and check_2:
+                self.repo.clean_party(game)
+                host_id: int = self.repo.get_host_from_party(game)
+                party_id = self.repo.get_party_id(str(host_id))
+                game_id = self.repo.get_game_id(party_id)
+                assert party_id == game, "Error in creation of parties.."
+                del self.current_games_list[game_id]
+
+    def game_is_finished(self, party: int) -> bool:
+        check = self.current_games_list[party][1].end_game()
+        return check
 
     def is_server_running(self) -> bool:
         return self.should_stop.is_set()
@@ -339,10 +347,11 @@ class Server(IServerService):
     def create_new_party(self, clients_list: list[int],
                          client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
+        print('ici')
         party_id = self.repo.get_party_id(client_id)
         if party_name == "":
             party_name = f"Party {party_id}"
-
+        print(f"la:{party_id}")
         # Initialize the game
         number_of_players_in_group: int = len(clients_list)
         graph: IGraphData = GraphData()
@@ -423,8 +432,9 @@ class Server(IServerService):
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
-        party_id = int(self.repo.get_game(client_id))
-        return self.current_games_list[party_id][1]
+        group_id = self.repo.get_party_id(client_id)
+        game_id = self.repo.get_game_id(group_id)
+        return self.current_games_list[game_id][1]
 
     def send_to_group(self, group_id: int, message: str) -> bool:
         players: list[str] = self.repo.get_players_from_group(group_id)
