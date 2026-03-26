@@ -347,11 +347,9 @@ class Server(IServerService):
     def create_new_party(self, clients_list: list[int],
                          client_id: str,  party_name: str = "") -> str:
         assert self.repo is not None, "No games repository."
-        print('ici')
         party_id = self.repo.get_party_id(client_id)
         if party_name == "":
             party_name = f"Party {party_id}"
-        print(f"la:{party_id}")
         # Initialize the game
         number_of_players_in_group: int = len(clients_list)
         graph: IGraphData = GraphData()

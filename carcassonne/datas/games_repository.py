@@ -322,8 +322,6 @@ class GameRepository(IGamesRepository):
         rows = self._execute_query(
             "SELECT * FROM current_games;"
         )
-        for r in rows:
-            print(r['game_id'], r['game_name'], r['group_id'])
         rows = self._execute_query(
             "SELECT game_id FROM current_games WHERE group_id=?;",
             (group_id,)
