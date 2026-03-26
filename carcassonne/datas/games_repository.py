@@ -238,14 +238,14 @@ class GameRepository(IGamesRepository):
         )
         return rows[0][0]
 
-    def get_group(self, host_id) -> int:
+    def get_group(self, host_id: int) -> int:
         rows = self._execute_query(
             "SELECT group_id FROM groups WHERE host_player=?;",
-            (int(host_id),)
+            (host_id,)
         )
         return rows[0]['group_id']
 
-    def party_is_launched(self, host_id) -> bool:
+    def party_is_launched(self, host_id: int) -> bool:
         group_id = self.get_group(host_id)
         rows = self._execute_query(
             "SELECT game_id FROM current_games WHERE group_id=?;",
@@ -265,7 +265,7 @@ class GameRepository(IGamesRepository):
     def change_status(self, client_id: str, status: str) -> str:
         rows = self._execute_non_query(
             "UPDATE players SET status=? WHERE player_id=?;",
-            (status, client_id,)
+            (status, int(client_id),)
         )
         if rows is None:
             return "Status not changed."
@@ -283,7 +283,7 @@ class GameRepository(IGamesRepository):
         rows = self._execute_query(
             "SELECT host_player, group_id FROM pending_invitations"
             " NATURAL JOIN groups WHERE invited_player=?;",
-            (client_id,)
+            (int(client_id),)
         )
         if rows == []:
             return (-1, -1)
@@ -291,7 +291,7 @@ class GameRepository(IGamesRepository):
 
     def has_been_invited(self, invited: str) -> bool:
         rows = self._execute_query(
-            "SELECT 1 FROM pending_invitations WHERE invited_player=?;",
+            "SELECT invitation_id FROM pending_invitations WHERE invited_player=?;",
             (int(invited),)
         )
         return bool(rows)
@@ -299,11 +299,10 @@ class GameRepository(IGamesRepository):
     def accept_invitation(self, group_id: int, invited: str):
         if not self.has_been_invited(invited):
             return
-        invited_id = self.get_id_from_username(invited)
-        self.change_status(str(invited_id), "ingame")
+        self.change_status(invited, "waitgame")
         self._execute_non_query(
             "UPDATE players SET group_id=? WHERE player_id=?;",
-            (group_id, int(invited_id),)
+            (group_id, int(invited),)
         )
         rows = self._execute_non_query(
             "DELETE FROM pending_invitations WHERE invited_player=?;",
@@ -321,7 +320,7 @@ class GameRepository(IGamesRepository):
     def reject_invitation(self, invited: str):
         self._execute_non_query(
             "DELETE FROM pending_invitations WHERE invited_player=?;",
-            (invited,)
+            (int(invited),)
         )
 
     def get_game(self, client_id: str) -> int:
@@ -373,29 +372,32 @@ class GameRepository(IGamesRepository):
         return rows
 
     def invitation_sent_from(self, client_id: str) -> bool:
+        group_id = self.get_group(int(client_id))
         rows = self._execute_query(
-            "SELECT 1 FROM pending_invitations NATURAL JOIN groups"
-            " WHERE host_player=? AND invitation_status!='accepted';",
-            (client_id,)
+            "SELECT invitation_id FROM pending_invitations "
+            " WHERE group_id=? AND invitation_status!='accepted';",
+            (group_id,)
         )
         return bool(rows)
 
     def cancel_invitation_from(self, client_id: str, players: list[str]):
-        if players is []:
-            rows = self._execute_non_query(
-                "DELETE FROM pending_invitations NATURAL JOIN groups WHERE"
-                " host_player=? AND invitation_status=='waiting';",
+        if players == []:
+            rows = self._execute_query(
+                "SELECT group_id FROM groups WHERE host_player=?;",
                 (client_id,)
+            )
+            group_id: int = rows[0]['group_id']
+            rows = self._execute_non_query(
+                "DELETE FROM pending_invitations WHERE group_id=?;",
+                (group_id,)
             )
             if bool(rows):
                 return "All invitations cancelled."
             return ""
-        for player_username in players:
+        for player_id in players:
             rows = self._execute_non_query(
-                "DELETE FROM pending_invitations NATURAL JOIN groups NATURAL"
-                " JOIN players WHERE host_player=? AND"
-                " invitation_status=='waiting' AND username=?;",
-                (client_id, player_username)
+                "DELETE FROM pending_invitations WHERE invited_player=?;",
+                (int(player_id),)
             )
         return "Your invitation(s) have been cancelled."
 
@@ -411,7 +413,7 @@ class GameRepository(IGamesRepository):
                 self.cancel_invitation(id)
         return timed_out
 
-    def cancel_invitation(self, invitation_id) -> bool:
+    def cancel_invitation(self, invitation_id: int) -> bool:
         rows = self._execute_non_query(
             "DELETE FROM pending_invitations WHERE invitation_id=?;",
             (invitation_id,)
@@ -429,6 +431,7 @@ class GameRepository(IGamesRepository):
 
     def create_party(self, client_username: str) -> int | None:
         host_id: int = self.get_id_from_username(client_username)
+        self.change_status(str(host_id), "waitgame")
         self._execute_non_query(
             "INSERT INTO groups(number_of_players, host_player)"
             " VALUES (?, ?);",
@@ -453,7 +456,7 @@ class GameRepository(IGamesRepository):
         rows = self._execute_query(
             "SELECT player_id FROM groups NATURAL JOIN players"
             " WHERE host_player=?;",
-            (client_id,)
+            (int(client_id),)
         )
         return [r[0] for r in rows]
 
@@ -472,32 +475,12 @@ class GameRepository(IGamesRepository):
         )
 
     def client_quit(self, client_username: str):
-        # id = self.get_id_from_username(client_username)
-        # group_id = self.get_party_id(str(id))
         self._execute_non_query(
-            "UPDATE players SET connected=?, group_id=? WHERE username=?;",
-            (False, None, client_username)
-        )
-        # check = self.check_party_is_alive(group_id)
-        # if not check:
-        #   self.remove_game(group_id)
-        #  self.remove_party(group_id)
-
-# board
-
-    def remove_party(self, group_id):
-        self._execute_non_query(
-            "DELETE FROM groups WHERE group_id=?;",
-            (group_id,)
+            "UPDATE players SET connected=?, group_id=?, status=? WHERE username=?;",
+            (False, None, client_username, "idle")
         )
 
-    def remove_game(self, group_id):
-        self._execute_non_query(
-            "DELETE FROM current_games WHERE group_id=?;",
-            (group_id,)
-        )
-
-    def check_party_is_alive(self, group_id) -> bool:
+    def check_party_is_alive(self, group_id: int) -> bool:
         rows = self._execute_query(
             "SELECT player_id FROM players WHERE group_id=?;",
             (group_id,)
@@ -540,14 +523,21 @@ class GameRepository(IGamesRepository):
                         invitee_player: str) -> bool:
         group_id: int = self._execute_query(
             "SELECT group_id FROM groups WHERE host_player=?;",
-            (invitee_player,)
+            (int(invitee_player),)
         )[0][0]
-        rows = self._execute_non_query(
-            "INSERT INTO pending_invitations(group_id, invited_player,"
-            " invitation_status, sending_time) VALUES(?, ?, ?, ?);",
-            (group_id, int(invited_player), "waiting", time.time())
+        rows = self._execute_query(
+            "SELECT status FROM players WHERE player_id=?;",
+            (int(invited_player),)
         )
-        return bool(rows)
+        status = rows[0]['status']
+        if status in ["idle", 'waitgame']:
+            rows = self._execute_non_query(
+                "INSERT INTO pending_invitations(group_id, invited_player,"
+                " invitation_status, sending_time) VALUES(?, ?, ?, ?);",
+                (group_id, int(invited_player), "waiting", time.time())
+            )
+            return bool(rows)
+        return False
 
     def get_players_from_group(self, group_id: int) -> list[str]:
         rows = self._execute_query(
