@@ -381,6 +381,13 @@ class GameRepository(IGamesRepository):
             return (-1, -1)
         return rows[0]['host_player'], rows[0]['group_id']
 
+    def has_been_invited(self, invited: str) -> bool:
+        rows = self._execute_query(
+            "SELECT invitation_id FROM pending_invitations WHERE invited_player=?;",
+            (int(invited),)
+        )
+        return bool(rows)
+
     def accept_invitation(self, group_id: int, invited: str):
         if self.invitation_received(invited) == (-1, -1):
             return
@@ -537,7 +544,7 @@ class GameRepository(IGamesRepository):
         rows = self._execute_query(
             "SELECT player_id FROM groups NATURAL JOIN players"
             " WHERE host_player=?;",
-            (int(client_id),),
+            (int(client_id),)
         )
         return [r[0] for r in rows]
 
@@ -622,7 +629,7 @@ class GameRepository(IGamesRepository):
     ) -> bool:
         group_id: int = self._execute_query(
             "SELECT group_id FROM groups WHERE host_player=?;",
-            (int(invitee_player),),
+            (int(invitee_player),)
         )[0][0]
         rows = self._execute_query(
             "SELECT status FROM players WHERE player_id=?;",
