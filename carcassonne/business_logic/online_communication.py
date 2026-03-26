@@ -19,7 +19,6 @@ class OnlineCommunication:
         id = self.server.repo.get_id_from_username(client_username)
         group_id = self.server.repo.get_party_id(str(id))
         game_id = self.server.repo.get_game_id(group_id)
-        del self.server.current_games_list[game_id]
         self.server.repo.client_quit(client_username)
         return f"Bye {client_username}!\n"
 

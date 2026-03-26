@@ -149,7 +149,7 @@ class Server(IServerService):
                 game)
             party = self.repo.get_group_from_game(game)
             check_2 = not self.repo.check_party_is_alive(party)
-            if check and check_2:
+            if check or check_2:
                 self.repo.clean_party(game)
                 host_id: int = self.repo.get_host_from_party(game)
                 party_id = self.repo.get_party_id(str(host_id))
