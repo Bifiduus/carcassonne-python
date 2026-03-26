@@ -6,6 +6,7 @@ the current graph and tile definitions.
 
 import copy
 import re
+from carcassonne.business_logic.game.river_manager import RiverManager
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
@@ -117,6 +118,7 @@ class RulesManager:
         tile1pos: tuple[int, int],
         orientation: int,
         graph: IGraphData,
+        river_manager: RiverManager
     ) -> bool:
         """
         Checks if the sides of two tiles from the computed move are equal.
@@ -132,6 +134,9 @@ class RulesManager:
 
         Returns True if the sides are equal, False otherwise.
         """
+        consider_river_rules = river_manager.is_river_active()
+        is_river_over = river_manager.game_data.is_river_over()
+        river_checked = False
 
         for dir in range(4):
             next_pos = graph.get_position_by_pos(tile1pos, dir)
@@ -149,6 +154,7 @@ class RulesManager:
                         tile2_coord = EAST_MATRIX
 
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
+
                     if land1 != land2:
                         '''print("position : " + str(tile1pos) + ",
                           and land 1 of " + str(tile1) +
@@ -161,7 +167,13 @@ class RulesManager:
                               str(vertex.get_orientation()) + " and direction "
                                 + str((dir + 2) % 4) + " is " + land2)'''
                         return False
+
+                    if consider_river_rules and land1 == 'S':
+                        river_checked = True
                     break
+
+        if consider_river_rules and not is_river_over and not river_checked:
+            return False
 
         return True
 
@@ -169,6 +181,7 @@ class RulesManager:
         self,
         move_parts: list[str],
         graph: IGraphData,
+        river_manager: RiverManager,
         current_player_id: int | None = None,
     ) -> bool:
         """
@@ -209,8 +222,9 @@ class RulesManager:
             self.tiles_info.direction_dict[attach_direction],
         )
         if not self.are_equal_sides(
-            move_parts[0], tile_pos, integers_placement[1], graph
-        ):
+                move_parts[0],
+                tile_pos, integers_placement[1],
+                graph, river_manager):
             # print("Tile sides do not match neighboring tiles.")
             return False
 
@@ -314,6 +328,7 @@ class RulesManager:
         self,
         move: str,
         graph: IGraphData,
+        river_manager: RiverManager,
         current_player_id: int | None = None,
     ) -> bool:
         """
@@ -326,7 +341,7 @@ class RulesManager:
             return False
 
         if not self.is_legal_move(
-            move.split("/"), graph, current_player_id
+            move.split("/"), graph, river_manager, current_player_id
         ):
             return False
 

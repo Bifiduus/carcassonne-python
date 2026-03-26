@@ -92,7 +92,7 @@ class Deck:
             "CCSS",
             "CSRS",
             "RSRS",
-            "RRSS"
+            "RRSS",
             "FFSF",  # "FFSF",
         ]
 
@@ -123,7 +123,7 @@ class Deck:
     def len(self) -> int:
         """Return the number of tiles currently left in the deck."""
         return len(self.tiles)
-    
+
     def len_river(self) -> int:
         """Return the number of tiles currently left in the river deck."""
         return len(self.river_tiles)

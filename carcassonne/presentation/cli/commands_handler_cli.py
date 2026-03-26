@@ -14,7 +14,7 @@ from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 def new_game(self, args, server_service: IServerService) -> None:
     if server_service.connected_to_a_server():
-        server_service.send_to_server("new "+args)
+        server_service.send_to_server("new " + args)
     self.game.start_new_game()
     print("Nouvelle partie commencée.")
 
@@ -114,10 +114,10 @@ def redo(self, N) -> None:
 
 
 def show_hand(self) -> None:
-    if self.game.current_hand is None:
+    if self.game.game_data.current_hand is None:
         print("Aucune tuile en main.")
     else:
-        print(f"Tuile en main: {self.game.current_hand}")
+        print(f"Tuile en main: {self.game.game_data.current_hand}")
 
 
 def _format_clock(remaining_seconds: float) -> str:
