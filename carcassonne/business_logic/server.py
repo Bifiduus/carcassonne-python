@@ -165,7 +165,7 @@ class Server(IServerService):
                 check = self.game_is_finished(game)
                 party = self.repo.get_group_from_game(game)
                 check_2 = not self.repo.check_party_is_alive(party)
-                if check or check_2:
+                if (check or check_2):
                     self.repo.clean_party(game)
                     del self.current_games_list[game]
 

@@ -276,7 +276,8 @@ class GameRepository(IGamesRepository):
 
     def get_group(self, host_id: int) -> int:
         rows = self._execute_query(
-            "SELECT group_id FROM groups WHERE host_player=?;", (host_id,)
+            "SELECT group_id FROM groups WHERE host_player=?;",
+            (host_id,)
         )
         return rows[0]["group_id"]
 
@@ -324,7 +325,14 @@ class GameRepository(IGamesRepository):
         )
         if rows == []:
             return (-1, -1)
-        return rows[0]["host_player"], rows[0]["group_id"]
+        return rows[0]['host_player'], rows[0]['group_id']
+
+    def has_been_invited(self, invited: str) -> bool:
+        rows = self._execute_query(
+            "SELECT invitation_id FROM pending_invitations WHERE invited_player=?;",
+            (int(invited),)
+        )
+        return bool(rows)
 
     def accept_invitation(self, group_id: int, invited: str):
         if self.invitation_received(invited) == (-1, -1):
@@ -413,12 +421,12 @@ class GameRepository(IGamesRepository):
         if players == []:
             rows = self._execute_query(
                 "SELECT group_id FROM groups WHERE host_player=?;",
-                (client_id,),
+                (client_id,)
             )
-            group_id: int = rows[0]["group_id"]
+            group_id: int = rows[0]['group_id']
             rows = self._execute_non_query(
                 "DELETE FROM pending_invitations WHERE group_id=?;",
-                (group_id,),
+                (group_id,)
             )
             if bool(rows):
                 return "All invitations cancelled."
