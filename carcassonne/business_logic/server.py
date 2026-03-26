@@ -149,19 +149,16 @@ class Server(IServerService):
 # a vérifier, puis board
 
     def clean_finished_games(self):
-        games = self.current_games_list
-        for game in games:
-            check = self.game_is_finished(
-                game)
-            party = self.repo.get_group_from_game(game)
-            check_2 = not self.repo.check_party_is_alive(party)
-            if check or check_2:
-                self.repo.clean_party(game)
-                host_id: int = self.repo.get_host_from_party(game)
-                party_id = self.repo.get_party_id(str(host_id))
-                game_id = self.repo.get_game_id(party_id)
-                assert party_id == game, "Error in creation of parties.."
-                del self.current_games_list[game_id]
+        with self.clients_lock:
+            games = self.current_games_list.copy()
+            for game in games:
+                check = self.game_is_finished(
+                    game)
+                party = self.repo.get_group_from_game(game)
+                check_2 = not self.repo.check_party_is_alive(party)
+                if check or check_2:
+                    self.repo.clean_party(game)
+                    del self.current_games_list[game]
 
     def game_is_finished(self, party: int) -> bool:
         check = self.current_games_list[party][1].end_game()
@@ -211,7 +208,8 @@ class Server(IServerService):
             # if self.proper_clients[client_socket] == False:
             # mise en place d'unt table des mauvais clients avec time out
             username: str = self.player_clients[client_socket]
-            self.handle_communication.command_quit(username)
+            if not self.proper_clients[client_socket]:
+                self.handle_communication.command_quit(username)
             client_socket.close()
             # Remove client from the list
             with self.clients_lock:
@@ -222,6 +220,7 @@ class Server(IServerService):
                     del self.client_sockets[username]
                     del self.player_clients[client_socket]
                     del self.registered_clients[client_socket]
+                    del self.proper_clients[client_socket]
 
     def handle_client_registering(self, message: str,
                                   client_socket: socket.socket,

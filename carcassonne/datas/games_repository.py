@@ -472,16 +472,16 @@ class GameRepository(IGamesRepository):
         )
 
     def client_quit(self, client_username: str):
+        # id = self.get_id_from_username(client_username)
+        # group_id = self.get_party_id(str(id))
         self._execute_non_query(
-            "UPDATE players SET connected=? WHERE username=?;",
-            (False, client_username)
+            "UPDATE players SET connected=?, group_id=? WHERE username=?;",
+            (False, None, client_username)
         )
-        id = self.get_id_from_username(client_username)
-        group_id = self.get_party_id(str(id))
-        check = self.check_party_is_alive(group_id)
-        if not check:
-            self.remove_game(group_id)
-            self.remove_party(group_id)
+        # check = self.check_party_is_alive(group_id)
+        # if not check:
+        #   self.remove_game(group_id)
+        #  self.remove_party(group_id)
 
 # board
 
