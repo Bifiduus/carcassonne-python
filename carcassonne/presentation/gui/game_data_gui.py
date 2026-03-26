@@ -4,8 +4,9 @@ from carcassonne.datas.serializer import parse_move
 
 
 class GameDataGui:
-    def __init__(self, game):
+    def __init__(self, game, server):
         self.game = game
+        self.server = server
         self.nb_tiles = 0  # used to give each drawn tile a unique id
         self.current_tile: TilesView | None = None
         self.current_orientation = 0

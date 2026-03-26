@@ -202,7 +202,7 @@ def main() -> int:
         print("Verbose mode enabled.")
     if args.gui:
         print("GUI mode enabled.")
-        CreateGui(game)
+        CreateGui(game, server_service)
     else:
         game_cli = GameCLI(game, server_service)
         game_cli.run()
