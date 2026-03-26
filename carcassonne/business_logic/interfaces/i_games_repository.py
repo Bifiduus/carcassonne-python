@@ -38,7 +38,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def check_all_invitations_timeout(self, timeout: float):
+    def check_all_invitations_timeout(self, timeout: float) -> list[int]:
         pass
 
     @abstractmethod
@@ -54,7 +54,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def change_status(self, client_username: str, status: str) -> str:
+    def change_status(self, client_id: str, status: str) -> str:
         pass
 
     @abstractmethod
@@ -138,6 +138,10 @@ class IGamesRepository(ABC):
 
     @abstractmethod
     def get_players_from_group(self, group_id: int) -> list[str]:
+        pass
+
+    @abstractmethod
+    def reject_invitation(self, invited: str):
         pass
 
     @abstractmethod

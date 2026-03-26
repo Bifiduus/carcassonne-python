@@ -35,6 +35,8 @@ class Server(IServerService):
         # Map socket -> client_username
         self.player_clients: dict[socket.socket, str] = {}
         self.registered_clients: dict[socket.socket, bool] = {}
+        # List of client that are timed out
+        self.proper_clients: dict[socket.socket, bool] = {}
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         assert self.repo, "The database should not be None"
@@ -80,6 +82,7 @@ class Server(IServerService):
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
                             self.registered_clients[client_socket] = False
+                            self.proper_clients[client_socket] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,))
@@ -88,8 +91,11 @@ class Server(IServerService):
 
                 # Timeout to check pending invitations periodically
                 assert self.repo, "The database should not be None"
-                self.repo.check_all_invitations_timeout(
+                timed_out = self.repo.check_all_invitations_timeout(
                     self.INVITATION_TIMEOUT)
+                for player_id in timed_out:
+                    user = self.repo.get_username(str(player_id))
+                    self.send_to_client(user, "Your invitation timed out..")
                 # Determine if a party can be launched, and if so, do it
                 self.launch_availables_games()
                 # Determine if a party ended, and if so, clean it
@@ -187,6 +193,7 @@ class Server(IServerService):
                         answer = self.handle_communication.command_quit(
                             client)
                         self.send_to_clients(answer)
+                        self.proper_clients[client_socket] = True
                         break
 
                     # Process data
@@ -201,6 +208,8 @@ class Server(IServerService):
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
+            # if self.proper_clients[client_socket] == False:
+            # mise en place d'unt table des mauvais clients avec time out
             username: str = self.player_clients[client_socket]
             self.handle_communication.command_quit(username)
             client_socket.close()
@@ -444,7 +453,7 @@ class Server(IServerService):
     def send_to_client(self, username: str, message: str) -> bool:
         client_socket = self.client_sockets[username]
         client_index = self.repo.get_id_from_username(username)
-        preface = f"Server -> Client{client_index}: "
+        preface = f"Server -> Client{client_index}"
         try:
             client_socket.send(f"{preface}: {message}\n".encode())
         except Exception as e:

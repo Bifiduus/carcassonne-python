@@ -258,12 +258,11 @@ class GameRepository(IGamesRepository):
             "SELECT player_id FROM players WHERE username=?;",
             (player_username,)
         )
-        if not rows:
+        if not bool(rows):
             return -1
         return rows[0][0]
 
-    def change_status(self, client_username: str, status: str) -> str:
-        client_id = self.get_id_from_username(client_username)
+    def change_status(self, client_id: str, status: str) -> str:
         rows = self._execute_non_query(
             "UPDATE players SET status=? WHERE player_id=?;",
             (status, client_id,)
@@ -290,7 +289,16 @@ class GameRepository(IGamesRepository):
             return (-1, -1)
         return rows[0]['host_player'], rows[0]['group_id']
 
+    def has_been_invited(self, invited: str) -> bool:
+        rows = self._execute_query(
+            "SELECT 1 FROM pending_invitations WHERE invited_player=?;",
+            (int(invited),)
+        )
+        return bool(rows)
+
     def accept_invitation(self, group_id: int, invited: str):
+        if not self.has_been_invited(invited):
+            return
         invited_id = self.get_id_from_username(invited)
         self.change_status(str(invited_id), "ingame")
         self._execute_non_query(
@@ -308,6 +316,12 @@ class GameRepository(IGamesRepository):
         rows = self._execute_non_query(
             "UPDATE groups SET number_of_players=?+1 WHERE group_id=?;",
             (rows[0][0], group_id)
+        )
+
+    def reject_invitation(self, invited: str):
+        self._execute_non_query(
+            "DELETE FROM pending_invitations WHERE invited_player=?;",
+            (invited,)
         )
 
     def get_game(self, client_id: str) -> int:
@@ -385,14 +399,17 @@ class GameRepository(IGamesRepository):
             )
         return "Your invitation(s) have been cancelled."
 
-    def check_all_invitations_timeout(self, timeout):
+    def check_all_invitations_timeout(self, timeout) -> list[int]:
         rows = self._execute_query(
-            "SELECT invitation_id, sending_time FROM pending_invitations;"
+            "SELECT invitation_id, sending_time, invited_player FROM pending_invitations;"
         )
+        timed_out = []
         for row in rows:
-            id, t = row
+            id, t, invited = row
             if time.time() - t > timeout:
+                timed_out.append(invited)
                 self.cancel_invitation(id)
+        return timed_out
 
     def cancel_invitation(self, invitation_id) -> bool:
         rows = self._execute_non_query(

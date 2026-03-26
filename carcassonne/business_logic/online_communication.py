@@ -16,9 +16,6 @@ class OnlineCommunication:
         return "pong\n"
 
     def command_quit(self, client_username: str) -> str:
-        id = self.server.repo.get_id_from_username(client_username)
-        group_id = self.server.repo.get_party_id(str(id))
-        game_id = self.server.repo.get_game_id(group_id)
         self.server.repo.client_quit(client_username)
         return f"Bye {client_username}!\n"
 
@@ -83,7 +80,7 @@ class OnlineCommunication:
             self.server.repo.accept_invitation(int(party_id), client_id)
             # Get invitee's name from repository
             self.notify_host_of_acceptance(sender_id, client_id)
-            answer = "Invitation accepted!\n"
+            answer = "Invitation accepted !\n"
         return answer
 
     def command_decline(self, client_id: str) -> str:
@@ -92,9 +89,10 @@ class OnlineCommunication:
             answer = "You have no invitation to decline.\n"
         else:
             host_id: int = self.server.repo.invitation_received(client_id)[0]
+            self.server.repo.reject_invitation(client_id)
             # envoie à {self.invitation_received(client_id)}
             self.notify_host_of_rejection(host_id, client_id)
-            answer = ""
+            answer = "Invitation declined !\n"
         return answer
 
     def notify_host_of_acceptance(self, host_id: int, invitee_id: str):

@@ -631,15 +631,15 @@ class Game(IGameService):
 
         TILE_HEIGHT = 3
         EMPTY_TILE = [" " * 9] * TILE_HEIGHT
-        board_str = ""
+        board_str = "    "
         for row in board:  # chaque ligne de tuiles
             for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
-                board_line = ""
+                board_line = []
                 for tile in row:
                     if tile is None:
-                        board_line += EMPTY_TILE[i]
+                        board_line.append(EMPTY_TILE[i])
                     else:
-                        board_line += tile[i]
+                        board_line.append(f"{tile[i]}\n")
                 board_str += "   ".join(board_line)
             # espace entre lignes de tuiles
             board_str += "\n"
@@ -666,15 +666,17 @@ class Game(IGameService):
         return seed
 
     def shuffle_players_order(self) -> None:
-        others = [player for player in self.players if player != 0]
+        others = [player for player in self.players]
         r.shuffle(others)
-        self.players_order = [0] + others
+        self.players_order = others
 
     def add_online_players(self, players: list[Player]):
         colors = ["red", "blue", "yellow", "black", "white"]
+        self.players.clear()
+        self.players_order.clear()
         for i in range(0, len(players)):
             players[i].set_color(colors[(i - 1) % len(colors)])
-            self.players[i] = players[i]
+            self.players[i+1] = players[i]
             self.players_order.append(players[i].get_id())
 
     def add_players(self, nb_players: int) -> None:
