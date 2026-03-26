@@ -154,14 +154,15 @@ class OnlineCommunication:
         game: Game = self.server.current_games_list[game_id][1]
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
-        board: str = game.get_printed_board()
         if game.end_game():
+            board: str = game.get_printed_board()
             return "You cannot play when the game is ended.\n" + board + "\n"
         if game.play_move(move):
             board: str = game.get_printed_board()
             group: int = self.server.repo.get_party_id(client_id)
             self.server.send_to_group(group, board)
             return "Move played.\n" + board + "\n"
+        board: str = game.get_printed_board()
         return "Move not played.\n" + board + "\n"
 
     def command_board(self, client_id: str) -> str:
@@ -259,10 +260,14 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
+        print("1")
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
+        print("2")
         already_had_tile: bool = game.current_hand is not None
+        print("3")
         tile = game.draw_tile()
+        print("4")
         answer = ""
         if tile is None:
             answer = "La pioche est vide!"
@@ -270,6 +275,7 @@ class OnlineCommunication:
             answer = "Vous avez déjà une tuile en main."
         else:
             answer = f"Tuile piochée: {tile}"
+        print("5")
         return answer
 
     def command_shuffle(self, client_id: str) -> str:

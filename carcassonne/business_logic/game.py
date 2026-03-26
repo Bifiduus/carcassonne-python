@@ -259,7 +259,7 @@ class Game(IGameService):
             print(
                 "The one: "
                 f"{expected_player} {self.current_player_order_list}. "
-                f"You: {self.get_current_player()}"
+                f"You: {self.get_current_player().get_id()}"
             )
             turn = max(self.graph.get_verticies().keys(), default=-1) + 1
             print(f"turn:{turn}")
@@ -675,6 +675,7 @@ class Game(IGameService):
         for i in range(0, len(players)):
             players[i].set_color(colors[(i - 1) % len(colors)])
             self.players[i] = players[i]
+            self.players_order.append(players[i].get_id())
 
     def add_players(self, nb_players: int) -> None:
         colors = ["red", "blue", "yellow", "black", "white"]
