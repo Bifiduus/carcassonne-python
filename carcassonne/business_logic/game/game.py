@@ -300,6 +300,7 @@ class Game(IGameService):
                 current_player,
             )
             print(move + " placed successfully.")
+            self.river_manager.update_river_turn(move.split("/"))
             self.game_data.current_hand = None
             self.game_data.current_player_order_list = (
                 self.game_data.current_player_order_list + 1

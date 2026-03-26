@@ -27,7 +27,9 @@ import random as r
 class GameData():
     """Class to store all game data, and be able to reset it when needed."""
 
-    def __init__(self, graphData: IGraphData, nb_players: int, config_overrides=None):
+    def __init__(
+            self, graphData: IGraphData, nb_players: int,
+            config_overrides=None):
         self.game_configuration = GameConfiguration(config_overrides)
         self.game_repository: GameRepository = GameRepository()
         self.graph: IGraphData = graphData
@@ -135,8 +137,12 @@ class GameData():
         if parsed.get("center"):
             tile_code = f"{tile_code}/{parsed['center']}"
         return tile_code
-    
+
     def is_river_over(self):
-        if self.deck.len_river() == 0:
+        hand = ""
+        if self.current_hand is not None:
+            hand = self.current_hand
+        if self.deck.len_river() == 0 and 'S' not in [
+                str for str in hand]:
             return True
         return False

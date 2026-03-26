@@ -228,9 +228,14 @@ class RulesManager:
             # print("Tile sides do not match neighboring tiles.")
             return False
 
-        # Verify meeple placement if applicable
-        # TODO : can_place_meeple_on_tile_side(move_parts[0] : str,
-        # move_parts[counter] str, game : IGameService) -> bool
+        # Verify that stream is good if we are with stream tiles
+        if not river_manager.check_river_turn(move_parts):
+            # print("River shoudn't take two turns in the same rotation two times in a row")
+            return False
+
+            # Verify meeple placement if applicable
+            # TODO : can_place_meeple_on_tile_side(move_parts[0] : str,
+            # move_parts[counter] str, game : IGameService) -> bool
         counter += 1
         if len(move_parts) - 1 == counter:
             if not self.can_place_meeple_on_tile_side(
