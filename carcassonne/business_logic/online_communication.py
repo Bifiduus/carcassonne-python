@@ -76,9 +76,7 @@ class OnlineCommunication:
         else:
             sender_id, party_id = self.server.repo.invitation_received(
                 client_id)
-            # envoie à {self.invitation_received(client_id)}
             self.server.repo.accept_invitation(int(party_id), client_id)
-            # Get invitee's name from repository
             self.notify_host_of_acceptance(sender_id, client_id)
             answer = "Invitation accepted !\n"
         return answer
@@ -90,7 +88,6 @@ class OnlineCommunication:
         else:
             host_id: int = self.server.repo.invitation_received(client_id)[0]
             self.server.repo.reject_invitation(client_id)
-            # envoie à {self.invitation_received(client_id)}
             self.notify_host_of_rejection(host_id, client_id)
             answer = "Invitation declined !\n"
         return answer
@@ -131,7 +128,9 @@ class OnlineCommunication:
         answer = ""
         if self.server.repo.invitation_sent_from(client_id):
             # des invitations en attentes, envoie des messages
-            players_list = players.split(" ")
+            players_list = []
+            if players != "":
+                players_list = players.split(" ")
             answer = self.server.repo.cancel_invitation_from(
                 client_id, players_list)
         else:

@@ -141,12 +141,9 @@ class Server(IServerService):
     def party_can_be_launched(self, party_number: int) -> bool:
         host_id: int = self.repo.get_host_from_party(party_number)
         check = self.repo.check_all_invitations_resolved(str(host_id))
-        if self.repo.party_is_launched(str(host_id)):
+        if self.repo.party_is_launched(host_id):
             check = False
         return check
-
-
-# a vérifier, puis board
 
     def clean_finished_games(self):
         with self.clients_lock:
@@ -156,7 +153,7 @@ class Server(IServerService):
                     game)
                 party = self.repo.get_group_from_game(game)
                 check_2 = not self.repo.check_party_is_alive(party)
-                if check or check_2:
+                if (check or check_2):
                     self.repo.clean_party(game)
                     del self.current_games_list[game]
 
@@ -369,6 +366,8 @@ class Server(IServerService):
                 party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)
+            for player_id in clients_list:
+                self.repo.change_status(str(player_id), "ingame")
         except Exception as e:
             print(f"Error creating party in repository: {e}")
         return "Your party has been created successfully !\n"
