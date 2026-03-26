@@ -168,13 +168,6 @@ class GameRepository(IGamesRepository):
         )
         return not bool(rows)
 
-    def has_no_special_username(self, server: str) -> bool:
-        rows = self._execute_query(
-            "SELECT username FROM usernames WHERE server=?",
-            (server,)
-        )
-        return not bool(rows)
-
     def player_exists(self, player_name: str) -> bool:
         rows = self._execute_query(
             "SELECT 1 FROM players WHERE username=?;",

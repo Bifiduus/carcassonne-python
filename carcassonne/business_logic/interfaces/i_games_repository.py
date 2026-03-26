@@ -128,10 +128,6 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_party(self, client_username: str) -> int | None:
-        pass
-
-    @abstractmethod
     def get_party(self, client_id: str) -> list[int]:
         pass
 
