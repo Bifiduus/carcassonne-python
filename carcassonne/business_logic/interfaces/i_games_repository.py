@@ -66,11 +66,19 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def check_party_is_alive(self, group_id: int) -> bool:
+        pass
+
+    @abstractmethod
+    def get_group_from_game(self, game_id: int) -> int:
+        pass
+
+    @abstractmethod
     def create_game(self, game_name: str, group_id: int):
         pass
 
     @abstractmethod
-    def get_game_id(self, group_id) -> int:
+    def get_game_id(self, group_id: int) -> int:
         pass
 
     @abstractmethod
