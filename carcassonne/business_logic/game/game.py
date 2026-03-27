@@ -22,6 +22,7 @@ from carcassonne.business_logic.save_handler import SaveHandler
 from carcassonne.business_logic.score_manager import ScoreManager
 from carcassonne.datas.serializer import parse_move
 from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.business_logic.game_mode_manager import GameModeManager
 
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
@@ -31,10 +32,14 @@ class Game(IGameService):
     def __init__(
         self, graphData: IGraphData, nb_players: int, config_overrides=None
     ) -> None:
-        self.game_data = GameData(graphData, nb_players, config_overrides)
+        self.game_data = GameData(
+            graphData,
+            nb_players,
+            config_overrides)
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.blitz_manager = BlitzManager(self.game_data)
+        self.game_mode_manager = GameModeManager(self.blitz_manager, self)
         self.end_game_manager = EndGame(
             self.game_data,
             self.blitz_manager,
@@ -60,6 +65,33 @@ class Game(IGameService):
         self.river = None
         self.start_new_game()
 
+    def _configured_blitz_minutes(self) -> int:
+        return self.game_mode_manager.get_configured_blitz_minutes()
+
+    def _is_blitz_enabled(self) -> bool:
+        return self.game_mode_manager.get_mode() == "blitz"
+
+    def _initialize_mode_state(self) -> None:
+        self.game_mode_manager.reset_for_current_state()
+
+    def _initialize_blitz_state(self) -> None:
+        self._initialize_mode_state()
+
+    def _has_playable_player(self) -> bool:
+        return self.game_mode_manager.has_playable_player()
+
+    def _advance_to_next_playable_player(self) -> bool:
+        return self.game_mode_manager.advance_to_next_playable_player()
+
+    def skip_current_player(self) -> bool:
+        return self.game_mode_manager.skip_current_player()
+
+    def _ensure_current_player_playable(self) -> bool:
+        return self.game_mode_manager.ensure_current_player_playable()
+
+    def start_load_game(self):
+        self.game_data.start_load_game()
+
     def get_history(self) -> List[str]:
         """Return the current play history."""
         return self.game_data.history.list_history()
@@ -80,8 +112,8 @@ class Game(IGameService):
         if key == "timeout":
             key = "time"
         self.game_data.game_configuration.settings[key] = value
-        if key in ("blitz", "time"):
-            self.blitz_manager._initialize_blitz_state()
+        if key in ("blitz", "time", "contest_file"):
+            self._initialize_mode_state()
 
     def get_maximum_number_of_players(self) -> int:
         return self.game_data.get_maximum_number_of_players()
@@ -95,6 +127,9 @@ class Game(IGameService):
     def set_number_of_ai_players(self, num_players: int) -> None:
         self.game_data.add_players(num_players)
         self.game_data.number_of_ai_players = num_players
+
+    def add_players(self, nb_players: int) -> None:
+        self.game_data.add_players(nb_players)
 
     def get_number_of_ai_players(self) -> int:
         return self.game_data.number_of_ai_players
@@ -111,7 +146,7 @@ class Game(IGameService):
     def load_game_from_file(self, filename: str) -> int:
         return self.save_handler.load_game_from_file(filename)
 
-    def rotate_dirs(self, dirs: list, rotation: int) -> list:
+    def rotate_dirs(self, dirs: str | list, rotation: int) -> list:
         rotation = rotation % 4
         return dirs[-rotation:] + dirs[:-rotation]
 
@@ -215,19 +250,71 @@ class Game(IGameService):
                 print("   ".join(line))
             print()  # espace entre lignes de tuiles
 
+    def get_printed_board(self) -> str:
+        vertices = list(self.game_data.graph.get_verticies().values())
+
+        if not vertices:
+            return "No vertices."
+
+        positions = [v.get_position() for v in vertices]
+
+        min_x = min(x for x, y in positions)
+        min_y = min(y for x, y in positions)
+        max_x = max(x for x, y in positions)
+        max_y = max(y for x, y in positions)
+
+        width = max_x - min_x + 1
+        height = max_y - min_y + 1
+
+        board = [[None for _ in range(width)] for _ in range(height)]
+
+        for v in vertices:
+            x, y = v.get_position()
+            nx = x - min_x
+            ny = y - min_y
+            board[ny][nx] = self.generate_tile_ascii(v)
+
+        TILE_HEIGHT = 3
+        EMPTY_TILE = [" " * 9] * TILE_HEIGHT
+        board_str = "    "
+        for row in board:  # chaque ligne de tuiles
+            for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
+                board_line = []
+                for tile in row:
+                    if tile is None:
+                        board_line.append(EMPTY_TILE[i])
+                    else:
+                        board_line.append(f"{tile[i]}\n")
+                board_str += "   ".join(board_line)
+            # espace entre lignes de tuiles
+            board_str += "\n"
+        return board_str
+
     def get_close_neighbors(
         self, x: int, y: int
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
 
-    def add_online_players(self, players: list[Player]) -> str:
+     # new method qui:
+    # recréer players avec données de repo
+    # (dans attributs de fonction), nb de players
+    def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
+
+    def add_online_players(self, players: list[Player]) -> str:
+        return self.game_data.add_online_players(players)
 
     def draw_tile(self) -> str | None:
         return self.deck_manager.draw_tile()
 
     def shuffle_deck(self, algo=None, seed=None) -> int:
         return self.deck_manager.shuffle_deck(algo, seed)
+
+    def shuffle_players_order(self) -> None:
+        self.game_data.shuffle_players_order()
+
+    def extract_tile_code(self, move):
+        self.game_data.extract_tile_code(move)
 
     def play_move(self, move: str) -> bool:
         """

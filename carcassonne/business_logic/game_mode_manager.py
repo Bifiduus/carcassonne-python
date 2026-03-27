@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from carcassonne.business_logic.blitz_manager import BlitzManager
+from carcassonne.business_logic.game.blitz_manager import BlitzManager
 from carcassonne.business_logic.contest_manager import ContestManager
 
 if TYPE_CHECKING:
@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 class GameModeManager:
     """Resolve the active game mode and run mode-specific logic."""
 
-    def __init__(self, game: Game) -> None:
+    def __init__(self, blitz_manager, game: Game) -> None:
         self.game = game
-        self.blitz_manager = BlitzManager()
+        self.blitz_manager = blitz_manager
         self.contest_manager = ContestManager(game)
 
     def get_mode(self) -> str:

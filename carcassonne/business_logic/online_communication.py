@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from carcassonne.business_logic.game import Game
+from carcassonne.business_logic.game.game import Game
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.server import Server

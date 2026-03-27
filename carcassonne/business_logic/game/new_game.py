@@ -11,7 +11,8 @@ from carcassonne.datas.starting_tile import (
 
 
 class NewGame():
-    def __init__(self, river_manager, deck_manager, blitz_manager, game_data: GameData, game=None):
+    def __init__(self, river_manager, deck_manager, blitz_manager,
+                 game_data: GameData, game=None):
         self.game_data = game_data
         self.river_manager = river_manager
         self.deck_manager = deck_manager
