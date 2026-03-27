@@ -125,7 +125,7 @@ def draw(self, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("draw")
     else:
-        already_had_tile: bool = self.game.current_hand is not None
+        already_had_tile: bool = self.game.game_data.current_hand is not None
         tile = self.game.draw_tile()
         if tile is None:
             print("La pioche est vide!")
