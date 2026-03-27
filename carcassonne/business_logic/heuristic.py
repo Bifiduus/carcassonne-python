@@ -35,7 +35,7 @@ def _find_player(game_state: Any, player_id: int) -> Any | None:
     Returns:
         The matching player object, or None if not found.
     """
-    for player in game_state.players.values():
+    for player in game_state.game_data.players.values():
         if player.get_id() == player_id:
             return player
     return None
@@ -88,7 +88,7 @@ def _component_meeple_counts(game_state: Any) -> dict[str, dict[int, int]]:
         - value: number of meeples in that component for that player
     """
     counts: dict[str, dict[int, int]] = {}
-    for meeple in game_state.graph.get_meeples():
+    for meeple in game_state.game_data.graph.get_meeples():
         component_name = meeple.lands_components
         player_id = meeple.player_id
         if component_name is None:
@@ -181,7 +181,7 @@ def _count_incomplete_city_tiles(game_state: Any, player_id: int) -> float:
     """
     counts = _component_meeple_counts(game_state)
     total = 0.0
-    graph = game_state.graph
+    graph = game_state.game_data.graph
     for component_name, entries in graph.lands_components.get("C", {}).items():
         controllers = _component_controllers(component_name, counts)
         if player_id not in controllers:
@@ -215,7 +215,7 @@ def _count_risky_fields_lt3_completed_cities(
         Estimated number of risky fields for player_id.
     """
     counts = _component_meeple_counts(game_state)
-    graph = game_state.graph
+    graph = game_state.game_data.graph
     risky_total = 0.0
 
     completed_city_tile_sets: list[set[int]] = []
@@ -266,9 +266,8 @@ def _estimate_latent_score(game_state: Any, player_id: int) -> float:
     total = 0.0
 
     for land_type in ("C", "R", "M"):
-        for component_name, entries in game_state.graph.lands_components.get(
-            land_type, {}
-        ).items():
+        for component_name, entries in game_state.game_data.graph.lands_components.get(
+                land_type, {}).items():
             controllers = _component_controllers(component_name, counts)
             if player_id not in controllers:
                 continue

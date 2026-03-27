@@ -33,12 +33,9 @@ class SaveHandler:
             + "\n"
         )
         file.write(
-            "PlayersOrder: ["
-            + ", ".join(
-                [f"{player_id} " for player_id in self.game.game_data.players_order]
-            )
-            + "]\n"
-        )
+            "PlayersOrder: [" + ", ".join(
+                [f"{player_id} "
+                 for player_id in self.game.game_data.players_order]) + "]\n")
         file.write(
             "GameScore: ["
             + ", ".join(
@@ -207,8 +204,7 @@ class SaveHandler:
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
                                 player_number = self.game.game_data.players_order.index(
-                                    player.get_id()
-                                )
+                                    player.get_id())
                                 print(
                                     f"Player number "
                                     f"{player_number} "
@@ -238,7 +234,7 @@ class SaveHandler:
                         if ":" in player_move
                         else player_move
                     )
-                    self.game.current_hand = move
+                    self.game.game_data.current_hand = move
                     if move != self.game.draw_tile():
                         print("The move doesn't match the seed !")
                     # Assuming line is in the format "player_id:details"

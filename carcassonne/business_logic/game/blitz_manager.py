@@ -137,7 +137,8 @@ class BlitzManager:
         return minutes if minutes > 0 else 30
 
     def _is_blitz_enabled(self) -> bool:
-        return bool(self.game_data.get_game_configuration().get("blitz", False))
+        return bool(self.game_data.get_game_configuration().get(
+            "blitz", False))
 
     def _initialize_blitz_state(self) -> None:
         self.reset(
