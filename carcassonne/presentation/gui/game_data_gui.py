@@ -111,8 +111,8 @@ class GameDataGui:
             # Calculate position
             position = self.game.graph.get_position(
                 vertex_id=parsed["target_id"],
-                side=self.game.tiles_info.direction_dict[parsed["target_side"]]
-            )
+                side=self.game.game_data.tiles_info.direction_dict
+                [parsed["target_side"]])
             if position:
                 self.hint_tile = {
                     "id": -1,  # special id for hint

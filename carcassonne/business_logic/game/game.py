@@ -35,8 +35,6 @@ class Game(IGameService):
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.blitz_manager = BlitzManager(self.game_data)
-        self.undo_redo_manager = UndoRedoManager(
-            self.blitz_manager, self.game_data)
         self.end_game_manager = EndGame(
             self.game_data,
             self.blitz_manager,
@@ -46,6 +44,8 @@ class Game(IGameService):
             self.game_data,
             self.blitz_manager,
             self.river_manager)
+        self.undo_redo_manager = UndoRedoManager(
+            self.blitz_manager, self.deck_manager, self.game_data)
         self.commands = CommandsGame(
             self.blitz_manager,
             self.deck_manager,

@@ -84,7 +84,8 @@ def save(self, filename) -> int:
 
 def shuffle(self) -> None:
     seed = self.game.shuffle_deck()
-    print(f"Pioche mélangée. Algo: {self.game.shuffle_algo}. Seed: {seed}")
+    print(
+        f"Pioche mélangée. Algo: {self.game.game_data.shuffle_algo}. Seed: {seed}")
 
 
 def draw(self) -> None:

@@ -3,9 +3,10 @@ from carcassonne.datas.history import History
 
 
 class UndoRedoManager:
-    def __init__(self, blitz_manager, game_data):
+    def __init__(self, blitz_manager, deck_manager, game_data):
         self.game_data = game_data
         self.blitz_manager = blitz_manager
+        self.deck_manager = deck_manager
 
     def undo(self) -> None:
         """Undo the last human move and subsequent AI moves."""
@@ -26,6 +27,8 @@ class UndoRedoManager:
                 previous_play = self.game_data.history.pop_past()
                 self.game_data.history.push_future(previous_play)
 
+            previous_play = self.game_data.history.pop_past()
+            self.game_data.history.push_future(previous_play)
             self._rebuild_state_from_history()
 
     def redo(self) -> None:
@@ -59,7 +62,7 @@ class UndoRedoManager:
             player.get_score().set_points(0)
             player.meeples = 7
 
-        self.game_data.deck_manager.shuffle_deck(
+        self.deck_manager.shuffle_deck(
             self.game_data.shuffle_algo, self.game_data.seed)
 
         for record in past_moves:
@@ -78,7 +81,7 @@ class UndoRedoManager:
                 record_history=False,
             )
 
-        self.game_data.current_player_order_list = len(self.game_data.history.past_moves) % len(
-            self.game_data.players_order
-        )
+        self.game_data.current_player_order_list = len(
+            self.game_data.history.past_moves) % len(
+            self.game_data.players_order)
         self.blitz_manager._ensure_current_player_playable()

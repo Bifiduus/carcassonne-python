@@ -447,7 +447,7 @@ class ExpectimaxPlayer:
 
     def undo_for_ai(self, game: 'Game') -> None:
         """Undo the last AI move."""
-        if game.history.past_moves:
+        if game.game_data.history.past_moves:
             previous_play = game.game_data.history.pop_past()
             game.game_data.history.push_future(previous_play)
             game.game_data.board.remove_tile_from_board(
@@ -528,7 +528,7 @@ class MCTSNode:
 
         self.children = []
         self.untried_moves = MCTSPlayer.get_possible_moves(
-            game.current_hand, game)
+            game.game_data.current_hand, game)
 
         self.visits = 0
         self.total_reward = 0.0  # somme des récompenses
@@ -784,7 +784,7 @@ class MCTSPlayer:
 
     def play_move_for_ai(self, game: 'Game', move: str) -> None:
         """Play move for AI exploring the possibilities."""
-        tile_code = game.extract_tile_code(move)
+        tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             print(
                 f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
@@ -801,64 +801,19 @@ class MCTSPlayer:
                 move,
                 game.game_data.graph,
                 game.game_data.tiles_info,
-                game.history,
+                game.game_data.history,
                 game.game_data.players,
                 game.game_data.players_order,
                 game.get_current_player())
-            game.current_hand = None
+            game.game_data.current_hand = None
             number_of_players = game.get_number_of_players()
-            game.current_player_order_list = (
-                game.current_player_order_list + 1) % number_of_players
+            game.game_data.current_player_order_list = (
+                game.game_data.current_player_order_list + 1) % number_of_players
         # game.get_board()
         # print("----------------------------------------------------")
             return True
         # print("THINGD WENT WRONG")
         return False
-
-
-class MCTSNode:
-    def __init__(self, game: 'Game', parent=None, move=None, player=None):
-        self.state = game
-        self.parent = parent
-        self.move = move  # coup qui mène à ce noeud
-        self.player = player  # joueur qui a joué ce coup
-
-        self.children = []
-        self.untried_moves = MCTSPlayer.get_possible_moves(
-            game.current_hand, game)
-
-        self.visits = 0
-        self.total_reward = 0.0  # somme des récompenses
-
-    def get_state(self):
-        return self.state
-
-    def get_parent(self):
-        return self.parent
-
-    def get_move(self):
-        return self.move
-
-    def get_player(self):
-        return self.player
-
-    def get_children(self):
-        return self.children
-
-    def get_untried_moves(self):
-        return self.untried_moves
-
-    def get_visits(self):
-        return self.visits
-
-    def get_total_reward(self):
-        return self.total_reward
-
-    def add_visitor(self, number):
-        self.visits += number
-
-    def add_reward(self, reward):
-        self.total_reward += reward
 
 
 class AIModelManager:

@@ -24,8 +24,6 @@ class RiverManager():
             self.river_previous_opposite_direction = (
                 self.river_turn + 2) % 4
         self.river_turn = turn
-        print(self.river_previous_opposite_direction)
-        print(self.river_turn)
 
     def check_river_turn(self, move_parts: str):
         tile_lands = move_parts[0]
