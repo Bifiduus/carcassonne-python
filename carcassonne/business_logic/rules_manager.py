@@ -84,6 +84,9 @@ class RulesManager:
         land_type = land_matrix[self.match_matrix[side_placement][0]][
             self.match_matrix[side_placement][1]
         ]
+        if land_type == "S":
+            graph_copy.remove_vertex(tile_id)
+            return False
         if not land_type or land_type not in graph_copy.lands_components:
             graph_copy.remove_vertex(tile_id)
             return False

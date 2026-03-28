@@ -15,6 +15,13 @@ class RiverManager():
 
     def initialize_river(self) -> None:
         self.river_active = True
+        self.river_previous_opposite_direction = 0
+        self.river_turn = None
+
+    def reset(self) -> None:
+        self.river_active = False
+        self.river_previous_opposite_direction = 0
+        self.river_turn = None
 
     def is_river_active(self) -> bool:
         return self.river_active

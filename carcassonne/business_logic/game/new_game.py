@@ -49,6 +49,7 @@ class NewGame():
         """
         self.game_data.history.clear_history()
         self.game_data.graph.reset_graph()
+        self.river_manager.reset()
         # ensure starting tile present after reset
         if self.game_data.game_configuration.get_setting_value("river"):
             self.river_manager.initialize_river()
@@ -64,6 +65,8 @@ class NewGame():
             self.game_data.players_order = players_order
         else:
             self.game_data.shuffle_players_order()
+        for player in self.game_data.players.values():
+            player.reset()
         self.deck_manager.shuffle_deck(None, seed)
         self.game_data.current_player_order_list = 0
         self.game_data._end_game_scored = False

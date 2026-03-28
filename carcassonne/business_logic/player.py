@@ -128,3 +128,8 @@ class Player:
         """
         if color in ["red", "blue", "yellow", "black", "white"]:
             self.color = color
+
+    def reset(self) -> None:
+        """Reset the player's score and meeples to their initial values."""
+        self.score = PlayerScore(self.id)
+        self.meeples = 7
