@@ -120,6 +120,9 @@ class Deck:
             return None
         return self.river_tiles.pop(0)
 
+    def append(self, tile):
+        self.tiles = [tile] + self.tiles
+
     def len(self) -> int:
         """Return the number of tiles currently left in the deck."""
         return len(self.tiles)

@@ -132,7 +132,7 @@ class TilesInfo(ITilesInfo):
             "CCCR/b": 2,
             "FRFR": 8,
             "FFRR": 9,
-            "CRFR": 4,
+            "CRFR": 3,
             "CFRR": 3,
             "CRRF": 3,
             "CCRR": 3,
