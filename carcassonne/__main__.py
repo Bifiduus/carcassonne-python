@@ -213,7 +213,7 @@ def main() -> int:
     )
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
-    daemon: bool = bool(args.daemon)
+    # daemon: bool = bool(args.daemon)
     # Daemon dans server init ?
     server_service: IServerService = Server(game_repo)
     client_service: IClientService = Client(game_repo, server_service)

@@ -396,7 +396,8 @@ class GameRepository(IGamesRepository):
 
     def check_all_invitations_timeout(self, timeout) -> list[int]:
         rows = self._execute_query(
-            "SELECT invitation_id, sending_time, invited_player FROM pending_invitations;"
+            "SELECT invitation_id, sending_time, invited_player"
+            " FROM pending_invitations;"
         )
         timed_out = []
         for row in rows:
@@ -465,7 +466,8 @@ class GameRepository(IGamesRepository):
 
     def client_quit(self, client_username: str):
         self._execute_non_query(
-            "UPDATE players SET connected=?, group_id=?, status=? WHERE username=?;",
+            "UPDATE players SET connected=?, group_id=?,"
+            " status=? WHERE username=?;",
             (False, None, "idle", client_username)
         )
 
