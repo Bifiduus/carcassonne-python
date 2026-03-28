@@ -136,6 +136,13 @@ class Server(IServerService):
             if check:
                 host_id: int = self.repo.get_host_from_party(party)
                 players = self.repo.get_party(str(host_id))
+                if len(players) == 1:
+                    client_username: str = self.repo.get_username(str(host_id))
+                    self.send_to_client(
+                        client_username, "You cannot play alone...")
+                    self.repo.delete_party(party)
+                    self.repo.change_status(str(host_id), "idle")
+                    continue
                 self.create_new_party(players, str(host_id))
 
     def party_can_be_launched(self, party_number: int) -> bool:

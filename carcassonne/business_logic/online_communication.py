@@ -71,7 +71,7 @@ class OnlineCommunication:
 
     def command_accept(self, client_id: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) == (0, 0):
+        if self.server.repo.invitation_received(client_id) == (-1, -1):
             answer = "You have no invitation to accept.\n"
         else:
             sender_id, party_id = self.server.repo.invitation_received(
@@ -83,7 +83,7 @@ class OnlineCommunication:
 
     def command_decline(self, client_id: str) -> str:
         answer = ""
-        if self.server.repo.invitation_received(client_id) == (0, 0):
+        if self.server.repo.invitation_received(client_id) == (-1, -1):
             answer = "You have no invitation to decline.\n"
         else:
             host_id: int = self.server.repo.invitation_received(client_id)[0]
@@ -256,14 +256,10 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
-        print("1")
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
-        print("2")
         already_had_tile: bool = game.current_hand is not None
-        print("3")
         tile = game.draw_tile()
-        print("4")
         answer = ""
         if tile is None:
             answer = "La pioche est vide!"
@@ -271,7 +267,6 @@ class OnlineCommunication:
             answer = "Vous avez déjà une tuile en main."
         else:
             answer = f"Tuile piochée: {tile}"
-        print("5")
         return answer
 
     def command_shuffle(self, client_id: str) -> str:
