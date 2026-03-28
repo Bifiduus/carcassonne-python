@@ -23,6 +23,31 @@ from carcassonne.business_logic.heuristic import (
 import copy
 
 
+def _is_river_tile(tile: str | None) -> bool:
+    """Return True when a tile belongs to the river deck."""
+    return bool(tile) and "S" in tile
+
+
+def _discard_unplayable_tile(game: "Game", tile: str | None) -> None:
+    """Put an unplayable tile back at the bottom of its source deck."""
+    if tile is None:
+        return
+    if _is_river_tile(tile):
+        game.game_data.deck.river_tiles.append(tile)
+    else:
+        game.game_data.deck.append(tile)
+
+
+def _restore_drawn_tile_after_undo(game: "Game", tile: str | None) -> None:
+    """Restore a drawn tile to the top of its source deck for undo."""
+    if tile is None:
+        return
+    if _is_river_tile(tile):
+        game.game_data.deck.river_tiles.insert(0, tile)
+    else:
+        game.game_data.deck.tiles.append(tile)
+
+
 class RandomPlayer:
 
     # Example positions for meeple placement
@@ -490,8 +515,10 @@ class ExpectimaxPlayer:
             game.game_data.current_player_order_list = (
                 game.game_data.current_player_order_list - 1
             ) % game.game_data.get_number_of_players()
-            game.game_data.deck.tiles.append(
-                previous_play.move_str.split("/")[0])
+            _restore_drawn_tile_after_undo(
+                game,
+                previous_play.move_str.split("/")[0],
+            )
             # Restore player scores, meeple counts and scored_components to
             # their exact state before this simulation step so that AI
             # exploration never permanently modifies the real game state.
@@ -758,10 +785,25 @@ class MCTSPlayer:
                 state.game_data.tiles_info) and time.time() < self.end_time:
             moves = self.get_possible_moves(
                 state.game_data.current_hand, state)
+            # Bound dead-hand retries within one rollout step to avoid
+            # spinning forever on states with no playable continuation.
+            dead_hand_retries = 0
+            max_dead_hand_retries = (
+                len(state.game_data.deck.tiles)
+                + len(state.game_data.deck.river_tiles)
+                + 1
+            )
             while not moves:
-                state.game_data.deck.append(state.game_data.current_hand)
+                if time.time() >= self.end_time:
+                    return counter
+                if dead_hand_retries >= max_dead_hand_retries:
+                    return counter
+                _discard_unplayable_tile(state, state.game_data.current_hand)
                 state.game_data.current_hand = None
-                state.draw_tile()
+                drawn_tile = state.draw_tile()
+                if drawn_tile is None:
+                    return counter
+                dead_hand_retries += 1
                 moves = self.get_possible_moves(
                     state.game_data.current_hand, state)
 
@@ -799,6 +841,15 @@ class MCTSPlayer:
         hand_to_restore: str = game_root.game_data.current_hand
 
         deck_to_restore: list[str] = game_root.game_data.deck.tiles.copy()
+        river_deck_to_restore: list[str] = (
+            game_root.game_data.deck.river_tiles.copy()
+        )
+
+        river_active_to_restore: bool = game_root.river_manager.river_active
+        river_previous_direction_to_restore: int = (
+            game_root.river_manager.river_previous_opposite_direction
+        )
+        river_turn_to_restore: int | None = game_root.river_manager.river_turn
 
         player_order_to_restore: int = game_root.game_data.current_player_order_list
 
@@ -846,8 +897,15 @@ class MCTSPlayer:
             game_root.game_data.current_hand = hand_to_restore
 
             game_root.game_data.deck.tiles = deck_to_restore.copy()
+            game_root.game_data.deck.river_tiles = river_deck_to_restore.copy()
 
             game_root.game_data.current_player_order_list = player_order_to_restore
+
+            game_root.river_manager.river_active = river_active_to_restore
+            game_root.river_manager.river_previous_opposite_direction = (
+                river_previous_direction_to_restore
+            )
+            game_root.river_manager.river_turn = river_turn_to_restore
 
             for i in range(len(game_root.game_data.players)):
                 game_root.game_data.players[i].score.score = score_to_restore[i]
@@ -860,14 +918,26 @@ class MCTSPlayer:
             game_root.game_data.graph.next_set_id = copy.deepcopy(
                 next_set_id_to_restore)
 
-        # 🏁 Choisir le meilleur coup
+        # 🏁 Choose the best move among expanded children.
+        # If time ran out before expansion, fall back to a legal root move.
+        if not root.children:
+            if root.untried_moves:
+                return random.choice(root.untried_moves)
+            return ""
+
         best_child: MCTSNode = max(
             root.children, key=lambda c: c.get_total_reward()
             / float(c.get_visits()))
 
         game_root.game_data.graph.set_meeples(meeples_to_restore)
         game_root.game_data.deck.tiles = deck_to_restore.copy()
+        game_root.game_data.deck.river_tiles = river_deck_to_restore.copy()
         game_root.game_data.current_player_order_list = player_order_to_restore
+        game_root.river_manager.river_active = river_active_to_restore
+        game_root.river_manager.river_previous_opposite_direction = (
+            river_previous_direction_to_restore
+        )
+        game_root.river_manager.river_turn = river_turn_to_restore
         # Restore land components to prevent ID corruption
         game_root.game_data.graph.lands_components = copy.deepcopy(
             lands_components_to_restore)
@@ -892,8 +962,10 @@ class MCTSPlayer:
             number_of_players = game.get_number_of_players()
             game.game_data.current_player_order_list = (
                 game.game_data.current_player_order_list - 1) % number_of_players
-            game.game_data.deck.tiles.append(
-                previous_play.move_str.split('/')[0])
+            _restore_drawn_tile_after_undo(
+                game,
+                previous_play.move_str.split('/')[0],
+            )
             # Restore player scores, meeple counts and scored_components to
             # their exact state before this simulation step so that AI
             # exploration never permanently modifies the real game state.
