@@ -1,6 +1,7 @@
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
 from carcassonne.datas.serializer import parse_move
+from gi.repository import GLib
 
 
 class GameDataGui:
@@ -60,8 +61,21 @@ class GameDataGui:
         if result:
             while self.game.get_current_player().is_ai_player():
                 self.game.play_ai_turn()
+                self._refresh_after_ai_turn()
 
         self.reset()
+
+    def _refresh_after_ai_turn(self):
+        """Force a visual refresh between two consecutive AI turns."""
+        if self.board_view:
+            self.board_view.refresh()
+        if self.gui and hasattr(self.gui, "players_view"):
+            self.gui.players_view.refresh()
+
+        # Let GTK process pending redraw events before the next AI move.
+        context = GLib.MainContext.default()
+        while context.pending():
+            context.iteration(False)
 
     def reset(self):
         self.current_tile = None

@@ -333,7 +333,6 @@ class Game(IGameService):
                 current_player,
             )
             print(move + " placed successfully.")
-            print(self.graph.get_meeples())
             self.current_hand = None
             self.current_player_order_list = (
                 self.current_player_order_list + 1
@@ -362,15 +361,19 @@ class Game(IGameService):
 
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        self.draw_tile()
-        if self.current_hand is None:
+        move_generator = RandomPlayer()
+        if self._draw_playable_tile_for_ai(move_generator) is None:
+            print(
+                f"AI Player {ai_player.get_username()} has no playable "
+                "tile to draw."
+            )
             return
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
         move = None
         eval_score = None
         if self.get_game_configuration().get("ai_mode") == "random":
-            model = RandomPlayer()
+            model = move_generator
             move = model.random_move(self.current_hand, self)
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
@@ -459,6 +462,34 @@ class Game(IGameService):
             return None
         self.current_hand = tile
         return tile
+
+    def _discard_current_hand(self) -> str | None:
+        if self.current_hand is None:
+            return None
+
+        discarded_tile = self.current_hand
+        self.current_hand = None
+        self.deck.append(discarded_tile)
+        return discarded_tile
+
+    def _draw_playable_tile_for_ai(self, move_generator: Any) -> str | None:
+        while True:
+            tile = self.draw_tile()
+            if tile is None:
+                return None
+
+            if move_generator.get_possible_moves(tile, self):
+                return tile
+
+            discarded_tile = self._discard_current_hand()
+            if discarded_tile is None:
+                return None
+
+            print(
+                "AI Player "
+                f"{self.get_current_player().get_username()} discards "
+                f"unplayable tile: {discarded_tile}"
+            )
 
     def end_game(self) -> bool:
         if self._end_game_scored:
@@ -693,7 +724,7 @@ class Game(IGameService):
 
     def add_online_players(self, players: list[Player]):
         colors = ["red", "blue", "yellow", "black", "white"]
-        for i in range(0, len(players)+1):
+        for i in range(0, len(players) + 1):
             players[i].set_color(colors[(i - 1) % len(colors)])
             self.players[i] = players[i]
 

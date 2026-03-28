@@ -23,6 +23,7 @@ DEFAULT_WEIGHTS = HeuristicWeights()
 DEFAULT_COMPRESSION_BIAS = 0.0
 # Larger scale makes the sigmoid less sensitive around 0.
 DEFAULT_COMPRESSION_SCALE = 250.0
+DEFAULT_PLAYER_MEEPLE_STOCK = 7
 
 
 def _find_player(game_state: Any, player_id: int) -> Any | None:
@@ -58,21 +59,22 @@ def _get_player_score(game_state: Any, player_id: int) -> float:
     return float(player.get_score().score)
 
 
-def _get_player_meeples(game_state: Any, player_id: int) -> float:
-    """Read the number of available meeples for a player.
+def _get_player_committed_meeples(game_state: Any, player_id: int) -> float:
+    """Read how many meeples a player has committed to the board.
 
     Args:
         game_state: Current game state object.
         player_id: Identifier of the player.
 
     Returns:
-        Remaining meeples as float. Returns 0.0 if player is missing.
+        Number of already-spent meeples as float. Returns 0.0 if the player
+        is missing.
     """
     player = _find_player(game_state, player_id)
     if player is None:
         return 0.0
 
-    return float(player.meeples)
+    return float(max(0, DEFAULT_PLAYER_MEEPLE_STOCK - player.meeples))
 
 
 def _component_meeple_counts(game_state: Any) -> dict[str, dict[int, int]]:
@@ -294,9 +296,9 @@ def extract_features(
     score_diff = _get_player_score(game_state, player_id) - _get_player_score(
         game_state, opponent_id
     )
-    meeple_diff = _get_player_meeples(
+    meeple_diff = _get_player_committed_meeples(
         game_state, player_id
-    ) - _get_player_meeples(game_state, opponent_id)
+    ) - _get_player_committed_meeples(game_state, opponent_id)
     latent_score_diff = _estimate_latent_score(
         game_state, player_id
     ) - _estimate_latent_score(game_state, opponent_id)

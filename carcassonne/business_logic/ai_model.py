@@ -129,6 +129,9 @@ class ExpectimaxPlayer:
         self.start_time = start_time
         self.max_time = max_time
 
+    def _time_exceeded(self) -> bool:
+        return time.time() - self.start_time > self.max_time
+
     def set_evaluation_method(self, name_or_fn):
         """Set evaluation by name or by callable.
 
@@ -203,7 +206,7 @@ class ExpectimaxPlayer:
                player_to_max: int, next_player: int) -> Tuple[float, str]:
         """Recursive search function for Expectimax algorithm.
         Adapt between Max and Min nodes based on the player parameter."""
-        check_time = time.time() - self.start_time > self.max_time
+        check_time = self._time_exceeded()
         if self.terminal(game.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player), ''
         restored_hand = game.current_hand
@@ -235,7 +238,7 @@ class ExpectimaxPlayer:
                     best_move = move
                 max_eval = max(max_eval, eval_score)
                 alpha = max(alpha, eval_score)
-                check_time = time.time() - self.start_time > self.max_time
+                check_time = self._time_exceeded()
                 if beta <= alpha or check_time:
                     break
             return max_eval, best_move
@@ -265,7 +268,7 @@ class ExpectimaxPlayer:
                 game.current_hand = restored_hand
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
-                check_time = time.time() - self.start_time > self.max_time
+                check_time = self._time_exceeded()
                 if beta <= alpha or check_time:
                     break
             return min_eval, ""
@@ -289,6 +292,9 @@ class ExpectimaxPlayer:
     ) -> float:
 
         moves = self.get_possible_moves(game.current_hand, game)
+        if not moves:
+            return self.eval_fn(game, player_to_max, next_player)
+
         # ordonner les moves selon un heuristique rapide à calculer
         # moves = sorted(
         #     moves,
@@ -297,13 +303,21 @@ class ExpectimaxPlayer:
         # )
 
         best = alpha
+        explored_move = False
 
         restored_hand = game.current_hand
 
         for i in range(min(probingFactor, len(moves))):
+            if self._time_exceeded():
+                return (
+                    best
+                    if explored_move
+                    else self.eval_fn(game, player_to_max, next_player)
+                )
             move = moves[i]
 
             self.play_move_for_ai(game, move)
+            explored_move = True
 
             value = self.star25(
                 game,
@@ -361,13 +375,17 @@ class ExpectimaxPlayer:
         player_to_max: int,
         next_player: int,
     ) -> float:
-        check_time = time.time() - self.start_time > self.max_time
+        check_time = self._time_exceeded()
         if self.terminal(game.tiles_info) or depth == 0 or check_time:
             return self.eval_fn(game, player_to_max, next_player)
 
         successors = self.num_successors(game.tiles_info)
+        if not successors:
+            return self.eval_fn(game, player_to_max, next_player)
 
         total_tiles = sum(successors.values())
+        if total_tiles <= 0:
+            return self.eval_fn(game, player_to_max, next_player)
 
         # probabilités
         probs = {
@@ -377,47 +395,55 @@ class ExpectimaxPlayer:
 
         cur_x = 0
         cur_y = 1
-        # w = {}
+        probe_bounds = {}
+        restored_hand = game.current_hand
+        fallback_value = self.eval_fn(game, player_to_max, next_player)
 
-        """
         # ---------- PROBING PHASE ----------
         for tile, prob in probs.items():
+            if self._time_exceeded():
+                game.current_hand = restored_hand
+                return cur_x + cur_y * fallback_value
 
             cur_y -= prob
 
             cur_beta = (beta - self.L * cur_y - cur_x) / prob
 
-            self.applyChanceEvent(game, tile)
+            self.apply_chance_event(game, tile)
 
-            value = self.nProbe(
+            value = self.n_probe(
                 game,
                 alpha,
                 cur_beta,
                 depth - 1,
                 player_to_max,
-                next_player
+                next_player,
             )
+            game.current_hand = restored_hand
 
-            w[tile] = value
+            probe_bounds[tile] = value
 
             if value >= cur_beta:
+                game.current_hand = restored_hand
                 return beta
 
             cur_x += prob * value
-        """
 
         # ---------- SEARCH PHASE ----------
         cur_x = 0
         cur_y = 1
 
         for tile, prob in probs.items():
+            if self._time_exceeded():
+                game.current_hand = restored_hand
+                return cur_x + cur_y * fallback_value
 
             cur_y -= prob
 
             cur_alpha = (alpha - cur_x - self.U * cur_y) / prob
             cur_beta = (beta - cur_x - self.L * cur_y) / prob
 
-            ax = max(self.L, cur_alpha)
+            ax = max(self.L, cur_alpha, probe_bounds.get(tile, self.L))
             bx = min(self.U, cur_beta)
 
             self.apply_chance_event(game, tile)
@@ -425,18 +451,22 @@ class ExpectimaxPlayer:
             value, _ = self.search(
                 game, depth - 1, ax, bx, player_to_max, next_player
             )
+            game.current_hand = restored_hand
 
             if value >= cur_beta:
+                game.current_hand = restored_hand
                 return beta
 
             if value <= cur_alpha:
+                game.current_hand = restored_hand
                 return alpha
 
-            if time.time() - self.start_time > self.max_time:
+            if self._time_exceeded():
                 break
 
             cur_x += prob * value
 
+        game.current_hand = restored_hand
         return cur_x
 
     def undo_for_ai(self, game: 'Game') -> None:
@@ -459,7 +489,13 @@ class ExpectimaxPlayer:
             # their exact state before this simulation step so that AI
             # exploration never permanently modifies the real game state.
             if self._sim_state_stack:
-                saved_scores, saved_meeples, saved_scored = (
+                (
+                    saved_scores,
+                    saved_meeples,
+                    saved_scored,
+                    saved_lands_components,
+                    saved_next_set_id,
+                ) = (
                     self._sim_state_stack.pop()
                 )
                 for pid, score in saved_scores.items():
@@ -467,6 +503,8 @@ class ExpectimaxPlayer:
                 for pid, meeples in saved_meeples.items():
                     game.players[pid].meeples = meeples
                 game.board.scored_components = saved_scored
+                game.graph.lands_components = saved_lands_components
+                game.graph.next_set_id = saved_next_set_id
 
     def play_move_for_ai(self, game: "Game", move: str) -> None:
         """Play move for AI exploring the possibilities."""
@@ -490,6 +528,10 @@ class ExpectimaxPlayer:
                 pid: p.get_meeples() for pid, p in game.players.items()
             }
             saved_scored = set(game.board.scored_components)
+            saved_lands_components = copy.deepcopy(
+                game.graph.lands_components
+            )
+            saved_next_set_id = copy.deepcopy(game.graph.next_set_id)
             game.board.add_tile_to_board(
                 move,
                 game.graph,
@@ -504,7 +546,13 @@ class ExpectimaxPlayer:
                 game.current_player_order_list + 1
             ) % game.get_number_of_players()
             self._sim_state_stack.append(
-                (saved_scores, saved_meeples, saved_scored)
+                (
+                    saved_scores,
+                    saved_meeples,
+                    saved_scored,
+                    saved_lands_components,
+                    saved_next_set_id,
+                )
             )
             return True
         return False
@@ -583,6 +631,8 @@ class MCTSPlayer:
         self.start_time = start_time
         self.max_time = max_time
         self.end_time = self.start_time + self.max_time
+        # Stack used to save/restore scoring state around each simulation step
+        self._sim_state_stack = []
 
     def set_evaluation_method(self, name_or_fn):
         """Set evaluation by name or by callable.
@@ -738,9 +788,23 @@ class MCTSPlayer:
 
         deck_to_restore: list[str] = game_root.deck.tiles.copy()
 
-        score_to_restore: list[int] = [game_root.players[i].score.score for i in range(len(game_root.players))]
+        player_order_to_restore: int = game_root.current_player_order_list
 
-        meeples_to_restore = [game_root.graph.get_meeples()[i] for i in range(len(game_root.graph.get_meeples()))]
+        score_to_restore: list[int] = [
+            game_root.players[i].score.score
+            for i in range(len(game_root.players))]
+
+        meeples_to_restore = copy.deepcopy(game_root.graph.get_meeples())
+
+        player_meeples_to_restore: list[int] = [
+            game_root.players[i].get_meeples()
+            for i in range(len(game_root.players))]
+
+        # Save land components tracking to prevent ID corruption during
+        # simulations
+        lands_components_to_restore = copy.deepcopy(
+            game_root.graph.lands_components)
+        next_set_id_to_restore = copy.deepcopy(game_root.graph.next_set_id)
 
         while time.time() < self.end_time:
             node: MCTSNode = root
@@ -767,18 +831,34 @@ class MCTSPlayer:
 
             game_root.current_hand = hand_to_restore
 
-            game_root.deck.tiles = deck_to_restore
+            game_root.deck.tiles = deck_to_restore.copy()
+
+            game_root.current_player_order_list = player_order_to_restore
 
             for i in range(len(game_root.players)):
                 game_root.players[i].score.score = score_to_restore[i]
+                game_root.players[i].meeples = player_meeples_to_restore[i]
 
             game_root.graph.set_meeples(meeples_to_restore)
+            # Restore land components to prevent ID corruption
+            game_root.graph.lands_components = copy.deepcopy(
+                lands_components_to_restore)
+            game_root.graph.next_set_id = copy.deepcopy(next_set_id_to_restore)
 
         # 🏁 Choisir le meilleur coup
         best_child: MCTSNode = max(
             root.children, key=lambda c: c.get_total_reward()
             / float(c.get_visits()))
 
+        game_root.graph.set_meeples(meeples_to_restore)
+        game_root.deck.tiles = deck_to_restore.copy()
+        game_root.current_player_order_list = player_order_to_restore
+        # Restore land components to prevent ID corruption
+        game_root.graph.lands_components = copy.deepcopy(
+            lands_components_to_restore)
+        game_root.graph.next_set_id = copy.deepcopy(next_set_id_to_restore)
+        for i in range(len(game_root.players)):
+            game_root.players[i].meeples = player_meeples_to_restore[i]
         game_root.current_hand = hand_to_restore
         return best_child.get_move()
 
@@ -794,7 +874,26 @@ class MCTSPlayer:
             game.current_player_order_list = (
                 game.current_player_order_list - 1) % number_of_players
             game.deck.tiles.append(previous_play.move_str.split('/')[0])
-            # print(game.graph.get_verticies())
+            # Restore player scores, meeple counts and scored_components to
+            # their exact state before this simulation step so that AI
+            # exploration never permanently modifies the real game state.
+            if self._sim_state_stack:
+                (
+                    saved_scores,
+                    saved_meeples,
+                    saved_scored,
+                    saved_lands_components,
+                    saved_next_set_id,
+                ) = (
+                    self._sim_state_stack.pop()
+                )
+                for pid, score in saved_scores.items():
+                    game.players[pid].get_score().set_points(score)
+                for pid, meeples in saved_meeples.items():
+                    game.players[pid].meeples = meeples
+                game.board.scored_components = saved_scored
+                game.graph.lands_components = saved_lands_components
+                game.graph.next_set_id = saved_next_set_id
 
     def play_move_for_ai(self, game: 'Game', move: str) -> None:
         """Play move for AI exploring the possibilities."""
@@ -809,6 +908,19 @@ class MCTSPlayer:
             current_player_id=game.get_current_player().get_id(),
         )
         if ok:
+            # Snapshot scoring state before modifying it so undo_for_ai can
+            # fully restore the real game state.
+            saved_scores = {
+                pid: p.get_score_int() for pid, p in game.players.items()
+            }
+            saved_meeples = {
+                pid: p.get_meeples() for pid, p in game.players.items()
+            }
+            saved_scored = set(game.board.scored_components)
+            saved_lands_components = copy.deepcopy(
+                game.graph.lands_components
+            )
+            saved_next_set_id = copy.deepcopy(game.graph.next_set_id)
             game.board.add_tile_to_board(move, game.graph, game.tiles_info,
                                          game.history,
                                          game.players, game.players_order,
@@ -817,10 +929,16 @@ class MCTSPlayer:
             number_of_players = game.get_number_of_players()
             game.current_player_order_list = (
                 game.current_player_order_list + 1) % number_of_players
-        # game.get_board()
-        # print("----------------------------------------------------")
+            self._sim_state_stack.append(
+                (
+                    saved_scores,
+                    saved_meeples,
+                    saved_scored,
+                    saved_lands_components,
+                    saved_next_set_id,
+                )
+            )
             return True
-        # print("THINGD WENT WRONG")
         return False
 
 
