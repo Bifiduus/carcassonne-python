@@ -128,9 +128,18 @@ class ExpectimaxPlayer:
     # Example positions for meeple placement
     meeple_placement_list = ["NW", "N", "NE", "E", "SE", "S", "SW", "W", "C"]
 
-    def __init__(self, game: 'Game', start_time: float, max_time: float,
-                 depth: int, is_maximizing: bool = True,
-                 eval_name: str = "", eval_fn=None):
+    def __init__(
+        self,
+        game: 'Game',
+        start_time: float,
+        max_time: float,
+        depth: int,
+        is_maximizing: bool = True,
+        eval_name: str = "",
+        eval_fn=None,
+        preferred_root_move: str | None = None,
+        history_table: dict[str, int] | None = None,
+    ):
         """
         Initialize the Expectimax AI player.
 
@@ -154,6 +163,9 @@ class ExpectimaxPlayer:
         self.depth_max = depth
         self.start_time = start_time
         self.max_time = max_time
+        self.preferred_root_move = preferred_root_move
+        # Shared between iterative-deepening iterations to improve move order.
+        self.history_table = history_table if history_table is not None else {}
 
     def _time_exceeded(self) -> bool:
         return time.time() - self.start_time > self.max_time
@@ -229,6 +241,27 @@ class ExpectimaxPlayer:
 
         return possible_moves
 
+    def _order_moves(self, moves: List[str], depth: int) -> List[str]:
+        """Order candidate moves to improve pruning efficiency.
+
+        Priority:
+        1) Root preferred move from previous iterative-deepening pass.
+        2) History heuristic score (higher first).
+        """
+        if not moves:
+            return moves
+
+        preferred = None
+        if depth == self.depth_max:
+            preferred = self.preferred_root_move
+
+        def _score(move: str) -> tuple[int, int]:
+            is_preferred = 1 if preferred and move == preferred else 0
+            history_score = self.history_table.get(move, 0)
+            return (is_preferred, history_score)
+
+        return sorted(moves, key=_score, reverse=True)
+
     def search(self, game: 'Game', depth: int, alpha: float, beta: float,
                player_to_max: int, next_player: int) -> Tuple[float, str]:
         """Recursive search function for Expectimax algorithm.
@@ -245,7 +278,8 @@ class ExpectimaxPlayer:
                 game.game_data.current_hand, game)
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
-            for move in possible_moves:
+            ordered_moves = self._order_moves(possible_moves, depth)
+            for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
                     print("SEARCH MAX DIDNT WORK")
@@ -269,6 +303,9 @@ class ExpectimaxPlayer:
                 alpha = max(alpha, eval_score)
                 check_time = self._time_exceeded()
                 if beta <= alpha or check_time:
+                    self.history_table[move] = (
+                        self.history_table.get(move, 0) + depth * depth
+                    )
                     break
             return max_eval, best_move
         else:  # Min node (opponent's turn)
@@ -277,7 +314,8 @@ class ExpectimaxPlayer:
                 game.game_data.current_hand, game)
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
-            for move in possible_moves:
+            ordered_moves = self._order_moves(possible_moves, depth)
+            for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
                     print("SEARCH MIN DIDNT WORK")
@@ -300,6 +338,9 @@ class ExpectimaxPlayer:
                 beta = min(beta, eval_score)
                 check_time = self._time_exceeded()
                 if beta <= alpha or check_time:
+                    self.history_table[move] = (
+                        self.history_table.get(move, 0) + depth * depth
+                    )
                     break
             return min_eval, ""
 
@@ -324,6 +365,7 @@ class ExpectimaxPlayer:
         moves = self.get_possible_moves(game.game_data.current_hand, game)
         if not moves:
             return self.eval_fn(game, player_to_max, next_player)
+        moves = self._order_moves(moves, depth)
 
         # ordonner les moves selon un heuristique rapide à calculer
         # moves = sorted(
@@ -588,6 +630,82 @@ class ExpectimaxPlayer:
             )
             return True
         return False
+
+
+class IterativeDeepeningPlayer:
+    """Iterative deepening wrapper around Expectimax/Minimax search."""
+
+    def __init__(
+        self,
+        game: "Game",
+        start_time: float,
+        max_time: float,
+        max_depth: int,
+        eval_name: str = "",
+        eval_fn=None,
+    ):
+        self.game = game
+        self.start_time = start_time
+        self.max_time = max_time
+        self.max_depth = max(1, int(max_depth or 1))
+        self.eval_name = eval_name
+        self.eval_fn = eval_fn
+        self.last_completed_depth = 0
+        self.history_table: dict[str, int] = {}
+
+    def _time_exceeded(self) -> bool:
+        return time.time() - self.start_time > self.max_time
+
+    def search(
+        self,
+        game: "Game",
+        alpha: float,
+        beta: float,
+        player_to_max: int,
+        next_player: int,
+    ) -> Tuple[float, str]:
+        """Run deepening iterations and keep the best fully-searched move."""
+        best_eval = float("-inf")
+        best_move = ""
+        preferred_move = ""
+
+        for depth in range(1, self.max_depth + 1):
+            if self._time_exceeded():
+                break
+
+            solver = ExpectimaxPlayer(
+                game,
+                self.start_time,
+                self.max_time,
+                depth,
+                eval_name=self.eval_name,
+                eval_fn=self.eval_fn,
+                preferred_root_move=preferred_move,
+                history_table=self.history_table,
+            )
+
+            eval_score, move = solver.search(
+                game,
+                depth=depth,
+                alpha=alpha,
+                beta=beta,
+                player_to_max=player_to_max,
+                next_player=next_player,
+            )
+
+            if self._time_exceeded() and not move:
+                break
+
+            self.last_completed_depth = depth
+            if move:
+                best_eval = eval_score
+                best_move = move
+                preferred_move = move
+                self.history_table[move] = (
+                    self.history_table.get(move, 0) + depth * depth
+                )
+
+        return best_eval, best_move
 
 
 class MCTSNode:

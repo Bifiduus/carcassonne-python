@@ -130,6 +130,7 @@ def main() -> int:
         help="AI algorithm we use (default: star2.5 (= minimax with pruning))",
         type=str,
         default="random",
+        choices=["random", "minimax", "iterative", "mcts"],
     )
 
     parser.add_argument(
@@ -197,8 +198,7 @@ def main() -> int:
         )
     if args.ai_time:
         config_overrides["ai_time"] = args.ai_time
-    if args.ai_mode == "mcts" or args.ai_mode == "random":
-        config_overrides["ai_mode"] = args.ai_mode
+    config_overrides["ai_mode"] = args.ai_mode
     if args.ai_minimax_depth > 0:
         config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
     if args.ai_mcts_selection == "UCT" or args.ai_mcts_selection == "ML":

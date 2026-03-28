@@ -406,6 +406,7 @@ class Game(IGameService):
     def play_ai_turn(self, game=None) -> None:
         from carcassonne.business_logic.ai_model import RandomPlayer
         from carcassonne.business_logic.ai_model import ExpectimaxPlayer
+        from carcassonne.business_logic.ai_model import IterativeDeepeningPlayer
         from carcassonne.business_logic.ai_model import MCTSPlayer
 
         if game is None:
@@ -437,6 +438,19 @@ class Game(IGameService):
             eval_score, move = model.search(
                 game,
                 depth=model.depth_max,
+                alpha=float("-inf"),
+                beta=float("inf"),
+                player_to_max=ai_player.get_id(),
+                next_player=ai_player.get_id(),
+            )
+        elif self.get_game_configuration().get("ai_mode") == "iterative":
+            start_time = time.time()
+            depth = self.get_game_configuration().get("ai_minimax_depth", 5)
+            model = IterativeDeepeningPlayer(
+                game, start_time, ai_time or 10.0, depth or 5
+            )
+            eval_score, move = model.search(
+                game,
                 alpha=float("-inf"),
                 beta=float("inf"),
                 player_to_max=ai_player.get_id(),
