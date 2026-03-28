@@ -74,6 +74,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def delete_party(self, party_id: int):
+        pass
+
+    @abstractmethod
     def create_game(self, game_name: str, group_id: int):
         pass
 
