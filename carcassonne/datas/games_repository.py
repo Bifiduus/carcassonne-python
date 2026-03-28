@@ -327,13 +327,6 @@ class GameRepository(IGamesRepository):
             return (-1, -1)
         return rows[0]['host_player'], rows[0]['group_id']
 
-    def has_been_invited(self, invited: str) -> bool:
-        rows = self._execute_query(
-            "SELECT invitation_id FROM pending_invitations WHERE invited_player=?;",
-            (int(invited),)
-        )
-        return bool(rows)
-
     def accept_invitation(self, group_id: int, invited: str):
         if self.invitation_received(invited) == (-1, -1):
             return
@@ -546,7 +539,7 @@ class GameRepository(IGamesRepository):
     def create_game(self, game_name: str, group_id: int):
         self._execute_non_query(
             "INSERT INTO current_games(game_name, group_id)" " VALUES(?, ?);",
-            (game_name, group_id),
+            (game_name, group_id)
         )
 
     def send_invitation(
@@ -572,7 +565,8 @@ class GameRepository(IGamesRepository):
 
     def delete_party(self, party_id: int):
         self._execute_non_query(
-            "DELETE FROM groups WHERE group_id=?;", (party_id,)
+            "DELETE FROM groups WHERE group_id=?;",
+            (party_id,)
         )
 
     def get_players_from_group(self, group_id: int) -> list[str]:
