@@ -4,8 +4,10 @@ It provides intelligent move selection for the AI player in Carcassonne.
 """
 
 import math
+import os
 import random
 import time
+from pathlib import Path
 from typing import List, Tuple, Optional, TYPE_CHECKING
 
 from carcassonne.datas.history import MoveRecord
@@ -22,6 +24,9 @@ from carcassonne.business_logic.heuristic import (
 )
 
 import copy
+
+DEFAULT_MCTS_ML_DIR = Path(__file__).resolve().parents[1] / "datas" / "mcts_ml"
+DEFAULT_MCTS_ML_MODEL_PATH = str(DEFAULT_MCTS_ML_DIR / "mcts_selection.keras")
 
 
 def _is_river_tile(tile: str | None) -> bool:
@@ -820,26 +825,120 @@ class MCTSPlayer:
         self.end_time = self.start_time + self.max_time
         # Stack used to save/restore scoring state around each simulation step
         self._sim_state_stack = []
+        self.ml_model = None
+        self._ml_model_attempted = False
 
     def set_evaluation_method(self, name_or_fn):
         """Set evaluation by name or by callable.
 
         Accepts a callable(graph, ai_score, opponent_score) or a string name.
         """
-        if name_or_fn == "UCT":
-            name_or_fn = self.uct_select_child
-            self.eval_fn = name_or_fn
-            return
         if callable(name_or_fn):
             self.eval_fn = name_or_fn
             return
 
         name = (name_or_fn or "").upper()
-        if name == "":
+        if name in ("", "UCT"):
             # default selection function
             self.eval_fn = self.uct_select_child
+        elif name == "ML":
+            self.eval_fn = self.ml_select_child
         else:
             raise ValueError(f"Unknown evaluation method: {name_or_fn}")
+
+    def _load_ml_model(self) -> bool:
+        """Load Keras model used by ML selection, if available."""
+        if self.ml_model is not None:
+            return True
+        if self._ml_model_attempted:
+            return False
+
+        self._ml_model_attempted = True
+        model_path = os.environ.get(
+            "CARCASSONNE_MCTS_MODEL_PATH", DEFAULT_MCTS_ML_MODEL_PATH
+        )
+
+        try:
+            from keras.models import load_model
+        except Exception:
+            return False
+
+        if not os.path.exists(model_path):
+            return False
+
+        try:
+            self.ml_model = load_model(model_path)
+        except Exception:
+            self.ml_model = None
+            return False
+
+        return True
+
+    def _extract_ml_features(
+        self, node: MCTSNode, child: MCTSNode
+    ) -> list[float]:
+        """Build a compact numerical feature vector for a child node."""
+        child_visits = max(child.get_visits(), 1)
+        node_visits = max(node.get_visits(), 1)
+        avg_reward = child.get_total_reward() / float(child_visits)
+        exploration = math.sqrt(
+            math.log(node_visits + 1.0) / float(child_visits)
+        )
+
+        current_player = child.get_state().get_current_player()
+        has_meeple_in_move = 1.0 if child.get_move().count("/") >= 2 else 0.0
+
+        return [
+            avg_reward,
+            float(child.get_total_reward()),
+            float(child_visits),
+            float(node_visits),
+            float(len(child.get_children())),
+            float(len(child.get_untried_moves())),
+            float(current_player.get_meeples()),
+            float(current_player.get_score_int()),
+            has_meeple_in_move,
+            exploration,
+        ]
+
+    def ml_select_child(self, node: MCTSNode, c=1.41):
+        """Select child using a trained Keras model (fallback to UCT)."""
+        if not node.get_children():
+            raise ValueError("Cannot select a child from a leaf node")
+
+        if not self._load_ml_model():
+            return self.uct_select_child(node, c)
+
+        features = [
+            self._extract_ml_features(node, child)
+            for child in node.get_children()
+        ]
+
+        try:
+            predictions = self.ml_model.predict(features, verbose=0)
+        except Exception:
+            return self.uct_select_child(node, c)
+
+        scored_children: list[tuple[float, MCTSNode]] = []
+        for idx, child in enumerate(node.get_children()):
+            pred = predictions[idx]
+            if isinstance(pred, (list, tuple)):
+                pred_score = float(pred[0]) if pred else 0.0
+            else:
+                try:
+                    pred_score = float(pred)
+                except TypeError:
+                    pred_score = float(pred.item())
+
+            # Keep small UCT tie-break to avoid deterministic deadlocks.
+            child_visits = max(child.get_visits(), 1)
+            node_visits = max(node.get_visits(), 1)
+            uct_tiebreak = c * math.sqrt(
+                math.log(node_visits + 1.0) / float(child_visits)
+            )
+            scored_children.append((pred_score + 1e-6 * uct_tiebreak, child))
+
+        return max(scored_children, key=lambda pair: pair[0])[1]
 
     def get_possible_moves(self, tile, game: "Game") -> List[str]:
         """
@@ -912,7 +1011,7 @@ class MCTSPlayer:
         return max(
             node.get_children(),
             key=lambda child: (
-                child.get_total_reward() / child.get_visits
+                child.get_total_reward() / child.get_visits()
                 + c
                 * math.sqrt(math.log(node.get_visits()) / child.get_visits())
             ),
@@ -957,7 +1056,7 @@ class MCTSPlayer:
                     return counter
                 _discard_unplayable_tile(state, state.game_data.current_hand)
                 state.game_data.current_hand = None
-                drawn_tile = state.draw_tile()
+                drawn_tile = state.draw_tile(silent=True)
                 if drawn_tile is None:
                     return counter
                 dead_hand_retries += 1

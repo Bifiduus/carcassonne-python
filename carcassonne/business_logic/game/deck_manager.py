@@ -9,7 +9,7 @@ class DeckManager:
         self.blitz_manager = blitz_manager
         self.river_manager = river_manager
 
-    def draw_tile(self) -> str | None:
+    def draw_tile(self, silent: bool = False) -> str | None:
         """Draw a tile, checking blitz timeout and player playability."""
         timed_out_now = self.blitz_manager.tick_blitz()
         if timed_out_now:
@@ -24,10 +24,10 @@ class DeckManager:
             self.river_manager.is_river_active()
             and not self.game_data.is_river_over()
         ):
-            tile = self.game_data.deck.draw_river_tile()
+            tile = self.game_data.deck.draw_river_tile(silent=silent)
 
         else:
-            tile = self.game_data.deck.draw()
+            tile = self.game_data.deck.draw(silent=silent)
 
         if tile is None:
             return None

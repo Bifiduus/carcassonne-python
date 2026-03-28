@@ -299,8 +299,8 @@ class Game(IGameService):
     def add_online_players(self, players: list[Player]) -> str:
         return self.game_data.add_online_players(players)
 
-    def draw_tile(self) -> str | None:
-        return self.deck_manager.draw_tile()
+    def draw_tile(self, silent: bool = False) -> str | None:
+        return self.deck_manager.draw_tile(silent=silent)
 
     def shuffle_deck(self, algo=None, seed=None) -> int:
         return self.deck_manager.shuffle_deck(algo, seed)
@@ -461,10 +461,10 @@ class Game(IGameService):
         elif self.get_game_configuration().get("ai_mode") == "mcts":
             start_time = time.time()
             eval_fn_name = self.get_game_configuration().get(
-                "ai_mcts_selection", "uct"
+                "ai_mcts_selection", "UCT"
             )
             model = MCTSPlayer(
-                game, start_time, ai_time or 10.0, eval_fn_name or "uct"
+                game, start_time, ai_time or 10.0, eval_fn_name or "UCT"
             )
             move = model.mcts(game)
         if not move:

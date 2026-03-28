@@ -22,6 +22,7 @@ dependencies = [
   "pytest-cov", # Code coverage plugin
   "sphinx", # Documentation generator
   "sphinx_rtd_theme", # ReadTheDocs theme for Sphinx
+  "keras", # ML model for MCTS selection policy
 ]
 
 [tool.setuptools.dynamic]

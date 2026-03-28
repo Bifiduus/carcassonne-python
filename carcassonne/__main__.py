@@ -148,8 +148,9 @@ def main() -> int:
     parser.add_argument(
         "-ams",
         "--ai-mcts-selection",
-        help="selection function for mcts (default: UCT)",
-        type=str,
+        help="selection function for mcts (UCT|ML, default: UCT)",
+        type=str.upper,
+        choices=["UCT", "ML"],
         default="UCT",
     )
 
@@ -197,8 +198,7 @@ def main() -> int:
     config_overrides["ai_mode"] = args.ai_mode
     if args.ai_minimax_depth > 0:
         config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
-    if args.ai_mcts_selection == "UCT" or args.ai_mcts_selection == "ML":
-        config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
+    config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
     if args.river:
         print("River mode enabled.")
         config_overrides["river"] = True

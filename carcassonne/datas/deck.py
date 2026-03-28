@@ -97,7 +97,7 @@ class Deck:
             "FFSF",  # "FFSF",
         ]
 
-    def draw(self) -> str | None:
+    def draw(self, silent: bool = False) -> str | None:
         """
         Draw and return the top tile from the deck.
 
@@ -105,11 +105,12 @@ class Deck:
             The drawn tile string, or None if the deck is empty
         """
         if not self.tiles:
-            print("Deck is empty, cannot draw a tile.")
+            if not silent:
+                print("Deck is empty, cannot draw a tile.")
             return None
         return self.tiles.pop()
 
-    def draw_river_tile(self) -> str | None:
+    def draw_river_tile(self, silent: bool = False) -> str | None:
         """
         Draw and return the next river tile from the river tile list.
 
@@ -117,7 +118,8 @@ class Deck:
             The drawn river tile string, or None if no river tiles remain
         """
         if not self.river_tiles:
-            print("No more river tiles available.")
+            if not silent:
+                print("No more river tiles available.")
             return None
         return self.river_tiles.pop(0)
 
