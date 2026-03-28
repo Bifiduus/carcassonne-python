@@ -1,4 +1,5 @@
 from carcassonne.business_logic.ai_model import is_ai_player
+from carcassonne.datas.deck import Deck
 from carcassonne.datas.history import History
 
 
@@ -55,13 +56,17 @@ class UndoRedoManager:
     def _rebuild_state_from_history(self) -> None:
         """Rebuild full game state from past moves to keep data coherent."""
         past_moves = list(self.game_data.history.past_moves)
+        future_moves = list(self.game_data.history.future_moves)
 
         self.game_data.reset()
+        self.game_data.history.past_moves = list(past_moves)
+        self.game_data.history.future_moves = list(future_moves)
 
         for player in self.game_data.players.values():
             player.get_score().set_points(0)
             player.meeples = 7
 
+        self.game_data.deck = Deck()
         self.deck_manager.shuffle_deck(
             self.game_data.shuffle_algo, self.game_data.seed)
 
@@ -80,8 +85,13 @@ class UndoRedoManager:
                 player,
                 record_history=False,
             )
+            # Advance the deck to match the tile that was drawn for this move
+            tile_code = record.move_str.split("/")[0]
+            if "S" in tile_code:
+                self.game_data.deck.draw_river_tile()
+            else:
+                self.game_data.deck.draw()
 
-        self.game_data.current_player_order_list = len(
-            self.game_data.history.past_moves) % len(
+        self.game_data.current_player_order_list = len(past_moves) % len(
             self.game_data.players_order)
         self.blitz_manager._ensure_current_player_playable()
