@@ -72,6 +72,7 @@ def on_config(gui) -> None:
 
 def on_info(gui) -> None:
     import carcassonne
+
     message = f"""Carcassonne Python
 
 Version: {carcassonne.__version__}

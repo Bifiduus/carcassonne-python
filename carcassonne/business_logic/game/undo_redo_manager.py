@@ -1,6 +1,5 @@
 from carcassonne.business_logic.ai_model import is_ai_player
 from carcassonne.datas.deck import Deck
-from carcassonne.datas.history import History
 
 
 class UndoRedoManager:
@@ -49,7 +48,8 @@ class UndoRedoManager:
                 self.game_data.history.future_moves[-1]
             ):
                 self.game_data.history.push_past(
-                    self.game_data.history.pop_future())
+                    self.game_data.history.pop_future()
+                )
 
             self._rebuild_state_from_history()
 
@@ -68,7 +68,8 @@ class UndoRedoManager:
 
         self.game_data.deck = Deck()
         self.deck_manager.shuffle_deck(
-            self.game_data.shuffle_algo, self.game_data.seed)
+            self.game_data.shuffle_algo, self.game_data.seed
+        )
 
         for record in past_moves:
             player = self.game_data.players.get(record.player_id)
@@ -93,5 +94,6 @@ class UndoRedoManager:
                 self.game_data.deck.draw()
 
         self.game_data.current_player_order_list = len(past_moves) % len(
-            self.game_data.players_order)
+            self.game_data.players_order
+        )
         self.blitz_manager._ensure_current_player_playable()

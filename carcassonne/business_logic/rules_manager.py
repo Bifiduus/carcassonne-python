@@ -121,7 +121,7 @@ class RulesManager:
         tile1pos: tuple[int, int],
         orientation: int,
         graph: IGraphData,
-        river_manager: RiverManager
+        river_manager: RiverManager,
     ) -> bool:
         """
         Checks if the sides of two tiles from the computed move are equal.
@@ -159,7 +159,7 @@ class RulesManager:
                     land2 = tile2[tile2_coord[0]][tile2_coord[1]]
 
                     if land1 != land2:
-                        '''print("position : " + str(tile1pos) + ",
+                        """print("position : " + str(tile1pos) + ",
                           and land 1 of " + str(tile1) +
                           " with orientation " +
                               str(orientation) + " and direction "
@@ -168,10 +168,10 @@ class RulesManager:
                         str(next_pos) + ", and land 2 of "
                           + vertex.get_name() + " with orientation " +
                               str(vertex.get_orientation()) + " and direction "
-                                + str((dir + 2) % 4) + " is " + land2)'''
+                                + str((dir + 2) % 4) + " is " + land2)"""
                         return False
 
-                    if consider_river_rules and land1 == 'S':
+                    if consider_river_rules and land1 == "S":
                         river_checked = True
                     break
 
@@ -225,15 +225,21 @@ class RulesManager:
             self.tiles_info.direction_dict[attach_direction],
         )
         if not self.are_equal_sides(
-                move_parts[0],
-                tile_pos, integers_placement[1],
-                graph, river_manager):
+            move_parts[0],
+            tile_pos,
+            integers_placement[1],
+            graph,
+            river_manager,
+        ):
             # print("Tile sides do not match neighboring tiles.")
             return False
 
         # Verify that stream is good if we are with stream tiles
         if not river_manager.check_river_turn(move_parts):
-            # print("River shoudn't take two turns in the same rotation two times in a row")
+            # print(
+            #     "River shouldn't take two turns in the"
+            #     " same rotation two times in a row"
+            # )
             return False
 
             # Verify meeple placement if applicable

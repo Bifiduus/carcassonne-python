@@ -57,7 +57,7 @@ class GameConfiguration:
             "ai_mode": "minimax",
             "ai_minimax_depth": 83,
             "ai_mcts_selection": "UCT",
-            "contest_file": ""
+            "contest_file": "",
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),

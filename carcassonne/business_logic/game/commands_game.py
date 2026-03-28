@@ -1,4 +1,4 @@
-class CommandsGame():
+class CommandsGame:
     def __init__(self, blitz_manager, deck_manager, game_data, game=None):
         self.game_data = game_data
         self.blitz_manager = blitz_manager
@@ -21,7 +21,9 @@ class CommandsGame():
         import time
         from carcassonne.business_logic.ai_model import RandomPlayer
         from carcassonne.business_logic.ai_model import ExpectimaxPlayer
-        from carcassonne.business_logic.ai_model import IterativeDeepeningPlayer
+        from carcassonne.business_logic.ai_model import (
+            IterativeDeepeningPlayer,
+        )
 
         timed_out_now = self.blitz_manager.tick_blitz()
         if timed_out_now:
@@ -36,22 +38,33 @@ class CommandsGame():
             return ""
         model = None
         move = ""
-        ai_mode = self.game_data.get_game_configuration().get("ai_mode", "random")
+        ai_mode = self.game_data.get_game_configuration().get(
+            "ai_mode", "random"
+        )
         if ai_mode == "random":
             model = RandomPlayer()
             if self.game:
                 move = model.random_move(
-                    self.game_data.current_hand, self.game)
+                    self.game_data.current_hand, self.game
+                )
+                username = ai_player.get_username()
                 print(
-                    f"AI Player {ai_player.get_username()} chooses move: {move}")
+                    f"AI Player {username} chooses move:"
+                    f" {move}"
+                )
         elif ai_mode == "expectimax" or ai_mode == "minimax":
             if not self.game:
                 return ""
             start_time = time.time()
-            ai_time = self.game_data.get_game_configuration().get("ai_time", 10.0)
-            depth = self.game_data.get_game_configuration().get("ai_minimax_depth", 5)
+            ai_time = self.game_data.get_game_configuration().get(
+                "ai_time", 10.0
+            )
+            depth = self.game_data.get_game_configuration().get(
+                "ai_minimax_depth", 5
+            )
             model = ExpectimaxPlayer(
-                self.game, start_time, ai_time or 10.0, depth or 5)
+                self.game, start_time, ai_time or 10.0, depth or 5
+            )
             eval_score, move = model.search(
                 self.game,
                 depth=model.depth_max,
@@ -68,8 +81,12 @@ class CommandsGame():
             if not self.game:
                 return ""
             start_time = time.time()
-            ai_time = self.game_data.get_game_configuration().get("ai_time", 10.0)
-            depth = self.game_data.get_game_configuration().get("ai_minimax_depth", 5)
+            ai_time = self.game_data.get_game_configuration().get(
+                "ai_time", 10.0
+            )
+            depth = self.game_data.get_game_configuration().get(
+                "ai_minimax_depth", 5
+            )
             model = IterativeDeepeningPlayer(
                 self.game, start_time, ai_time or 10.0, depth or 5
             )

@@ -1,11 +1,7 @@
-
 import re
 
-from carcassonne.presentation.interfaces.i_game_service import IGameService
-from carcassonne.datas.starting_tile import initialize_starting_tile_river
 
-
-class RiverManager():
+class RiverManager:
 
     def __init__(self, game_data):
         self.game_data = game_data
@@ -28,8 +24,7 @@ class RiverManager():
 
     def river_takes_turn(self, turn: int):
         if self.river_turn is not None:
-            self.river_previous_opposite_direction = (
-                self.river_turn + 2) % 4
+            self.river_previous_opposite_direction = (self.river_turn + 2) % 4
         self.river_turn = turn
 
     def check_river_turn(self, move_parts: str):
@@ -46,12 +41,18 @@ class RiverManager():
         orientation = integers_placement[1]
 
         already_connected = (
-            self.game_data.tiles_info.direction_dict[attach_direction] + 2) % 4
+            self.game_data.tiles_info.direction_dict[attach_direction] + 2
+        ) % 4
 
         for i in range(4):
-            if tile_lands[(i - orientation) %
-                          4] == 'S' and i != already_connected:
-                if self.river_turn is not None and i == self.river_previous_opposite_direction:
+            if (
+                tile_lands[(i - orientation) % 4] == "S"
+                and i != already_connected
+            ):
+                if (
+                    self.river_turn is not None
+                    and i == self.river_previous_opposite_direction
+                ):
                     return False
                 else:
                     return True
@@ -71,13 +72,19 @@ class RiverManager():
         orientation = integers_placement[1]
 
         already_connected = (
-            self.game_data.tiles_info.direction_dict[attach_direction] + 2) % 4
+            self.game_data.tiles_info.direction_dict[attach_direction] + 2
+        ) % 4
 
         for i in range(4):
-            if tile_lands[(i - orientation) %
-                          4] == 'S' and i != already_connected:
-                if self.river_turn is not None and i == self.river_previous_opposite_direction:
+            if (
+                tile_lands[(i - orientation) % 4] == "S"
+                and i != already_connected
+            ):
+                if (
+                    self.river_turn is not None
+                    and i == self.river_previous_opposite_direction
+                ):
                     break
                 else:
-                    if tile_lands[(i - orientation - 2) % 4] != 'S':
+                    if tile_lands[(i - orientation - 2) % 4] != "S":
                         self.river_takes_turn(i)

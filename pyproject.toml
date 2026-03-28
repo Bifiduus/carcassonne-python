@@ -38,5 +38,8 @@ addopts = [ # Add options for pytest
   "--cov-branch",
 ]
 
+[tool.black]
+line-length = 79
+
 [project.scripts]
 carcassonne = "carcassonne.__main__:main"

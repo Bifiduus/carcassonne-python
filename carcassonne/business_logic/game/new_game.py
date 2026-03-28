@@ -10,9 +10,15 @@ from carcassonne.datas.starting_tile import (
 )
 
 
-class NewGame():
-    def __init__(self, river_manager, deck_manager, blitz_manager,
-                 game_data: GameData, game=None):
+class NewGame:
+    def __init__(
+        self,
+        river_manager,
+        deck_manager,
+        blitz_manager,
+        game_data: GameData,
+        game=None,
+    ):
         self.game_data = game_data
         self.river_manager = river_manager
         self.deck_manager = deck_manager
@@ -21,8 +27,10 @@ class NewGame():
 
     def start_online_game(self, players: list[Player]):
         if len(players) > self.game_data.get_maximum_number_of_players():
-            return "Error, too many players: Maximum players" \
+            return (
+                "Error, too many players: Maximum players"
                 f" is {self.game_data.get_maximum_number_of_players()}"
+            )
         self.game_data.history.clear_history()
         self.game_data.graph.reset_graph()
         # ensure starting tile present after reset
@@ -42,8 +50,9 @@ class NewGame():
         self.game_data.current_player_order_list = 0
         return "Starting the game."
 
-    def start_new_game(self, players_order: list[int] | None = None,
-                       seed: int | None = None) -> None:
+    def start_new_game(
+        self, players_order: list[int] | None = None, seed: int | None = None
+    ) -> None:
         """Start a new game by clearing the play history, undo history,
         and resetting the graph and game repository.
         """
@@ -73,6 +82,7 @@ class NewGame():
         self.blitz_manager._initialize_blitz_state()
         while self.game_data.get_current_player().is_ai_player():
             from .end_game import EndGame
+
             end_game = EndGame(self.game_data)
             if end_game.end_game():
                 break
@@ -80,5 +90,8 @@ class NewGame():
             self.game.play_ai_turn(self.game)
             if end_game.end_game():
                 break
-            if self.game_data.get_current_player().get_id() == previous_player_id:
+            if (
+                self.game_data.get_current_player().get_id()
+                == previous_player_id
+            ):
                 break

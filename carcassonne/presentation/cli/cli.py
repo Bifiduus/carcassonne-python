@@ -42,7 +42,7 @@ COMMANDS = [
     "decline",
     "cancel",
     "away",
-    "back"
+    "back",
 ]
 
 
@@ -58,9 +58,12 @@ def completer(texte, state):
 
 class GameCLI:
 
-    def __init__(self, game_service: IGameService,
-                 server_service: IServerService,
-                 client_service: IClientService):
+    def __init__(
+        self,
+        game_service: IGameService,
+        server_service: IServerService,
+        client_service: IClientService,
+    ):
         self.server = server_service
         self.client = client_service
         self.game = game_service
@@ -127,7 +130,7 @@ class GameCLI:
     def _input_loop(self) -> None:
         while self.game.get_current_player().is_ai_player():
             self.game.play_ai_turn(self.game)
-        
+
         while self.running and not self._stop_event.is_set():
             try:
                 command = input(">> ").strip()
@@ -163,8 +166,10 @@ class GameCLI:
     def handle_command(self, command):
         is_turn_bound_command = self._is_turn_bound_command(command)
         if is_turn_bound_command and not self._local_player_can_act():
-            print("Commande refusée: ce n'est pas votre tour"
-                  " ou votre temps est écoulé.")
+            print(
+                "Commande refusée: ce n'est pas votre tour"
+                " ou votre temps est écoulé."
+            )
             return
 
         if command.startswith("new"):
@@ -197,16 +202,18 @@ class GameCLI:
         elif command == "show hand":
             commands_handler_cli.show_hand(self, self.client)
         elif command == "show time" or command.startswith("show time "):
-            player_id_arg = command[len("show time"):].strip()
+            player_id_arg = command[len("show time") :].strip()
             commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
             commands_handler_cli.show_score(self, self.client)
         elif command == "show history":
             commands_handler_cli.show_history(
-                self, game=self.game, client_service=self.client)
+                self, game=self.game, client_service=self.client
+            )
         elif command == "show configuration":
             commands_handler_cli.show_configuration(
-                self, game=self.game, client_service=self.client)
+                self, game=self.game, client_service=self.client
+            )
         elif command.startswith("set"):
             content = command[3:].strip()
             if "=" in content:
@@ -216,21 +223,20 @@ class GameCLI:
             else:
                 param = content
                 value = None
-            commands_handler_cli.set_parameter(
-                self, param, value, self.client)
+            commands_handler_cli.set_parameter(self, param, value, self.client)
         elif command.startswith("players"):
-            commands_handler_cli.players(
-                self, self.client, command)
+            commands_handler_cli.players(self, self.client, command)
         elif command.startswith("play "):
             move = command[5:].strip()
             commands_handler_cli.play(
-                self, move, game=self.game, client_service=self.client)
+                self, move, game=self.game, client_service=self.client
+            )
         elif command.startswith("board"):
             commands_handler_cli.show_board(
-                self, game=self.game, client_service=self.client)
+                self, game=self.game, client_service=self.client
+            )
         elif command == "server list":
-            commands_handler_cli.show_server_list(
-                self, self.client)
+            commands_handler_cli.show_server_list(self, self.client)
         elif command.startswith("server start"):
             port = command.strip("server start")
             commands_handler_cli.server_start(self, port, self.server)
@@ -240,11 +246,9 @@ class GameCLI:
             addresse = command[5:].strip()
             if ":" in addresse:
                 ip, port = addresse.split(":")
-                commands_handler_cli.join(
-                    self, self.client, ip, port)
+                commands_handler_cli.join(self, self.client, ip, port)
             else:
-                commands_handler_cli.join(
-                    self, self.client, addresse)
+                commands_handler_cli.join(self, self.client, addresse)
         elif command == "ping":
             commands_handler_cli.ping(self, self.client)
         elif command == "server status":

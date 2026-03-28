@@ -1,4 +1,5 @@
 """Module providing an interface between Présentation and Logique Métier"""
+
 from abc import ABC, abstractmethod
 
 
@@ -9,8 +10,9 @@ class IClientService(ABC):
         pass
 
     @abstractmethod
-    def create_default_online_player(self, username: str, password: str,
-                                     server: str = "127.0.1.1") -> str:
+    def create_default_online_player(
+        self, username: str, password: str, server: str = "127.0.1.1"
+    ) -> str:
         pass
 
     @abstractmethod
@@ -22,8 +24,12 @@ class IClientService(ABC):
         pass
 
     @abstractmethod
-    def join_server(self, ip: str | None = None, port: int | None = None,
-                    timeout: float = 5.0) -> bool:
+    def join_server(
+        self,
+        ip: str | None = None,
+        port: int | None = None,
+        timeout: float = 5.0,
+    ) -> bool:
         pass
 
     @abstractmethod

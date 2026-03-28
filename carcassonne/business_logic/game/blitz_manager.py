@@ -137,8 +137,9 @@ class BlitzManager:
         return minutes if minutes > 0 else 30
 
     def _is_blitz_enabled(self) -> bool:
-        return bool(self.game_data.get_game_configuration().get(
-            "blitz", False))
+        return bool(
+            self.game_data.get_game_configuration().get("blitz", False)
+        )
 
     def _initialize_blitz_state(self) -> None:
         self.reset(
@@ -161,7 +162,9 @@ class BlitzManager:
             return False
 
         for _ in range(len(self.game_data.players_order)):
-            player_id = self.game_data.players_order[self.game_data.current_player_order_list]
+            player_id = self.game_data.players_order[
+                self.game_data.current_player_order_list
+            ]
             if not self.is_player_timed_out(player_id):
                 return True
             self.game_data.current_player_order_list = (

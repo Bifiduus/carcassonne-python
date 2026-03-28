@@ -26,7 +26,7 @@ class InfoMessage:
         scrolled.set_child(text_view)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_min_content_height(200)  # Minimum height for readability
-        scrolled.set_min_content_width(400)   # Minimum width
+        scrolled.set_min_content_width(400)  # Minimum width
 
         # Add to dialog content area
         dialog.get_content_area().append(scrolled)

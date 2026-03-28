@@ -67,11 +67,14 @@ class ContestManagerTestCase(unittest.TestCase):
     def test_run_fails_when_loader_returns_error(self):
         manager = ContestManager(DummyGame())
 
-        with patch.object(
-            manager,
-            "_load_position",
-            side_effect=ValueError("load failure"),
-        ), self.assertRaises(ValueError):
+        with (
+            patch.object(
+                manager,
+                "_load_position",
+                side_effect=ValueError("load failure"),
+            ),
+            self.assertRaises(ValueError),
+        ):
             manager.run("contest_state.txt")
 
 

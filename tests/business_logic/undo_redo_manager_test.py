@@ -89,15 +89,11 @@ def test_undo_then_redo_preserves_history_stacks() -> None:
     manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
 
     game_data.history.push_past(
-        MoveRecord(
-            "CFFF/0N0",
-            player_id=0,
-            is_ai=False))
+        MoveRecord("CFFF/0N0", player_id=0, is_ai=False)
+    )
     game_data.history.push_past(
-        MoveRecord(
-            "FFRR/1N0",
-            player_id=1,
-            is_ai=True))
+        MoveRecord("FFRR/1N0", player_id=1, is_ai=True)
+    )
 
     manager.undo()
 
@@ -119,15 +115,11 @@ def test_rebuild_reconstructs_deck_consumption_for_replayed_moves() -> None:
     manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
 
     game_data.history.push_past(
-        MoveRecord(
-            "FSFS/0N0",
-            player_id=0,
-            is_ai=False))
+        MoveRecord("FSFS/0N0", player_id=0, is_ai=False)
+    )
     game_data.history.push_past(
-        MoveRecord(
-            "CFFF/0N0",
-            player_id=0,
-            is_ai=False))
+        MoveRecord("CFFF/0N0", player_id=0, is_ai=False)
+    )
 
     initial_base_count = len(Deck().tiles)
     initial_river_count = len(Deck().river_tiles)

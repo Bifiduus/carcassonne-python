@@ -114,8 +114,9 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def send_invitation(self, invited_player: str,
-                        invitee_player: str) -> bool:
+    def send_invitation(
+        self, invited_player: str, invitee_player: str
+    ) -> bool:
         pass
 
     @abstractmethod
@@ -127,8 +128,9 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def cancel_invitation_from(self, client_id: str,
-                               players: list[str]) -> str:
+    def cancel_invitation_from(
+        self, client_id: str, players: list[str]
+    ) -> str:
         pass
 
     @abstractmethod
@@ -136,8 +138,9 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def create_default_online_player(self, username: str, password: str,
-                                     server: str) -> str:
+    def create_default_online_player(
+        self, username: str, password: str, server: str
+    ) -> str:
         pass
 
     @abstractmethod

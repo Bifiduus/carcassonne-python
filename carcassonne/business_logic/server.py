@@ -9,8 +9,9 @@ from carcassonne.business_logic.online_communication import OnlineCommunication
 from carcassonne.business_logic.player import Player
 from carcassonne.datas.graph_data import GraphData
 from carcassonne.datas.games_repository import GameRepository
-from carcassonne.business_logic.interfaces.i_games_repository \
-    import IGamesRepository
+from carcassonne.business_logic.interfaces.i_games_repository import (
+    IGamesRepository,
+)
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
@@ -55,7 +56,7 @@ class Server(IServerService):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            self.server.bind(('', int(port)))
+            self.server.bind(("", int(port)))
             self.server.listen()
             print(f"Server started on port {port}")
         except Exception as e:
@@ -63,7 +64,8 @@ class Server(IServerService):
             return
         self.should_stop.set()
         self.server_thread = threading.Thread(
-            target=self.server_running, args=(port,))
+            target=self.server_running, args=(port,)
+        )
         self.server_thread.start()
 
     def server_running(self, port):
@@ -85,14 +87,16 @@ class Server(IServerService):
                             self.proper_clients[client_socket] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
-                            target=self.handle_client, args=(client_socket,))
+                            target=self.handle_client, args=(client_socket,)
+                        )
                         client_thread.start()
                         print("Accepted connection from a client.")
 
                 # Timeout to check pending invitations periodically
                 assert self.repo, "The database should not be None"
                 timed_out = self.repo.check_all_invitations_timeout(
-                    self.INVITATION_TIMEOUT)
+                    self.INVITATION_TIMEOUT
+                )
                 for player_id in timed_out:
                     user = self.repo.get_username(str(player_id))
                     self.send_to_client(user, "Your invitation timed out..")
@@ -107,11 +111,12 @@ class Server(IServerService):
                     host_name = socket.gethostname()
                     message = f"{socket.gethostbyname(host_name)}:{port}"
                     socket_message = socket.socket(
-                        socket.AF_INET, socket.SOCK_DGRAM,
-                        socket.IPPROTO_UDP)
+                        socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
+                    )
                     socket_message.setsockopt(
-                        socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                    broadcast_addr = ('<broadcast>', 12346)
+                        socket.SOL_SOCKET, socket.SO_BROADCAST, 1
+                    )
+                    broadcast_addr = ("<broadcast>", 12346)
                     socket_message.sendto(message.encode(), broadcast_addr)
                     socket_message.close()
                     if first_diffusion:
@@ -139,7 +144,8 @@ class Server(IServerService):
                 if len(players) == 1:
                     client_username: str = self.repo.get_username(str(host_id))
                     self.send_to_client(
-                        client_username, "You cannot play alone...")
+                        client_username, "You cannot play alone..."
+                    )
                     self.repo.delete_party(party)
                     self.repo.change_status(str(host_id), "idle")
                     continue
@@ -156,11 +162,10 @@ class Server(IServerService):
         with self.clients_lock:
             games = self.current_games_list.copy()
             for game in games:
-                check = self.game_is_finished(
-                    game)
+                check = self.game_is_finished(game)
                 party = self.repo.get_group_from_game(game)
                 check_2 = not self.repo.check_party_is_alive(party)
-                if (check or check_2):
+                if check or check_2:
                     self.repo.clean_party(game)
                     del self.current_games_list[game]
 
@@ -186,13 +191,11 @@ class Server(IServerService):
                     continue
                 client, message = data.decode().split(":")
                 message = message.strip()
-                client_index = self.repo.get_id_from_username(
-                    client)
+                client_index = self.repo.get_id_from_username(client)
                 if self.client_is_registered(client_socket):
 
                     if message == "quit":
-                        answer = self.handle_communication.command_quit(
-                            client)
+                        answer = self.handle_communication.command_quit(client)
                         self.send_to_clients(answer)
                         self.proper_clients[client_socket] = True
                         break
@@ -205,7 +208,8 @@ class Server(IServerService):
                     client_socket.send(answer.encode())
                 else:
                     self.handle_client_registering(
-                        message, client_socket, client_index)
+                        message, client_socket, client_index
+                    )
         except Exception as e:
             print(f"Error handling client: {e}")
         finally:
@@ -226,26 +230,30 @@ class Server(IServerService):
                     del self.registered_clients[client_socket]
                     del self.proper_clients[client_socket]
 
-    def handle_client_registering(self, message: str,
-                                  client_socket: socket.socket,
-                                  client_index: int):
+    def handle_client_registering(
+        self, message: str, client_socket: socket.socket, client_index: int
+    ):
         """
         Process client registering and return a response.
         """
         preface = f"Server -> Client{client_index}: "
         if message.find("username=") == -1:
-            answer = f"{preface}You should send your username "\
-                "and password !\n"
-            answer += "Type: username=<your username> password="\
-                "<your password>\n"
-            answer += "If it is your first time connecting, you"\
-                " can create one.\n"
+            answer = (
+                f"{preface}You should send your username " "and password !\n"
+            )
+            answer += (
+                "Type: username=<your username> password=" "<your password>\n"
+            )
+            answer += (
+                "If it is your first time connecting, you" " can create one.\n"
+            )
         else:
-            if (message.find("username=") != -1 and
-                    message.find("password=") != -1):
+            if (
+                message.find("username=") != -1
+                and message.find("password=") != -1
+            ):
                 username, password = message.split(" password=")
-                username: str = username.removeprefix(
-                    "username=")
+                username: str = username.removeprefix("username=")
                 success = self.repo.registering(username, password)
                 if success:
                     answer = f"{preface}\nSuccessfull registering !\n"
@@ -256,8 +264,10 @@ class Server(IServerService):
                 else:
                     answer = f"{preface}\nYour registration has failed...\n"
             else:
-                answer = f"{preface}\nYou should send your username"\
+                answer = (
+                    f"{preface}\nYou should send your username"
                     " and password !\n"
+                )
         client_socket.send(answer.encode())
 
     def send_to_clients(self, message: str):
@@ -284,80 +294,77 @@ class Server(IServerService):
                 answer = self.handle_communication.command_server_status()
             elif message.startswith("new"):
                 answer = self.handle_communication.command_new(
-                    message, client_id)
+                    message, client_id
+                )
             elif message.startswith("players"):
                 answer = self.handle_communication.command_players(message)
             elif message.startswith("play"):
                 answer = self.handle_communication.command_play(
-                    message, client_id)
+                    message, client_id
+                )
             elif message == "scoreboard":
                 answer = self.handle_communication.command_scoreboard()
             elif message == "accept":
-                answer = self.handle_communication.command_accept(
-                    client_id)
+                answer = self.handle_communication.command_accept(client_id)
             elif message == "decline":
-                answer = self.handle_communication.command_decline(
-                    client_id)
+                answer = self.handle_communication.command_decline(client_id)
             elif message.startswith("cancel"):
                 answer = self.handle_communication.command_cancel(
-                    client_id, message.strip("cancel"))
+                    client_id, message.strip("cancel")
+                )
             elif message == "away":
-                answer = self.handle_communication.command_away(
-                    client_id)
+                answer = self.handle_communication.command_away(client_id)
             elif message == "back":
-                answer = self.handle_communication.command_back(
-                    client_id)
+                answer = self.handle_communication.command_back(client_id)
             elif message == "board":
-                answer = self.handle_communication.command_board(
-                    client_id)
+                answer = self.handle_communication.command_board(client_id)
             elif message.startswith("set"):
                 answer = self.handle_communication.command_set(
-                    client_id, message)
+                    client_id, message
+                )
             elif message == "show configuration":
-                answer = self.handle_communication.command_config(
-                    client_id)
+                answer = self.handle_communication.command_config(client_id)
             elif message == "show history":
-                answer = self.handle_communication.command_history(
-                    client_id)
+                answer = self.handle_communication.command_history(client_id)
             elif message == "show score":
-                answer = self.handle_communication.command_score(
-                    client_id)
+                answer = self.handle_communication.command_score(client_id)
             elif message == "show hand":
-                answer = self.handle_communication.command_hand(
-                    client_id)
+                answer = self.handle_communication.command_hand(client_id)
             elif message == "redo":
-                answer = self.handle_communication.command_redo(
-                    client_id)
+                answer = self.handle_communication.command_redo(client_id)
             elif message == "undo":
-                answer = self.handle_communication.command_undo(
-                    client_id)
+                answer = self.handle_communication.command_undo(client_id)
             elif message == "hint":
-                answer = self.handle_communication.command_hint(
-                    client_id)
+                answer = self.handle_communication.command_hint(client_id)
             elif message == "draw":
-                answer = self.handle_communication.command_draw(
-                    client_id)
+                answer = self.handle_communication.command_draw(client_id)
             elif message == "shuffle":
-                answer = self.handle_communication.command_shuffle(
-                    client_id)
+                answer = self.handle_communication.command_shuffle(client_id)
             elif message.startswith("save "):
                 answer = self.handle_communication.command_save(
-                    client_id, message)
+                    client_id, message
+                )
             elif message.startswith("load "):
                 answer = self.handle_communication.command_load(
-                    client_id, message)
+                    client_id, message
+                )
         return answer
 
-    def check_clients_list_validity(self,
-                                    clients_list: list[str]) -> list[str]:
+    def check_clients_list_validity(
+        self, clients_list: list[str]
+    ) -> list[str]:
         """Verify that each client id refers to
-          an existing player via the repository."""
+        an existing player via the repository."""
         assert self.repo is not None, "No games repository."
-        return [c for c in clients_list if
-                self.repo.player_exists(self.repo.get_username(c))]
+        return [
+            c
+            for c in clients_list
+            if self.repo.player_exists(self.repo.get_username(c))
+        ]
 
-    def create_new_party(self, clients_list: list[int],
-                         client_id: str,  party_name: str = "") -> str:
+    def create_new_party(
+        self, clients_list: list[int], client_id: str, party_name: str = ""
+    ) -> str:
         assert self.repo is not None, "No games repository."
         party_id = self.repo.get_party_id(client_id)
         if party_name == "":
@@ -369,8 +376,7 @@ class Server(IServerService):
         try:
             self.repo.create_game(party_name, party_id)
             game_id: int = self.repo.get_game_id(party_id)
-            self.current_games_list[game_id] = (
-                party_name, new_party)
+            self.current_games_list[game_id] = (party_name, new_party)
             players_list = self.create_players_from_list(clients_list)
             new_party.start_online_game(players_list)
             for player_id in clients_list:
@@ -379,8 +385,9 @@ class Server(IServerService):
             print(f"Error creating party in repository: {e}")
         return "Your party has been created successfully !\n"
 
-    def create_players_from_list(self,
-                                 clients_list: list[int]) -> list[Player]:
+    def create_players_from_list(
+        self, clients_list: list[int]
+    ) -> list[Player]:
         players_list = []
         assert self.repo, "The database should not be None"
         for client in clients_list:
@@ -394,16 +401,19 @@ class Server(IServerService):
         profile = self.repo.get_player_profile(player_id)
         if profile is None:
             return "Player not found\n"
-        return f"Player profile:\n username={profile['username']}\n "\
-            f"status={profile['status']}\n score={profile['score']}\n "\
+        return (
+            f"Player profile:\n username={profile['username']}\n "
+            f"status={profile['status']}\n score={profile['score']}\n "
             f"wins={profile['stats_win']}\n loses={profile['stats_lose']}\n"
+        )
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
         username: str = self.repo.get_username(invited_player_id)
         invited_client: socket.socket = self.client_sockets[username]
         host_name: str = self.repo.get_username(invitee_player_id)
-        message = "Server: You have received an invitation "\
-            f"from {host_name}.\n"
+        message = (
+            "Server: You have received an invitation " f"from {host_name}.\n"
+        )
         message += "Expires in 300s.\n"
         with self.clients_lock:
             try:
@@ -435,7 +445,7 @@ class Server(IServerService):
                 self.should_stop.clear()
                 self.server.close()
             # close repository database connection if there is one
-            if hasattr(self, 'repo') and self.repo:
+            if hasattr(self, "repo") and self.repo:
                 try:
                     self.repo.close()
                 except Exception:

@@ -20,7 +20,8 @@ class AiMenu(Gtk.Box):
 
         # --- AI selection --------------------------------------------------
         ai_choice_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            orientation=Gtk.Orientation.VERTICAL, spacing=6
+        )
         self.ai_choice = Gtk.ComboBoxText()
         # Exemple de résolutions courantes
         ais = ["Random", "Minimax", "Monte Carlo"]
@@ -36,10 +37,10 @@ class AiMenu(Gtk.Box):
 
         # --- Numbers of AI players ---------------------------------------
         ai_players_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            orientation=Gtk.Orientation.VERTICAL, spacing=6
+        )
         self.ai_players_entry = Gtk.Entry()
-        self.ai_players_entry.set_placeholder_text(
-            "1-4")
+        self.ai_players_entry.set_placeholder_text("1-4")
         ai_players_box.append(Gtk.Label(label="Number of AI players:"))
         self.ai_players_entry.connect("changed", self.on_ai_players_changed)
 
@@ -63,7 +64,7 @@ class AiMenu(Gtk.Box):
         ai_mode_map = {
             "Random": "random",
             "Minimax": "minimax",
-            "Monte Carlo": "mcts"
+            "Monte Carlo": "mcts",
         }
 
         ai_mode = ai_mode_map.get(ai_selection, "minimax")
@@ -78,7 +79,8 @@ class AiMenu(Gtk.Box):
             num_ai_players = int(self.ai_players_entry.get_text())
             if 1 <= num_ai_players <= 4:
                 self.gui.game_data.game.set_game_configuration(
-                    "num_ai_players", num_ai_players)
+                    "num_ai_players", num_ai_players
+                )
                 self.gui.game_data.game.save_config()
         except ValueError:
             pass

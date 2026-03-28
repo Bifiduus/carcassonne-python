@@ -94,15 +94,19 @@ class BoardView(Gtk.DrawingArea):
     def _create_move_str(self, grid_x: int, grid_y: int) -> str | None:
         """Create a move string if placement is valid, else return None."""
         vertex_id, side = self.game_data.game.get_close_neighbors(
-            grid_x, grid_y)
+            grid_x, grid_y
+        )
         if vertex_id is None or side is None:
             return None
         orientation = self.game_data.current_orientation
-        return (f"{self.game_data.current_tile.current_tile}/{vertex_id}"
-                f"{['N', 'E', 'S', 'W'][side]}{orientation}")
+        return (
+            f"{self.game_data.current_tile.current_tile}/{vertex_id}"
+            f"{['N', 'E', 'S', 'W'][side]}{orientation}"
+        )
 
-    def _set_tile_placement(self, grid_x: int,
-                            grid_y: int, move_str: str) -> None:
+    def _set_tile_placement(
+        self, grid_x: int, grid_y: int, move_str: str
+    ) -> None:
         """Set the current tile's placement data."""
         self.game_data.current_tile.move = move_str
         self.game_data.current_tile.x = grid_x
@@ -160,8 +164,9 @@ class BoardView(Gtk.DrawingArea):
         player_last_i = {}
         for i in range(1, len(board_data)):  # start from 1
             turn = i - 1  # turn 0 for i=1
-            player_id = self.game_data.game.game_data.players_order[turn % len(
-                self.game_data.game.game_data.players_order)]
+            player_id = self.game_data.game.game_data.players_order[
+                turn % len(self.game_data.game.game_data.players_order)
+            ]
             player_last_i[player_id] = i
 
         for i, t in enumerate(tiles):
@@ -170,13 +175,15 @@ class BoardView(Gtk.DrawingArea):
             border_color = None
             if i < len(board_data) and i > 0:
                 turn = i - 1
-                player_id = self.game_data.game.game_data.players_order[turn % len(
-                    self.game_data.game.game_data.players_order)]
+                player_id = self.game_data.game.game_data.players_order[
+                    turn % len(self.game_data.game.game_data.players_order)
+                ]
                 if i == player_last_i.get(player_id):
                     player = self.game_data.game.game_data.players[player_id]
                     color_str = player.get_color()
                     border_color = board_utils.color_map.get(
-                        color_str, (1, 0, 0))
+                        color_str, (1, 0, 0)
+                    )
             self.draw_tile(cr, x, y, size, t, border_color)
 
         if self.game_data.is_dragging and self.ghost_x is not None:
@@ -233,7 +240,8 @@ class BoardView(Gtk.DrawingArea):
         if pixbuf:
             if is_hint:
                 board_utils.draw_pixbuf_with_alpha(
-                    cr, x, y, size, pixbuf, orientation, alpha=0.5)
+                    cr, x, y, size, pixbuf, orientation, alpha=0.5
+                )
             else:
                 board_utils.draw_pixbuf(cr, x, y, size, pixbuf, orientation)
         else:
@@ -280,13 +288,14 @@ class BoardView(Gtk.DrawingArea):
             and board_utils.is_previewed_tile(current_tile, tile_data)
         ):
             row, col = board_utils.MEEPLE_POS_GRID.get(
-                current_tile.meeple_pos, (1, 1))
+                current_tile.meeple_pos, (1, 1)
+            )
             cell = size / 3
             cx, cy = x + col * cell, y + row * cell
             padding = cell * 0.2
             r, g, b = board_utils.color_map.get(
-                self.game_data.game.get_current_player().get_color(),
-                (1, 0, 0))
+                self.game_data.game.get_current_player().get_color(), (1, 0, 0)
+            )
             cr.set_source_rgba(r, g, b, 0.7)
             cr.set_line_width(3)
             cr.move_to(cx + padding, cy + padding)
@@ -297,7 +306,8 @@ class BoardView(Gtk.DrawingArea):
 
         if is_hint and tile_data.get("meeple"):
             row, col = board_utils.MEEPLE_POS_CARDINAL.get(
-                tile_data["meeple"], (1, 1))
+                tile_data["meeple"], (1, 1)
+            )
             cell = size / 3
             cx, cy = x + col * cell, y + row * cell
             padding = cell * 0.2
@@ -330,12 +340,18 @@ class BoardView(Gtk.DrawingArea):
         if self.game_data.current_tile.move:
             offsets = self.get_board_offsets()
             if board_utils.click_within_current_tile(
-                mouse_x, mouse_y, offsets, self.tile_size,
-                self.game_data.current_tile
+                mouse_x,
+                mouse_y,
+                offsets,
+                self.tile_size,
+                self.game_data.current_tile,
             ):
                 result = board_utils.meeple_zone(
-                    mouse_x, mouse_y, offsets, self.tile_size,
-                    self.game_data.current_tile
+                    mouse_x,
+                    mouse_y,
+                    offsets,
+                    self.tile_size,
+                    self.game_data.current_tile,
                 )
                 self.game_data.current_tile.meeple_pos = result
                 self.queue_draw()
@@ -383,10 +399,10 @@ class BoardView(Gtk.DrawingArea):
     def on_key_press(self, controller, keyval, keycode, state):
         step = 20
         key_map = {
-            Gdk.KEY_z: (0, step),     # up
-            Gdk.KEY_s: (0, -step),    # down
-            Gdk.KEY_q: (step, 0),     # left
-            Gdk.KEY_d: (-step, 0),    # right
+            Gdk.KEY_z: (0, step),  # up
+            Gdk.KEY_s: (0, -step),  # down
+            Gdk.KEY_q: (step, 0),  # left
+            Gdk.KEY_d: (-step, 0),  # right
         }
         if keyval in key_map:
             dx, dy = key_map[keyval]
@@ -408,10 +424,15 @@ class BoardView(Gtk.DrawingArea):
         min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
         size = self.tile_size
         w, h = self.get_allocated_width(), self.get_allocated_height()
-        board_w, board_h = (max_x - min_x + 1) * \
-            size, (max_y - min_y + 1) * size
-        return ((w - board_w) // 2 + self.offset_x,
-                (h - board_h) // 2 + self.offset_y, min_x, min_y)
+        board_w, board_h = (max_x - min_x + 1) * size, (
+            max_y - min_y + 1
+        ) * size
+        return (
+            (w - board_w) // 2 + self.offset_x,
+            (h - board_h) // 2 + self.offset_y,
+            min_x,
+            min_y,
+        )
 
     def pixel_to_grid(self, mouse_x: float, mouse_y: float) -> Tuple[int, int]:
         """Convert pixel coordinates to grid coordinates."""
@@ -420,8 +441,10 @@ class BoardView(Gtk.DrawingArea):
             return 0, 0
         offset_x, offset_y, min_x, min_y = self.get_board_offsets()
         size = self.tile_size
-        return (int((mouse_x - offset_x) // size) + min_x,
-                int((mouse_y - offset_y) // size) + min_y)
+        return (
+            int((mouse_x - offset_x) // size) + min_x,
+            int((mouse_y - offset_y) // size) + min_y,
+        )
 
     # =========================
     # 🔄 REFRESH

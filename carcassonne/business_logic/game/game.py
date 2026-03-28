@@ -4,7 +4,6 @@ This module implements `IGameService`, handling history, undo/redo,
 rule checks, and persistence interactions.
 """
 
-import random as r
 import time
 from typing import Any, List
 
@@ -32,36 +31,31 @@ class Game(IGameService):
     def __init__(
         self, graphData: IGraphData, nb_players: int, config_overrides=None
     ) -> None:
-        self.game_data = GameData(
-            graphData,
-            nb_players,
-            config_overrides)
+        self.game_data = GameData(graphData, nb_players, config_overrides)
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.blitz_manager = BlitzManager(self.game_data)
         self.game_mode_manager = GameModeManager(self.blitz_manager, self)
         self.end_game_manager = EndGame(
-            self.game_data,
-            self.blitz_manager,
-            self.score_manager)
+            self.game_data, self.blitz_manager, self.score_manager
+        )
         self.river_manager = RiverManager(self.game_data)
         self.deck_manager = DeckManager(
-            self.game_data,
-            self.blitz_manager,
-            self.river_manager)
+            self.game_data, self.blitz_manager, self.river_manager
+        )
         self.undo_redo_manager = UndoRedoManager(
-            self.blitz_manager, self.deck_manager, self.game_data)
+            self.blitz_manager, self.deck_manager, self.game_data
+        )
         self.commands = CommandsGame(
-            self.blitz_manager,
-            self.deck_manager,
-            self.game_data,
-            self)
+            self.blitz_manager, self.deck_manager, self.game_data, self
+        )
         self.new_game = NewGame(
             self.river_manager,
             self.deck_manager,
             self.blitz_manager,
             self.game_data,
-            self)
+            self,
+        )
         self.river = None
         self.start_new_game()
 
@@ -153,7 +147,8 @@ class Game(IGameService):
     def generate_tile_ascii(self, vertex: Any) -> list[str]:
         dirs = list(vertex.get_name())  # [N, E, S, W]
         rotation = self.game_data.graph.get_vertex_orientation(
-            vertex.get_id())  # 0 à 3
+            vertex.get_id()
+        )  # 0 à 3
         meeples = self.game_data.graph.get_meeples()
         for meeple in meeples:
             if meeple.tile_id == vertex.get_id():
@@ -223,7 +218,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        vertice = self.game_data.graph.get_vertice_data(tile)
+        self.game_data.graph.get_vertice_data(tile)
 
         return None
 
@@ -295,7 +290,7 @@ class Game(IGameService):
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
 
-     # new method qui:
+    # new method qui:
     # recréer players avec données de repo
     # (dans attributs de fonction), nb de players
     def start_online_game(self, players: list[Player]):
@@ -333,7 +328,9 @@ class Game(IGameService):
             return False
 
         if (
-            self.game_data.players_order[self.game_data.current_player_order_list]
+            self.game_data.players_order[
+                self.game_data.current_player_order_list
+            ]
             != self.get_current_player().get_id()
         ):
             print("It is not your turn to play.")
@@ -345,8 +342,10 @@ class Game(IGameService):
                 f"{expected_player} {self.current_player_order_list}. "
                 f"You: {self.get_current_player()}"
             )
-            turn = max(self.game_data.graph.get_verticies().keys(),
-                       default=-1) + 1
+            turn = (
+                max(self.game_data.graph.get_verticies().keys(), default=-1)
+                + 1
+            )
             print(f"turn:{turn}")
             print(self.game_data.players_order)
             return False
@@ -356,8 +355,8 @@ class Game(IGameService):
 
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
-            print(
-                f"Vous devez jouer la tuile en main: {self.game_data.current_hand}")
+            hand = self.game_data.current_hand
+            print(f"Vous devez jouer la tuile en main: {hand}")
             return False
 
         try:
@@ -406,7 +405,9 @@ class Game(IGameService):
     def play_ai_turn(self, game=None) -> None:
         from carcassonne.business_logic.ai_model import RandomPlayer
         from carcassonne.business_logic.ai_model import ExpectimaxPlayer
-        from carcassonne.business_logic.ai_model import IterativeDeepeningPlayer
+        from carcassonne.business_logic.ai_model import (
+            IterativeDeepeningPlayer,
+        )
         from carcassonne.business_logic.ai_model import MCTSPlayer
 
         if game is None:
@@ -434,7 +435,8 @@ class Game(IGameService):
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth", 5)
             model = ExpectimaxPlayer(
-                game, start_time, ai_time or 10.0, depth or 5)
+                game, start_time, ai_time or 10.0, depth or 5
+            )
             eval_score, move = model.search(
                 game,
                 depth=model.depth_max,
@@ -462,19 +464,16 @@ class Game(IGameService):
                 "ai_mcts_selection", "uct"
             )
             model = MCTSPlayer(
-                game, start_time, ai_time or 10.0, eval_fn_name or "uct")
+                game, start_time, ai_time or 10.0, eval_fn_name or "uct"
+            )
             move = model.mcts(game)
         if not move:
-            print(
-                f"AI Player {ai_player.get_username()} has no legal move."
-            )
+            print(f"AI Player {ai_player.get_username()} has no legal move.")
             print(self.game_data.current_hand)
             exit(1)
             return
         if eval_score is None:
-            print(
-                f"AI Player {ai_player.get_username()} chooses move: {move}"
-            )
+            print(f"AI Player {ai_player.get_username()} chooses move: {move}")
         else:
             print(
                 f"AI Player {ai_player.get_username()} chooses move: {move} "
@@ -506,8 +505,9 @@ class Game(IGameService):
                 )
                 return
 
-    def start_new_game(self, players_order: list[int] | None = None,
-                       seed: int | None = None) -> None:
+    def start_new_game(
+        self, players_order: list[int] | None = None, seed: int | None = None
+    ) -> None:
         return self.new_game.start_new_game(players_order, seed)
 
     def end_game(self) -> bool:
@@ -523,15 +523,18 @@ class Game(IGameService):
         return self.commands.provide_hint()
 
     def get_all_players_remaining_time_seconds(
-            self) -> List[tuple[int, float]]:
+        self,
+    ) -> List[tuple[int, float]]:
         return self.blitz_manager.get_all_players_remaining_time_seconds()
 
     def get_current_player_remaining_time_seconds(self) -> float | None:
         return self.blitz_manager.get_player_remaining_time_seconds(
-            self.game_data.get_current_player().get_id())
+            self.game_data.get_current_player().get_id()
+        )
 
     def get_player_remaining_time_seconds(
-            self, player_id: int) -> float | None:
+        self, player_id: int
+    ) -> float | None:
         return self.blitz_manager.get_player_remaining_time_seconds(player_id)
 
     def tick_blitz(self) -> bool:

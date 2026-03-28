@@ -85,7 +85,8 @@ class GameGUI(Gtk.Application):
         # multi-player game later on.
         self.singleplayer_options_view = SingleplayerMenu(self)
         window.stack.add_named(
-            self.singleplayer_options_view, "singleplayer_menu")
+            self.singleplayer_options_view, "singleplayer_menu"
+        )
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
@@ -143,8 +144,9 @@ class GameGUI(Gtk.Application):
         back_button.set_valign(Gtk.Align.START)
         back_button.add_css_class("back-buttons")
         back_button.connect(
-            "clicked", lambda b:
-            self.window.stack.set_visible_child_name("menu"))
+            "clicked",
+            lambda b: self.window.stack.set_visible_child_name("menu"),
+        )
         overlay.add_overlay(back_button)
 
         # end-turn button in a semi-transparent panel

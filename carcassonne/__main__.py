@@ -5,8 +5,9 @@ import sys
 
 from carcassonne import __version__
 from carcassonne.business_logic.client import Client
-from carcassonne.business_logic.interfaces.i_games_repository\
-    import IGamesRepository
+from carcassonne.business_logic.interfaces.i_games_repository import (
+    IGamesRepository,
+)
 from carcassonne.business_logic.server import Server
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.presentation.gui.create_gui import CreateGui
@@ -113,7 +114,7 @@ def main() -> int:
         "--river",
         help="enable river mode",
         action="store_true",
-        default=False
+        default=False,
     )
 
     parser.add_argument(
@@ -155,10 +156,7 @@ def main() -> int:
     parser.add_argument(
         "-S",
         "--server",
-        help=(
-            "join a server "
-            "(default: localhost:1235)"
-        ),
+        help=("join a server " "(default: localhost:1235)"),
         type=str,
     )
 
@@ -183,9 +181,7 @@ def main() -> int:
     if args.verbose:
         config_overrides["verbose"] = True
     if args.blitz:
-        config_overrides["time"] = (
-            args.time if args.time is not None else 30
-        )
+        config_overrides["time"] = args.time if args.time is not None else 30
     if args.file:
         config_overrides["contest_file"] = args.file
     # map -p/--players to num_ai_players for AI settings
@@ -208,9 +204,7 @@ def main() -> int:
         config_overrides["river"] = True
 
     game_data: IGraphData = GraphData()
-    nb_players = (
-        args.players if args.players and 1 < args.players <= 5 else 2
-    )
+    nb_players = args.players if args.players and 1 < args.players <= 5 else 2
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
     # daemon: bool = bool(args.daemon)

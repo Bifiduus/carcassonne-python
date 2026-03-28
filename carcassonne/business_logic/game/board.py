@@ -113,9 +113,10 @@ class Board:
                             meeple = Meeple(
                                 player_id=current_player_id,
                                 tile_id=tile_id,
-                                position=tiles_info.meeple_placement_list.
-                                index(
-                                    move_parts[counter]
+                                position=(
+                                    tiles_info.meeple_placement_list.index(
+                                        move_parts[counter]
+                                    )
                                 ),
                                 lands_components=set_name_to_place,
                             )
@@ -129,7 +130,7 @@ class Board:
         )
 
         # affiche les scores actuels dans la console
-        '''print(f"-- Scores après le tour {turn} --")
+        """print(f"-- Scores après le tour {turn} --")
         for player_id in sorted(players.keys()):
             player = players[player_id]
             print(
@@ -137,7 +138,7 @@ class Board:
                 f"({player.get_username()}): {player.get_score().score} pts"
             )
         print("------------------------------")
-        '''
+        """
 
         # enlever la tuile des tuiles disponibles
         tile_name = (

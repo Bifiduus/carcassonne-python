@@ -60,7 +60,8 @@ class SingleplayerMenu(Gtk.Box):
         self.file_button.connect("clicked", self.on_choose_file)
 
         self.time_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            orientation=Gtk.Orientation.VERTICAL, spacing=6
+        )
         entry_label = Gtk.Label(label="Time limit (minutes):")
         self.entry_time = Gtk.Entry()
         self.entry_time.connect("changed", self.on_time_changed)
@@ -175,6 +176,6 @@ class SingleplayerMenu(Gtk.Box):
             return
 
         # Start the new game with the seed value
-        seed = getattr(self, 'seed_value', None)
+        seed = getattr(self, "seed_value", None)
         self.gui.game_data.new_game(None, seed)
         self.gui.window.stack.set_visible_child_name("options_menu")

@@ -55,24 +55,30 @@ def help(self) -> None:
     print("  server stop        - Arrête le serveur")
     print(
         "  join [IP[:PORT]]   - Connecte le client au serveur à l'adresse"
-        " donnée ou à son propre serveur")
+        " donnée ou à son propre serveur"
+    )
     print("  quit               - Quitte le serveur")
     print("  ping               - Affiche le ping du serveur")
     print("  server status      - Affiche le status du serveur")
-    print("  players [PLAYER_ID] - Affiche les joueurs connectés ou"
-          " des informations sur le joueur [PLAYER_ID] si [PLAYER_ID]")
+    print(
+        "  players [PLAYER_ID] - Affiche les joueurs connectés ou"
+        " des informations sur le joueur [PLAYER_ID] si [PLAYER_ID]"
+    )
     print("  scoreboard         - Affiche le scoreboard du serveur")
-    print("  new PLAYER_ID ..   - Commence une partie avec le"
-          " ou les joueurs proposé(s)")
+    print(
+        "  new PLAYER_ID ..   - Commence une partie avec le"
+        " ou les joueurs proposé(s)"
+    )
     print("  accept             - Accepte l'invitation reçu")
     print("  decline            - Refuse l'invitation reçu")
     print("  cancel             - Annule l'invitation envoyée")
-    print("  away               - Change le status en \"away\"")
-    print("  back               - Change le status en \"idle\"")
+    print('  away               - Change le status en "away"')
+    print('  back               - Change le status en "idle"')
 
 
-def quit(self, server_service: IServerService,
-         client_service: IClientService) -> None:
+def quit(
+    self, server_service: IServerService, client_service: IClientService
+) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("quit")
         return
@@ -83,7 +89,7 @@ def quit(self, server_service: IServerService,
         saved: int | None = -1
         while saved == -1:
             confirm: str = input("Save the game before quitting?[y/N] ")
-            if confirm != 'y':
+            if confirm != "y":
                 print("Abandon de la commande de quitter.")
                 self.running = False
                 saved = 0
@@ -117,8 +123,8 @@ def shuffle(self, client_service: IClientService) -> None:
         client_service.send_to_server("shuffle")
     else:
         seed = self.game.shuffle_deck()
-        print(
-            f"Pioche mélangée. Algo: {self.game.game_data.shuffle_algo}. Seed: {seed}")
+        algo = self.game.game_data.shuffle_algo
+        print(f"Pioche mélangée. Algo: {algo}. Seed: {seed}")
 
 
 def draw(self, client_service: IClientService) -> None:
@@ -285,8 +291,12 @@ def stop_server(self, server_service: IServerService):
     server_service.server_stop()
 
 
-def join(self, client_service: IClientService, ip: str | None = None,
-         port: str | None = None):
+def join(
+    self,
+    client_service: IClientService,
+    ip: str | None = None,
+    port: str | None = None,
+):
     if port is None and ip is None:
         client_service.join_server()
     if port is not None:

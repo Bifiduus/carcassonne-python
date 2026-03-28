@@ -33,9 +33,15 @@ class SaveHandler:
             + "\n"
         )
         file.write(
-            "PlayersOrder: [" + ", ".join(
-                [f"{player_id} "
-                 for player_id in self.game.game_data.players_order]) + "]\n")
+            "PlayersOrder: ["
+            + ", ".join(
+                [
+                    f"{player_id} "
+                    for player_id in self.game.game_data.players_order
+                ]
+            )
+            + "]\n"
+        )
         file.write(
             "GameScore: ["
             + ", ".join(
@@ -184,8 +190,8 @@ class SaveHandler:
                         int(player_id.strip())
                         for player_id in line.strip("[]").split(",")
                     ]
-                    print(
-                        f"Players order set to {self.game.game_data.players_order}.")
+                    order = self.game.game_data.players_order
+                    print(f"Players order set to {order}.")
 
                 if line.startswith("GameScore:"):
                     # Assuming the format is "GameScore: [Player1ID: 10,
@@ -203,8 +209,11 @@ class SaveHandler:
                         for player in self.game.game_data.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
-                                player_number = self.game.game_data.players_order.index(
-                                    player.get_id())
+                                player_number = (
+                                    self.game.game_data.players_order.index(
+                                        player.get_id()
+                                    )
+                                )
                                 print(
                                     f"Player number "
                                     f"{player_number} "
@@ -220,7 +229,8 @@ class SaveHandler:
                         continue
                     self.game.game_data.seed = int(line)
                     self.game.shuffle_deck(
-                        "fisher-yates", self.game.game_data.seed)
+                        "fisher-yates", self.game.game_data.seed
+                    )
                     print(self.game.game_data.deck.tiles)
 
             elif history_section:

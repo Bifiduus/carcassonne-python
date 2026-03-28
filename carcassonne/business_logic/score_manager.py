@@ -133,9 +133,7 @@ class ScoreManager:
                 ):
                     fn(component, name, graph, players)
 
-        for name, component in graph.lands_components.get(
-            "F", {}
-        ).items():
+        for name, component in graph.lands_components.get("F", {}).items():
             ScoreManager._score_field(component, name, graph, players)
 
     @staticmethod

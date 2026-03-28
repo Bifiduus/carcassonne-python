@@ -1,4 +1,5 @@
 """Module providing an interface between Présentation and Logique Métier"""
+
 from abc import ABC, abstractmethod
 
 

@@ -21,8 +21,8 @@ class OnlineCommunication:
 
     def command_server_status(self):
         assert (
-            self.server.server
-            is not None), "No server to execute the command on..."
+            self.server.server is not None
+        ), "No server to execute the command on..."
         answer = f"Port: {self.server.server.getsockname()[1]}, "
         answer += f"Clients: {len(self.server.connected_clients)}, "
         answer += f"Current Parties: {len(self.server.current_games_list)}\n"
@@ -39,7 +39,8 @@ class OnlineCommunication:
         # Check if the clients exist and are available,
         #  remove the ones that cannot be invited
         clients_list_checked = self.server.check_clients_list_validity(
-            clients_list)
+            clients_list
+        )
         for invited in clients_list_checked:
             self.server.send_invitation(invited, client_id)
         # Create a new party with a name and players, ask them first
@@ -51,7 +52,8 @@ class OnlineCommunication:
         answer = ""
         if message.removeprefix("players") != "":
             answer = self.server.check_profile_player(
-                int(message.split("players")[1].strip()))
+                int(message.split("players")[1].strip())
+            )
         else:
             # Return a list of the current players (id, name and status)
             #  in the server, not the away players
@@ -62,9 +64,11 @@ class OnlineCommunication:
         rows = self.server.repo.get_scoreboard()
         scoreboard: str = "Scoreboard:\n"
         for row in rows:
-            scoreboard += f"Id: {row['id']}, username: {row['username']},"\
-                f" victories: {row['victories']}, defeats: {row['defeats']},"\
+            scoreboard += (
+                f"Id: {row['id']}, username: {row['username']},"
+                f" victories: {row['victories']}, defeats: {row['defeats']},"
                 f" total games: {row['total_games']}\n"
+            )
         return scoreboard  # Affiche le tableau des scores
         # joueurs qui ont joué sur le serveur (nombre de
         # victoires, défaites, parties jouées) de la db.
@@ -75,7 +79,8 @@ class OnlineCommunication:
             answer = "You have no invitation to accept.\n"
         else:
             sender_id, party_id = self.server.repo.invitation_received(
-                client_id)
+                client_id
+            )
             self.server.repo.accept_invitation(int(party_id), client_id)
             self.notify_host_of_acceptance(sender_id, client_id)
             answer = "Invitation accepted !\n"
@@ -97,13 +102,14 @@ class OnlineCommunication:
         if host_id in self.server.client_sockets:
             try:
                 host_username: str = self.server.repo.get_username(
-                    str(host_id))
-                invitee_name: str = self.server.repo.get_username(
-                    invitee_id
+                    str(host_id)
                 )
+                invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
-                message = f"Server -> {host_username}: {invitee_name}"\
+                message = (
+                    f"Server -> {host_username}: {invitee_name}"
                     "has accepted your invitation!\n"
+                )
                 host_socket.send(message.encode())
             except Exception as e:
                 print(f"Error notifying host {host_id}: {e}")
@@ -113,13 +119,14 @@ class OnlineCommunication:
         if host_id in self.server.client_sockets:
             try:
                 host_username: str = self.server.repo.get_username(
-                    str(host_id))
-                invitee_name: str = self.server.repo.get_username(
-                    invitee_id
+                    str(host_id)
                 )
+                invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
-                message = f"Server -> {host_username}: {invitee_name}"\
+                message = (
+                    f"Server -> {host_username}: {invitee_name}"
                     " has rejected your invitation!\n"
+                )
                 host_socket.send(message.encode())
             except Exception as e:
                 print(f"Error notifying host {host_id}: {e}")
@@ -132,7 +139,8 @@ class OnlineCommunication:
             if players != "":
                 players_list = players.split(" ")
             answer = self.server.repo.cancel_invitation_from(
-                client_id, players_list)
+                client_id, players_list
+            )
         else:
             answer = "No invitations to cancel."
         return answer
@@ -213,8 +221,10 @@ class OnlineCommunication:
             game.score_manager.score_end_of_turn(game.graph, game.players)
         answer = "Score:"
         for player in game.players.values():
-            answer += f"{player.get_username()} "\
+            answer += (
+                f"{player.get_username()} "
                 f"{'AI' if player.is_ai else ''}: {player.score} points.\n"
+            )
         return answer
 
     def command_hand(self, client_id: str) -> str:

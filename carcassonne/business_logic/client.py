@@ -1,5 +1,3 @@
-
-
 import select
 import socket
 import threading
@@ -7,9 +5,9 @@ import time
 
 from carcassonne.business_logic.server import Server
 from carcassonne.business_logic.interfaces.i_games_repository import (
-    IGamesRepository)
-from carcassonne.presentation.interfaces.i_client_service import (
-    IClientService)
+    IGamesRepository,
+)
+from carcassonne.presentation.interfaces.i_client_service import IClientService
 
 
 class Client(IClientService):
@@ -36,13 +34,18 @@ class Client(IClientService):
             username = input(">> Your username is: ")
             password = input(">> Your password is: ")
             self.create_default_online_player(
-                username, password, self.server_name)
+                username, password, self.server_name
+            )
         else:
             self.client_player = self.repo.get_online_player(self.server_name)
 
     # Client side
-    def join_server(self, ip: str | None = None, port: int | None = None,
-                    timeout: float = 5.0) -> bool:
+    def join_server(
+        self,
+        ip: str | None = None,
+        port: int | None = None,
+        timeout: float = 5.0,
+    ) -> bool:
         """
         Connect to a remote server identified by name (and optional port).
 
@@ -56,7 +59,7 @@ class Client(IClientService):
         self.list_available_servers()
         if ip is (None or ""):
             ip = self.server_service.server_name
-        if (ip not in self.available_servers):
+        if ip not in self.available_servers:
             print("Error: There is no server with such an ip.")
             return False
         server_port, _ = self.available_servers[ip]
@@ -83,18 +86,21 @@ class Client(IClientService):
 
         if self.repo.has_no_special_username(ip):
             username = self.repo.get_online_player(
-                self.server_service.server_name)
+                self.server_service.server_name
+            )
 
         else:
             username = self.repo.get_online_player(ip)
-        information = f"username={username} "\
-            f"password={self.repo.get_password(1)}"
+        information = (
+            f"username={username} " f"password={self.repo.get_password(1)}"
+        )
 
         self.send_to_server(information)
 
         # start a listener thread so the caller can interact without blocking
         self._recv_thread = threading.Thread(
-            target=self._receive_loop, args=(ip,),  daemon=True)
+            target=self._receive_loop, args=(ip,), daemon=True
+        )
         self._recv_thread.start()
         self.has_joined_server = True
         return True
@@ -111,7 +117,7 @@ class Client(IClientService):
                     print("Server closed the connection")
                     break
                 self.handle_server_message(data.decode(), server)
-                if (not self.has_joined_server):
+                if not self.has_joined_server:
                     break
         except Exception as e:
             print(f"Error receiving from server: {e}")
@@ -140,13 +146,18 @@ class Client(IClientService):
             if message == "Your registration has failed...":
                 username = input("You must send another username:\n>> ")
                 self.temporary_username = username
-                message = f"username={username} password="\
+                message = (
+                    f"username={username} password="
                     f"{self.repo.get_password(0)}\n"
+                )
                 self.send_to_server(message)
-            if (message == "Successfull registering !" and
-                    self.temporary_username != ""):
+            if (
+                message == "Successfull registering !"
+                and self.temporary_username != ""
+            ):
                 self.repo.set_new_username_for_server(
-                    server, self.temporary_username)
+                    server, self.temporary_username
+                )
                 self.temporary_username = ""
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
@@ -157,7 +168,7 @@ class Client(IClientService):
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            s.bind(('', 12346))
+            s.bind(("", 12346))
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
             print(f"Error binding socket: {e}")
@@ -167,7 +178,8 @@ class Client(IClientService):
         while time.time() - start_time < timeout:
             try:
                 ready = select.select(
-                    [s], [], [], timeout - (time.time() - start_time))
+                    [s], [], [], timeout - (time.time() - start_time)
+                )
                 if ready[0]:
                     message, addr = s.recvfrom(1500)
                     message_part = message.decode()
@@ -209,12 +221,14 @@ class Client(IClientService):
             del self.available_servers[name]
         return self.available_servers
 
-    def create_default_online_player(self, username: str, password: str,
-                                     server: str = "127.0.1.1") -> str:
+    def create_default_online_player(
+        self, username: str, password: str, server: str = "127.0.1.1"
+    ) -> str:
         self.client_player = username.strip()
         assert self.repo, "The database should not be None"
-        return self.repo.create_default_online_player(username, password,
-                                                      server)
+        return self.repo.create_default_online_player(
+            username, password, server
+        )
 
     def ping(self) -> str:
         """
@@ -252,7 +266,8 @@ class Client(IClientService):
             ip = self.connected_to_server
             if self.repo.has_no_special_username(ip):
                 username = self.repo.get_online_player(
-                    self.server_service.server_name)
+                    self.server_service.server_name
+                )
             else:
                 username = self.repo.get_online_player(ip)
 

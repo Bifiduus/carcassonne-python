@@ -2,6 +2,7 @@
 This module implements the AI player using the Expectimax pruning algorithm.
 It provides intelligent move selection for the AI player in Carcassonne.
 """
+
 import math
 import random
 import time
@@ -68,7 +69,9 @@ class RandomPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = game.game_data.graph.get_verticies()
-        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
+        can_place_meeple = (
+            game.game_data.get_current_player().get_meeples() > 0
+        )
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -97,7 +100,9 @@ class RandomPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.game_data.get_current_player().get_id()
+                            id_player = (
+                                game.game_data.get_current_player().get_id()
+                            )
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
@@ -113,7 +118,7 @@ class RandomPlayer:
 
         possible_moves = self.get_possible_moves(tile, game)
 
-        return r.choice(possible_moves) if possible_moves else ''
+        return r.choice(possible_moves) if possible_moves else ""
 
 
 class ExpectimaxPlayer:
@@ -130,7 +135,7 @@ class ExpectimaxPlayer:
 
     def __init__(
         self,
-        game: 'Game',
+        game: "Game",
         start_time: float,
         max_time: float,
         depth: int,
@@ -201,7 +206,9 @@ class ExpectimaxPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = copy.deepcopy(game.game_data.graph.get_verticies())
-        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
+        can_place_meeple = (
+            game.game_data.get_current_player().get_meeples() > 0
+        )
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -230,7 +237,9 @@ class ExpectimaxPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.game_data.get_current_player().get_id()
+                            id_player = (
+                                game.game_data.get_current_player().get_id()
+                            )
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
@@ -262,20 +271,31 @@ class ExpectimaxPlayer:
 
         return sorted(moves, key=_score, reverse=True)
 
-    def search(self, game: 'Game', depth: int, alpha: float, beta: float,
-               player_to_max: int, next_player: int) -> Tuple[float, str]:
+    def search(
+        self,
+        game: "Game",
+        depth: int,
+        alpha: float,
+        beta: float,
+        player_to_max: int,
+        next_player: int,
+    ) -> Tuple[float, str]:
         """Recursive search function for Expectimax algorithm.
         Adapt between Max and Min nodes based on the player parameter."""
         check_time = self._time_exceeded()
-        if self.terminal(
-                game.game_data.tiles_info) or depth == 0 or check_time:
-            return self.eval_fn(game, player_to_max, next_player), ''
+        if (
+            self.terminal(game.game_data.tiles_info)
+            or depth == 0
+            or check_time
+        ):
+            return self.eval_fn(game, player_to_max, next_player), ""
         restored_hand = game.game_data.current_hand
         best_move = ""
         if player_to_max == next_player:  # Max node
             max_eval = float("-inf")
             possible_moves = self.get_possible_moves(
-                game.game_data.current_hand, game)
+                game.game_data.current_hand, game
+            )
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
             ordered_moves = self._order_moves(possible_moves, depth)
@@ -311,7 +331,8 @@ class ExpectimaxPlayer:
         else:  # Min node (opponent's turn)
             min_eval = float("inf")
             possible_moves = self.get_possible_moves(
-                game.game_data.current_hand, game)
+                game.game_data.current_hand, game
+            )
             if not possible_moves:
                 return self.eval_fn(game, player_to_max, next_player), ""
             ordered_moves = self._order_moves(possible_moves, depth)
@@ -449,8 +470,11 @@ class ExpectimaxPlayer:
         next_player: int,
     ) -> float:
         check_time = self._time_exceeded()
-        if self.terminal(
-                game.game_data.tiles_info) or depth == 0 or check_time:
+        if (
+            self.terminal(game.game_data.tiles_info)
+            or depth == 0
+            or check_time
+        ):
             return self.eval_fn(game, player_to_max, next_player)
 
         successors = self.num_successors(game.game_data.tiles_info)
@@ -543,7 +567,7 @@ class ExpectimaxPlayer:
         game.game_data.current_hand = restored_hand
         return cur_x
 
-    def undo_for_ai(self, game: 'Game') -> None:
+    def undo_for_ai(self, game: "Game") -> None:
         """Undo the last AI move."""
         if game.game_data.history.past_moves:
             previous_play = game.game_data.history.pop_past()
@@ -567,9 +591,7 @@ class ExpectimaxPlayer:
                     saved_scored,
                     saved_lands_components,
                     saved_next_set_id,
-                ) = (
-                    self._sim_state_stack.pop()
-                )
+                ) = self._sim_state_stack.pop()
                 for pid, score in saved_scores.items():
                     game.game_data.players[pid].get_score().set_points(score)
                 for pid, meeples in saved_meeples.items():
@@ -582,8 +604,8 @@ class ExpectimaxPlayer:
         """Play move for AI exploring the possibilities."""
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
-            print(
-                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
+            hand = game.game_data.current_hand
+            print(f"Vous devez jouer la tuile en main: {hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(
@@ -596,11 +618,13 @@ class ExpectimaxPlayer:
             # Snapshot scoring state before modifying it so undo_for_ai can
             # fully restore the real game state.
             saved_scores = {
-                pid: p.get_score_int() for pid,
-                p in game.game_data.players.items()}
+                pid: p.get_score_int()
+                for pid, p in game.game_data.players.items()
+            }
             saved_meeples = {
-                pid: p.get_meeples() for pid,
-                p in game.game_data.players.items()}
+                pid: p.get_meeples()
+                for pid, p in game.game_data.players.items()
+            }
             saved_scored = set(game.game_data.board.scored_components)
             saved_lands_components = copy.deepcopy(
                 game.game_data.graph.lands_components
@@ -709,8 +733,14 @@ class IterativeDeepeningPlayer:
 
 
 class MCTSNode:
-    def __init__(self, game: 'Game', mcts_player: 'MCTSPlayer',
-                 parent=None, move=None, player=None):
+    def __init__(
+        self,
+        game: "Game",
+        mcts_player: "MCTSPlayer",
+        parent=None,
+        move=None,
+        player=None,
+    ):
         self.state = game
         self.parent = parent
         self.move = move  # coup qui mène à ce noeud
@@ -719,7 +749,8 @@ class MCTSNode:
 
         self.children = []
         self.untried_moves = mcts_player.get_possible_moves(
-            game.game_data.current_hand, game)
+            game.game_data.current_hand, game
+        )
 
         self.visits = 0
         self.total_reward = 0.0  # somme des récompenses
@@ -758,10 +789,16 @@ class MCTSNode:
 class MCTSPlayer:
 
     # Example positions for meeple placement
-    meeple_placement_list = ['NW', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'C']
+    meeple_placement_list = ["NW", "N", "NE", "E", "SE", "S", "SW", "W", "C"]
 
-    def __init__(self, game: 'Game', start_time: float, max_time: float,
-                 eval_name: str = "", eval_fn=None):
+    def __init__(
+        self,
+        game: "Game",
+        start_time: float,
+        max_time: float,
+        eval_name: str = "",
+        eval_fn=None,
+    ):
         """
         Initialize the Expectimax AI player.
 
@@ -797,14 +834,14 @@ class MCTSPlayer:
             self.eval_fn = name_or_fn
             return
 
-        name = (name_or_fn or '').upper()
-        if name == '':
+        name = (name_or_fn or "").upper()
+        if name == "":
             # default selection function
             self.eval_fn = self.uct_select_child
         else:
             raise ValueError(f"Unknown evaluation method: {name_or_fn}")
 
-    def get_possible_moves(self, tile, game: 'Game') -> List[str]:
+    def get_possible_moves(self, tile, game: "Game") -> List[str]:
         """
         Generate all legal moves from the current game state.
 
@@ -829,7 +866,7 @@ class MCTSPlayer:
         # Try to place the tile next to each existing vertex
         for vertex_id, vertex in vertices.items():
             # Try each direction (North, South, East, West)
-            for direction in ['N', 'S', 'E', 'W']:
+            for direction in ["N", "S", "E", "W"]:
                 # Check if this side is free
                 directions = game.game_data.tiles_info.direction_dict
                 if vertex.is_neighbor_free(directions.get(direction, 0)):
@@ -838,12 +875,16 @@ class MCTSPlayer:
                         # -1 means no meeple placement
                         for meeple in meeple_indices:
                             if meeple == -1:
-                                move = f"{tile}/{vertex_id}{direction}"\
+                                move = (
+                                    f"{tile}/{vertex_id}{direction}"
                                     f"{rotation}"
+                                )
                             else:
-                                move = f"{tile}/{vertex_id}{direction}"\
-                                    f"{rotation}"\
+                                move = (
+                                    f"{tile}/{vertex_id}{direction}"
+                                    f"{rotation}"
                                     f"/{self.meeple_placement_list[meeple]}"
+                                )
                             # Verify the move is legal
                             id_player = game.get_current_player().get_id()
                             if game.game_data.rules_manager.check_move(
@@ -872,15 +913,14 @@ class MCTSPlayer:
             node.get_children(),
             key=lambda child: (
                 child.get_total_reward() / child.get_visits
-                + c * math.sqrt(math.log(node.get_visits()) /
-                                child.get_visits())
-            )
+                + c
+                * math.sqrt(math.log(node.get_visits()) / child.get_visits())
+            ),
         )
 
     def expand(self, node: MCTSNode):
         move = node.get_untried_moves().pop()
-        self.play_move_for_ai(
-            node.get_state(), move)
+        self.play_move_for_ai(node.get_state(), move)
 
         child = MCTSNode(
             game=node.get_state(),
@@ -893,12 +933,15 @@ class MCTSPlayer:
         node.get_children().append(child)
         return child
 
-    def rollout(self, state: 'Game'):
+    def rollout(self, state: "Game"):
         counter = 0
-        while not self.terminal(
-                state.game_data.tiles_info) and time.time() < self.end_time:
+        while (
+            not self.terminal(state.game_data.tiles_info)
+            and time.time() < self.end_time
+        ):
             moves = self.get_possible_moves(
-                state.game_data.current_hand, state)
+                state.game_data.current_hand, state
+            )
             # Bound dead-hand retries within one rollout step to avoid
             # spinning forever on states with no playable continuation.
             dead_hand_retries = 0
@@ -919,18 +962,20 @@ class MCTSPlayer:
                     return counter
                 dead_hand_retries += 1
                 moves = self.get_possible_moves(
-                    state.game_data.current_hand, state)
+                    state.game_data.current_hand, state
+                )
 
             move = random.choice(moves)
-            self.play_move_for_ai(
-                state, move)
+            self.play_move_for_ai(state, move)
             counter += 1
 
         return counter
 
-    def compute_reward(self, state: 'Game', root_player_id):
-        scores = {i: state.game_data.players[i].get_score().score
-                  for i in range(len(state.game_data.players))}
+    def compute_reward(self, state: "Game", root_player_id):
+        scores = {
+            i: state.game_data.players[i].get_score().score
+            for i in range(len(state.game_data.players))
+        }
 
         vp1 = scores[root_player_id]
         vp2 = max(v for p, v in scores.items() if p != root_player_id)
@@ -938,7 +983,7 @@ class MCTSPlayer:
         return vp1 - vp2
 
     def backpropagate(self, node: MCTSNode, reward: float, counter: int):
-        state: 'Game' = node.get_state()
+        state: "Game" = node.get_state()
         while counter > 0:
             self.undo_for_ai(state)
             counter -= 1
@@ -948,7 +993,7 @@ class MCTSPlayer:
             node = node.get_parent()
             self.undo_for_ai(state)
 
-    def mcts(self, game_root: 'Game'):
+    def mcts(self, game_root: "Game"):
         root = MCTSNode(game_root, self)
         root_player = game_root.get_current_player()
 
@@ -965,25 +1010,32 @@ class MCTSPlayer:
         )
         river_turn_to_restore: int | None = game_root.river_manager.river_turn
 
-        player_order_to_restore: int = game_root.game_data.current_player_order_list
+        player_order_to_restore: int = (
+            game_root.game_data.current_player_order_list
+        )
 
         score_to_restore: list[int] = [
             game_root.game_data.players[i].score.score
-            for i in range(len(game_root.game_data.players))]
+            for i in range(len(game_root.game_data.players))
+        ]
 
         meeples_to_restore = copy.deepcopy(
-            game_root.game_data.graph.get_meeples())
+            game_root.game_data.graph.get_meeples()
+        )
 
         player_meeples_to_restore: list[int] = [
             game_root.game_data.players[i].get_meeples()
-            for i in range(len(game_root.game_data.players))]
+            for i in range(len(game_root.game_data.players))
+        ]
 
         # Save land components tracking to prevent ID corruption during
         # simulations
         lands_components_to_restore = copy.deepcopy(
-            game_root.game_data.graph.lands_components)
+            game_root.game_data.graph.lands_components
+        )
         next_set_id_to_restore = copy.deepcopy(
-            game_root.game_data.graph.next_set_id)
+            game_root.game_data.graph.next_set_id
+        )
 
         while time.time() < self.end_time:
             node: MCTSNode = root
@@ -992,8 +1044,7 @@ class MCTSPlayer:
             # 🔍 SELECTION
             while node.get_untried_moves() == [] and node.get_children():
                 node = self.eval_fn(node)
-                self.play_move_for_ai(
-                    node.get_state(), node.get_move())
+                self.play_move_for_ai(node.get_state(), node.get_move())
 
             # 🌱 EXPANSION
             if node.get_untried_moves():
@@ -1013,7 +1064,9 @@ class MCTSPlayer:
             game_root.game_data.deck.tiles = deck_to_restore.copy()
             game_root.game_data.deck.river_tiles = river_deck_to_restore.copy()
 
-            game_root.game_data.current_player_order_list = player_order_to_restore
+            game_root.game_data.current_player_order_list = (
+                player_order_to_restore
+            )
 
             game_root.river_manager.river_active = river_active_to_restore
             game_root.river_manager.river_previous_opposite_direction = (
@@ -1022,15 +1075,21 @@ class MCTSPlayer:
             game_root.river_manager.river_turn = river_turn_to_restore
 
             for i in range(len(game_root.game_data.players)):
-                game_root.game_data.players[i].score.score = score_to_restore[i]
-                game_root.game_data.players[i].meeples = player_meeples_to_restore[i]
+                game_root.game_data.players[i].score.score = score_to_restore[
+                    i
+                ]
+                game_root.game_data.players[i].meeples = (
+                    player_meeples_to_restore[i]
+                )
 
             game_root.game_data.graph.set_meeples(meeples_to_restore)
             # Restore land components to prevent ID corruption
             game_root.game_data.graph.lands_components = copy.deepcopy(
-                lands_components_to_restore)
+                lands_components_to_restore
+            )
             game_root.game_data.graph.next_set_id = copy.deepcopy(
-                next_set_id_to_restore)
+                next_set_id_to_restore
+            )
 
         # 🏁 Choose the best move among expanded children.
         # If time ran out before expansion, fall back to a legal root move.
@@ -1040,8 +1099,9 @@ class MCTSPlayer:
             return ""
 
         best_child: MCTSNode = max(
-            root.children, key=lambda c: c.get_total_reward()
-            / float(c.get_visits()))
+            root.children,
+            key=lambda c: c.get_total_reward() / float(c.get_visits()),
+        )
 
         game_root.game_data.graph.set_meeples(meeples_to_restore)
         game_root.game_data.deck.tiles = deck_to_restore.copy()
@@ -1054,15 +1114,19 @@ class MCTSPlayer:
         game_root.river_manager.river_turn = river_turn_to_restore
         # Restore land components to prevent ID corruption
         game_root.game_data.graph.lands_components = copy.deepcopy(
-            lands_components_to_restore)
+            lands_components_to_restore
+        )
         game_root.game_data.graph.next_set_id = copy.deepcopy(
-            next_set_id_to_restore)
+            next_set_id_to_restore
+        )
         for i in range(len(game_root.game_data.players)):
-            game_root.game_data.players[i].meeples = player_meeples_to_restore[i]
+            game_root.game_data.players[i].meeples = player_meeples_to_restore[
+                i
+            ]
         game_root.game_data.current_hand = hand_to_restore
         return best_child.get_move()
 
-    def undo_for_ai(self, game: 'Game') -> None:
+    def undo_for_ai(self, game: "Game") -> None:
         """Undo the last AI move."""
         if game.game_data.history.past_moves:
             previous_play = game.game_data.history.pop_past()
@@ -1072,13 +1136,15 @@ class MCTSPlayer:
                 game.game_data.graph,
                 game.game_data.tiles_info,
                 game.game_data.history,
-                players=game.game_data.players)
+                players=game.game_data.players,
+            )
             number_of_players = game.get_number_of_players()
             game.game_data.current_player_order_list = (
-                game.game_data.current_player_order_list - 1) % number_of_players
+                game.game_data.current_player_order_list - 1
+            ) % number_of_players
             _restore_drawn_tile_after_undo(
                 game,
-                previous_play.move_str.split('/')[0],
+                previous_play.move_str.split("/")[0],
             )
             # Restore player scores, meeple counts and scored_components to
             # their exact state before this simulation step so that AI
@@ -1090,9 +1156,7 @@ class MCTSPlayer:
                     saved_scored,
                     saved_lands_components,
                     saved_next_set_id,
-                ) = (
-                    self._sim_state_stack.pop()
-                )
+                ) = self._sim_state_stack.pop()
                 for pid, score in saved_scores.items():
                     game.game_data.players[pid].get_score().set_points(score)
                 for pid, meeples in saved_meeples.items():
@@ -1101,12 +1165,12 @@ class MCTSPlayer:
                 game.game_data.graph.lands_components = saved_lands_components
                 game.game_data.graph.next_set_id = saved_next_set_id
 
-    def play_move_for_ai(self, game: 'Game', move: str) -> None:
+    def play_move_for_ai(self, game: "Game", move: str) -> None:
         """Play move for AI exploring the possibilities."""
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
-            print(
-                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
+            hand = game.game_data.current_hand
+            print(f"Vous devez jouer la tuile en main: {hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(
@@ -1119,11 +1183,13 @@ class MCTSPlayer:
             # Snapshot scoring state before modifying it so undo_for_ai can
             # fully restore the real game state.
             saved_scores = {
-                pid: p.get_score_int() for pid,
-                p in game.game_data.players.items()}
+                pid: p.get_score_int()
+                for pid, p in game.game_data.players.items()
+            }
             saved_meeples = {
-                pid: p.get_meeples() for pid,
-                p in game.game_data.players.items()}
+                pid: p.get_meeples()
+                for pid, p in game.game_data.players.items()
+            }
             saved_scored = set(game.game_data.board.scored_components)
             saved_lands_components = copy.deepcopy(
                 game.game_data.graph.lands_components
@@ -1136,11 +1202,13 @@ class MCTSPlayer:
                 game.game_data.history,
                 game.game_data.players,
                 game.game_data.players_order,
-                game.get_current_player())
+                game.get_current_player(),
+            )
             game.game_data.current_hand = None
             number_of_players = game.get_number_of_players()
             game.game_data.current_player_order_list = (
-                game.game_data.current_player_order_list + 1) % number_of_players
+                game.game_data.current_player_order_list + 1
+            ) % number_of_players
             self._sim_state_stack.append(
                 (
                     saved_scores,

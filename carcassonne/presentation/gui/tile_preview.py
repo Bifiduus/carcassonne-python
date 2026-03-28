@@ -51,13 +51,16 @@ class TilePreview(Gtk.Picture):
         pixbuf = self._load_tile_image(tile_name, orientation)
         self.set_paintable(Gdk.Texture.new_for_pixbuf(pixbuf))
 
-    def _load_tile_image(self, tile_name: str,
-                         orientation: int = 0) -> GdkPixbuf.Pixbuf:
+    def _load_tile_image(
+        self, tile_name: str, orientation: int = 0
+    ) -> GdkPixbuf.Pixbuf:
         """Load and rotate a tile image."""
         image_path = tile_image_path(tile_name)
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-            filename=image_path, width=100,
-            height=100, preserve_aspect_ratio=True
+            filename=image_path,
+            width=100,
+            height=100,
+            preserve_aspect_ratio=True,
         )
         return pixbuf.rotate_simple(ROTATIONS[orientation % len(ROTATIONS)])
 

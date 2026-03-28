@@ -16,7 +16,9 @@ class DummyGame:
 
 class TimeoutProbePlayer(ExpectimaxPlayer):
     def __init__(self, game, start_time, max_time):
-        super().__init__(game, start_time, max_time, depth=4, eval_fn=self._eval)
+        super().__init__(
+            game, start_time, max_time, depth=4, eval_fn=self._eval
+        )
         self.probe_calls = 0
 
     def _eval(self, game, player_to_max, next_player):
@@ -56,7 +58,9 @@ class TimeoutProbePlayer(ExpectimaxPlayer):
 
 class ExpiredProbePlayer(ExpectimaxPlayer):
     def __init__(self, game, start_time, max_time):
-        super().__init__(game, start_time, max_time, depth=2, eval_fn=self._eval)
+        super().__init__(
+            game, start_time, max_time, depth=2, eval_fn=self._eval
+        )
         self.play_calls = 0
 
     def _eval(self, game, player_to_max, next_player):

@@ -268,8 +268,12 @@ def _estimate_latent_score(game_state: Any, player_id: int) -> float:
     total = 0.0
 
     for land_type in ("C", "R", "M"):
-        for component_name, entries in game_state.game_data.graph.lands_components.get(
-                land_type, {}).items():
+        for (
+            component_name,
+            entries,
+        ) in game_state.game_data.graph.lands_components.get(
+            land_type, {}
+        ).items():
             controllers = _component_controllers(component_name, counts)
             if player_id not in controllers:
                 continue
