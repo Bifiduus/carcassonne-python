@@ -346,7 +346,8 @@ class ExpectimaxPlayer:
                 )
             move = moves[i]
 
-            self.play_move_for_ai(game, move)
+            if not self.play_move_for_ai(game, move):
+                continue
             explored_move = True
 
             value = self.star25(
@@ -504,7 +505,6 @@ class ExpectimaxPlayer:
         """Undo the last AI move."""
         if game.game_data.history.past_moves:
             previous_play = game.game_data.history.pop_past()
-            game.game_data.history.push_future(previous_play)
             game.game_data.board.remove_tile_from_board(
                 build_str(previous_play),
                 game.game_data.graph,
@@ -515,10 +515,6 @@ class ExpectimaxPlayer:
             game.game_data.current_player_order_list = (
                 game.game_data.current_player_order_list - 1
             ) % game.game_data.get_number_of_players()
-            _restore_drawn_tile_after_undo(
-                game,
-                previous_play.move_str.split("/")[0],
-            )
             # Restore player scores, meeple counts and scored_components to
             # their exact state before this simulation step so that AI
             # exploration never permanently modifies the real game state.
