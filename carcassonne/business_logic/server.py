@@ -1,6 +1,7 @@
 import time
 import socket
 import select
+import signal
 import threading
 
 from carcassonne.business_logic.game.game import Game
@@ -19,6 +20,7 @@ class Server(IServerService):
     SERVER_TIMEOUT = 30
     SERVER_DIFFUSION_PERIOD = 10
     INVITATION_TIMEOUT = 300
+    CLIENT_TIMEOUT = 60
 
     def __init__(self, repo: IGamesRepository | None = None):
         # networking/server state
@@ -36,8 +38,8 @@ class Server(IServerService):
         # Map socket -> client_username
         self.player_clients: dict[socket.socket, str] = {}
         self.registered_clients: dict[socket.socket, bool] = {}
-        # List of client that are timed out
-        self.proper_clients: dict[socket.socket, bool] = {}
+        # Track each client handler thread (for clean shutdown)
+        self.client_threads: list[threading.Thread] = []
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         assert self.repo, "The database should not be None"
@@ -58,6 +60,7 @@ class Server(IServerService):
         try:
             self.server.bind(("", int(port)))
             self.server.listen()
+            self.server.settimeout(1.0)
             print(f"Server started on port {port}")
         except Exception as e:
             print(f"Error starting server: {e}")
@@ -72,7 +75,7 @@ class Server(IServerService):
         assert self.server
         first_diffusion = True
         server_last_diffusion = time.time()
-        while self.should_stop.is_set():
+        while self.server and self.should_stop.is_set():
             try:
                 # Timeout to check self.running periodically
                 self.server.settimeout(1.0)
@@ -84,12 +87,12 @@ class Server(IServerService):
                         with self.clients_lock:
                             self.connected_clients.append(client_socket)
                             self.registered_clients[client_socket] = False
-                            self.proper_clients[client_socket] = False
                         # Handle client in a new thread
                         client_thread = threading.Thread(
                             target=self.handle_client, args=(client_socket,)
                         )
                         client_thread.start()
+                        self.client_threads.append(client_thread)
                         print("Accepted connection from a client.")
 
                 # Timeout to check pending invitations periodically
@@ -104,6 +107,7 @@ class Server(IServerService):
                 self.launch_availables_games()
                 # Determine if a party ended, and if so, clean it
                 self.clean_finished_games()
+                self.check_client_timeouts()
                 time_passed = time.time() - server_last_diffusion
                 clock = self.SERVER_DIFFUSION_PERIOD
                 if time_passed >= clock or first_diffusion:
@@ -128,8 +132,17 @@ class Server(IServerService):
                 if self.should_stop.is_set():
                     print(f"Error accepting connection: {e}")
                 break
-        self.server.close()
         print("Server stopped")
+
+    def check_client_timeouts(self):
+        """Check for clients that have exceeded their timeout and handle them."""
+        assert self.repo is not None, "No games repository."
+        timed_out_clients = self.repo.check_all_remaining_timeouts(
+            self.CLIENT_TIMEOUT)
+        for client_id in timed_out_clients:
+            username = self.repo.get_username(str(client_id))
+            self.send_to_client(
+                username, "Your timeout has ended, you can now reconnect.")
 
     def launch_availables_games(self):
         # For all parties, check if game can be launched
@@ -141,7 +154,7 @@ class Server(IServerService):
             if check:
                 host_id: int = self.repo.get_host_from_party(party)
                 players = self.repo.get_party(str(host_id))
-                if len(players) == 1:
+                if len(players) == 0:
                     client_username: str = self.repo.get_username(str(host_id))
                     self.send_to_client(
                         client_username, "You cannot play alone..."
@@ -197,7 +210,6 @@ class Server(IServerService):
                     if message == "quit":
                         answer = self.handle_communication.command_quit(client)
                         self.send_to_clients(answer)
-                        self.proper_clients[client_socket] = True
                         break
 
                     # Process data
@@ -212,12 +224,18 @@ class Server(IServerService):
                     )
         except Exception as e:
             print(f"Error handling client: {e}")
+            # Mark client as improper if they have a username (registered)
+            if client_socket in self.player_clients:
+                username: str = self.player_clients[client_socket]
+                self.repo.set_unproper_client(username)
         finally:
-            # if self.proper_clients[client_socket] == False:
-            # mise en place d'unt table des mauvais clients avec time out
-            username: str = self.player_clients[client_socket]
-            if not self.proper_clients[client_socket]:
-                self.handle_communication.command_quit(username)
+            # Handle improper client disconnections using repository
+            if client_socket in self.player_clients:
+                username: str = self.player_clients[client_socket]
+                if not self.repo.is_proper_client(username):
+                    self.repo.set_timeout_for_player(
+                        username, self.CLIENT_TIMEOUT)
+                    self.handle_communication.command_quit(username)
             client_socket.close()
             # Remove client from the list
             with self.clients_lock:
@@ -228,7 +246,6 @@ class Server(IServerService):
                     del self.client_sockets[username]
                     del self.player_clients[client_socket]
                     del self.registered_clients[client_socket]
-                    del self.proper_clients[client_socket]
 
     def handle_client_registering(
         self, message: str, client_socket: socket.socket, client_index: int
@@ -237,37 +254,27 @@ class Server(IServerService):
         Process client registering and return a response.
         """
         preface = f"Server -> Client{client_index}: "
-        if message.find("username=") == -1:
-            answer = (
-                f"{preface}You should send your username " "and password !\n"
-            )
-            answer += (
-                "Type: username=<your username> password=" "<your password>\n"
-            )
-            answer += (
-                "If it is your first time connecting, you" " can create one.\n"
-            )
-        else:
-            if (
-                message.find("username=") != -1
-                and message.find("password=") != -1
-            ):
-                username, password = message.split(" password=")
-                username: str = username.removeprefix("username=")
-                success = self.repo.registering(username, password)
-                if success:
-                    answer = f"{preface}\nSuccessfull registering !\n"
-                    self.registered_clients[client_socket] = True
-                    self.client_sockets[username] = client_socket
-                    self.player_clients[client_socket] = username
-                    self.send_to_clients(f"{username} is now connected !\n")
-                else:
-                    answer = f"{preface}\nYour registration has failed...\n"
+        if (message.find("username=") != -1 and
+                message.find("password=") != -1):
+            username, password = message.split(" password=")
+            username: str = username.removeprefix(
+                "username=")
+            success = self.repo.registering(username, password)
+            if success and not self.repo.is_proper_client(username):
+                remaining_timeout = self.repo.get_remaining_timeout(
+                    username)
+                answer = f"{preface}\nYou are under a timeout of {remaining_timeout}s !\n"
+            elif success:
+                answer = f"{preface}\nSuccessfull registering !\n"
+                self.registered_clients[client_socket] = True
+                self.client_sockets[username] = client_socket
+                self.player_clients[client_socket] = username
+                self.send_to_clients(f"{username} is now connected !\n")
             else:
-                answer = (
-                    f"{preface}\nYou should send your username"
-                    " and password !\n"
-                )
+                answer = f"{preface}\nYour registration has failed...\n"
+        else:
+            answer = f"{preface}\nYou should send your username"\
+                " and password !\n"
         client_socket.send(answer.encode())
 
     def send_to_clients(self, message: str):
@@ -425,32 +432,90 @@ class Server(IServerService):
 
     def server_stop(self):
         """
-        Stop the server gracefully.
+        Stop the server gracefully with proper resource cleanup.
         """
-        if self.server_thread is not None:
+        print("Starting server shutdown...")
 
-            # Send shutdown message to all connected clients
+        if self.server_thread is not None:
+            # 1. Signal server loop to stop
+            self.should_stop.clear()
+
+            # 2. Close the server socket immediately to stop accepting connections
+            if self.server:
+                try:
+                    self.server.close()
+                except Exception as e:
+                    print(f"Error closing server socket: {e}")
+                self.server = None
+
+            # 3. Notify and close all connected clients
             shutdown_message = "Server Shutdown\n"
             with self.clients_lock:
-                # Copy the list to avoid modification during iteration
                 for client_socket in self.connected_clients[:]:
                     try:
                         client_socket.sendall(shutdown_message.encode())
+                        # Ensure the client is marked as proper to
+                        #  avoid handling them as abrupt disconnects
+                        username = self.player_clients.get(
+                            client_socket, "Unknown")
+                        self.repo.client_quit(username)
                     except Exception as e:
-                        print(f"Error sending shutdown message to client: {e}")
+                        print(f"Error sending shutdown message: {e}")
                     finally:
-                        client_socket.close()
+                        try:
+                            client_socket.close()
+                        except Exception as e:
+                            print(f"Error closing client socket: {e}")
                 self.connected_clients.clear()
-            if self.server:
-                self.should_stop.clear()
-                self.server.close()
-            # close repository database connection if there is one
-            if hasattr(self, "repo") and self.repo:
+
+            # 4. Clean up active games
+            with self.clients_lock:
+                for game_id, (party_name, game) in list(self.current_games_list.items()):
+                    try:
+                        # Save game state or perform cleanup
+                        print(f"Cleaning up game: {party_name}")
+                        game = self.current_games_list.pop(game_id, None)
+                        if game:
+                            # Perform any necessary cleanup on the game instance
+                            game[1].save_game_to_file(
+                                f"game_{party_name}_"
+                                f"{time.asctime(time.localtime())}_backup.txt")
+                    except Exception as e:
+                        print(f"Error cleaning up game {game_id}: {e}")
+                self.current_games_list.clear()
+
+            # 5. Clear client tracking dictionaries
+            with self.clients_lock:
+                self.client_sockets.clear()
+                self.player_clients.clear()
+                self.registered_clients.clear()
+
+            # 6. Wait for client threads to finish (with timeout)
+            for t in self.client_threads:
+                if t.is_alive():
+                    try:
+                        t.join(timeout=2.0)
+                    except Exception as e:
+                        print(f"Error joining client thread: {e}")
+                    if t.is_alive():
+                        print("Warning: a client thread did not finish in time")
+
+            # 7. Close repository
+            if hasattr(self, 'repo') and self.repo:
                 try:
                     self.repo.close()
-                except Exception:
-                    pass
-            self.server_thread.join()
+                except Exception as e:
+                    print(f"Error closing repository: {e}")
+
+            # 8. Wait for server thread to finish (with timeout)
+            try:
+                self.server_thread.join(timeout=5.0)
+                if self.server_thread.is_alive():
+                    print("Warning: Server thread did not terminate within timeout")
+            except Exception as e:
+                print(f"Error joining server thread: {e}")
+
+            print("Server shutdown complete")
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."

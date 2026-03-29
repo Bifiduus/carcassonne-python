@@ -135,7 +135,7 @@ class GameCLI:
             with self._game_lock:
                 if not self.running or self.game.end_game():
                     break
-                self.game.play_ai_turn(self.game)
+                self.game.play_ai_turn()
 
         if self.game.end_game():
             self._on_game_over()
@@ -174,7 +174,7 @@ class GameCLI:
             and not self.game.end_game()
             and self.game.get_current_player().is_ai_player()
         ):
-            self.game.play_ai_turn(self.game)
+            self.game.play_ai_turn()
             self.game.get_board()
 
     def _on_game_over(self) -> None:
@@ -235,7 +235,7 @@ class GameCLI:
         elif command == "show hand":
             commands_handler_cli.show_hand(self, self.client)
         elif command == "show time" or command.startswith("show time "):
-            player_id_arg = command[len("show time") :].strip()
+            player_id_arg = command[len("show time"):].strip()
             commands_handler_cli.show_time(self, player_id_arg or None)
         elif command == "show score":
             commands_handler_cli.show_score(self, self.client)

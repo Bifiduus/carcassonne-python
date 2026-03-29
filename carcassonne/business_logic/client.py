@@ -1,4 +1,5 @@
 import select
+import signal
 import socket
 import threading
 import time
@@ -28,6 +29,8 @@ class Client(IClientService):
         self.repo = repo
         self.server_service = server_service
         self.server_name = server_service.server_name
+        self._recv_thread = None
+        self.shutdown_event = threading.Event()
         # Registering phase
         if not self.repo.is_accounted_for():
             print("You should create an online account.\n")
@@ -111,19 +114,33 @@ class Client(IClientService):
         dispatch it to `handle_server_message`.
         """
         try:
-            while self.client:
-                data = self.client.recv(1500)
-                if data.decode().endswith("Server Shutdown\n"):
-                    print("Server closed the connection")
-                    break
-                self.handle_server_message(data.decode(), server)
-                if not self.has_joined_server:
-                    break
+            assert self.client is not None, "Client socket should be initialized"
+            # Set a timeout for recv to allow periodic checks
+            self.client.settimeout(1.0)
+            while self.client and not self.shutdown_event.is_set():
+                try:
+                    data = self.client.recv(1500)
+                    if not data:
+                        break  # Connection closed by server
+                    if data.decode().endswith("Server Shutdown\n"):
+                        print("Server closed the connection")
+                        break
+                    self.handle_server_message(data.decode(), server)
+                    if not self.has_joined_server:
+                        break
+                except socket.timeout:
+                    continue  # Check for shutdown_event and loop again
+                except OSError as e:
+                    print(f"Socket error: {e}")
+                    continue
         except Exception as e:
             print(f"Error receiving from server: {e}")
         finally:
             if self.client:
-                self.client.close()
+                try:
+                    self.client.close()
+                except Exception as e:
+                    print(f"Error closing client socket: {e}")
             self.client = None
 
     def handle_server_message(self, message: str, server: str):
@@ -279,3 +296,50 @@ class Client(IClientService):
         except Exception as e:
             print(f"Failed to send: {e}")
             return False
+
+    def disconnect(self):
+        """
+        Disconnect from the server gracefully with proper resource cleanup.
+        This handles both normal and forceful shutdowns.
+        """
+        print("Starting client disconnection...")
+        if self.client:
+            try:
+                self.client.shutdown(socket.SHUT_RDWR)
+            except Exception as e:
+                print(f"Error shutting down client socket: {e}")
+
+        try:
+            # 1. Signal the receive loop to stop
+            self.has_joined_server = False
+            self.shutdown_event.set()
+
+            # 2. Close the client socket
+            if self.client:
+                try:
+                    self.client.shutdown(socket.SHUT_RDWR)
+                except Exception as e:
+                    print(f"Error closing client socket: {e}")
+                self.client = None
+
+            # 3. Wait for receive thread to finish (with timeout)
+            if self._recv_thread and self._recv_thread.is_alive():
+                try:
+                    self._recv_thread.join(timeout=3.0)
+                    if self._recv_thread.is_alive():
+                        print(
+                            "Warning: Receive thread did not terminate "
+                            "within timeout")
+                except Exception as e:
+                    print(f"Error joining receive thread: {e}")
+
+            # 4. Clear available servers
+            self.available_servers.clear()
+
+            # 5. Reset connection state
+            self.temporary_username = ""
+            self.connected_server = ""
+
+            print("Client disconnection complete")
+        except Exception as e:
+            print(f"Error during client disconnection: {e}")

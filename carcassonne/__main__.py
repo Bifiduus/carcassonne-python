@@ -1,6 +1,8 @@
 """Main file of the program"""
 
 import argparse
+from functools import partial
+import signal
 import sys
 
 from carcassonne import __version__
@@ -26,6 +28,29 @@ class ArgumentParser(argparse.ArgumentParser):
         print(f"error: {message}", file=sys.stderr)
         self.print_help(sys.stderr)
         raise SystemExit(1)
+
+
+ALREADY_SHUTTING_DOWN: bool = False
+
+
+def shutdown_all(signum, frame, server_service: IServerService,
+                 client_service: IClientService):
+    global ALREADY_SHUTTING_DOWN
+    print(f"Signal {signum} received: shutting down both client and server.")
+    if ALREADY_SHUTTING_DOWN:
+        print("Already shutting down, ignoring additional signal.")
+        return
+    ALREADY_SHUTTING_DOWN = True
+    try:
+        if server_service is not None:
+            server_service.server_stop()
+    except Exception as e:
+        print(f"Error shutting down server: {e}")
+    try:
+        if client_service is not None:
+            client_service.disconnect()
+    except Exception as e:
+        print(f"Error shutting down client: {e}")
 
 
 def main() -> int:
@@ -211,6 +236,16 @@ def main() -> int:
     # Daemon dans server init ?
     server_service: IServerService = Server(game_repo)
     client_service: IClientService = Client(game_repo, server_service)
+
+    # Register the global signal handler once
+    handler = partial(
+        shutdown_all,
+        server_service=server_service,
+        client_service=client_service
+    )
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
+
     if args.server:
         client_service.join_server(args.server)
     # mettre en place client_service dans le reste

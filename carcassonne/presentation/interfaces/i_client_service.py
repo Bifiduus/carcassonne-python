@@ -35,3 +35,7 @@ class IClientService(ABC):
     @abstractmethod
     def send_to_server(self, text: str) -> bool:
         pass
+
+    @abstractmethod
+    def disconnect(self):
+        pass

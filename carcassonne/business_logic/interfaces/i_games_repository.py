@@ -74,6 +74,26 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def set_timeout_for_player(self, username: str, timeout_duration: float):
+        pass
+
+    @abstractmethod
+    def set_unproper_client(self, client_username: str):
+        pass
+
+    @abstractmethod
+    def is_proper_client(self, client_username: str) -> bool:
+        pass
+
+    @abstractmethod
+    def check_all_remaining_timeouts(self, timeout: float) -> list[int]:
+        pass
+
+    @abstractmethod
+    def get_remaining_timeout(self, username: str) -> float:
+        pass
+
+    @abstractmethod
     def delete_party(self, party_id: int):
         pass
 

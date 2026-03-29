@@ -216,15 +216,15 @@ class OnlineCommunication:
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         if game.end_game():
-            game.score_manager.score_end_of_game(game.graph, game.players)
+            game.score_manager.score_end_of_game(
+                game.game_data.graph, game.game_data.players)
         else:
-            game.score_manager.score_end_of_turn(game.graph, game.players)
+            game.score_manager.score_end_of_turn(
+                game.game_data.graph, game.game_data.players)
         answer = "Score:"
-        for player in game.players.values():
-            answer += (
-                f"{player.get_username()} "
+        for player in game.game_data.players.values():
+            answer += f"{player.get_username()} "\
                 f"{'AI' if player.is_ai else ''}: {player.score} points.\n"
-            )
         return answer
 
     def command_hand(self, client_id: str) -> str:
@@ -232,10 +232,10 @@ class OnlineCommunication:
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         answer = ""
-        if game.current_hand is None:
+        if game.game_data.current_hand is None:
             answer = "Aucune tuile en main."
         else:
-            answer = f"Tuile en main: {game.current_hand}"
+            answer = f"Tuile en main: {game.game_data.current_hand}"
         return answer
 
     def command_redo(self, client_id: str) -> str:
@@ -268,7 +268,7 @@ class OnlineCommunication:
         game: Game = self.server.current_games_list[game_id][1]
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
-        already_had_tile: bool = game.current_hand is not None
+        already_had_tile: bool = game.game_data.current_hand is not None
         tile = game.draw_tile()
         answer = ""
         if tile is None:
@@ -286,7 +286,7 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         seed = game.shuffle_deck()
-        return f"Pioche mélangée. Algo: {game.shuffle_algo}. Seed: {seed}"
+        return f"Pioche mélangée. Algo: {game.game_data.shuffle_algo}. Seed: {seed}"
 
     def command_save(self, client_id: str, message: str) -> str:
         filename = message[5:].strip()
