@@ -91,8 +91,6 @@ class NewGame:
             self.game.play_ai_turn(self.game)
             if end_game.end_game():
                 break
-            if (
-                self.game_data.get_current_player().get_id()
-                == previous_player_id
-            ):
+            if (self.game_data.get_current_player().get_id()
+                    == previous_player_id):
                 break

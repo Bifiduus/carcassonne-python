@@ -128,6 +128,9 @@ class GameCLI:
         self._input_thread.start()
 
     def _input_loop(self) -> None:
+        while self.game.get_current_player().is_ai_player():
+            self.game.play_ai_turn()
+
         while (
             self.game.get_current_player().is_ai_player()
             and not self.game.end_game()

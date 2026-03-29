@@ -357,8 +357,9 @@ class Game(IGameService):
 
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
-            hand = self.game_data.current_hand
-            print(f"Vous devez jouer la tuile en main: {hand}")
+            print(
+                f"Vous devez jouer la tuile en main:"
+                f" {self.game_data.current_hand}")
             return False
 
         try:

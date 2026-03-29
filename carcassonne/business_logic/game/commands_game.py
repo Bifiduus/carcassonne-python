@@ -38,9 +38,8 @@ class CommandsGame:
             return ""
         model = None
         move = ""
-        ai_mode = self.game_data.get_game_configuration().get(
-            "ai_mode", "random"
-        )
+        configuration = self.game_data.get_game_configuration()
+        ai_mode = configuration.get("ai_mode", "random")
         if ai_mode == "random":
             model = RandomPlayer()
             if self.game:
@@ -49,19 +48,15 @@ class CommandsGame:
                 )
                 username = ai_player.get_username()
                 print(
-                    f"AI Player {username} chooses move:"
-                    f" {move}"
-                )
-        elif ai_mode == "expectimax" or ai_mode == "minimax":
+                    f"AI Player {ai_player.get_username()}"
+                    f" chooses move: {move}")
+        elif ai_mode == "expectimax":
             if not self.game:
                 return ""
             start_time = time.time()
-            ai_time = self.game_data.get_game_configuration().get(
-                "ai_time", 10.0
-            )
-            depth = self.game_data.get_game_configuration().get(
-                "ai_minimax_depth", 5
-            )
+            configuration = self.game_data.get_game_configuration()
+            ai_time = configuration.get("ai_time", 10.0)
+            depth = configuration.get("ai_minimax_depth", 5)
             model = ExpectimaxPlayer(
                 self.game, start_time, ai_time or 10.0, depth or 5
             )

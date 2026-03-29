@@ -240,6 +240,52 @@ class GameRepository(IGamesRepository):
                 (player_id, timeout_end)
             )
 
+    def check_all_remaining_timeouts(self, timeout: float) -> list[int]:
+        rows = self._execute_query(
+            "SELECT player_id, timeout_end FROM timeouts;"
+        )
+        timed_out = []
+        for row in rows:
+            player_id, timeout_end = row
+            if time.time() >= timeout_end:
+                timed_out.append(player_id)
+                self._execute_non_query(
+                    "DELETE FROM timeouts WHERE player_id=?;",
+                    (player_id,)
+                )
+                self.set_proper_client(self.get_username(player_id))
+        return timed_out
+
+    def get_remaining_timeout(self, username: str) -> int:
+        player_id = self.get_id_from_username(username)
+        rows = self._execute_query(
+            "SELECT timeout_end FROM timeouts WHERE player_id=?;",
+            (player_id,)
+        )
+        if not bool(rows):
+            return 0
+        timeout_end = rows[0]['timeout_end']
+        remaining_timeout = int(timeout_end - time.time())
+        return max(remaining_timeout, 0)
+
+    def set_timeout_for_player(self, username: str, timeout_duration: float):
+        player_id = self.get_id_from_username(username)
+        timeout_end = time.time() + timeout_duration
+        rows = self._execute_query(
+            "SELECT 1 FROM timeouts WHERE player_id=?;",
+            (player_id,)
+        )
+        if bool(rows):
+            self._execute_non_query(
+                "UPDATE timeouts SET timeout_end=? WHERE player_id=?;",
+                (timeout_end, player_id)
+            )
+        else:
+            self._execute_non_query(
+                "INSERT INTO timeouts(player_id, timeout_end) VALUES(?, ?);",
+                (player_id, timeout_end)
+            )
+
     def set_new_username_for_server(self, server: str, username: str):
         self._execute_non_query(
             "INSERT INTO usernames(server, username) VALUES(?, ?);",

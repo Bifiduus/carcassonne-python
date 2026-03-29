@@ -190,8 +190,9 @@ class SaveHandler:
                         int(player_id.strip())
                         for player_id in line.strip("[]").split(",")
                     ]
-                    order = self.game.game_data.players_order
-                    print(f"Players order set to {order}.")
+                    print(
+                        f"Players order set to"
+                        f" {self.game.game_data.players_order}.")
 
                 if line.startswith("GameScore:"):
                     # Assuming the format is "GameScore: [Player1ID: 10,
@@ -209,11 +210,10 @@ class SaveHandler:
                         for player in self.game.game_data.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
-                                player_number = (
-                                    self.game.game_data.players_order.index(
-                                        player.get_id()
-                                    )
-                                )
+                                game_data = self.game.game_data
+                                players_order = game_data.players_order
+                                player_number = players_order.index(
+                                    player.get_id())
                                 print(
                                     f"Player number "
                                     f"{player_number} "
