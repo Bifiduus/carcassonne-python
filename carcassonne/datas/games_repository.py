@@ -135,8 +135,7 @@ class GameRepository(IGamesRepository):
 
         timeout_table = "CREATE TABLE IF NOT EXISTS timeouts(player_id int" \
             " CONSTRAINT player_id_scoreboard REFERENCES" \
-            " players(player_id), timeout_end float CONSTRAINT" \
-            " timeout_end NOT NULL);"
+            " players(player_id), timeout_end float CONSTRAINT timeout_end NOT NULL);"
         self._execute_non_query(timeout_table)
 
     # low-level helpers
@@ -577,9 +576,7 @@ class GameRepository(IGamesRepository):
             "SELECT proper_client FROM players WHERE username=?;",
             (client_username,)
         )
-        if not bool(rows):
-            return True
-        return rows[0]['proper_client']
+        return not bool(rows) or rows[0]['proper_client']
 
     def check_party_is_alive(self, group_id: int) -> bool:
         rows = self._execute_query(
@@ -629,7 +626,7 @@ class GameRepository(IGamesRepository):
             (int(invited_player),),
         )
         status = rows[0]['status']
-        if status == "idle":
+        if status in ["idle", "waitgame"]:
             rows = self._execute_non_query(
                 "INSERT INTO pending_invitations(group_id, invited_player,"
                 " invitation_status, sending_time) VALUES(?, ?, ?, ?);",
