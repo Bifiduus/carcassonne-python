@@ -126,8 +126,8 @@ class GameCLI:
 
     def _input_loop(self) -> None:
         while self.game.get_current_player().is_ai_player():
-            self.game.play_ai_turn(self.game)
-        
+            self.game.play_ai_turn()
+
         while self.running and not self._stop_event.is_set():
             try:
                 command = input(">> ").strip()
@@ -157,7 +157,7 @@ class GameCLI:
             and not self.game.end_game()
             and self.game.get_current_player().is_ai_player()
         ):
-            self.game.play_ai_turn(self.game)
+            self.game.play_ai_turn()
             self.game.get_board()
 
     def handle_command(self, command):

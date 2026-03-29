@@ -254,7 +254,7 @@ class Game(IGameService):
         vertices = list(self.game_data.graph.get_verticies().values())
 
         if not vertices:
-            return "No vertices."
+            return "No vertices.\n"
 
         positions = [v.get_position() for v in vertices]
 
@@ -276,19 +276,21 @@ class Game(IGameService):
 
         TILE_HEIGHT = 3
         EMPTY_TILE = [" " * 9] * TILE_HEIGHT
-        board_str = "    "
+        lines: list[str] = []
+
         for row in board:  # chaque ligne de tuiles
             for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
-                board_line = []
+                line = []
                 for tile in row:
                     if tile is None:
-                        board_line.append(EMPTY_TILE[i])
+                        line.append(EMPTY_TILE[i])
                     else:
-                        board_line.append(f"{tile[i]}\n")
-                board_str += "   ".join(board_line)
+                        line.append(tile[i])
+                lines.append("   ".join(line))
             # espace entre lignes de tuiles
-            board_str += "\n"
-        return board_str
+            lines.append("")
+
+        return "\n".join(lines) + "\n"
 
     def get_close_neighbors(
         self, x: int, y: int
@@ -338,11 +340,11 @@ class Game(IGameService):
         ):
             print("It is not your turn to play.")
             expected_player = self.game_data.players_order[
-                self.current_player_order_list
+                self.game_data.current_player_order_list
             ]
             print(
                 "The one: "
-                f"{expected_player} {self.current_player_order_list}. "
+                f"{expected_player} {self.game_data.current_player_order_list}. "
                 f"You: {self.get_current_player()}"
             )
             turn = max(self.game_data.graph.get_verticies().keys(),

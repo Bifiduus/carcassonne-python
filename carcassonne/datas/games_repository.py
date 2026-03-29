@@ -40,7 +40,7 @@ class GameRepository(IGamesRepository):
         table_players += " group_id INTEGER CONSTRAINT group_id_c"\
             " REFERENCES groups(group_id),"
         table_players += " password varchar(20) CONSTRAINT password NOT NULL,"
-        table_players += " connected boolean);"
+        table_players += " connected boolean, proper_client boolean);"
         self._execute_non_query(table_players)
 
         table_groups = "CREATE TABLE IF NOT EXISTS groups"\
@@ -95,6 +95,11 @@ class GameRepository(IGamesRepository):
             " NOT NULL);"
         self._execute_non_query(usernames_table)
 
+        timeout_table = "CREATE TABLE IF NOT EXISTS timeouts(player_id int" \
+            " CONSTRAINT player_id_scoreboard REFERENCES" \
+            " players(player_id), timeout_end float CONSTRAINT timeout_end NOT NULL);"
+        self._execute_non_query(timeout_table)
+
     # low-level helpers
     def _execute_query(self, query: str,
                        params: tuple = ()) -> list[sqlite3.Row]:
@@ -129,9 +134,9 @@ class GameRepository(IGamesRepository):
                                      server: str) -> str:
         if 3 <= len(username) <= 30:
             self._execute_non_query(
-                "INSERT INTO players(username, status, password, connected)"
-                " VALUES(?, ?, ?, ?);",
-                (username, "idle", password, False)
+                "INSERT INTO players(username, status, password, connected, proper_client)"
+                " VALUES(?, ?, ?, ?, ?);",
+                (username, "idle", password, False, True)
             )
             player_id: int = self.get_id_from_username(username)
             self._execute_non_query(
@@ -147,6 +152,52 @@ class GameRepository(IGamesRepository):
         else:
             return "Error creating the account, username too long" \
                 " (min 3 characters, max 30 characters)."
+
+    def check_all_remaining_timeouts(self, timeout: float) -> list[int]:
+        rows = self._execute_query(
+            "SELECT player_id, timeout_end FROM timeouts;"
+        )
+        timed_out = []
+        for row in rows:
+            player_id, timeout_end = row
+            if time.time() >= timeout_end:
+                timed_out.append(player_id)
+                self._execute_non_query(
+                    "DELETE FROM timeouts WHERE player_id=?;",
+                    (player_id,)
+                )
+                self.set_proper_client(self.get_username(player_id))
+        return timed_out
+
+    def get_remaining_timeout(self, username: str) -> int:
+        player_id = self.get_id_from_username(username)
+        rows = self._execute_query(
+            "SELECT timeout_end FROM timeouts WHERE player_id=?;",
+            (player_id,)
+        )
+        if not bool(rows):
+            return 0
+        timeout_end = rows[0]['timeout_end']
+        remaining_timeout = int(timeout_end - time.time())
+        return max(remaining_timeout, 0)
+
+    def set_timeout_for_player(self, username: str, timeout_duration: float):
+        player_id = self.get_id_from_username(username)
+        timeout_end = time.time() + timeout_duration
+        rows = self._execute_query(
+            "SELECT 1 FROM timeouts WHERE player_id=?;",
+            (player_id,)
+        )
+        if bool(rows):
+            self._execute_non_query(
+                "UPDATE timeouts SET timeout_end=? WHERE player_id=?;",
+                (timeout_end, player_id)
+            )
+        else:
+            self._execute_non_query(
+                "INSERT INTO timeouts(player_id, timeout_end) VALUES(?, ?);",
+                (player_id, timeout_end)
+            )
 
     def set_new_username_for_server(self, server: str, username: str):
         self._execute_non_query(
@@ -192,9 +243,9 @@ class GameRepository(IGamesRepository):
             return False
         else:
             rows_players = self._execute_non_query(
-                "INSERT INTO players(username, status, password, connected)"
-                " VALUES(?, ?, ?, ?);",
-                (username, "idle", password, True)
+                "INSERT INTO players(username, status, password, connected, proper_client)"
+                " VALUES(?, ?, ?, ?, ?);",
+                (username, "idle", password, True, True)
             )
             player_id: int = self.get_id_from_username(username)
             rows_scoreboard = self._execute_non_query(
@@ -471,6 +522,25 @@ class GameRepository(IGamesRepository):
             (False, None, "idle", client_username)
         )
 
+    def set_unproper_client(self, client_username: str):
+        self._execute_non_query(
+            "UPDATE players SET proper_client=? WHERE username=?;",
+            (False, client_username)
+        )
+
+    def set_proper_client(self, client_username: str):
+        self._execute_non_query(
+            "UPDATE players SET proper_client=? WHERE username=?;",
+            (True, client_username)
+        )
+
+    def is_proper_client(self, client_username: str) -> bool:
+        rows = self._execute_query(
+            "SELECT proper_client FROM players WHERE username=?;",
+            (client_username,)
+        )
+        return not bool(rows) or rows[0]['proper_client']
+
     def check_party_is_alive(self, group_id: int) -> bool:
         rows = self._execute_query(
             "SELECT player_id FROM players WHERE group_id=?;",
@@ -521,7 +591,8 @@ class GameRepository(IGamesRepository):
             (int(invited_player),)
         )
         status = rows[0]['status']
-        if status == "idle":
+        # heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerrrrrrreeeeeeee
+        if status in ["idle", "waitgame"]:
             rows = self._execute_non_query(
                 "INSERT INTO pending_invitations(group_id, invited_player,"
                 " invitation_status, sending_time) VALUES(?, ?, ?, ?);",

@@ -99,15 +99,18 @@ class GameData():
     def add_online_players(self, players: list[Player]) -> None:
         """Add online players to the game."""
         colors = ["red", "blue", "yellow", "black", "white"]
+        self.players.clear()
+        self.players_order.clear()
         for i in range(len(players)):
             players[i].set_color(colors[i % len(colors)])
-            self.players[i] = players[i]
+            self.players[i+1] = players[i]
+            self.players_order.append(players[i].get_id())
 
     def shuffle_players_order(self) -> None:
         """Shuffle the players order."""
-        others = [player for player in self.players_order if player != 0]
+        others = [player for player in self.players_order]
         r.shuffle(others)
-        self.players_order = [0] + others
+        self.players_order = others
 
     def get_current_player(self) -> Player:
         """Get the current player."""
