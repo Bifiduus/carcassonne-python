@@ -76,7 +76,7 @@ class NewGame():
             if end_game.end_game():
                 break
             previous_player_id = self.game_data.get_current_player().get_id()
-            self.game.play_ai_turn()
+            self.game.play_ai_turn(self.game)
             if end_game.end_game():
                 break
             if (self.game_data.get_current_player().get_id()
