@@ -1,9 +1,6 @@
 
 import re
 
-from carcassonne.presentation.interfaces.i_game_service import IGameService
-from carcassonne.datas.starting_tile import initialize_starting_tile_river
-
 
 class RiverManager():
 
@@ -44,7 +41,8 @@ class RiverManager():
         for i in range(4):
             if tile_lands[(i - orientation) %
                           4] == 'S' and i != already_connected:
-                if self.river_turn is not None and i == self.river_previous_opposite_direction:
+                if (self.river_turn is not None
+                        and i == self.river_previous_opposite_direction):
                     return False
                 else:
                     return True
@@ -69,7 +67,8 @@ class RiverManager():
         for i in range(4):
             if tile_lands[(i - orientation) %
                           4] == 'S' and i != already_connected:
-                if self.river_turn is not None and i == self.river_previous_opposite_direction:
+                if (self.river_turn is not None
+                        and i == self.river_previous_opposite_direction):
                     break
                 else:
                     if tile_lands[(i - orientation - 2) % 4] != 'S':

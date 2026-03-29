@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from carcassonne.business_logic.game.blitz_manager import BlitzManager
 from carcassonne.business_logic.contest_manager import ContestManager
 
 if TYPE_CHECKING:

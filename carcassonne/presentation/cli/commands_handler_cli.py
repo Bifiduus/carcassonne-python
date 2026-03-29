@@ -118,7 +118,8 @@ def shuffle(self, client_service: IClientService) -> None:
     else:
         seed = self.game.shuffle_deck()
         print(
-            f"Pioche mélangée. Algo: {self.game.game_data.shuffle_algo}. Seed: {seed}")
+            f"Pioche mélangée. Algo: {self.game.game_data.shuffle_algo}."
+            f" Seed: {seed}")
 
 
 def draw(self, client_service: IClientService) -> None:

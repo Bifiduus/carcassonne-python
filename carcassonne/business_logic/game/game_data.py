@@ -1,7 +1,4 @@
-from carcassonne.business_logic.game.river_manager import RiverManager
-from carcassonne.business_logic.score_manager import ScoreManager
 from carcassonne.datas.deck import Deck
-from carcassonne.datas.seed import Seed
 from carcassonne.datas.serializer import parse_move
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
@@ -9,18 +6,13 @@ from carcassonne.business_logic.rules_manager import RulesManager
 from carcassonne.business_logic.game.board import Board
 from carcassonne.datas.games_repository import GameRepository
 from carcassonne.datas.game_configuration import GameConfiguration
-from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.datas.history import History
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.datas.tiles_info import TilesInfo
-from carcassonne.business_logic.save_handler import SaveHandler
-from carcassonne.business_logic.game.blitz_manager import BlitzManager
-from carcassonne.business_logic.game.deck_manager import DeckManager
 from carcassonne.datas.starting_tile import (
     initialize_starting_tile,
     initialize_starting_tile_river,
 )
-import time
 import random as r
 
 

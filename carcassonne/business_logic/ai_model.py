@@ -43,7 +43,8 @@ class RandomPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = game.game_data.graph.get_verticies()
-        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
+        can_place_meeple = (game.game_data.get_current_player().get_meeples()
+                            > 0)
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -72,7 +73,9 @@ class RandomPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.game_data.get_current_player().get_id()
+                            game_data = game.game_data
+                            current_player = game_data.get_current_player()
+                            id_player = current_player.get_id()
                             if game.game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
@@ -161,7 +164,8 @@ class ExpectimaxPlayer:
 
         # Try to place each available tile on each empty neighbor position
         vertices = copy.deepcopy(game.game_data.graph.get_verticies())
-        can_place_meeple = game.game_data.get_current_player().get_meeples() > 0
+        can_place_meeple = (game.game_data.get_current_player().get_meeples()
+                            > 0)
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -190,8 +194,10 @@ class ExpectimaxPlayer:
                                     f"{self.meeple_placement_list[meeple]}"
                                 )
                             # Verify the move is legal
-                            id_player = game.game_data.get_current_player().get_id()
-                            if game.game_data.rules_manager.check_move(
+                            game_data = game.game_data
+                            current_player = game_data.get_current_player()
+                            id_player = current_player.get_id()
+                            if game_data.rules_manager.check_move(
                                 move,
                                 game.game_data.graph,
                                 game.river_manager,
@@ -480,7 +486,8 @@ class ExpectimaxPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             print(
-                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
+                f"Vous devez jouer la tuile en main:"
+                f" {game.game_data.current_hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(
@@ -776,8 +783,9 @@ class MCTSPlayer:
                 game.game_data.history,
                 players=game.game_data.players)
             number_of_players = game.get_number_of_players()
-            game.game_data.current_player_order_list = (
-                game.game_data.current_player_order_list - 1) % number_of_players
+            game.game_data.current_player_order_list = ((
+                game.game_data.current_player_order_list - 1)
+                % number_of_players)
             game.game_data.deck.tiles.append(
                 previous_play.move_str.split('/')[0])
             # print(game.graph.get_verticies())
@@ -787,7 +795,8 @@ class MCTSPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             print(
-                f"Vous devez jouer la tuile en main: {game.game_data.current_hand}")
+                f"Vous devez jouer la tuile en main:"
+                f" {game.game_data.current_hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(
@@ -807,8 +816,9 @@ class MCTSPlayer:
                 game.get_current_player())
             game.game_data.current_hand = None
             number_of_players = game.get_number_of_players()
-            game.game_data.current_player_order_list = (
-                game.game_data.current_player_order_list + 1) % number_of_players
+            game.game_data.current_player_order_list = ((
+                game.game_data.current_player_order_list + 1)
+                % number_of_players)
         # game.get_board()
         # print("----------------------------------------------------")
             return True

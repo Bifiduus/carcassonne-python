@@ -278,7 +278,8 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         seed = game.shuffle_deck()
-        return f"Pioche mélangée. Algo: {game.game_data.shuffle_algo}. Seed: {seed}"
+        return f"Pioche mélangée. Algo: {game.game_data.shuffle_algo}."\
+            f" Seed: {seed}"
 
     def command_save(self, client_id: str, message: str) -> str:
         filename = message[5:].strip()

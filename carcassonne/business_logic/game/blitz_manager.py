@@ -161,7 +161,8 @@ class BlitzManager:
             return False
 
         for _ in range(len(self.game_data.players_order)):
-            player_id = self.game_data.players_order[self.game_data.current_player_order_list]
+            current_players = self.game_data.current_player_order_list
+            player_id = self.game_data.players_order[current_players]
             if not self.is_player_timed_out(player_id):
                 return True
             self.game_data.current_player_order_list = (

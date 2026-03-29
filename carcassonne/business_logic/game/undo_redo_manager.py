@@ -1,5 +1,4 @@
 from carcassonne.business_logic.ai_model import is_ai_player
-from carcassonne.datas.history import History
 
 
 class UndoRedoManager:

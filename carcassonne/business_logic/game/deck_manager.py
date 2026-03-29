@@ -2,7 +2,8 @@ from carcassonne.datas.seed import Seed
 
 
 class DeckManager():
-    """Class to manage the deck of the game, and be able to reset it when needed."""
+    """Class to manage the deck of the game,
+      and be able to reset it when needed."""
 
     def __init__(self, game_data, blitz_manager, river_manager):
         self.game_data = game_data
@@ -10,7 +11,8 @@ class DeckManager():
         self.river_manager = river_manager
 
     def draw_tile(self) -> str | None:
-        """Draw a tile from the deck, checking blitz timeout and player playability."""
+        """Draw a tile from the deck,
+        checking blitz timeout and player playability."""
         timed_out_now = self.blitz_manager.tick_blitz()
         if timed_out_now:
             return None
@@ -20,10 +22,11 @@ class DeckManager():
         if self.game_data.current_hand is not None:
             return self.game_data.current_hand
 
-        if self.river_manager.is_river_active() and not self.game_data.is_river_over():
+        if (self.river_manager.is_river_active()
+                and not self.game_data.is_river_over()):
             tile = self.game_data.deck.draw_river_tile()
 
-        else :
+        else:
             tile = self.game_data.deck.draw()
 
         if tile is None:

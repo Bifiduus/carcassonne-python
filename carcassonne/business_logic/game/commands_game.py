@@ -35,20 +35,23 @@ class CommandsGame():
             return ""
         model = None
         move = ""
-        ai_mode = self.game_data.get_game_configuration().get("ai_mode", "random")
+        configuration = self.game_data.get_game_configuration()
+        ai_mode = configuration.get("ai_mode", "random")
         if ai_mode == "random":
             model = RandomPlayer()
             if self.game:
                 move = model.random_move(
                     self.game_data.current_hand, self.game)
                 print(
-                    f"AI Player {ai_player.get_username()} chooses move: {move}")
+                    f"AI Player {ai_player.get_username()}"
+                    f" chooses move: {move}")
         elif ai_mode == "expectimax":
             if not self.game:
                 return ""
             start_time = time.time()
-            ai_time = self.game_data.get_game_configuration().get("ai_time", 10.0)
-            depth = self.game_data.get_game_configuration().get("ai_minimax_depth", 5)
+            configuration = self.game_data.get_game_configuration()
+            ai_time = configuration.get("ai_time", 10.0)
+            depth = configuration.get("ai_minimax_depth", 5)
             model = ExpectimaxPlayer(
                 self.game, start_time, ai_time or 10.0, depth or 5)
             eval_score, move = model.search(

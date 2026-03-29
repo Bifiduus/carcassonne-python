@@ -71,12 +71,14 @@ class NewGame():
         while self.game_data.get_current_player().is_ai_player():
             from .end_game import EndGame
             end_game = EndGame(
-                self.game_data, self.blitz_manager, self.game_data.rules_manager)
+                self.game_data, self.blitz_manager,
+                self.game_data.rules_manager)
             if end_game.end_game():
                 break
             previous_player_id = self.game_data.get_current_player().get_id()
-            self.game.play_ai_turn(self.game)
+            self.game.play_ai_turn()
             if end_game.end_game():
                 break
-            if self.game_data.get_current_player().get_id() == previous_player_id:
+            if (self.game_data.get_current_player().get_id()
+                    == previous_player_id):
                 break

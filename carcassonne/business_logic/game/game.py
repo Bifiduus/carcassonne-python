@@ -4,7 +4,6 @@ This module implements `IGameService`, handling history, undo/redo,
 rule checks, and persistence interactions.
 """
 
-import random as r
 import time
 from typing import Any, List
 
@@ -223,7 +222,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        vertice = self.game_data.graph.get_vertice_data(tile)
+        self.game_data.graph.get_vertice_data(tile)
 
         return None
 
@@ -290,21 +289,21 @@ class Game(IGameService):
             # espace entre lignes de tuiles
             lines.append("")
 
-        return "\n".join(lines) + "\n"
+        return "\n".join(lines)
 
     def get_close_neighbors(
         self, x: int, y: int
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
 
-     # new method qui:
+    # new method qui:
     # recréer players avec données de repo
     # (dans attributs de fonction), nb de players
     def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
 
-    def add_online_players(self, players: list[Player]) -> str:
-        return self.game_data.add_online_players(players)
+    def add_online_players(self, players: list[Player]) -> None:
+        self.game_data.add_online_players(players)
 
     def draw_tile(self) -> str | None:
         return self.deck_manager.draw_tile()
@@ -333,9 +332,9 @@ class Game(IGameService):
             return False
         if not self.blitz_manager._ensure_current_player_playable():
             return False
-
+        current_players = self.game_data.current_player_order_list
         if (
-            self.game_data.players_order[self.game_data.current_player_order_list]
+            self.game_data.players_order[current_players]
             != self.get_current_player().get_id()
         ):
             print("It is not your turn to play.")
@@ -344,7 +343,8 @@ class Game(IGameService):
             ]
             print(
                 "The one: "
-                f"{expected_player} {self.game_data.current_player_order_list}. "
+                f"{expected_player} "
+                f"{self.game_data.current_player_order_list}. "
                 f"You: {self.get_current_player()}"
             )
             turn = max(self.game_data.graph.get_verticies().keys(),
@@ -359,7 +359,8 @@ class Game(IGameService):
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
             print(
-                f"Vous devez jouer la tuile en main: {self.game_data.current_hand}")
+                f"Vous devez jouer la tuile en main:"
+                f" {self.game_data.current_hand}")
             return False
 
         try:

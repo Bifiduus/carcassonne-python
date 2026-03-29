@@ -230,7 +230,8 @@ class RulesManager:
 
         # Verify that stream is good if we are with stream tiles
         if not river_manager.check_river_turn(move_parts):
-            # print("River shoudn't take two turns in the same rotation two times in a row")
+            # print("River shoudn't take two turns
+            #  in the same rotation two times in a row")
             return False
 
             # Verify meeple placement if applicable
