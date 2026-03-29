@@ -628,7 +628,7 @@ class GameRepository(IGamesRepository):
             "SELECT status FROM players WHERE player_id=?;",
             (int(invited_player),),
         )
-        status = rows[0]["status"]
+        status = rows[0]['status']
         if status == "idle":
             rows = self._execute_non_query(
                 "INSERT INTO pending_invitations(group_id, invited_player,"

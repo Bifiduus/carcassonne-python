@@ -173,10 +173,9 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
-        return game.get_printed_board()
+        return "Game board:\n" + game.get_printed_board()
 
     def command_set(self, client_id: str, message: str) -> str:
-        # peut faire en sorte que seul le chef de groupe puisse la faire
         content = message[3:].strip()
         if "=" in content:
             param, value = content.split("=", 1)
