@@ -30,10 +30,42 @@ class MultiplayerMenu(Gtk.Box):
         self.set_halign(Gtk.Align.CENTER)
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
+        self.set_orientation(Gtk.Orientation.HORIZONTAL)
+        self.set_spacing(20)
+
+        # Left side has controls, right side shows players
+        self.left_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.left_box.set_halign(Gtk.Align.FILL)
+        self.left_box.set_valign(Gtk.Align.START)
+        self.left_box.set_hexpand(True)
+
+        self.players_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.players_box.set_halign(Gtk.Align.END)
+        self.players_box.set_valign(Gtk.Align.START)
+        self.players_box.set_margin_top(20)
+        self.players_box.set_margin_end(20)
+        self.players_box.set_size_request(280, -1)
+        self.players_box.set_hexpand(False)
+        self.players_box.add_css_class("players-sidebar")
+
+        players_title = Gtk.Label(label="Players")
+        players_title.add_css_class("section-title")
+        self.players_box.append(players_title)
+
+        self.players_listbox = Gtk.ListBox()
+        self.players_box.append(self.players_listbox)
+
+        # no hide button: always visible
+        self.players_box.set_visible(True)
 
         title = Gtk.Label(label="Multiplayer")
         title.add_css_class("section-title")
-        self.append(title)
+        self.left_box.append(title)
+
+        self.append(self.left_box)
+        self.append(self.players_box)
 
         # --- search servers  --------------------------------------------------
         server_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
@@ -45,7 +77,11 @@ class MultiplayerMenu(Gtk.Box):
         server_box.set_halign(Gtk.Align.CENTER)
         server_box.append(btn_server)
 
-        self.append(server_box)
+        self.left_box.append(server_box)
+
+        # --- show all players --------------------------------------------------
+        # now always visible in right sidebar: no dedicated button needed
+        self.refresh_players_view()
 
         # --- create server button ----------------------------------------
         create_server_box = Gtk.Box(
@@ -59,12 +95,39 @@ class MultiplayerMenu(Gtk.Box):
         create_server_box.set_halign(Gtk.Align.CENTER)
         create_server_box.append(btn_create_server)
 
-        self.append(create_server_box)
+        self.left_box.append(create_server_box)
         self.entry_create = Gtk.Entry()
         self.entry_create.set_placeholder_text("(leave blank for random)")
 
         create_server_box.append(self.entry_create)
-        self.append(create_server_box)
+        self.left_box.append(create_server_box)
+
+        # --- credentials section ----------------------------------------
+        credentials_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+
+        label_username = Gtk.Label(label="Username")
+        self.entry_username = Gtk.Entry()
+        self.entry_username.set_placeholder_text("Enter username")
+
+        label_password = Gtk.Label(label="Password")
+        self.entry_password = Gtk.Entry()
+        self.entry_password.set_visibility(False)
+        self.entry_password.set_placeholder_text("Enter password")
+
+        btn_update = Gtk.Button(label="Update Credentials")
+        btn_update.add_css_class("back-buttons")
+        btn_update.connect("clicked", self.on_update_credentials)
+        btn_update.set_hexpand(False)
+
+        credentials_box.set_halign(Gtk.Align.CENTER)
+        credentials_box.append(label_username)
+        credentials_box.append(self.entry_username)
+        credentials_box.append(label_password)
+        credentials_box.append(self.entry_password)
+        credentials_box.append(btn_update)
+
+        self.left_box.append(credentials_box)
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
@@ -76,9 +139,21 @@ class MultiplayerMenu(Gtk.Box):
         btn_box.set_halign(Gtk.Align.CENTER)
         btn_box.append(btn_back)
 
-        self.append(btn_box)
+        self.left_box.append(btn_box)
 
     # ------------------------------------------------------------------
+
+    def on_update_credentials(self, button):
+        """Update the user's credentials."""
+        username = self.entry_username.get_text()
+        password = self.entry_password.get_text()
+        if username and password:
+            self.gui.game_data.client.create_default_online_player(
+                username, password, self.gui.game_data.server)
+            # Maybe show a confirmation
+            print(f"Credentials updated to {username}")
+        else:
+            print("Please enter both username and password")
 
     def on_server_list(self, button):
         """Show the server list."""
@@ -131,6 +206,35 @@ class MultiplayerMenu(Gtk.Box):
         self.gui.game_data.client.join_server(server)
 
         popup.close()
+
+    def on_show_all_players(self, button=None):
+        """Refresh the player list in the right-side panel."""
+        players = self.gui.game_data.client.repo.get_scoreboard()
+        self.show_players_sidebar(players)
+
+    def refresh_players_view(self):
+        """Refresh players sidebar from repository without a button."""
+        try:
+            players = self.gui.game_data.client.repo.get_scoreboard()
+        except Exception:
+            players = []
+        self.show_players_sidebar(players)
+
+    def show_players_sidebar(self, players):
+        """Display players in the right-side panel."""
+        # Clear existing entries from listbox
+
+        for player in players:
+            row_box = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            label = Gtk.Label(
+                label=f"{player['username']} - Wins: {player['victories']}, Losses: {player['defeats']}",
+                xalign=0,
+            )
+            row_box.append(label)
+            self.players_listbox.append(row_box)
+
+        self.players_box.set_visible(True)
 
     def on_server_create(self, button):
         """Create a server."""
