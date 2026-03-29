@@ -1,5 +1,4 @@
 import select
-import signal
 import socket
 import threading
 import time
@@ -114,7 +113,8 @@ class Client(IClientService):
         dispatch it to `handle_server_message`.
         """
         try:
-            assert self.client is not None, "Client socket should be initialized"
+            assert self.client is not None, ""\
+                "Client socket should be initialized"
             # Set a timeout for recv to allow periodic checks
             self.client.settimeout(1.0)
             while self.client and not self.shutdown_event.is_set():
@@ -161,17 +161,16 @@ class Client(IClientService):
 
             # not own server
             if message == "Your registration has failed...":
-                username = input("You must send another username:\n>> ")
-                self.temporary_username = username
-                message = (
-                    f"username={username} password="
-                    f"{self.repo.get_password(0)}\n"
-                )
-                self.send_to_server(message)
-            if (
-                message == "Successfull registering !"
-                and self.temporary_username != ""
-            ):
+                answer = input(
+                    "Would you like to try another username ? (y/n)\n>> ")
+                if answer.lower() == "y":
+                    username = input("username:\n>> ")
+                    self.temporary_username = username
+                    message = f"username={username} password="\
+                        f"{self.repo.get_password(0)}\n"
+                    self.send_to_server(message)
+            if (message == "Successfull registering !" and
+                    self.temporary_username != ""):
                 self.repo.set_new_username_for_server(
                     server, self.temporary_username
                 )
@@ -303,17 +302,12 @@ class Client(IClientService):
         This handles both normal and forceful shutdowns.
         """
         print("Starting client disconnection...")
-        if self.client:
-            try:
-                self.client.shutdown(socket.SHUT_RDWR)
-            except Exception as e:
-                print(f"Error shutting down client socket: {e}")
 
         try:
+            self.send_to_server("Bad client disconnection\n")
             # 1. Signal the receive loop to stop
             self.has_joined_server = False
             self.shutdown_event.set()
-
             # 2. Close the client socket
             if self.client:
                 try:

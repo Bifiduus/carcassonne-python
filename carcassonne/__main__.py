@@ -42,15 +42,15 @@ def shutdown_all(signum, frame, server_service: IServerService,
         return
     ALREADY_SHUTTING_DOWN = True
     try:
-        if server_service is not None:
-            server_service.server_stop()
-    except Exception as e:
-        print(f"Error shutting down server: {e}")
-    try:
         if client_service is not None:
             client_service.disconnect()
     except Exception as e:
         print(f"Error shutting down client: {e}")
+    try:
+        if server_service is not None:
+            server_service.server_stop()
+    except Exception as e:
+        print(f"Error shutting down server: {e}")
 
 
 def main() -> int:

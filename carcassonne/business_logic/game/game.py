@@ -285,7 +285,7 @@ class Game(IGameService):
             # espace entre lignes de tuiles
             lines.append("")
 
-        return "\n".join(lines) + "\n"
+        return "\n".join(lines)
 
     def get_close_neighbors(
         self, x: int, y: int
@@ -298,8 +298,8 @@ class Game(IGameService):
     def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
 
-    def add_online_players(self, players: list[Player]) -> str:
-        return self.game_data.add_online_players(players)
+    def add_online_players(self, players: list[Player]) -> None:
+        self.game_data.add_online_players(players)
 
     def draw_tile(self, silent: bool = False) -> str | None:
         return self.deck_manager.draw_tile(silent=silent)
@@ -328,7 +328,6 @@ class Game(IGameService):
             return False
         if not self.blitz_manager._ensure_current_player_playable():
             return False
-
         if (
             self.game_data.players_order[
                 self.game_data.current_player_order_list
@@ -341,7 +340,8 @@ class Game(IGameService):
             ]
             print(
                 "The one: "
-                f"{expected_player} {self.game_data.current_player_order_list}. "
+                f"{expected_player} "
+                f"{self.game_data.current_player_order_list}. "
                 f"You: {self.get_current_player()}"
             )
             turn = (
