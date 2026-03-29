@@ -128,8 +128,18 @@ class GameCLI:
         self._input_thread.start()
 
     def _input_loop(self) -> None:
-        while self.game.get_current_player().is_ai_player():
-            self.game.play_ai_turn(self.game)
+        while (
+            self.game.get_current_player().is_ai_player()
+            and not self.game.end_game()
+        ):
+            with self._game_lock:
+                if not self.running or self.game.end_game():
+                    break
+                self.game.play_ai_turn(self.game)
+
+        if self.game.end_game():
+            self._on_game_over()
+            return
 
         while self.running and not self._stop_event.is_set():
             try:
@@ -155,6 +165,10 @@ class GameCLI:
             print(f"\n{clean_message}")
             self._tick_last_message = clean_message
 
+        if self.game.end_game():
+            self._on_game_over()
+            return
+
         if (
             not self._local_player_can_act()
             and not self.game.end_game()
@@ -162,6 +176,25 @@ class GameCLI:
         ):
             self.game.play_ai_turn(self.game)
             self.game.get_board()
+
+    def _on_game_over(self) -> None:
+        """Display final scores and stop the game loop."""
+        if not self.running:
+            return
+        self.running = False
+        self._stop_event.set()
+        self.game.get_board()
+        print("\n=== Partie terminée ! Scores finaux ===")
+        players_order = self.game.get_players_order()
+        results = []
+        for pid in players_order:
+            player = self.game.game_data.players[pid]
+            username = player.get_username()
+            score = player.get_score_int()
+            results.append((score, username))
+        results.sort(key=lambda x: -x[0])
+        for rank, (score, username) in enumerate(results, start=1):
+            print(f"  {rank}. {username}: {score} points")
 
     def handle_command(self, command):
         is_turn_bound_command = self._is_turn_bound_command(command)

@@ -37,6 +37,7 @@ class GameGUI(Gtk.Application):
 
         self.game_data = game_data
         self.running = True
+        self._end_game_dialog_shown = False
 
         # global CSS and shared helpers
         utils.load_css()

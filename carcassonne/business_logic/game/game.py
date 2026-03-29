@@ -416,13 +416,16 @@ class Game(IGameService):
         self.tick_blitz()
         if not self.blitz_manager._ensure_current_player_playable():
             return
+        if self.end_game():
+            return
         if not self.get_current_player().is_ai_player():
             return
 
         ai_player = self.get_current_player()
         print(f"AI Player {ai_player.get_username()} is thinking...")
-        self.deck_manager.draw_tile()
+        self.deck_manager.draw_tile(silent=True)
         if self.game_data.current_hand is None:
+            self.end_game()
             return
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
@@ -470,7 +473,6 @@ class Game(IGameService):
         if not move:
             print(f"AI Player {ai_player.get_username()} has no legal move.")
             print(self.game_data.current_hand)
-            exit(1)
             return
         if eval_score is None:
             print(f"AI Player {ai_player.get_username()} chooses move: {move}")

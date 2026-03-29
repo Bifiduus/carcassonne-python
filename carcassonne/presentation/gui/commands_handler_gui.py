@@ -139,6 +139,11 @@ def on_redo_gui(gui):
 def on_draw_gui(gui):
     """Draw a tile from the deck and update preview."""
     tile = gui.game_data.draw_tile()
+    if tile is None:
+        gui.tile_preview.set_filename("")
+        if hasattr(gui, "players_view"):
+            gui.players_view.refresh()
+        return
     image_path = utils.tile_image_path(tile)
     gui.tile_preview.set_filename(image_path)
     gui.update_preview_rotation()

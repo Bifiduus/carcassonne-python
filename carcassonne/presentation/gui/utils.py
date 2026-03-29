@@ -1,12 +1,13 @@
 """Utility helpers shared by several GUI modules."""
 
-from gi.repository import Gtk, Gdk, Gio
 import os
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gio", "2.0")
+
+from gi.repository import Gtk, Gdk, Gio  # noqa: E402
 
 
 def get_images_dir() -> str:
@@ -15,13 +16,15 @@ def get_images_dir() -> str:
     return os.path.join(base_dir, "Images")
 
 
-def tile_image_path(name: str) -> str:
+def tile_image_path(name: str | None) -> str:
     """Convert a tile name (possibly including a "/") to its PNG path.
 
     The GUI used to duplicate this logic in several places; centralising
     it here makes it easier to test and maintain.
     """
     images_dir = get_images_dir()
+    if not name:
+        return ""
     if "/" in name:
         parts = name.split("/")
         return os.path.join(images_dir, f"{parts[0]}{parts[1]}.png")

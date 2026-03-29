@@ -59,7 +59,10 @@ class GameDataGui:
         if not self.game.is_undo_history_empty():
             self.game.clear_undo_history()
         if result:
-            while self.game.get_current_player().is_ai_player():
+            while (
+                self.game.get_current_player().is_ai_player()
+                and not self.game.end_game()
+            ):
                 self.game.play_ai_turn(self.game)
                 self._refresh_after_ai_turn()
 
@@ -106,6 +109,10 @@ class GameDataGui:
 
     def draw_tile(self):
         tile_name = self.game.draw_tile()
+        if tile_name is None:
+            self.current_tile = None
+            self.current_orientation = 0
+            return None
         self.nb_tiles += 1
         self.current_tile = TilesView(tile_name, tile_id=self.nb_tiles)
         self.current_orientation = 0
