@@ -1,7 +1,6 @@
 import time
 import socket
 import select
-import signal
 import threading
 
 from carcassonne.business_logic.game.game import Game

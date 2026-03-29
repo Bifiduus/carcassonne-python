@@ -135,7 +135,8 @@ class GameRepository(IGamesRepository):
 
         timeout_table = "CREATE TABLE IF NOT EXISTS timeouts(player_id int" \
             " CONSTRAINT player_id_scoreboard REFERENCES" \
-            " players(player_id), timeout_end float CONSTRAINT timeout_end NOT NULL);"
+            " players(player_id), timeout_end float CONSTRAINT" \
+            " timeout_end NOT NULL);"
         self._execute_non_query(timeout_table)
 
     # low-level helpers
@@ -576,7 +577,9 @@ class GameRepository(IGamesRepository):
             "SELECT proper_client FROM players WHERE username=?;",
             (client_username,)
         )
-        return not bool(rows) or rows[0]['proper_client']
+        if not bool(rows):
+            return True
+        return rows[0]['proper_client']
 
     def check_party_is_alive(self, group_id: int) -> bool:
         rows = self._execute_query(
