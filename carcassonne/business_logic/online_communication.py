@@ -152,6 +152,8 @@ class OnlineCommunication:
         return self.server.repo.change_status(client_username, "idle")
 
     def command_play(self, message: str, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         move: str = message.removeprefix("play ").strip()
@@ -170,12 +172,16 @@ class OnlineCommunication:
         return "Move not played.\n" + board + "\n"
 
     def command_board(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         return "Game board:\n" + game.get_printed_board()
 
     def command_set(self, client_id: str, message: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         content = message[3:].strip()
         if "=" in content:
             param, value = content.split("=", 1)
@@ -201,6 +207,8 @@ class OnlineCommunication:
         return answer
 
     def command_history(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -211,6 +219,8 @@ class OnlineCommunication:
         return answer
 
     def command_score(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -227,6 +237,8 @@ class OnlineCommunication:
         return answer
 
     def command_hand(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -238,6 +250,8 @@ class OnlineCommunication:
         return answer
 
     def command_redo(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -247,6 +261,8 @@ class OnlineCommunication:
         return "Derniers coups rétablis."
 
     def command_undo(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -256,12 +272,16 @@ class OnlineCommunication:
         return "Derniers coups annulés."
 
     def command_hint(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         return game.provide_hint()
 
     def command_draw(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -279,6 +299,8 @@ class OnlineCommunication:
         return answer
 
     def command_shuffle(self, client_id: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
@@ -289,6 +311,8 @@ class OnlineCommunication:
             f" Seed: {seed}"
 
     def command_save(self, client_id: str, message: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         filename = message[5:].strip()
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
@@ -300,6 +324,8 @@ class OnlineCommunication:
         return f"Erreur de la sauvegarde dans {filename}."
 
     def command_load(self, client_id: str, message: str) -> str:
+        if self.server.repo.get_party_id(client_id) == -1:
+            return "You are not in a game."
         filename = message[5:].strip()
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
