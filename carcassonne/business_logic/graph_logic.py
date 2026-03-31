@@ -98,6 +98,7 @@ class GraphLogic:
         lands_set_index = self._build_lands_set_index(graph)
 
         neighbors = vertex.get_neighbors()
+        # Connect cardinal sides to neighbor components
         self._process_cardinal_neighbors(
             tile_id,
             tile_orientation,
@@ -109,6 +110,7 @@ class GraphLogic:
             group_connection_count,
             lands_set_index,
         )
+        # Connect corner groups to neighbor components
         self._process_corner_neighbors(
             tile_id,
             tile_orientation,
@@ -120,6 +122,7 @@ class GraphLogic:
             group_connection_count,
             lands_set_index,
         )
+        # Create components for unlinked groups
         self._create_unlinked_groups(
             tile_id,
             graph,
@@ -127,6 +130,7 @@ class GraphLogic:
             group_land_type,
             lands_set_index,
         )
+        # Merge groups that connected multiple times
         self._merge_connected_groups(
             tile_id,
             graph,
@@ -167,6 +171,9 @@ class GraphLogic:
     ) -> None:
         """Connect cardinal sides of the tile to neighbor components."""
         for side in self.cardinals:
+            # Extract terrain label from the 3x3 tile matrix
+            # at the cardinal position.
+            # match_matrix maps side labels ("N", "E", "S", "W") to (row, col).
             oriented_side = tile_def.direction_matrix[tile_orientation][
                 self.match_matrix[side][0]
             ][self.match_matrix[side][1]]
@@ -202,6 +209,9 @@ class GraphLogic:
     ) -> None:
         """Connect corner groups of the current tile to neighbor components."""
         for corner in self.corners:
+            # Extract terrain label from the 3x3 tile matrix
+            # at the corner position.
+            # match_matrix maps corner labels ("NW", "NE", etc.) to (row, col).
             oriented_corner = tile_def.direction_matrix[tile_orientation][
                 self.match_matrix[corner][0]
             ][self.match_matrix[corner][1]]
@@ -316,6 +326,8 @@ class GraphLogic:
         lands_set_index: LandsSetIndex,
     ) -> List[str]:
         """Collect component names that must be merged for one group key."""
+        # Use object id() to map list references back to component names,
+        # since the index stores list objects but we need their string keys.
         set_names_by_list_id = {
             id(set_list): set_name
             for set_name, set_list in graph.lands_components.get(
@@ -356,9 +368,8 @@ class GraphLogic:
                     graph.lands_components[land_type][other_set_name],
                     main_set_entries,
                 )
-            for meeple in graph.get_meeples():
-                if meeple.lands_components == other_set_name:
-                    meeple.lands_components = main_set_name
+            # Redirect all meeples from the old component to the merged one
+            # to maintain ownership consistency after merge.
             del graph.lands_components[land_type][other_set_name]
 
     @staticmethod
@@ -596,12 +607,13 @@ class GraphLogic:
             None. Mutates component lists and tracking maps when a connection
             exists.
         """
-        # Find the special land type in the corner
         land, corner_grp = self._find_land_and_group_for_side(tile_def, corner)
         if land is None or corner_grp is None:
             return
 
         if corner_number == 0:
+            # Even/odd orientation determines which terrain of the split
+            # corner connects to this neighbor side.
             special_land = (
                 special_corner[0]
                 if tile_orientation % 2 == 0
@@ -625,21 +637,19 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
-
-        # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
-        # Find if neighbor has a direction group containing the opposite
-        # position
+        # Check if neighbor has matching terrain at the opposite position
         neighbor_dir_group = self._find_neighbor_group(
             neighbor_def, special_land, neigh_corner
         )
 
         if neighbor_dir_group is None:
             return
-        # Means we have the same land for the two tiles
+
+        # Link current group to existing neighbor component
         existing_set = self._find_component_set(
             special_land,
             neighbor_id,
@@ -696,7 +706,6 @@ class GraphLogic:
             None. Mutates component lists and tracking maps when a connection
             exists.
         """
-        # Find the land type in the corner
         land, corner_grp = self._find_land_and_group_for_side(tile_def, corner)
         if land is None or corner_grp is None:
             return
@@ -711,21 +720,19 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
-
-        # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
-        # Find if neighbor has a direction group containing the opposite
-        # position
+        # Check if neighbor has matching terrain at the opposite corner
         neighbor_dir_group = self._find_neighbor_group(
             neighbor_def, land, neigh_corner
         )
 
         if neighbor_dir_group is None:
             return
-        # Means we have the same land for the two tiles
+
+        # Link current group to existing neighbor component
         existing_set = self._find_component_set(
             land,
             neighbor_id,
@@ -780,7 +787,6 @@ class GraphLogic:
             None. Mutates component lists and tracking maps when a connection
             exists.
         """
-        # Find the land type of the cardinal
         land, card_grp = self._find_land_and_group_for_side(tile_def, cardinal)
         if land is None or card_grp is None:
             return
@@ -791,21 +797,19 @@ class GraphLogic:
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
         neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
-
-        # Get the opposite corner on neighbor tile
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
 
-        # Find if neighbor has a direction group containing the opposite
-        # position
+        # Check if neighbor has matching terrain on opposite edge
         neighbor_dir_group = self._find_neighbor_group(
             neighbor_def, land, neigh_corner
         )
 
         if neighbor_dir_group is None:
             return
-        # Means we have the same land for the two tiles
+
+        # Link current group to existing neighbor component
         existing_set = self._find_component_set(
             land,
             neighbor_id,
