@@ -24,7 +24,7 @@ class AiMenu(Gtk.Box):
         )
         self.ai_choice = Gtk.ComboBoxText()
         # Exemple de résolutions courantes
-        ais = ["Random", "Minimax", "Monte Carlo"]
+        ais = ["Random", "Minimax", "Monte Carlo", "Iterative"]
         for ai in ais:
             self.ai_choice.append_text(ai)
         # Valeurs par défaut
@@ -34,6 +34,21 @@ class AiMenu(Gtk.Box):
         # Connect signal to apply AI selection immediately
         self.ai_choice.connect("changed", self.on_ai_selected)
         self.append(ai_choice_box)
+
+        # --- Selection function for MCTS -----------------------------------
+        self.selection_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6
+        )
+        self.selection_choice = Gtk.ComboBoxText()
+        selection_functions = ["UCT", "ML"]
+        for func in selection_functions:
+            self.selection_choice.append_text(func)
+        self.selection_choice.set_active(0)
+        self.selection_box.append(Gtk.Label(label="Selection Function:"))
+        self.selection_box.append(self.selection_choice)
+        self.selection_choice.connect("changed", self.on_selection_changed)
+        self.selection_box.set_visible(False)  # Hidden by default
+        self.append(self.selection_box)
 
         # --- Numbers of AI players ---------------------------------------
         ai_players_box = Gtk.Box(
@@ -65,12 +80,26 @@ class AiMenu(Gtk.Box):
             "Random": "random",
             "Minimax": "minimax",
             "Monte Carlo": "mcts",
+            "Iterative": "iterative",
         }
 
         ai_mode = ai_mode_map.get(ai_selection, "minimax")
 
         # Apply the AI configuration
         self.gui.game_data.game.set_game_configuration("ai_mode", ai_mode)
+
+        # Show/hide selection function based on AI mode
+        if ai_selection == "Monte Carlo":
+            self.selection_box.set_visible(True)
+            # Set the selection function
+            selection = self.selection_choice.get_active_text()
+            selection_map = {"UCT": "uct", "ML": "ml"}
+            selection_func = selection_map.get(selection, "uct")
+            self.gui.game_data.game.set_game_configuration(
+                "selection_function", selection_func)
+        else:
+            self.selection_box.set_visible(False)
+
         self.gui.game_data.game.save_config()
 
     def on_ai_players_changed(self, entry):
@@ -84,6 +113,16 @@ class AiMenu(Gtk.Box):
                 self.gui.game_data.game.save_config()
         except ValueError:
             pass
+
+    def on_selection_changed(self, combo_box):
+        """Apply selection function configuration when changed"""
+        if self.selection_box.get_visible():
+            selection = self.selection_choice.get_active_text()
+            selection_map = {"UCT": "uct", "ML": "ml"}
+            selection_func = selection_map.get(selection, "uct")
+            self.gui.game_data.game.set_game_configuration(
+                "selection_function", selection_func)
+            self.gui.game_data.game.save_config()
 
     def on_back(self, button):
         self.gui.window.stack.set_visible_child_name("singleplayer_menu")
