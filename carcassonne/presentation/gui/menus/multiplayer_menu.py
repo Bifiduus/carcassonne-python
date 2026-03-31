@@ -103,7 +103,7 @@ class MultiplayerMenu(Gtk.Box):
         server_mgmt_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_server_mgmt = Gtk.Button(label="Server Management")
-        btn_server_mgmt.add_css_class("orange-buttons")
+        btn_server_mgmt.add_css_class("back-buttons")
         btn_server_mgmt.connect("clicked", self.on_server_management)
         btn_server_mgmt.set_hexpand(False)
 
@@ -114,7 +114,7 @@ class MultiplayerMenu(Gtk.Box):
         invitation_mgmt_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_invitation_mgmt = Gtk.Button(label="Party Invitations")
-        btn_invitation_mgmt.add_css_class("orange-buttons")
+        btn_invitation_mgmt.add_css_class("back-buttons")
         btn_invitation_mgmt.connect("clicked", self.on_invitation_management)
         btn_invitation_mgmt.set_hexpand(False)
 
@@ -124,7 +124,7 @@ class MultiplayerMenu(Gtk.Box):
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back")
-        btn_back.add_css_class("red-buttons")
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 

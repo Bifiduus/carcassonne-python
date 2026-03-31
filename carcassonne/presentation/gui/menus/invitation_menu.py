@@ -1,10 +1,7 @@
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk
 import os
-import ast
 
 import gi
-
-from carcassonne.presentation.interfaces.i_client_service import IClientService
 
 gi.require_version("Gtk", "4.0")
 
@@ -14,22 +11,12 @@ class InvitationMenu(Gtk.Box):
 
     This menu provides controls for sending invitations, accepting/declining
     invitations, managing player status, and viewing player information.
-
-    Follows 3-tier architecture by depending on IClientService interface.
     """
 
-    def __init__(self, gui, client_service: IClientService = None):
+    def __init__(self, gui):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
-        # Use interface for client service (3-tier architecture)
-        self.client_service = client_service or (
-            gui.game_data.client if gui.game_data else None)
-
-        # store last visitor message for external retrieval / tests
-        self.last_server_message = None
-        self.last_server_name = None
-        self._popup_pending = False
 
         self.set_halign(Gtk.Align.CENTER)
         self.set_valign(Gtk.Align.CENTER)
@@ -72,7 +59,7 @@ class InvitationMenu(Gtk.Box):
 
         # Show players button
         btn_show_players = Gtk.Button(label="Show Players")
-        btn_show_players.add_css_class("orange-buttons")
+        btn_show_players.add_css_class("back-buttons")
         btn_show_players.connect("clicked", self.on_show_players)
         info_box.append(btn_show_players)
 
@@ -93,7 +80,7 @@ class InvitationMenu(Gtk.Box):
         self.entry_invite_id = Gtk.Entry()
         self.entry_invite_id.set_placeholder_text("Player ID to invite")
         btn_send_invite = Gtk.Button(label="Send Invitation")
-        btn_send_invite.add_css_class("orange-buttons")
+        btn_send_invite.add_css_class("back-buttons")
         btn_send_invite.connect("clicked", self.on_send_invitation)
         send_box.append(send_label)
         send_box.append(self.entry_invite_id)
@@ -106,17 +93,17 @@ class InvitationMenu(Gtk.Box):
         response_box.set_halign(Gtk.Align.CENTER)
 
         btn_accept = Gtk.Button(label="Accept Invitation")
-        btn_accept.add_css_class("orange-buttons")
+        btn_accept.add_css_class("back-buttons")
         btn_accept.connect("clicked", self.on_accept_invitation)
         response_box.append(btn_accept)
 
         btn_decline = Gtk.Button(label="Decline Invitation")
-        btn_decline.add_css_class("orange-buttons")
+        btn_decline.add_css_class("back-buttons")
         btn_decline.connect("clicked", self.on_decline_invitation)
         response_box.append(btn_decline)
 
         btn_cancel = Gtk.Button(label="Cancel Invitation")
-        btn_cancel.add_css_class("orange-buttons")
+        btn_cancel.add_css_class("back-buttons")
         btn_cancel.connect("clicked", self.on_cancel_invitation)
         response_box.append(btn_cancel)
 
@@ -138,12 +125,12 @@ class InvitationMenu(Gtk.Box):
         status_buttons_box.set_halign(Gtk.Align.CENTER)
 
         btn_away = Gtk.Button(label="Set Away")
-        btn_away.add_css_class("orange-buttons")
+        btn_away.add_css_class("back-buttons")
         btn_away.connect("clicked", self.on_set_away)
         status_buttons_box.append(btn_away)
 
         btn_back_idle = Gtk.Button(label="Back to Idle")
-        btn_back_idle.add_css_class("orange-buttons")
+        btn_back_idle.add_css_class("back-buttons")
         btn_back_idle.connect("clicked", self.on_back_to_idle)
         status_buttons_box.append(btn_back_idle)
 
@@ -155,7 +142,7 @@ class InvitationMenu(Gtk.Box):
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back to Multiplayer")
-        btn_back.add_css_class("red-buttons")
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 
@@ -167,16 +154,41 @@ class InvitationMenu(Gtk.Box):
     # ------------------------------------------------------------------
 
     def on_show_players(self, button):
-        """Show player information - la réponse arrivera via le visitor."""
+        """Show player information."""
         player_id = self.entry_player_id.get_text().strip()
+
         try:
-            message = "players " + player_id if player_id else "players"
-            result = self.client_service.send_to_server(message)
-            if not result:
-                self.show_message("Erreur", "Impossible d'envoyer la requête.")
-            # Pas de popup ici : la réponse viendra via visit_server_message()
+            if player_id:
+                # Show specific player details
+                player_profile = self.gui.game_data.client.repo.get_player_profile(
+                    int(player_id))
+                if player_profile:
+                    player_text = f"Player ID: {player_id}\n"
+                    player_text += f"Username: {player_profile.get('username', 'N/A')}\n"
+                    player_text += f"Status: {player_profile.get('status', 'N/A')}\n"
+                    player_text += f"Wins: {player_profile.get('stats_win', 0)}\n"
+                    player_text += f"Losses: {player_profile.get('stats_lose', 0)}\n"
+                    player_text += f"Score: {player_profile.get('score', 0)}"
+                else:
+                    player_text = f"No player found with ID {player_id}"
+            else:
+                # Show all players
+                scoreboard = self.gui.game_data.client.repo.get_scoreboard()
+                if scoreboard:
+                    player_text = "\n".join([
+                        f"ID: {self.gui.game_data.client.repo.get_id_from_username(p['username'])}, "
+                        f"Name: {p['username']}, "
+                        f"Status: {self.gui.game_data.client.repo.get_status(str(self.gui.game_data.client.repo.get_id_from_username(p['username'])))}"
+                        for p in scoreboard
+                    ])
+                else:
+                    player_text = "No players found"
+
+            self.show_message("Player Information", player_text)
         except Exception as e:
-            self.show_message("Erreur", f"Erreur : {e}")
+            print(f"Error getting player info: {e}")
+            self.show_message(
+                "Error", f"Error getting player information: {e}")
 
     def on_send_invitation(self, button):
         """Send an invitation to a player."""
@@ -186,11 +198,32 @@ class InvitationMenu(Gtk.Box):
             return
 
         try:
-            result = self.client_service.send_to_server(
-                "new " + invite_id)
-            if not result:
-                self.show_message("Error", "Failed to send invitation request")
-            # Response will arrive via visit_server_message() from server
+            # Check if player exists and is not away
+            player_profile = self.gui.game_data.client.repo.get_player_profile(
+                int(invite_id))
+            if not player_profile:
+                self.show_message(
+                    "Error", f"Player {invite_id} does not exist")
+                return
+
+            status = self.gui.game_data.client.repo.get_status(invite_id)
+            if status == "away":
+                self.show_message(
+                    "Error", f"Player {invite_id} is away and cannot receive invitations")
+                return
+
+            # Send invitation
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            result = self.gui.game_data.client.repo.send_invitation(
+                current_player_id, invite_id)
+
+            if result:
+                self.show_message(
+                    "Success", f"Invitation sent to player {invite_id}")
+            else:
+                self.show_message(
+                    "Error", f"Failed to send invitation to player {invite_id}")
         except Exception as e:
             print(f"Error sending invitation: {e}")
             self.show_message("Error", f"Error sending invitation: {e}")
@@ -198,10 +231,19 @@ class InvitationMenu(Gtk.Box):
     def on_accept_invitation(self, button):
         """Accept the current invitation."""
         try:
-            result = self.client_service.send_to_server("accept")
-            if not result:
-                self.show_message("Error", "Failed to send acceptance")
-            # Response will arrive via visit_server_message() from server
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            invitation = self.gui.game_data.client.repo.invitation_received(
+                current_player_id)
+
+            if invitation == (-1, -1):
+                self.show_message("Error", "No pending invitation to accept")
+                return
+
+            self.gui.game_data.client.repo.accept_invitation(
+                invitation[1], current_player_id)
+            self.show_message(
+                "Success", "Invitation accepted. Game will start soon.")
         except Exception as e:
             print(f"Error accepting invitation: {e}")
             self.show_message("Error", f"Error accepting invitation: {e}")
@@ -209,10 +251,17 @@ class InvitationMenu(Gtk.Box):
     def on_decline_invitation(self, button):
         """Decline the current invitation."""
         try:
-            result = self.client_service.send_to_server("decline")
-            if not result:
-                self.show_message("Error", "Failed to send decline response")
-            # Response will arrive via visit_server_message() from server
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            invitation = self.gui.game_data.client.repo.invitation_received(
+                current_player_id)
+
+            if invitation == (-1, -1):
+                self.show_message("Error", "No pending invitation to decline")
+                return
+
+            self.gui.game_data.client.repo.reject_invitation(current_player_id)
+            self.show_message("Success", "Invitation declined")
         except Exception as e:
             print(f"Error declining invitation: {e}")
             self.show_message("Error", f"Error declining invitation: {e}")
@@ -220,10 +269,19 @@ class InvitationMenu(Gtk.Box):
     def on_cancel_invitation(self, button):
         """Cancel a sent invitation."""
         try:
-            result = self.client_service.send_to_server("cancel")
-            if not result:
-                self.show_message("Error", "Failed to send cancellation")
-            # Response will arrive via visit_server_message() from server
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            players_to_cancel = self.gui.game_data.client.repo.invitation_sent_from(
+                current_player_id)
+
+            if not players_to_cancel:
+                self.show_message("Error", "No pending invitations to cancel")
+                return
+
+            # Cancel all pending invitations
+            result = self.gui.game_data.client.repo.cancel_invitation_from(
+                current_player_id, players_to_cancel)
+            self.show_message("Success", f"Invitations cancelled: {result}")
         except Exception as e:
             print(f"Error cancelling invitation: {e}")
             self.show_message("Error", f"Error cancelling invitation: {e}")
@@ -231,10 +289,11 @@ class InvitationMenu(Gtk.Box):
     def on_set_away(self, button):
         """Set player status to away."""
         try:
-            result = self.client_service.send_to_server("away")
-            if not result:
-                self.show_message("Error", "Failed to send away status")
-            # Response will arrive via visit_server_message() from server
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            result = self.gui.game_data.client.repo.change_status(
+                current_player_id, "away")
+            self.show_message("Success", "Status set to away")
         except Exception as e:
             print(f"Error setting status to away: {e}")
             self.show_message("Error", f"Error setting status to away: {e}")
@@ -242,10 +301,11 @@ class InvitationMenu(Gtk.Box):
     def on_back_to_idle(self, button):
         """Set player status back to idle."""
         try:
-            result = self.client_service.send_to_server("back")
-            if not result:
-                self.show_message("Error", "Failed to send idle status")
-            # Response will arrive via visit_server_message() from server
+            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
+                self.gui.game_data.client.client_player))
+            result = self.gui.game_data.client.repo.change_status(
+                current_player_id, "idle")
+            self.show_message("Success", "Status set back to idle")
         except Exception as e:
             print(f"Error setting status to idle: {e}")
             self.show_message("Error", f"Error setting status to idle: {e}")
@@ -254,106 +314,15 @@ class InvitationMenu(Gtk.Box):
         """Return to the multiplayer menu."""
         self.gui.window.stack.set_visible_child_name("multiplayer_menu")
 
-    def show_message(self, title: str, received):
-        """Show a message dialog (GTK4 compatible)."""
-        if isinstance(received, bool):
-            message = "Success" if received else "Failure"
-        elif received is None:
-            message = "No response received"
-        else:
-            message = str(received)
-
-        def _show_dialog():
-            try:
-                parent_window = None
-                if (hasattr(self, 'gui') and self.gui and
-                        hasattr(self.gui, 'window') and self.gui.window and
-                        hasattr(self.gui.window, 'window')):
-                    parent_window = self.gui.window.window
-
-                dialog = Gtk.Window(title=title)
-                dialog.set_modal(True)
-                dialog.set_transient_for(parent_window)
-                dialog.set_default_size(300, 150)
-                dialog.set_resizable(False)
-
-                box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-                box.set_margin_top(20)
-                box.set_margin_bottom(20)
-                box.set_margin_start(20)
-                box.set_margin_end(20)
-
-                label = Gtk.Label(label=message)
-                label.set_wrap(True)
-                label.set_selectable(True)
-                box.append(label)
-
-                btn_ok = Gtk.Button(label="OK")
-                btn_ok.set_halign(Gtk.Align.CENTER)
-                btn_ok.connect("clicked", lambda b: dialog.close())
-                box.append(btn_ok)
-
-                dialog.set_child(box)
-                dialog.present()
-                btn_ok.grab_focus()
-            except Exception as e:
-                print(f"{title}: {message}")
-                print(f"Erreur affichage dialog: {e}")
-            return False
-
-        GLib.idle_add(_show_dialog)
-
-    def visit_server_message(self, message: str, server: str):
-        """Appelé depuis un thread réseau → déléguer au thread GTK."""
-        if self._popup_pending:
-            return  # ignore si une popup est déjà en attente
-        self._popup_pending = True
-        self.last_server_message = message
-        self.last_server_name = server
-        # ✅ Planifie l'affichage sur le thread principal GTK
-        GLib.idle_add(self._handle_server_message, message, server)
-
-    def _handle_server_message(self, message: str, server: str):
-        """Exécuté sur le thread principal GTK."""
-        try:
-            if "List of current players:" in message:
-                self._display_player_list(message)
-            else:
-                self.show_message(
-                    "Server Event", f"Server {server}: {message}")
-        except Exception as e:
-            print(f"Erreur dans _handle_server_message: {e}")
-        finally:
-            self._popup_pending = False  # libère le verrou
-        return False  # Important : dire à GLib de ne pas rappeler cette fonction
-
-    def _display_player_list(self, message: str):
-        """Affiche la liste des joueurs de manière sécurisée."""
-        try:
-            list_str = message.split("List of current players: ", 1)[1]
-            players_list = ast.literal_eval(list_str)
-
-            if not players_list:
-                self.show_message("Joueurs connectés",
-                                  "Aucun joueur connecté.")
-                return
-
-            lines = [f"{'ID':<6} {'Nom':<20} {'Statut'}"]
-            lines.append("─" * 36)
-            for entry in players_list:
-                player_id, username, status = entry
-                lines.append(f"{str(player_id):<6} {username:<20} {status}")
-
-            self.show_message("Joueurs connectés", "\n".join(lines))
-
-        except (ValueError, SyntaxError, IndexError) as e:
-            print(f"Erreur parsing players list: {e}")
-            self.show_message("Joueurs connectés",
-                              f"Réponse brute :\n{message}")
-        except Exception as e:
-            print(f"Erreur dans _display_player_list: {e}")
-            self.show_message("Erreur", f"Erreur lors de l'affichage: {e}")
-
-    def get_last_server_event(self):
-        """Return the last received server event (server, message)."""
-        return self.last_server_name, self.last_server_message
+    def show_message(self, title: str, message: str):
+        """Show a message dialog."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self.gui.window.window,
+            modal=True,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text=title
+        )
+        dialog.set_markup(message)
+        dialog.connect("response", lambda d, r: d.destroy())
+        dialog.present()
