@@ -65,24 +65,27 @@ class GameGUI(Gtk.Application):
         # self.error_message.show_error("Welcome to Carcassonne!")
 
         # main menu is now produced by a small helper
-        menu_overlay = Gtk.Overlay()
-
-        # 📸 Background
-        background = Gtk.Picture.new_for_filename(
-            utils.get_images_dir() + "/main_menu_background_test.png"
+        # 🌍 Fond global derrière tout le GUI
+        css_provider = Gtk.CssProvider()
+        bg_path = utils.get_images_dir() + "/main_menu_background_test.png"
+        css_provider.load_from_data(f"""
+            .global-background {{
+                background-image: url('file://{bg_path}');
+                background-size: cover;
+                background-position: center;
+            }}
+        """.encode())
+        Gtk.StyleContext.add_provider_for_display(
+            window.window.get_display(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
-        background.set_can_shrink(True)
-        background.set_keep_aspect_ratio(False)
+        window.stack.add_css_class("global-background")
+        window.window.set_child(window.stack)
 
-        menu_overlay.set_child(background)
-
-        # 📦 Ton menu actuel
+        # 📦 Menu principal directement dans le stack
         menu = MainMenu.create(self)
-
-        menu_overlay.add_overlay(menu)
-
-        # 👉 on met l'overlay dans le stack
-        window.stack.add_named(menu_overlay, "menu")
+        window.stack.add_named(menu, "menu")
 
         # options page is built once and kept around so that the user can
         # revisit it from either the *Options* button or after doing a
@@ -97,14 +100,14 @@ class GameGUI(Gtk.Application):
         )
         self.server_view = ServerMenu(self)
         window.stack.add_named(self.server_view, "server")
-        self.invitation_view = InvitationMenu(self)
-        window.stack.add_named(self.invitation_view, "invitation")
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
         window.stack.add_named(self.keybinds_view, "keybinds_menu")
         self.ai_view = AiMenu(self)
         window.stack.add_named(self.ai_view, "ai_menu")
+        self.invitation_view = InvitationMenu(self)
+        window.stack.add_named(self.invitation_view, "invitation")
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
