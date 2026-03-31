@@ -552,3 +552,46 @@ class Server(IServerService):
             print(f"Error handling client: {e}")
             return False
         return True
+
+    def number_current_games(self) -> int:
+        return len(self.current_games_list)
+
+    def get_connected_players(self) -> list[dict[str, str]]:
+        """Return a list of connected players with their ID, name, and status."""
+        players = []
+        with self.clients_lock:
+            for socket, username in self.player_clients.items():
+                client_id = self.repo.get_id_from_username(username)
+                status = self.repo.get_status(str(client_id))
+                players.append({
+                    "id": str(client_id),
+                    "name": username,
+                    "status": status
+                })
+        return players
+
+    def start_new_game_with_players(self, player_ids: list[str]) -> str:
+        """Start a new game with the specified players if they are idle and connected."""
+        if not player_ids:
+            return "Error: No player IDs provided"
+
+        # Check if all players exist and are connected and idle
+        connected_players = self.get_connected_players()
+        connected_ids = {p['id'] for p in connected_players}
+        idle_players = {p['id']
+                        for p in connected_players if p['status'] == 'idle'}
+
+        for pid in player_ids:
+            if pid not in connected_ids:
+                return f"Error: Player {pid} is not connected"
+            if pid not in idle_players:
+                return f"Error: Player {pid} is not idle"
+
+        # All checks passed, create the party
+        try:
+            client_ids_int = [int(pid) for pid in player_ids]
+            host_id = str(client_ids_int[0])  # Use first player as host
+            self.create_new_party(client_ids_int, host_id)
+            return f"New game started with players: {', '.join(player_ids)}"
+        except Exception as e:
+            return f"Error starting game: {str(e)}"

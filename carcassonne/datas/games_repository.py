@@ -409,6 +409,15 @@ class GameRepository(IGamesRepository):
             return "Status not changed."
         return f"Status changed to {status}."
 
+    def get_status(self, client_id: str) -> str:
+        rows = self._execute_query(
+            "SELECT status FROM players WHERE player_id=?;",
+            (int(client_id),),
+        )
+        if not rows:
+            return "unknown"
+        return rows[0][0]
+
     def current_players(self) -> str:
         rows = self._execute_query(
             "SELECT player_id, username, status FROM players"
@@ -501,14 +510,14 @@ class GameRepository(IGamesRepository):
         )
         return rows
 
-    def invitation_sent_from(self, client_id: str) -> bool:
+    def invitation_sent_from(self, client_id: str) -> list[str]:
         group_id = self.get_group(int(client_id))
         rows = self._execute_query(
-            "SELECT invitation_id FROM pending_invitations "
-            " WHERE group_id=? AND invitation_status!='accepted';",
+            "SELECT invited_player FROM pending_invitations "
+            " WHERE group_id=? AND invitation_status='waiting';",
             (group_id,),
         )
-        return bool(rows)
+        return [str(row[0]) for row in rows]
 
     def cancel_invitation_from(self, client_id: str, players: list[str]):
         if players == []:

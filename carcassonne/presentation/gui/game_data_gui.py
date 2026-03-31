@@ -5,8 +5,10 @@ from gi.repository import GLib
 
 
 class GameDataGui:
-    def __init__(self, game):
+    def __init__(self, game, client_service, server_service):
         self.game = game
+        self.client = client_service
+        self.server = server_service
         self.nb_tiles = 0  # used to give each drawn tile a unique id
         self.current_tile: TilesView | None = None
         self.current_orientation = 0
