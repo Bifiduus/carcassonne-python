@@ -212,11 +212,19 @@ class InvitationMenu(Gtk.Box):
                     "Error", f"Player {invite_id} is away and cannot receive invitations")
                 return
 
-            # Send invitation
+            # Ensure the sender has a party
+            current_username = self.gui.game_data.client.client_player
             current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
+                current_username))
+            current_player_id_int = int(current_player_id)
+            try:
+                self.gui.game_data.client.repo.get_group(current_player_id_int)
+            except IndexError:
+                self.gui.game_data.client.repo.create_party(current_username)
+
+            # Send invitation
             result = self.gui.game_data.client.repo.send_invitation(
-                current_player_id, invite_id)
+                invite_id, current_player_id)
 
             if result:
                 self.show_message(
