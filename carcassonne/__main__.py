@@ -308,7 +308,7 @@ def main() -> int:
         print(_("GUI mode enabled."))
         from carcassonne.presentation.gui.create_gui import CreateGui
 
-        CreateGui(game)
+        CreateGui(game, client_service, server_service)
     else:
         game_cli = GameCLI(game, server_service, client_service)
         game_cli.run()
