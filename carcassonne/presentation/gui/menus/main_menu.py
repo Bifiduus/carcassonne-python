@@ -24,7 +24,7 @@ class MainMenu:
         title = Gtk.Label(label="Carcassonne")
         title.add_css_class("main-title")
 
-        btn_single = Gtk.Button(label="Singleplayer")
+        btn_single = Gtk.Button(label="Start Game")
         btn_single.add_css_class("game-buttons")
         btn_multi = Gtk.Button(label="Multiplayer")
         btn_multi.add_css_class("game-buttons")
