@@ -3,6 +3,7 @@ from gi.repository import Gtk
 import gi
 
 from carcassonne.i18n import gettext as _
+from carcassonne.presentation.gui import utils
 
 gi.require_version("Gtk", "4.0")
 
@@ -35,8 +36,8 @@ class OptionsMenu(Gtk.Box):
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label=_("Back"))
-        btn_back.add_css_class("back-buttons")
+        btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("quit-button")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
         self.append(btn_box)

@@ -142,7 +142,7 @@ class InvitationMenu(Gtk.Box):
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back to Multiplayer")
-        btn_back.add_css_class("back-buttons")
+        btn_back.add_css_class("quit-button")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 
