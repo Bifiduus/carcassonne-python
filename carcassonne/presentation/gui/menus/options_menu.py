@@ -48,6 +48,7 @@ class OptionsMenu(Gtk.Box):
         self.fullscreen_cb = Gtk.CheckButton(label=_("Fullscreen"))
 
         options_box.append(self.fullscreen_cb)
+        self.fullscreen_cb.connect("toggled", self.on_fullscreen_toggled)
         self.append(options_box)
 
         res_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)

@@ -59,7 +59,10 @@ class WindowView:
 
         # stack of views (menu / game / etc.)
         self.stack = Gtk.Stack()
-        self.window.set_child(self.stack)
+        self.stack.set_hexpand(True)
+        self.stack.set_vexpand(True)
+        self.stack.set_halign(Gtk.Align.FILL)
+        self.stack.set_valign(Gtk.Align.FILL)
 
         # header and menus
 
