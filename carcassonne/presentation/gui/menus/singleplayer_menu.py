@@ -55,8 +55,9 @@ class SingleplayerMenu(Gtk.Box):
         # --- game mode ----------------------------------------------------
         mode_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         mode_box.set_halign(Gtk.Align.CENTER)
-        self.blitz_cb = Gtk.CheckButton(label=_("Blitz mode"))
-        self.contest_cb = Gtk.CheckButton(label=_("Contest mode"))
+        self.blitz_cb = Gtk.CheckButton(label="Blitz mode")
+        self.contest_cb = Gtk.CheckButton(label="Contest mode")
+        self.river_cb = Gtk.CheckButton(label="River mode")
         # file chooser only enabled when contest is active
         self.file_button = Gtk.Button(label=_("Choose contest file"))
         self.file_button.connect("clicked", self.on_choose_file)

@@ -25,8 +25,8 @@ class AiMenu(Gtk.Box):
             orientation=Gtk.Orientation.VERTICAL, spacing=6
         )
         self.ai_choice = Gtk.ComboBoxText()
-        # Available AI modes.
-        ais = ["Random", "Minimax", "Monte Carlo"]
+        # Exemple de résolutions courantes
+        ais = ["Random", "Minimax", "Monte Carlo", "Iterative"]
         for ai in ais:
             self.ai_choice.append_text(_(ai))
         # Default value.
@@ -79,9 +79,10 @@ class AiMenu(Gtk.Box):
 
         # Map display names to internal AI mode names
         ai_mode_map = {
-            _("Random"): "random",
-            _("Minimax"): "minimax",
-            _("Monte Carlo"): "mcts",
+            "Random": "random",
+            "Minimax": "minimax",
+            "Monte Carlo": "mcts",
+            "Iterative": "iterative",
         }
 
         ai_mode = ai_mode_map.get(ai_selection, "minimax")
