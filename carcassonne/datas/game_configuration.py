@@ -14,6 +14,7 @@ DEFAULT_SETTINGS = {
     "ai_time": 5,
     "ai_mode": "minimax",
     "ai_minimax_depth": 80,
+    "ai_minimax_scoring": "baseline",
     "ai_mcts_selection": "UCT",
     "contest_file": "",
     "file_keybinds": {
@@ -56,6 +57,7 @@ class GameConfiguration:
             "ai_time": 5,
             "ai_mode": "minimax",
             "ai_minimax_depth": 83,
+            "ai_minimax_scoring": "baseline",
             "ai_mcts_selection": "UCT",
             "contest_file": "",
         }
@@ -99,6 +101,22 @@ class GameConfiguration:
                 settings["num_ai_players"] = config.getint(
                     "defaults", "num_ai_players"
                 )
+            if config.has_option("defaults", "ai_time"):
+                settings["ai_time"] = config.getint("defaults", "ai_time")
+            if config.has_option("defaults", "ai_mode"):
+                settings["ai_mode"] = config.get("defaults", "ai_mode")
+            if config.has_option("defaults", "ai_minimax_depth"):
+                settings["ai_minimax_depth"] = config.getint(
+                    "defaults", "ai_minimax_depth"
+                )
+            if config.has_option("defaults", "ai_minimax_scoring"):
+                settings["ai_minimax_scoring"] = config.get(
+                    "defaults", "ai_minimax_scoring"
+                )
+            if config.has_option("defaults", "ai_mcts_selection"):
+                settings["ai_mcts_selection"] = config.get(
+                    "defaults", "ai_mcts_selection"
+                )
             # optional contest file
             if config.has_option("defaults", "contest_file"):
                 settings["contest_file"] = config.get(
@@ -133,6 +151,9 @@ class GameConfiguration:
             "ai_time": str(self.settings["ai_time"]),
             "ai_mode": str(self.settings["ai_mode"]),
             "ai_minimax_depth": str(self.settings["ai_minimax_depth"]),
+            "ai_minimax_scoring": str(
+                self.settings["ai_minimax_scoring"]
+            ),
             "ai_mcts_selection": str(self.settings["ai_mcts_selection"]),
             "contest_file": str(self.settings.get("contest_file", "")),
         }

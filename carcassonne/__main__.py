@@ -171,6 +171,17 @@ def main() -> int:
     )
 
     parser.add_argument(
+        "--ai-minimax-scoring",
+        help=(
+            "evaluation function for minimax/iterative "
+            "(baseline|short_term|disruption)"
+        ),
+        type=str,
+        choices=["baseline", "short_term", "disruption"],
+        default=None,
+    )
+
+    parser.add_argument(
         "-ams",
         "--ai-mcts-selection",
         help="selection function for mcts (UCT|ML, default: UCT)",
@@ -223,6 +234,8 @@ def main() -> int:
     config_overrides["ai_mode"] = args.ai_mode
     if args.ai_minimax_depth > 0:
         config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
+    if args.ai_minimax_scoring is not None:
+        config_overrides["ai_minimax_scoring"] = args.ai_minimax_scoring
     config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
     if args.river:
         print("River mode enabled.")

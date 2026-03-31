@@ -12,6 +12,12 @@ from carcassonne.datas.serializer import build_str
 from carcassonne.business_logic.heuristic import (
     evaluate_state as heuristic_evaluate_state,
 )
+from carcassonne.business_logic.heuristic_short_term import (
+    evaluate_state as short_term_evaluate_state,
+)
+from carcassonne.business_logic.heuristic_disruption import (
+    evaluate_state as disruption_evaluate_state,
+)
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.game.game import Game
@@ -80,11 +86,19 @@ class ExpectimaxPlayer:
             self.eval_fn = name_or_fn
             return
 
+        evaluations = {
+            "": heuristic_evaluate_state,
+            "BASELINE": heuristic_evaluate_state,
+            "SHORT_TERM": short_term_evaluate_state,
+            "DISRUPTION": disruption_evaluate_state,
+        }
+
         name = (name_or_fn or "").upper()
-        if name == "":
-            self.eval_fn = heuristic_evaluate_state
-        else:
-            raise ValueError(f"Unknown evaluation method: {name_or_fn}")
+        if name in evaluations:
+            self.eval_fn = evaluations[name]
+            return
+
+        raise ValueError(f"Unknown evaluation method: {name_or_fn}")
 
     def get_possible_moves(self, tile: str, game: "Game") -> List[str]:
         """
