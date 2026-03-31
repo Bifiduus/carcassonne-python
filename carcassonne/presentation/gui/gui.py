@@ -75,7 +75,7 @@ class GameGUI(Gtk.Application):
         # main menu is now produced by a small helper
         # 🌍 Fond global derrière tout le GUI
         css_provider = Gtk.CssProvider()
-        bg_path = utils.get_images_dir() + "/background.png"
+        bg_path = utils.get_images_dir() + "/main_menu_background_test.png"
         css_provider.load_from_data(f"""
             .global-background {{
                 background-image: url('file://{bg_path}');
@@ -108,20 +108,14 @@ class GameGUI(Gtk.Application):
         )
         self.server_view = ServerMenu(self)
         window.stack.add_named(self.server_view, "server")
-        self.invitation_view = InvitationMenu(self)
-        window.stack.add_named(self.invitation_view, "invitation")
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
         window.stack.add_named(self.keybinds_view, "keybinds_menu")
         self.ai_view = AiMenu(self)
         window.stack.add_named(self.ai_view, "ai_menu")
-        self.invitation_view = InvitationMenu(
-            self,
-            client_service=self.game_data.client
-        )
+        self.invitation_view = InvitationMenu(self)
         window.stack.add_named(self.invitation_view, "invitation")
-        self.invitation = self.invitation_view
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
