@@ -78,12 +78,14 @@ class SingleplayerMenu(Gtk.Box):
         mode_box.append(self.time_box)
         mode_box.append(self.contest_cb)
         mode_box.append(self.file_button)
+        mode_box.append(self.river_cb)
 
         self.append(mode_box)
 
         # Connect mode toggle to apply configuration immediately
         self.blitz_cb.connect("toggled", self.on_mode_toggle)
         self.contest_cb.connect("toggled", self.on_mode_toggle)
+        self.river_cb.connect("toggled", self.on_mode_toggle)
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
@@ -128,6 +130,13 @@ class SingleplayerMenu(Gtk.Box):
     def on_mode_toggle(self, button):
         """Apply mode configuration when it changes"""
         # Update UI visibility
+        if button is self.river_cb:
+            river_active = button.get_active()
+            self.gui.game_data.game.set_game_configuration(
+                "river", river_active)
+            self.gui.game_data.game.save_config()
+            return
+
         if button is self.blitz_cb and button.get_active():
             self.contest_cb.set_active(False)
             self.time_box.set_visible(True)
