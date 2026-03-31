@@ -57,8 +57,13 @@ class CommandsGame:
             configuration = self.game_data.get_game_configuration()
             ai_time = configuration.get("ai_time", 10.0)
             depth = configuration.get("ai_minimax_depth", 5)
+            eval_name = configuration.get("ai_minimax_scoring", "baseline")
             model = ExpectimaxPlayer(
-                self.game, start_time, ai_time or 10.0, depth or 5
+                self.game,
+                start_time,
+                ai_time or 10.0,
+                depth or 5,
+                eval_name=eval_name,
             )
             eval_score, move = model.search(
                 self.game,
@@ -76,14 +81,16 @@ class CommandsGame:
             if not self.game:
                 return ""
             start_time = time.time()
-            ai_time = self.game_data.get_game_configuration().get(
-                "ai_time", 10.0
-            )
-            depth = self.game_data.get_game_configuration().get(
-                "ai_minimax_depth", 5
-            )
+            configuration = self.game_data.get_game_configuration()
+            ai_time = configuration.get("ai_time", 10.0)
+            depth = configuration.get("ai_minimax_depth", 5)
+            eval_name = configuration.get("ai_minimax_scoring", "baseline")
             model = IterativeDeepeningPlayer(
-                self.game, start_time, ai_time or 10.0, depth or 5
+                self.game,
+                start_time,
+                ai_time or 10.0,
+                depth or 5,
+                eval_name=eval_name,
             )
             eval_score, move = model.search(
                 self.game,
