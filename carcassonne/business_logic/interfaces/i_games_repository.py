@@ -58,6 +58,10 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def get_status(self, client_id: str) -> str:
+        pass
+
+    @abstractmethod
     def current_players(self) -> str:
         pass
 
@@ -140,7 +144,7 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
-    def invitation_sent_from(self, client_id: str) -> bool:
+    def invitation_sent_from(self, client_id: str) -> list[str]:
         pass
 
     @abstractmethod

@@ -5,7 +5,10 @@ from carcassonne.presentation.gui.board_view import BoardView
 from carcassonne.presentation.gui.error_message_view import ErrorMessageView
 from carcassonne.presentation.gui.info_message import InfoMessage
 from carcassonne.presentation.gui.menus.ai_menu import AiMenu
+from carcassonne.presentation.gui.menus.invitation_menu import InvitationMenu
 from carcassonne.presentation.gui.menus.keybinds_menu import KeybindsMenu
+from carcassonne.presentation.gui.menus.multiplayer_menu import MultiplayerMenu
+from carcassonne.presentation.gui.menus.server_menu import ServerMenu
 from carcassonne.presentation.gui.window_view import WindowView
 from carcassonne.presentation.gui import utils
 from carcassonne.presentation.gui.menus.main_menu import MainMenu
@@ -89,6 +92,14 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(
             self.singleplayer_options_view, "singleplayer_menu"
         )
+        self.multiplayer_options_view = MultiplayerMenu(self)
+        window.stack.add_named(
+            self.multiplayer_options_view, "multiplayer_menu"
+        )
+        self.server_view = ServerMenu(self)
+        window.stack.add_named(self.server_view, "server")
+        self.invitation_view = InvitationMenu(self)
+        window.stack.add_named(self.invitation_view, "invitation")
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
@@ -238,7 +249,7 @@ class GameGUI(Gtk.Application):
 
     def start_multiplayer(self, button):
         # self.game.start_new_game(mode="multi")
-        self.window.stack.set_visible_child_name("game")
+        self.window.stack.set_visible_child_name("multiplayer_menu")
 
     def show_options(self, button):
         self.window.stack.set_visible_child_name("options_menu")

@@ -17,3 +17,15 @@ class IServerService(ABC):
     @abstractmethod
     def server_stop(self):
         pass
+
+    @abstractmethod
+    def number_current_games(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_connected_players(self) -> list[dict[str, str]]:
+        pass
+
+    @abstractmethod
+    def start_new_game_with_players(self, player_ids: list[str]) -> str:
+        pass
