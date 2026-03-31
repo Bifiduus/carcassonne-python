@@ -46,7 +46,6 @@ class CommandsGame:
                 move = model.random_move(
                     self.game_data.current_hand, self.game
                 )
-                username = ai_player.get_username()
                 print(
                     f"AI Player {ai_player.get_username()}"
                     f" chooses move: {move}")
