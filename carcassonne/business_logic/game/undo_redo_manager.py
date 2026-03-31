@@ -1,4 +1,6 @@
 from carcassonne.business_logic.ai_model import is_ai_player
+from carcassonne.business_logic.score_manager import ScoreManager
+from carcassonne.datas.deck import Deck
 
 
 class UndoRedoManager:
@@ -20,14 +22,16 @@ class UndoRedoManager:
         ):
             previous_play = self.game_data.history.pop_past()
             self.game_data.history.push_future(previous_play)
-            while self.game_data.history.past_moves and is_ai_player(
-                self.game_data.history.past_moves[-1]
-            ):
-                previous_play = self.game_data.history.pop_past()
-                self.game_data.history.push_future(previous_play)
+            if is_ai_player(previous_play):
+                while self.game_data.history.past_moves and is_ai_player(
+                    self.game_data.history.past_moves[-1]
+                ):
+                    previous_play = self.game_data.history.pop_past()
+                    self.game_data.history.push_future(previous_play)
 
-            previous_play = self.game_data.history.pop_past()
-            self.game_data.history.push_future(previous_play)
+                if self.game_data.history.past_moves:
+                    previous_play = self.game_data.history.pop_past()
+                    self.game_data.history.push_future(previous_play)
             self._rebuild_state_from_history()
 
     def redo(self) -> None:
@@ -95,4 +99,18 @@ class UndoRedoManager:
         self.game_data.current_player_order_list = len(past_moves) % len(
             self.game_data.players_order
         )
+
+        # Reset end-game scoring flag and reapply final scoring only if the
+        # rebuilt position is terminal.
+        self.game_data._end_game_scored = False
+        if (
+            self.game_data.deck.is_empty()
+            or not self.blitz_manager._has_playable_player()
+        ):
+            ScoreManager.score_end_of_game(
+                self.game_data.graph,
+                self.game_data.players,
+            )
+            self.game_data._end_game_scored = True
+
         self.blitz_manager._ensure_current_player_playable()
