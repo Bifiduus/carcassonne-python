@@ -3,6 +3,8 @@ This module defines the Deck class used to manage Carcassonne tiles.
 It includes tile initialization, deterministic shuffling, and draw helpers.
 """
 
+import random
+
 
 class Deck:
     """Represent the draw pile and tile order for a game."""
@@ -141,28 +143,10 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        # Build deterministic pseudo-random indices from seed digits.
-        seed_list: list[int] = [int(s) for s in str(seed)]
-        seed_index = 0
+        rng = random.Random(seed)
         for i in range(len(self.tiles) - 1, 0, -1):
             # Fisher-Yates step: swap tile i with a tile in [0, i].
-            if seed_index + 1 < len(seed_list):
-                j = (
-                    int(
-                        str(seed_list[seed_index])
-                        + str(seed_list[seed_index + 1])
-                    )
-                    * 123
-                    % (i + 1)
-                )
-                seed_index += 1
-            else:
-                j = (
-                    int(str(seed_list[seed_index]) + str(seed_list[0]))
-                    * 123
-                    % (i + 1)
-                )
-                seed_index = 0
+            j = rng.randrange(i + 1)
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
 
     def shuffle_naive(self, seed: int) -> None:
@@ -172,27 +156,10 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        seed_list: list[int] = [int(s) for s in str(seed)]
-        seed_index = 0
+        rng = random.Random(seed)
         n = len(self.tiles)
         for i in range(n):
-            if seed_index + 1 < len(seed_list):
-                j = (
-                    int(
-                        str(seed_list[seed_index])
-                        + str(seed_list[seed_index + 1])
-                    )
-                    * 123
-                    % n
-                )
-                seed_index += 1
-            else:
-                j = (
-                    int(str(seed_list[seed_index]) + str(seed_list[0]))
-                    * 123
-                    % n
-                )
-                seed_index = 0
+            j = rng.randrange(n)
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
 
     def is_empty(self) -> bool:
