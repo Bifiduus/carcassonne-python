@@ -14,6 +14,7 @@ def test_shuffle_fisher_yates_is_deterministic_for_same_seed():
     deck_b.shuffle_fisher_yates(seed)
 
     assert deck_a.tiles == deck_b.tiles
+    assert deck_a.river_tiles == deck_b.river_tiles
 
 
 def test_shuffle_naive_is_deterministic_for_same_seed():
@@ -25,24 +26,33 @@ def test_shuffle_naive_is_deterministic_for_same_seed():
     deck_b.shuffle_naive(seed)
 
     assert deck_a.tiles == deck_b.tiles
+    assert deck_a.river_tiles == deck_b.river_tiles
 
 
 def test_shuffle_fisher_yates_preserves_tile_multiset():
     deck = Deck()
     original_tiles = Counter(deck.tiles)
+    original_river_tiles = Counter(deck.river_tiles)
+    last_river_tile = deck.river_tiles[-1]
 
     deck.shuffle_fisher_yates(12345678)
 
     assert Counter(deck.tiles) == original_tiles
+    assert Counter(deck.river_tiles) == original_river_tiles
+    assert deck.river_tiles[-1] == last_river_tile
 
 
 def test_shuffle_naive_preserves_tile_multiset():
     deck = Deck()
     original_tiles = Counter(deck.tiles)
+    original_river_tiles = Counter(deck.river_tiles)
+    last_river_tile = deck.river_tiles[-1]
 
     deck.shuffle_naive(12345678)
 
     assert Counter(deck.tiles) == original_tiles
+    assert Counter(deck.river_tiles) == original_river_tiles
+    assert deck.river_tiles[-1] == last_river_tile
 
 
 def _shuffle_small_deck_with_forced_choices(
@@ -50,6 +60,7 @@ def _shuffle_small_deck_with_forced_choices(
 ) -> tuple[str, ...]:
     deck = Deck()
     deck.tiles = ["A", "B", "C"]
+    deck.river_tiles = ["R_END"]
     remaining_choices = iter(choices)
 
     class FakeRandom:
