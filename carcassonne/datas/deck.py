@@ -143,11 +143,51 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        rng = random.Random(seed)
+        # Build deterministic pseudo-random indices from seed digits.
+        seed_list: list[int] = [int(s) for s in str(seed)]
+        seed_index = 0
         for i in range(len(self.tiles) - 1, 0, -1):
             # Fisher-Yates step: swap tile i with a tile in [0, i].
-            j = rng.randrange(i + 1)
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % (i + 1)
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % (i + 1)
+                )
+                seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
+
+        # Shuffle river tiles, keeping the last tile (FFSF) fixed at the end.
+        river_len = len(self.river_tiles) - 1
+        for i in range(river_len - 1, 0, -1):
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % (i + 1)
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % (i + 1)
+                )
+                seed_index = 0
+            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
 
     def shuffle_naive(self, seed: int) -> None:
         """
@@ -156,11 +196,51 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        rng = random.Random(seed)
+        seed_list: list[int] = [int(s) for s in str(seed)]
+        seed_index = 0
         n = len(self.tiles)
         for i in range(n):
-            j = rng.randrange(n)
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % n
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % n
+                )
+                seed_index = 0
             self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
+
+        # Shuffle river tiles, keeping the last tile (FFSF) fixed at the end.
+        river_len = len(self.river_tiles) - 1
+        n_river = river_len
+        for i in range(n_river):
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % n_river
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % n_river
+                )
+                seed_index = 0
+            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
 
     def is_empty(self) -> bool:
         """Return True when no tile remains in the deck."""
