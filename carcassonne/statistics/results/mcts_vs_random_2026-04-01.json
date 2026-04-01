@@ -1,0 +1,230 @@
+{
+  "elapsed_seconds": 389.45,
+  "seeds": [
+    101,
+    202,
+    303,
+    404,
+    505
+  ],
+  "results": {
+    "UCT": {
+      "summary": {
+        "games": 5,
+        "wins": 3,
+        "win_rate": 0.6,
+        "ties_for_first": 0,
+        "avg_target_score": 22.8,
+        "avg_margin_vs_best_opponent": 1,
+        "avg_turns": 71,
+        "total_errors": 0
+      },
+      "runs": [
+        {
+          "seed": 101,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 26,
+            "1": 11,
+            "2": 5,
+            "3": 11,
+            "4": 19
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 26,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 7
+        },
+        {
+          "seed": 202,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 22,
+            "1": 15,
+            "2": 15,
+            "3": 8,
+            "4": 20
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 22,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 2
+        },
+        {
+          "seed": 303,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 28,
+            "1": 19,
+            "2": 12,
+            "3": 16,
+            "4": 11
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 28,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 9
+        },
+        {
+          "seed": 404,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 23,
+            "1": 18,
+            "2": 30,
+            "3": 5,
+            "4": 18
+          },
+          "winners": [
+            2
+          ],
+          "target_score": 23,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -7
+        },
+        {
+          "seed": 505,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 15,
+            "1": 9,
+            "2": 21,
+            "3": 14,
+            "4": 15
+          },
+          "winners": [
+            2
+          ],
+          "target_score": 15,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -6
+        }
+      ]
+    },
+    "ML": {
+      "summary": {
+        "games": 5,
+        "wins": 3,
+        "win_rate": 0.6,
+        "ties_for_first": 0,
+        "avg_target_score": 27.2,
+        "avg_margin_vs_best_opponent": 3.4,
+        "avg_turns": 71,
+        "total_errors": 0
+      },
+      "runs": [
+        {
+          "seed": 101,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 32,
+            "1": 34,
+            "2": 28,
+            "3": 7,
+            "4": 21
+          },
+          "winners": [
+            1
+          ],
+          "target_score": 32,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -2
+        },
+        {
+          "seed": 202,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 35,
+            "1": 11,
+            "2": 9,
+            "3": 20,
+            "4": 12
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 35,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 15
+        },
+        {
+          "seed": 303,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 32,
+            "1": 25,
+            "2": 13,
+            "3": 20,
+            "4": 13
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 32,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 7
+        },
+        {
+          "seed": 404,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 17,
+            "1": 29,
+            "2": 25,
+            "3": 14,
+            "4": 10
+          },
+          "winners": [
+            1
+          ],
+          "target_score": 17,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -12
+        },
+        {
+          "seed": 505,
+          "turns": 71,
+          "errors": 0,
+          "scores": {
+            "0": 20,
+            "1": 11,
+            "2": 10,
+            "3": 3,
+            "4": 9
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 20,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 9
+        }
+      ]
+    }
+  }
+}
