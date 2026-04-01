@@ -297,14 +297,20 @@ class MCTSPlayer:
         return False
 
     def uct_select_child(self, node: MCTSNode, c=1.41):
-        return max(
-            node.get_children(),
-            key=lambda child: (
-                child.get_total_reward() / child.get_visits()
-                + c
-                * math.sqrt(math.log(node.get_visits()) / child.get_visits())
-            ),
-        )
+        def uct_score(child: MCTSNode) -> float:
+            child_visits = child.get_visits()
+            if child_visits <= 0:
+                # Always explore unvisited children first.
+                return float("inf")
+
+            parent_visits = max(node.get_visits(), 1)
+            exploitation = child.get_total_reward() / float(child_visits)
+            exploration = c * math.sqrt(
+                math.log(parent_visits) / float(child_visits)
+            )
+            return exploitation + exploration
+
+        return max(node.get_children(), key=uct_score)
 
     def expand(self, node: MCTSNode):
         move = node.get_untried_moves().pop()
