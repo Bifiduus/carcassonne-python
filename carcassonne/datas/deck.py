@@ -166,6 +166,28 @@ class Deck:
             self._shuffle_fisher_yates_in_place(river_prefix, rng)
             self.river_tiles[:-1] = river_prefix
 
+        # Shuffle river tiles, keeping the last tile (FFSF) fixed at the end.
+        river_len = len(self.river_tiles) - 1
+        for i in range(river_len - 1, 0, -1):
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % (i + 1)
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % (i + 1)
+                )
+                seed_index = 0
+            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
+
     def shuffle_naive(self, seed: int) -> None:
         """
         Shuffle the deck with a deterministic naive swap strategy.
@@ -180,6 +202,29 @@ class Deck:
             river_prefix = self.river_tiles[:-1]
             self._shuffle_naive_in_place(river_prefix, rng)
             self.river_tiles[:-1] = river_prefix
+
+        # Shuffle river tiles, keeping the last tile (FFSF) fixed at the end.
+        river_len = len(self.river_tiles) - 1
+        n_river = river_len
+        for i in range(n_river):
+            if seed_index + 1 < len(seed_list):
+                j = (
+                    int(
+                        str(seed_list[seed_index])
+                        + str(seed_list[seed_index + 1])
+                    )
+                    * 123
+                    % n_river
+                )
+                seed_index += 1
+            else:
+                j = (
+                    int(str(seed_list[seed_index]) + str(seed_list[0]))
+                    * 123
+                    % n_river
+                )
+                seed_index = 0
+            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
 
     def is_empty(self) -> bool:
         """Return True when no tile remains in the deck."""
