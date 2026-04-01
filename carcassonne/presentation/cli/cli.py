@@ -50,9 +50,11 @@ COMMANDS = [
 def completer(texte, state):
 
     # filtrer les commandes qui commencent par text
-    matches = [cmd for cmd in COMMANDS if cmd.startswith(texte)]
+    line = readline.get_line_buffer()
+    prefix = line[:-len(texte)] if texte else line
+    matches = [cmd for cmd in COMMANDS if cmd.startswith(prefix + texte)]
     if state < len(matches):
-        return matches[state]
+        return matches[state][len(prefix):]
     else:
         return None
 
@@ -81,7 +83,10 @@ class GameCLI:
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
 
-        readline.parse_and_bind("set show-all-if-ambiguous on")
+        try:
+            readline.read_history_file('.carcassonne_history')
+        except FileNotFoundError:
+            pass
 
     def _is_turn_bound_command(self, command: str) -> bool:
         return (
@@ -117,6 +122,7 @@ class GameCLI:
             self._stop_event.set()
             if self._input_thread is not None:
                 self._input_thread.join(timeout=0.2)
+            readline.write_history_file('.carcassonne_history')
 
     def _start_input_loop(self) -> None:
         if self._input_thread is not None and self._input_thread.is_alive():
@@ -315,3 +321,6 @@ class GameCLI:
             print(
                 _("Unknown command. Type 'help' to see the list of commands.")
             )
+
+        if command:
+            readline.add_history(command)
