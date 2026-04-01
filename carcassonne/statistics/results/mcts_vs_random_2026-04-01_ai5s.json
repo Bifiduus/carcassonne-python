@@ -1,0 +1,279 @@
+{
+  "elapsed_seconds": 1020.84,
+  "ai_time_seconds": 5,
+  "seeds": [
+    101,
+    202,
+    303,
+    404,
+    505
+  ],
+  "results": {
+    "UCT": {
+      "summary": {
+        "games": 5,
+        "wins": 2,
+        "win_rate": 0.4,
+        "ties_for_first": 0,
+        "avg_target_score": 28,
+        "avg_margin_vs_best_opponent": -0.2,
+        "avg_turns": 71,
+        "avg_mcts_turns": 15,
+        "avg_mcts_steps_total": 1687.8,
+        "avg_mcts_steps_per_turn": 112.52,
+        "max_mcts_steps_single_turn": 1714,
+        "total_errors": 0
+      },
+      "runs": [
+        {
+          "seed": 101,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1644,
+          "mcts_steps_avg_per_mcts_turn": 109.6,
+          "mcts_steps_max_single_turn": 1573,
+          "scores": {
+            "0": 33,
+            "1": 24,
+            "2": 28,
+            "3": 17,
+            "4": 16
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 33,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 5
+        },
+        {
+          "seed": 202,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1748,
+          "mcts_steps_avg_per_mcts_turn": 116.53333333333333,
+          "mcts_steps_max_single_turn": 1714,
+          "scores": {
+            "0": 28,
+            "1": 16,
+            "2": 18,
+            "3": 9,
+            "4": 20
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 28,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 8
+        },
+        {
+          "seed": 303,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1760,
+          "mcts_steps_avg_per_mcts_turn": 117.33333333333333,
+          "mcts_steps_max_single_turn": 1713,
+          "scores": {
+            "0": 26,
+            "1": 22,
+            "2": 2,
+            "3": 33,
+            "4": 10
+          },
+          "winners": [
+            3
+          ],
+          "target_score": 26,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -7
+        },
+        {
+          "seed": 404,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1583,
+          "mcts_steps_avg_per_mcts_turn": 105.53333333333333,
+          "mcts_steps_max_single_turn": 1557,
+          "scores": {
+            "0": 36,
+            "1": 18,
+            "2": 33,
+            "3": 37,
+            "4": 20
+          },
+          "winners": [
+            3
+          ],
+          "target_score": 36,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -1
+        },
+        {
+          "seed": 505,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1704,
+          "mcts_steps_avg_per_mcts_turn": 113.6,
+          "mcts_steps_max_single_turn": 1659,
+          "scores": {
+            "0": 17,
+            "1": 7,
+            "2": 13,
+            "3": 23,
+            "4": 12
+          },
+          "winners": [
+            3
+          ],
+          "target_score": 17,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -6
+        }
+      ]
+    },
+    "ML": {
+      "summary": {
+        "games": 5,
+        "wins": 4,
+        "win_rate": 0.8,
+        "ties_for_first": 0,
+        "avg_target_score": 27,
+        "avg_margin_vs_best_opponent": 6,
+        "avg_turns": 71,
+        "avg_mcts_turns": 15,
+        "avg_mcts_steps_total": 1023,
+        "avg_mcts_steps_per_turn": 68.2,
+        "max_mcts_steps_single_turn": 1136,
+        "total_errors": 0
+      },
+      "runs": [
+        {
+          "seed": 101,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 651,
+          "mcts_steps_avg_per_mcts_turn": 43.4,
+          "mcts_steps_max_single_turn": 562,
+          "scores": {
+            "0": 30,
+            "1": 19,
+            "2": 8,
+            "3": 19,
+            "4": 17
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 30,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 11
+        },
+        {
+          "seed": 202,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1117,
+          "mcts_steps_avg_per_mcts_turn": 74.46666666666667,
+          "mcts_steps_max_single_turn": 1050,
+          "scores": {
+            "0": 29,
+            "1": 7,
+            "2": 25,
+            "3": 21,
+            "4": 21
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 29,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 4
+        },
+        {
+          "seed": 303,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 956,
+          "mcts_steps_avg_per_mcts_turn": 63.733333333333334,
+          "mcts_steps_max_single_turn": 916,
+          "scores": {
+            "0": 32,
+            "1": 9,
+            "2": 10,
+            "3": 12,
+            "4": 15
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 32,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 17
+        },
+        {
+          "seed": 404,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1209,
+          "mcts_steps_avg_per_mcts_turn": 80.6,
+          "mcts_steps_max_single_turn": 1097,
+          "scores": {
+            "0": 29,
+            "1": 10,
+            "2": 0,
+            "3": 13,
+            "4": 25
+          },
+          "winners": [
+            0
+          ],
+          "target_score": 29,
+          "target_win": true,
+          "target_tie_first": true,
+          "target_margin_vs_best_opp": 4
+        },
+        {
+          "seed": 505,
+          "turns": 71,
+          "errors": 0,
+          "mcts_turns": 15,
+          "mcts_steps_total": 1182,
+          "mcts_steps_avg_per_mcts_turn": 78.8,
+          "mcts_steps_max_single_turn": 1136,
+          "scores": {
+            "0": 15,
+            "1": 12,
+            "2": 21,
+            "3": 9,
+            "4": 13
+          },
+          "winners": [
+            2
+          ],
+          "target_score": 15,
+          "target_win": false,
+          "target_tie_first": false,
+          "target_margin_vs_best_opp": -6
+        }
+      ]
+    }
+  }
+}

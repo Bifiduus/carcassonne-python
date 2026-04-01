@@ -112,6 +112,9 @@ class MCTSPlayer:
         self.start_time = start_time
         self.max_time = max_time
         self.end_time = self.start_time + self.max_time
+        # Number of iterations performed in the main MCTS while-loop
+        # during the most recent call to mcts().
+        self.last_search_steps = 0
         # Stack used to save/restore scoring state around each simulation step
         self._sim_state_stack = []
         self.ml_model = None
@@ -390,6 +393,7 @@ class MCTSPlayer:
     def mcts(self, game_root: "Game"):
         root = MCTSNode(game_root, self)
         root_player = game_root.get_current_player()
+        self.last_search_steps = 0
 
         hand_to_restore: str = game_root.game_data.current_hand
 
@@ -432,6 +436,7 @@ class MCTSPlayer:
         )
 
         while time.time() < self.end_time:
+            self.last_search_steps += 1
             node: MCTSNode = root
             state = game_root
 

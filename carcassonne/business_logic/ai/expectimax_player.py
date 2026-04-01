@@ -8,7 +8,7 @@ from typing import List, Tuple, TYPE_CHECKING
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
-from carcassonne.datas.serializer import build_str
+from carcassonne.datas.serializer import build_str, parse_move
 from carcassonne.business_logic.heuristic import (
     evaluate_state as heuristic_evaluate_state,
 )
@@ -46,6 +46,7 @@ class ExpectimaxPlayer:
         eval_fn=None,
         preferred_root_move: str | None = None,
         history_table: dict[str, int] | None = None,
+        prefer_root_meeple: bool = False,
     ):
         """
         Initialize the Expectimax AI player.
@@ -71,6 +72,7 @@ class ExpectimaxPlayer:
         self.start_time = start_time
         self.max_time = max_time
         self.preferred_root_move = preferred_root_move
+        self.prefer_root_meeple = prefer_root_meeple
         # Shared between iterative-deepening iterations to improve move order.
         self.history_table = history_table if history_table is not None else {}
 
@@ -174,10 +176,20 @@ class ExpectimaxPlayer:
         if depth == self.depth_max:
             preferred = self.preferred_root_move
 
+        def _has_meeple(move: str) -> int:
+            if not (self.prefer_root_meeple and depth == self.depth_max):
+                return 0
+            try:
+                parsed = parse_move(move)
+            except ValueError:
+                return 0
+            return 1 if parsed.get("meeple") else 0
+
         def _score(move: str) -> tuple[int, int]:
             is_preferred = 1 if preferred and move == preferred else 0
             history_score = self.history_table.get(move, 0)
-            return (is_preferred, history_score)
+            meeple_score = _has_meeple(move)
+            return (is_preferred, meeple_score, history_score)
 
         return sorted(moves, key=_score, reverse=True)
 

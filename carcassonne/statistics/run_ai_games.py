@@ -54,6 +54,9 @@ def run_single_game(seed, mcts_selection):
     errors = 0
     turns = 0
     stuck = 0
+    mcts_turns = 0
+    mcts_steps_total = 0
+    mcts_steps_max = 0
     prev_hist = len(game.game_data.history.past_moves)
 
     while not game.end_game():
@@ -63,6 +66,11 @@ def run_single_game(seed, mcts_selection):
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 game.play_ai_turn(game)
+            if pid == 0:
+                steps = int(getattr(game, "last_mcts_steps", 0) or 0)
+                mcts_turns += 1
+                mcts_steps_total += steps
+                mcts_steps_max = max(mcts_steps_max, steps)
         except Exception:
             errors += 1
             if not random_fallback_move(game):
@@ -91,6 +99,12 @@ def run_single_game(seed, mcts_selection):
         "seed": seed,
         "turns": turns,
         "errors": errors,
+        "mcts_turns": mcts_turns,
+        "mcts_steps_total": mcts_steps_total,
+        "mcts_steps_avg_per_mcts_turn": (
+            mcts_steps_total / mcts_turns if mcts_turns else 0.0
+        ),
+        "mcts_steps_max_single_turn": mcts_steps_max,
         "scores": scores,
         "winners": winners,
         "target_score": scores[0],
@@ -113,6 +127,16 @@ def summarize(runs):
             r["target_margin_vs_best_opp"] for r in runs
         ),
         "avg_turns": statistics.mean(r["turns"] for r in runs),
+        "avg_mcts_turns": statistics.mean(r["mcts_turns"] for r in runs),
+        "avg_mcts_steps_total": statistics.mean(
+            r["mcts_steps_total"] for r in runs
+        ),
+        "avg_mcts_steps_per_turn": statistics.mean(
+            r["mcts_steps_avg_per_mcts_turn"] for r in runs
+        ),
+        "max_mcts_steps_single_turn": max(
+            r["mcts_steps_max_single_turn"] for r in runs
+        ),
         "total_errors": sum(r["errors"] for r in runs),
     }
 

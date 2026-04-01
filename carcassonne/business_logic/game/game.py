@@ -425,6 +425,8 @@ class Game(IGameService):
             return
 
         ai_player = self.get_current_player()
+        # Exposed metric for benchmark scripts. Updated on MCTS turns.
+        self.last_mcts_steps = 0
         print(f"AI Player {ai_player.get_username()} is thinking...")
         self.deck_manager.draw_tile(silent=True)
         if self.game_data.current_hand is None:
@@ -449,6 +451,7 @@ class Game(IGameService):
                 ai_time or 10.0,
                 depth or 5,
                 eval_name=eval_name,
+                prefer_root_meeple=True,
             )
             eval_score, move = model.search(
                 game,
@@ -487,6 +490,7 @@ class Game(IGameService):
                 game, start_time, ai_time or 10.0, eval_fn_name or "UCT"
             )
             move = model.mcts(game)
+            self.last_mcts_steps = model.last_search_steps
         if not move:
             print(f"AI Player {ai_player.get_username()} has no legal move.")
             print(self.game_data.current_hand)
