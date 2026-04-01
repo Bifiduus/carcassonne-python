@@ -3,8 +3,6 @@ This module defines the Deck class used to manage Carcassonne tiles.
 It includes tile initialization, deterministic shuffling, and draw helpers.
 """
 
-import random
-
 
 class Deck:
     """Represent the draw pile and tile order for a game."""
@@ -187,7 +185,8 @@ class Deck:
                     % (i + 1)
                 )
                 seed_index = 0
-            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
+            self.river_tiles[i], self.river_tiles[j] = \
+                self.river_tiles[j], self.river_tiles[i]
 
     def shuffle_naive(self, seed: int) -> None:
         """
@@ -240,7 +239,8 @@ class Deck:
                     % n_river
                 )
                 seed_index = 0
-            self.river_tiles[i], self.river_tiles[j] = self.river_tiles[j], self.river_tiles[i]
+            self.river_tiles[i], self.river_tiles[j] = \
+                self.river_tiles[j], self.river_tiles[i]
 
     def is_empty(self) -> bool:
         """Return True when no tile remains in the deck."""
