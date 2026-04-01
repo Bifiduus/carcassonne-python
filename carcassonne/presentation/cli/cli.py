@@ -102,7 +102,7 @@ class GameCLI:
 
     def run(self):
         print(_("Welcome to Carcassonne"))
-        print(_("Type 'help' to see the list of commands.") + "\n")
+        print(_("Type 'help' for the list of commands.\n"))
 
         self._start_input_loop()
         last_tick = time.monotonic()

@@ -156,8 +156,22 @@ def draw(self, client_service: IClientService) -> None:
 
 
 def hint(self, client_service) -> None:
-    # hint = self.game.getPlacementHint()
-    print(_("Hint for placing the tile: "))
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("hint")
+        return
+    from carcassonne.datas.serializer import parse_move
+    move = self.game.provide_hint()
+    if move:
+        try:
+            parsed = parse_move(move)
+            description = f"Placez la tuile à la position {parsed['target_id']} sur le côté {parsed['target_side']}, tournée de {parsed['rotation'] * 90} degrés."
+            if parsed['meeple']:
+                description += f" et placez un meeple sur {parsed['meeple']}."
+            print(f"Conseil: {description}")
+        except Exception as e:
+            print(f"Conseil: Jouez le coup {move}")
+    else:
+        print("Aucun conseil disponible.")
 
 
 def undo(self, N, client_service: IClientService) -> None:
