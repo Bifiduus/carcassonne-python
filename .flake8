@@ -1,9 +1,0 @@
-[flake8]
-max-line-length = 79
-# E203: whitespace before ':' — Black produces this in slice notation
-extend-ignore = E203
-exclude =
-    .venv,
-    .git,
-    __pycache__,
-    *.egg-info
