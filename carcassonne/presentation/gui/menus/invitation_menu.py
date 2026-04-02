@@ -159,7 +159,7 @@ class InvitationMenu(Gtk.Box):
 
         try:
             message = "players " + player_id if player_id else "players"
-            result = self.gui.game_data.server.handle_communication.command_players(
+            result = self.gui.game_data.client.send_to_server(
                 message)
             self.show_message("Player Information", result)
         except Exception as e:
@@ -175,11 +175,8 @@ class InvitationMenu(Gtk.Box):
             return
 
         try:
-            current_username = self.gui.game_data.client.client_player
-            current_player_id = str(
-                self.gui.game_data.client.repo.get_id_from_username(current_username))
-            result = self.gui.game_data.server.handle_communication.command_new(
-                "new " + invite_id, current_player_id)
+            result = self.gui.game_data.client.send_to_server(
+                "new " + invite_id)
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error sending invitation: {e}")
@@ -188,10 +185,8 @@ class InvitationMenu(Gtk.Box):
     def on_accept_invitation(self, button):
         """Accept the current invitation."""
         try:
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
-            result = self.gui.game_data.server.handle_communication.command_accept(
-                current_player_id)
+            result = self.gui.game_data.client.send_to_server(
+                "accept")
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error accepting invitation: {e}")
@@ -200,10 +195,9 @@ class InvitationMenu(Gtk.Box):
     def on_decline_invitation(self, button):
         """Decline the current invitation."""
         try:
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
-            result = self.gui.game_data.server.handle_communication.command_decline(
-                current_player_id)
+
+            result = self.gui.game_data.client.send_to_server(
+                "decline")
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error declining invitation: {e}")
@@ -212,10 +206,8 @@ class InvitationMenu(Gtk.Box):
     def on_cancel_invitation(self, button):
         """Cancel a sent invitation."""
         try:
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
-            result = self.gui.game_data.server.handle_communication.command_cancel(
-                current_player_id, "")
+            result = self.gui.game_data.client.send_to_server(
+                "cancel")
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error cancelling invitation: {e}")
@@ -224,9 +216,8 @@ class InvitationMenu(Gtk.Box):
     def on_set_away(self, button):
         """Set player status to away."""
         try:
-            current_username = self.gui.game_data.client.client_player
-            result = self.gui.game_data.server.handle_communication.command_away(
-                current_username)
+            result = self.gui.game_data.client.send_to_server(
+                "away")
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error setting status to away: {e}")
@@ -235,9 +226,8 @@ class InvitationMenu(Gtk.Box):
     def on_back_to_idle(self, button):
         """Set player status back to idle."""
         try:
-            current_username = self.gui.game_data.client.client_player
-            result = self.gui.game_data.server.handle_communication.command_back(
-                current_username)
+            result = self.gui.game_data.client.send_to_server(
+                "back")
             self.show_message("Result", result)
         except Exception as e:
             print(f"Error setting status to idle: {e}")
@@ -247,8 +237,16 @@ class InvitationMenu(Gtk.Box):
         """Return to the multiplayer menu."""
         self.gui.window.stack.set_visible_child_name("multiplayer_menu")
 
-    def show_message(self, title: str, message: str):
+    def show_message(self, title: str, received):
         """Show a message dialog."""
+        # Normalise result to a user-friendly message.
+        if isinstance(received, bool):
+            message = "Success" if received else "Failure"
+        elif received is None:
+            message = "No response received"
+        else:
+            message = str(received)
+
         dialog = Gtk.MessageDialog(
             transient_for=self.gui.window.window,
             modal=True,
