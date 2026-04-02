@@ -66,8 +66,8 @@ class AiMenu(Gtk.Box):
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label=_("Back"))
-        btn_back.add_css_class("back-buttons")
+        btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("orange-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
         self.append(btn_box)

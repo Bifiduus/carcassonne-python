@@ -75,7 +75,7 @@ class GameGUI(Gtk.Application):
         # main menu is now produced by a small helper
         # 🌍 Fond global derrière tout le GUI
         css_provider = Gtk.CssProvider()
-        bg_path = utils.get_images_dir() + "/main_menu_background_test.png"
+        bg_path = utils.get_images_dir() + "/background.png"
         css_provider.load_from_data(f"""
             .global-background {{
                 background-image: url('file://{bg_path}');
