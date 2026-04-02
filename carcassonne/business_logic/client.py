@@ -34,10 +34,7 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         self._recv_thread = None
         self.shutdown_event = threading.Event()
-        # Thread-safety locks
-        # Protects: has_joined_server, client_id, connected_server
-        self.state_lock = threading.Lock()
-        self.servers_lock = threading.Lock()  # Protects: available_servers
+        self.message_visitor: IClientMessageVisitor | None = None
         # Registering phase
         if not self.repo.is_accounted_for():
             print(_("You should create an online account.") + "\n")
@@ -405,8 +402,10 @@ class Client(IClientService):
 
             print(_("Client disconnection complete."))
         except Exception as e:
-            print(
-                _("Error during client disconnection: {error}").format(
-                    error=e
-                )
-            )
+            print(f"Error during client disconnection: {e}")
+
+    def register_message_visitor(
+        self, visitor: IClientMessageVisitor
+    ) -> None:
+        """Register observer/visitor for incoming server messages."""
+        self.message_visitor = visitor
