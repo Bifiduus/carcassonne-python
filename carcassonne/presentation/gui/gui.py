@@ -68,7 +68,7 @@ class GameGUI(Gtk.Application):
         # main menu is now produced by a small helper
         # 🌍 Fond global derrière tout le GUI
         css_provider = Gtk.CssProvider()
-        bg_path = utils.get_images_dir() + "/main_menu_background_test.png"
+        bg_path = utils.get_images_dir() + "/background.png"
         css_provider.load_from_data(f"""
             .global-background {{
                 background-image: url('file://{bg_path}');
@@ -158,7 +158,7 @@ class GameGUI(Gtk.Application):
         back_button.set_margin_end(10)
         back_button.set_halign(Gtk.Align.END)
         back_button.set_valign(Gtk.Align.START)
-        back_button.add_css_class("back-buttons")
+        back_button.add_css_class("red-buttons")
         back_button.connect(
             "clicked",
             lambda b: self.window.stack.set_visible_child_name("menu"),
@@ -208,11 +208,6 @@ class GameGUI(Gtk.Application):
 
         window.stack.add_named(overlay, "game")
         window.stack.set_visible_child_name("menu")
-
-        self.background_image = "fond_bois.jpg"
-        self.board_view.set_background(
-            utils.get_images_dir() + "/" + self.background_image
-        )
 
         # make the window visible on screen
         window.window.present()

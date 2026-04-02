@@ -77,6 +77,14 @@ class OptionsMenu(Gtk.Box):
 
         self.append(res_box)
 
+        # --- back buttons ----------------------------------------
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("red-buttons")
+        btn_back.connect("clicked", self.on_back)
+        btn_box.append(btn_back)
+        self.append(btn_box)
+
     def on_back(self, button):
         self.gui.window.stack.set_visible_child_name("menu")
 
