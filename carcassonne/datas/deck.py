@@ -3,9 +3,26 @@ This module defines the Deck class used to manage Carcassonne tiles.
 It includes tile initialization, deterministic shuffling, and draw helpers.
 """
 
+import random
+
 
 class Deck:
     """Represent the draw pile and tile order for a game."""
+
+    @staticmethod
+    def _shuffle_fisher_yates_in_place(
+        items: list[str], rng: random.Random
+    ) -> None:
+        for i in range(len(items) - 1, 0, -1):
+            j = rng.randrange(i + 1)
+            items[i], items[j] = items[j], items[i]
+
+    @staticmethod
+    def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
+        n = len(items)
+        for i in range(n):
+            j = rng.randrange(n)
+            items[i], items[j] = items[j], items[i]
 
     def __init__(self):
         """Initialize the deck with the base tile distribution."""
@@ -141,29 +158,13 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        # Build deterministic pseudo-random indices from seed digits.
-        seed_list: list[int] = [int(s) for s in str(seed)]
-        seed_index = 0
-        for i in range(len(self.tiles) - 1, 0, -1):
-            # Fisher-Yates step: swap tile i with a tile in [0, i].
-            if seed_index + 1 < len(seed_list):
-                j = (
-                    int(
-                        str(seed_list[seed_index])
-                        + str(seed_list[seed_index + 1])
-                    )
-                    * 123
-                    % (i + 1)
-                )
-                seed_index += 1
-            else:
-                j = (
-                    int(str(seed_list[seed_index]) + str(seed_list[0]))
-                    * 123
-                    % (i + 1)
-                )
-                seed_index = 0
-            self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
+        rng = random.Random(seed)
+        self._shuffle_fisher_yates_in_place(self.tiles, rng)
+
+        if len(self.river_tiles) > 1:
+            river_prefix = self.river_tiles[:-1]
+            self._shuffle_fisher_yates_in_place(river_prefix, rng)
+            self.river_tiles[:-1] = river_prefix
 
     def shuffle_naive(self, seed: int) -> None:
         """
@@ -172,28 +173,13 @@ class Deck:
         Args:
             seed: Seed used to generate pseudo-random swap indices
         """
-        seed_list: list[int] = [int(s) for s in str(seed)]
-        seed_index = 0
-        n = len(self.tiles)
-        for i in range(n):
-            if seed_index + 1 < len(seed_list):
-                j = (
-                    int(
-                        str(seed_list[seed_index])
-                        + str(seed_list[seed_index + 1])
-                    )
-                    * 123
-                    % n
-                )
-                seed_index += 1
-            else:
-                j = (
-                    int(str(seed_list[seed_index]) + str(seed_list[0]))
-                    * 123
-                    % n
-                )
-                seed_index = 0
-            self.tiles[i], self.tiles[j] = self.tiles[j], self.tiles[i]
+        rng = random.Random(seed)
+        self._shuffle_naive_in_place(self.tiles, rng)
+
+        if len(self.river_tiles) > 1:
+            river_prefix = self.river_tiles[:-1]
+            self._shuffle_naive_in_place(river_prefix, rng)
+            self.river_tiles[:-1] = river_prefix
 
     def is_empty(self) -> bool:
         """Return True when no tile remains in the deck."""

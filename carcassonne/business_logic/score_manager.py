@@ -3,13 +3,15 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from carcassonne.business_logic.player import Player
 
-# Direction constants
+# Integer IDs for cardinal directions,
+# used as keys in graph.vertices.neighbors.
 NORTH_DIR = 0
 EAST_DIR = 1
 SOUTH_DIR = 2
 WEST_DIR = 3
 
-# Mapping between position strings and cardinal directions
+# Convert tile definition direction strings ("N", "E", "S", "W")
+# to neighbor dictionary keys.
 DIRECTION_MAP = {
     "N": NORTH_DIR,  # 0
     "E": EAST_DIR,  # 1
@@ -156,7 +158,7 @@ class ScoreManager:
         if vertex is None:
             return False
 
-        # Count surrounding tiles in all 8 directions around the monastery.
+        # Monastery is complete when all 8 surrounding cells are occupied.
         adjacent_count = ScoreManager._count_surrounding_tiles(tile_id, graph)
         is_complete = adjacent_count >= 8
         return is_complete

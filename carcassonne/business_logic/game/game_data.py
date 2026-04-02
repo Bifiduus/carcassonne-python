@@ -60,6 +60,7 @@ class GameData:
         self.rules_manager = RulesManager(self.tiles_info)
         self.current_hand = None
         self.history = History()
+        self._end_game_scored = False
 
     def start_load_game(self):
         self.history.clear_history()

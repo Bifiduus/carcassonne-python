@@ -440,8 +440,15 @@ class Game(IGameService):
         elif self.get_game_configuration().get("ai_mode") == "minimax":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth", 5)
+            eval_name = self.get_game_configuration().get(
+                "ai_minimax_scoring", "baseline"
+            )
             model = ExpectimaxPlayer(
-                game, start_time, ai_time or 10.0, depth or 5
+                game,
+                start_time,
+                ai_time or 10.0,
+                depth or 5,
+                eval_name=eval_name,
             )
             eval_score, move = model.search(
                 game,
@@ -454,8 +461,15 @@ class Game(IGameService):
         elif self.get_game_configuration().get("ai_mode") == "iterative":
             start_time = time.time()
             depth = self.get_game_configuration().get("ai_minimax_depth", 5)
+            eval_name = self.get_game_configuration().get(
+                "ai_minimax_scoring", "baseline"
+            )
             model = IterativeDeepeningPlayer(
-                game, start_time, ai_time or 10.0, depth or 5
+                game,
+                start_time,
+                ai_time or 10.0,
+                depth or 5,
+                eval_name=eval_name,
             )
             eval_score, move = model.search(
                 game,
