@@ -22,7 +22,6 @@ class GameDataGui:
 
     def new_game(self, players_order, seed):
         """Helper that starts a new game and resets GUI state.
-
         ``players_order`` and ``seed`` are simply forwarded to the underlying
         game service (``Game.start_new_game``) so callers such as
         :class:`OptionsView` can influence how the match is initialised.

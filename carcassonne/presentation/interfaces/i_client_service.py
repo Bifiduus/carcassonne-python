@@ -39,3 +39,8 @@ class IClientService(ABC):
     @abstractmethod
     def disconnect(self):
         pass
+
+    @abstractmethod
+    def register_message_visitor(self, visitor):
+        """Register a visitor callback for incoming server messages."""
+        pass

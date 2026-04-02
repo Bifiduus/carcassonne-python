@@ -9,6 +9,9 @@ from carcassonne.business_logic.interfaces.i_games_repository import (
 )
 from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.presentation.interfaces.i_client_message_visitor import (
+    IClientMessageVisitor,
+)
 
 
 class Client(IClientService):
@@ -31,10 +34,16 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         self._recv_thread = None
         self.shutdown_event = threading.Event()
+
+
+<< << << < HEAD
         # Thread-safety locks
         # Protects: has_joined_server, client_id, connected_server
         self.state_lock = threading.Lock()
         self.servers_lock = threading.Lock()  # Protects: available_servers
+== == == =
+        self.message_visitor: IClientMessageVisitor | None = None
+>>>>>> > 84c166c(added Visitor design pattern)
         # Registering phase
         if not self.repo.is_accounted_for():
             print(_("You should create an online account.") + "\n")
@@ -196,6 +205,10 @@ class Client(IClientService):
                     server, self.temporary_username
                 )
                 self.temporary_username = ""
+
+        # Notify any GUI visitor about incoming server message
+        if self.message_visitor is not None:
+            self.message_visitor.visit_server_message(message, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
