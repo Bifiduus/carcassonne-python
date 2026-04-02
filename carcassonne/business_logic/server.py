@@ -21,12 +21,13 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
-    def __init__(self, repo: IGamesRepository | None = None):
+    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
         self.should_stop = threading.Event()
         self.server_thread = None
+        self.daemon = daemon
         # List to track connected client sockets
         self.connected_clients: list[socket.socket] = []
         self.clients_lock = threading.Lock()  # Lock for thread-safe access
@@ -216,7 +217,11 @@ class Server(IServerService):
                     response = self.process_message(str(client_index), message)
                     # fonction qui check le statut d'une invitation et
                     #  l'envoie à l'host
-                    answer = f"Server -> Client{client_index}: {response}\n"
+                    if self.daemon:
+                        answer = ""
+                    else:
+                        answer = f"Server -> Client{client_index}: {response}\n"
+
                     client_socket.send(answer.encode())
                 else:
                     self.handle_client_registering(

@@ -1,13 +1,47 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from carcassonne.business_logic.game import Game
+    from carcassonne.business_logic.game.game import Game
 
 
 class SaveHandler:
+    boolean_settings = [
+        "verbose",
+        "blitz",
+        "contest",
+        "river",
+    ]
+    integer_settings = [
+        "time",
+        "num_ai",
+        "ai_time",
+        "ai_minimax_depth",
+    ]
+    string_settings = [
+        "ai_mode",
+        "ai_minimax_scoring",
+        "ai_mcts_selection",
+        "contest_file",
+    ]
+    keybinds_settings = [
+        "file_keybinds",
+        "game_keybinds",
+    ]
+
     def __init__(self, game: "Game"):
         self.game = game
+
+    def serialize_value(self, value: Any) -> str:
+        # This function would convert the current game state into a string
+        # representation that can be saved to a file. This is a placeholder
+        # implementation and should be expanded based on the actual game state
+        # structure.
+        if isinstance(value, dict):
+            return "[" + ", ".join(
+                f"{k}: {self.serialize_value(v)}" for k, v in value.items()
+            ) + "]"
+        return str(value)
 
     def save_game_to_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
@@ -19,7 +53,8 @@ class SaveHandler:
 
         file.write("[Settings]\n")
         for key, value in self.game.get_game_configuration().items():
-            file.write(f"{key}: {value}\n")
+            serialized_value = self.serialize_value(value)
+            file.write(f"{key}: {serialized_value}\n")
 
         file.write("\n")
         file.write("[GameState]\n")
@@ -59,11 +94,23 @@ class SaveHandler:
         moves_history.reverse()
         while moves_history is not None and len(moves_history) > 0:
             for player in range(self.game.get_number_of_players()):
+                if len(moves_history) == 0:
+                    break
                 move = moves_history.pop()
                 file.write(move + " ")
         file.write("\n")
         file.close()
         return 0
+
+    def handle_keybinds_load(self, line: str, section: str):
+        keybinds = line.split(
+            "[")[1].strip("]")
+        keybinds_dict = {}
+        for keybind in keybinds.split(","):
+            if ":" in keybind:
+                action, key = keybind.split(":")
+                keybinds_dict[action.strip()] = key.strip()
+        self.game.set_game_configuration(section, keybinds_dict)
 
     def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
@@ -143,17 +190,30 @@ class SaveHandler:
                 continue
             elif line == "":
                 continue  # Skip empty lines
-            print(line)
             if settings_section:
                 # Parse settings and configure the game accordingly.
                 # This is a placeholder for demonstration purposes.
                 # Configuration of the game, shuffle algorithm and seed.
-                print("Parsing settings: ", line)
+
+                setting, value = line.split(":", 1)
+                if setting.strip() in self.keybinds_settings:
+                    self.handle_keybinds_load(value, setting.strip())
+                elif setting.strip() in self.boolean_settings:
+                    self.game.set_game_configuration(
+                        setting.strip(), value.strip().lower() == "true"
+                    )
+                elif setting.strip() in self.integer_settings:
+                    self.game.set_game_configuration(
+                        setting.strip(), int(value.strip())
+                    )
+                elif setting.strip() in self.string_settings:
+                    self.game.set_game_configuration(
+                        setting.strip(), value.strip()
+                    )
             elif game_state_section:
                 # Here you would parse the game state.
                 # This is a placeholder for demonstration purposes.
                 # Game scores and player order.
-                print("Parsing game state: ", line)
 
                 if line.startswith("NumberOfPlayers:"):
                     line = line.split("NumberOfPlayers:")[1].strip()
@@ -166,10 +226,6 @@ class SaveHandler:
                     human_players = int(number_of_players.strip())
                     ai_players = int(number_of_ai_players.strip())
                     total_players = human_players + ai_players
-                    print(
-                        "Total number of players specified: "
-                        f"{total_players}."
-                    )
                     min_players = self.game.get_minimum_number_of_players()
                     max_players = self.game.get_maximum_number_of_players()
                     if total_players > max_players:
@@ -179,7 +235,6 @@ class SaveHandler:
                         )
                         continue
                     self.game.set_number_of_ai_players(ai_players)
-                    print(f"Number of players set to {total_players}.")
 
                 if line.startswith("PlayersOrder:"):
                     line = line.split("PlayersOrder:")[1].strip()
@@ -190,9 +245,6 @@ class SaveHandler:
                         int(player_id.strip())
                         for player_id in line.strip("[]").split(",")
                     ]
-                    print(
-                        f"Players order set to"
-                        f" {self.game.game_data.players_order}.")
 
                 if line.startswith("GameScore:"):
                     # Assuming the format is "GameScore: [Player1ID: 10,
@@ -210,16 +262,6 @@ class SaveHandler:
                         for player in self.game.game_data.players.values():
                             if player.get_id() == int(playerID.strip()):
                                 player.score.set_points(int(points.strip()))
-                                game_data = self.game.game_data
-                                players_order = game_data.players_order
-                                player_number = players_order.index(
-                                    player.get_id())
-                                print(
-                                    f"Player number "
-                                    f"{player_number} "
-                                    f"({player.get_username().strip()}) has "
-                                    f"{player.score.score} points."
-                                )
                     game_score = True
                 if line.startswith("Seed:"):
                     # Assuming the format is "Seed: the seed"
@@ -231,7 +273,6 @@ class SaveHandler:
                     self.game.shuffle_deck(
                         "fisher-yates", self.game.game_data.seed
                     )
-                    print(self.game.game_data.deck.tiles)
 
             elif history_section:
                 if not game_score:

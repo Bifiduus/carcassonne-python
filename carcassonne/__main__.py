@@ -193,7 +193,9 @@ def main() -> int:
     parser.add_argument(
         "-S",
         "--server",
-        help=("join a server " "(default: localhost:1235)"),
+        help=(
+            "join a server on port [PORT] "
+            "(default: don't join any server, start in local mode)"),
         type=str,
     )
 
@@ -201,6 +203,7 @@ def main() -> int:
         "-D",
         "--daemon",
         help="Lance le serveur en mode sans interface.",
+        action="store_true",
     )
 
     args: argparse.Namespace = parser.parse_args()
@@ -245,9 +248,8 @@ def main() -> int:
     nb_players = args.players if args.players and 1 < args.players <= 5 else 2
     game: IGameService = Game(game_data, nb_players, config_overrides)
     game_repo: IGamesRepository = GameRepository()
-    # daemon: bool = bool(args.daemon)
-    # Daemon dans server init ?
-    server_service: IServerService = Server(game_repo)
+    daemon: bool = bool(args.daemon)
+    server_service: IServerService = Server(game_repo, daemon=daemon)
     client_service: IClientService = Client(game_repo, server_service)
 
     # Register the global signal handler once
@@ -259,8 +261,15 @@ def main() -> int:
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
+    if args.daemon:
+        print("Starting server in daemon mode (no interface).")
+        server_service.server_start()
+
     if args.server:
+        server_service.server_start(args.server)
+        client_service.list_available_servers()
         client_service.join_server(args.server)
+
     # mettre en place client_service dans le reste
     game.game_data.shuffle_algo = args.shuffle
     game.game_data.default_seed = args.seed

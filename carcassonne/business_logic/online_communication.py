@@ -107,7 +107,7 @@ class OnlineCommunication:
                 invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
                 message = (
-                    f"Server -> {host_username}: {invitee_name}"
+                    f"{invitee_name}"
                     "has accepted your invitation!\n"
                 )
                 host_socket.send(message.encode())
@@ -124,7 +124,7 @@ class OnlineCommunication:
                 invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
                 message = (
-                    f"Server -> {host_username}: {invitee_name}"
+                    f"{invitee_name}"
                     " has rejected your invitation!\n"
                 )
                 host_socket.send(message.encode())
