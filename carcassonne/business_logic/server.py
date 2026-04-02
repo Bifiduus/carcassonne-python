@@ -22,11 +22,16 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
+
+<< << << < HEAD
     def __init__(
         self,
         repo: IGamesRepository | None = None,
         daemon: bool = False,
     ):
+== == == =
+    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
+>>>>>> > c9e23ed(implementation of a headless server, savehandler works for settings, reword daemon and --server options)
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
