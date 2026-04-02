@@ -436,9 +436,11 @@ class Server(IServerService):
         message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
         with self.clients_lock:
             try:
-                invited_client.sendall(message.encode())
                 assert self.repo, "The database should not be None"
-                self.repo.send_invitation(invited_player_id, invitee_player_id)
+                ok = self.repo.send_invitation(invited_player_id,
+                                                invitee_player_id)
+                if ok:
+                    invited_client.sendall(message.encode())
             except Exception as e:
                 print(f"Error sending invitation: {e}")
 
