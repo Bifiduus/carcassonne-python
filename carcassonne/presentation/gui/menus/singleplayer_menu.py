@@ -36,7 +36,7 @@ class SingleplayerMenu(Gtk.Box):
         self.append(title)
 
         ai_button = Gtk.Button(label="Ai")
-        ai_button.add_css_class("options-buttons")
+        ai_button.add_css_class("orange-buttons")
         ai_button.connect("clicked", self.on_ai_options)
         self.append(ai_button)
 
@@ -89,7 +89,7 @@ class SingleplayerMenu(Gtk.Box):
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back")
-        btn_back.add_css_class("quit-button")
+        btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 

@@ -23,23 +23,15 @@ class OptionsMenu(Gtk.Box):
 
         # --- game options button ---------------------------------------------
         keybinds_button = Gtk.Button(label="Game")
-        keybinds_button.add_css_class("options-buttons")
+        keybinds_button.add_css_class("orange-buttons")
         keybinds_button.connect("clicked", self.on_game_options)
         self.append(keybinds_button)
 
         # --- keybinds button -------------------------------------------------
         keybinds_button = Gtk.Button(label="Keybinds")
-        keybinds_button.add_css_class("options-buttons")
+        keybinds_button.add_css_class("orange-buttons")
         keybinds_button.connect("clicked", self.on_keybinds)
         self.append(keybinds_button)
-
-        # --- back buttons ----------------------------------------
-        btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
-        btn_back.add_css_class("quit-button")
-        btn_back.connect("clicked", self.on_back)
-        btn_box.append(btn_back)
-        self.append(btn_box)
 
         # ------------------------------------------------------------------
 
@@ -73,10 +65,19 @@ class OptionsMenu(Gtk.Box):
 
         # bouton pour appliquer la résolution
         apply_btn = Gtk.Button(label="Apply Resolution")
+        apply_btn.add_css_class("orange-buttons")
         apply_btn.connect("clicked", self.apply_resolution)
         res_box.append(apply_btn)
 
         self.append(res_box)
+
+        # --- back buttons ----------------------------------------
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        btn_back = Gtk.Button(label="Back")
+        btn_back.add_css_class("red-buttons")
+        btn_back.connect("clicked", self.on_back)
+        btn_box.append(btn_back)
+        self.append(btn_box)
 
     def on_back(self, button):
         self.gui.window.stack.set_visible_child_name("menu")

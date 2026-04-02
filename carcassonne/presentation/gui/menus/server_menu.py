@@ -42,7 +42,7 @@ class ServerMenu(Gtk.Box):
         # --- search servers  --------------------------------------------------
         server_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_server = Gtk.Button(label="Server list")
-        btn_server.add_css_class("back-buttons")
+        btn_server.add_css_class("orange-buttons")
         btn_server.connect("clicked", self.on_server_list)
         btn_server.set_hexpand(False)
 
@@ -78,12 +78,12 @@ class ServerMenu(Gtk.Box):
         buttons_box.set_halign(Gtk.Align.CENTER)
 
         btn_start_server = Gtk.Button(label="Start Server")
-        btn_start_server.add_css_class("back-buttons")
+        btn_start_server.add_css_class("orange-buttons")
         btn_start_server.connect("clicked", self.on_start_server)
         buttons_box.append(btn_start_server)
 
         btn_stop_server = Gtk.Button(label="Stop Server")
-        btn_stop_server.add_css_class("back-buttons")
+        btn_stop_server.add_css_class("orange-buttons")
         btn_stop_server.connect("clicked", self.on_stop_server)
         buttons_box.append(btn_stop_server)
 
@@ -101,19 +101,19 @@ class ServerMenu(Gtk.Box):
 
         # Status button
         btn_status = Gtk.Button(label="Server Status")
-        btn_status.add_css_class("back-buttons")
+        btn_status.add_css_class("orange-buttons")
         btn_status.connect("clicked", self.on_server_status)
         info_box.append(btn_status)
 
         # Players button
         btn_players = Gtk.Button(label="Connected Players")
-        btn_players.add_css_class("back-buttons")
+        btn_players.add_css_class("orange-buttons")
         btn_players.connect("clicked", self.on_show_players)
         info_box.append(btn_players)
 
         # Scoreboard button
         btn_scoreboard = Gtk.Button(label="Scoreboard")
-        btn_scoreboard.add_css_class("back-buttons")
+        btn_scoreboard.add_css_class("orange-buttons")
         btn_scoreboard.connect("clicked", self.on_show_scoreboard)
         info_box.append(btn_scoreboard)
 
@@ -134,21 +134,21 @@ class ServerMenu(Gtk.Box):
 
         # Disconnect button (only shown if connected)
         self.btn_disconnect = Gtk.Button(label="Disconnect from Server")
-        self.btn_disconnect.add_css_class("back-buttons")
+        self.btn_disconnect.add_css_class("orange-buttons")
         self.btn_disconnect.connect("clicked", self.on_disconnect_from_server)
         self.btn_disconnect.set_visible(False)  # Hidden by default
         connection_buttons_box.append(self.btn_disconnect)
 
         # Ping button (only shown if connected)
         self.btn_ping = Gtk.Button(label="Ping Server")
-        self.btn_ping.add_css_class("back-buttons")
+        self.btn_ping.add_css_class("orange-buttons")
         self.btn_ping.connect("clicked", self.on_ping_server)
         self.btn_ping.set_visible(False)  # Hidden by default
         connection_buttons_box.append(self.btn_ping)
 
         # Stop local server button (only shown if server is running)
         self.btn_stop_local_server = Gtk.Button(label="Stop Local Server")
-        self.btn_stop_local_server.add_css_class("back-buttons")
+        self.btn_stop_local_server.add_css_class("orange-buttons")
         self.btn_stop_local_server.connect(
             "clicked", self.on_stop_local_server)
         self.btn_stop_local_server.set_visible(False)  # Hidden by default
@@ -165,7 +165,7 @@ class ServerMenu(Gtk.Box):
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back to Multiplayer")
-        btn_back.add_css_class("quit-button")
+        btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 

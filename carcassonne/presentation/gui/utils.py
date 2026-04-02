@@ -59,27 +59,28 @@ def load_css() -> None:
         padding: 4px;
     }
     .main-title {
-        font-size: 70px;
+        font-family: "DejaVu Sans Mono", monospace;
+        font-size: 42px;
         font-weight: bold;
-        color: orange;
+        letter-spacing: 0px;
+        color: #fffdfb;
         letter-spacing: 2px;
-        text-shadow:
-            2px 2px 0px #000,
-            4px 4px 6px rgba(0,0,0,0.5);
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     }
 
     .section-title {
+    font-family: "DejaVu Sans Mono", monospace;
     font-size: 36px;
     font-weight: 900;
-    color: #ff9800;
+    letter-spacing: 0px;
+    color: #fffdfb;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     }
 
-
-
-    /*Options buttons*/
-    .options-buttons {
-    background: linear-gradient(135deg, #F7B82F, #F54927);
-    color: white;
+    /*orange buttons*/
+    .orange-buttons {
+    background: #ff8032;
+    color: black;
     border-radius: 10px;
     padding: 10px;
     font-weight: bold;
@@ -89,26 +90,25 @@ def load_css() -> None:
     }
 
     /* Hover */
-    .options-buttons:hover {
+    .orange-buttons:hover {
         background: linear-gradient(135deg, #94FF4A, #30A61E);
         transform: translateY(-2px);
     }
 
     /* Click */
-    .options-buttons:active {
+    .orange-buttons:active {
         transform: scale(0.96);
     }
-
     /* Focus (clavier) */
-    .options-buttons:focus {
+    .orange-buttons:focus {
         outline: 2px solid white;
         outline-offset: 2px;
     }
 
-    /*Quit button*/
-    .quit-button {
-    background: #ff3d1d;
-    color: white;
+    /*red buttons*/
+    .red-buttons {
+    background: #ff3737;
+    color: black;
     border-radius: 10px;
     padding: 10px;
     font-weight: bold;
@@ -118,80 +118,24 @@ def load_css() -> None:
     }
 
     /* Hover */
-    .quit-button:hover {
+    .red-buttons:hover {
         background: linear-gradient(135deg, #94FF4A, #30A61E);
         transform: translateY(-2px);
     }
 
     /* Click */
-    .quit-button:active {
+    .red-buttons:active {
         transform: scale(0.96);
     }
     /* Focus (clavier) */
-    .quit-button:focus {
-        outline: 2px solid white;
-        outline-offset: 2px;
-    }
-
-    /*Back buttons*/
-    .back-buttons {
-    background: #ab8ee7;
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    font-weight: bold;
-    border: none;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-
-    /* Hover */
-    .back-buttons:hover {
-        background: linear-gradient(135deg, #94FF4A, #30A61E);
-        transform: translateY(-2px);
-    }
-
-    /* Click */
-    .back-buttons:active {
-        transform: scale(0.96);
-    }
-    /* Focus (clavier) */
-    .back-buttons:focus {
-        outline: 2px solid white;
-        outline-offset: 2px;
-    }
-
-    /*game buttons*/
-    .game-buttons {
-    background: linear-gradient(135deg, #2FCCF7, #2F39F7);
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    font-weight: bold;
-    border: none;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-
-    /* Hover */
-    .game-buttons:hover {
-        background: linear-gradient(135deg, #94FF4A, #30A61E);
-        transform: translateY(-2px);
-    }
-
-    /* Click */
-    .game-buttons:active {
-        transform: scale(0.96);
-    }
-    /* Focus (clavier) */
-    .game-buttons:focus {
+    .red-buttons:focus {
         outline: 2px solid white;
         outline-offset: 2px;
     }
     /*header buttons*/
     /*.headers_buttons {
     background: #ab8ee7;
-    color: white;
+    color: black;
     border-radius: 10px;
     padding: 10px;
     font-weight: bold;

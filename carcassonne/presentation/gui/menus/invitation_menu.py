@@ -59,7 +59,7 @@ class InvitationMenu(Gtk.Box):
 
         # Show players button
         btn_show_players = Gtk.Button(label="Show Players")
-        btn_show_players.add_css_class("back-buttons")
+        btn_show_players.add_css_class("orange-buttons")
         btn_show_players.connect("clicked", self.on_show_players)
         info_box.append(btn_show_players)
 
@@ -80,7 +80,7 @@ class InvitationMenu(Gtk.Box):
         self.entry_invite_id = Gtk.Entry()
         self.entry_invite_id.set_placeholder_text("Player ID to invite")
         btn_send_invite = Gtk.Button(label="Send Invitation")
-        btn_send_invite.add_css_class("back-buttons")
+        btn_send_invite.add_css_class("orange-buttons")
         btn_send_invite.connect("clicked", self.on_send_invitation)
         send_box.append(send_label)
         send_box.append(self.entry_invite_id)
@@ -93,17 +93,17 @@ class InvitationMenu(Gtk.Box):
         response_box.set_halign(Gtk.Align.CENTER)
 
         btn_accept = Gtk.Button(label="Accept Invitation")
-        btn_accept.add_css_class("back-buttons")
+        btn_accept.add_css_class("orange-buttons")
         btn_accept.connect("clicked", self.on_accept_invitation)
         response_box.append(btn_accept)
 
         btn_decline = Gtk.Button(label="Decline Invitation")
-        btn_decline.add_css_class("back-buttons")
+        btn_decline.add_css_class("orange-buttons")
         btn_decline.connect("clicked", self.on_decline_invitation)
         response_box.append(btn_decline)
 
         btn_cancel = Gtk.Button(label="Cancel Invitation")
-        btn_cancel.add_css_class("back-buttons")
+        btn_cancel.add_css_class("orange-buttons")
         btn_cancel.connect("clicked", self.on_cancel_invitation)
         response_box.append(btn_cancel)
 
@@ -125,12 +125,12 @@ class InvitationMenu(Gtk.Box):
         status_buttons_box.set_halign(Gtk.Align.CENTER)
 
         btn_away = Gtk.Button(label="Set Away")
-        btn_away.add_css_class("back-buttons")
+        btn_away.add_css_class("orange-buttons")
         btn_away.connect("clicked", self.on_set_away)
         status_buttons_box.append(btn_away)
 
         btn_back_idle = Gtk.Button(label="Back to Idle")
-        btn_back_idle.add_css_class("back-buttons")
+        btn_back_idle.add_css_class("orange-buttons")
         btn_back_idle.connect("clicked", self.on_back_to_idle)
         status_buttons_box.append(btn_back_idle)
 
@@ -142,7 +142,7 @@ class InvitationMenu(Gtk.Box):
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_back = Gtk.Button(label="Back to Multiplayer")
-        btn_back.add_css_class("quit-button")
+        btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 
@@ -158,33 +158,10 @@ class InvitationMenu(Gtk.Box):
         player_id = self.entry_player_id.get_text().strip()
 
         try:
-            if player_id:
-                # Show specific player details
-                player_profile = self.gui.game_data.client.repo.get_player_profile(
-                    int(player_id))
-                if player_profile:
-                    player_text = f"Player ID: {player_id}\n"
-                    player_text += f"Username: {player_profile.get('username', 'N/A')}\n"
-                    player_text += f"Status: {player_profile.get('status', 'N/A')}\n"
-                    player_text += f"Wins: {player_profile.get('stats_win', 0)}\n"
-                    player_text += f"Losses: {player_profile.get('stats_lose', 0)}\n"
-                    player_text += f"Score: {player_profile.get('score', 0)}"
-                else:
-                    player_text = f"No player found with ID {player_id}"
-            else:
-                # Show all players
-                scoreboard = self.gui.game_data.client.repo.get_scoreboard()
-                if scoreboard:
-                    player_text = "\n".join([
-                        f"ID: {self.gui.game_data.client.repo.get_id_from_username(p['username'])}, "
-                        f"Name: {p['username']}, "
-                        f"Status: {self.gui.game_data.client.repo.get_status(str(self.gui.game_data.client.repo.get_id_from_username(p['username'])))}"
-                        for p in scoreboard
-                    ])
-                else:
-                    player_text = "No players found"
-
-            self.show_message("Player Information", player_text)
+            message = "players " + player_id if player_id else "players"
+            result = self.gui.game_data.server.handle_communication.command_players(
+                message)
+            self.show_message("Player Information", result)
         except Exception as e:
             print(f"Error getting player info: {e}")
             self.show_message(
@@ -198,40 +175,12 @@ class InvitationMenu(Gtk.Box):
             return
 
         try:
-            # Check if player exists and is not away
-            player_profile = self.gui.game_data.client.repo.get_player_profile(
-                int(invite_id))
-            if not player_profile:
-                self.show_message(
-                    "Error", f"Player {invite_id} does not exist")
-                return
-
-            status = self.gui.game_data.client.repo.get_status(invite_id)
-            if status == "away":
-                self.show_message(
-                    "Error", f"Player {invite_id} is away and cannot receive invitations")
-                return
-
-            # Ensure the sender has a party
             current_username = self.gui.game_data.client.client_player
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                current_username))
-            current_player_id_int = int(current_player_id)
-            try:
-                self.gui.game_data.client.repo.get_group(current_player_id_int)
-            except IndexError:
-                self.gui.game_data.client.repo.create_party(current_username)
-
-            # Send invitation
-            result = self.gui.game_data.client.repo.send_invitation(
-                invite_id, current_player_id)
-
-            if result:
-                self.show_message(
-                    "Success", f"Invitation sent to player {invite_id}")
-            else:
-                self.show_message(
-                    "Error", f"Failed to send invitation to player {invite_id}")
+            current_player_id = str(
+                self.gui.game_data.client.repo.get_id_from_username(current_username))
+            result = self.gui.game_data.server.handle_communication.command_new(
+                "new " + invite_id, current_player_id)
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error sending invitation: {e}")
             self.show_message("Error", f"Error sending invitation: {e}")
@@ -241,17 +190,9 @@ class InvitationMenu(Gtk.Box):
         try:
             current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
                 self.gui.game_data.client.client_player))
-            invitation = self.gui.game_data.client.repo.invitation_received(
+            result = self.gui.game_data.server.handle_communication.command_accept(
                 current_player_id)
-
-            if invitation == (-1, -1):
-                self.show_message("Error", "No pending invitation to accept")
-                return
-
-            self.gui.game_data.client.repo.accept_invitation(
-                invitation[1], current_player_id)
-            self.show_message(
-                "Success", "Invitation accepted. Game will start soon.")
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error accepting invitation: {e}")
             self.show_message("Error", f"Error accepting invitation: {e}")
@@ -261,15 +202,9 @@ class InvitationMenu(Gtk.Box):
         try:
             current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
                 self.gui.game_data.client.client_player))
-            invitation = self.gui.game_data.client.repo.invitation_received(
+            result = self.gui.game_data.server.handle_communication.command_decline(
                 current_player_id)
-
-            if invitation == (-1, -1):
-                self.show_message("Error", "No pending invitation to decline")
-                return
-
-            self.gui.game_data.client.repo.reject_invitation(current_player_id)
-            self.show_message("Success", "Invitation declined")
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error declining invitation: {e}")
             self.show_message("Error", f"Error declining invitation: {e}")
@@ -279,17 +214,9 @@ class InvitationMenu(Gtk.Box):
         try:
             current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
                 self.gui.game_data.client.client_player))
-            players_to_cancel = self.gui.game_data.client.repo.invitation_sent_from(
-                current_player_id)
-
-            if not players_to_cancel:
-                self.show_message("Error", "No pending invitations to cancel")
-                return
-
-            # Cancel all pending invitations
-            result = self.gui.game_data.client.repo.cancel_invitation_from(
-                current_player_id, players_to_cancel)
-            self.show_message("Success", f"Invitations cancelled: {result}")
+            result = self.gui.game_data.server.handle_communication.command_cancel(
+                current_player_id, "")
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error cancelling invitation: {e}")
             self.show_message("Error", f"Error cancelling invitation: {e}")
@@ -297,11 +224,10 @@ class InvitationMenu(Gtk.Box):
     def on_set_away(self, button):
         """Set player status to away."""
         try:
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
-            result = self.gui.game_data.client.repo.change_status(
-                current_player_id, "away")
-            self.show_message("Success", "Status set to away")
+            current_username = self.gui.game_data.client.client_player
+            result = self.gui.game_data.server.handle_communication.command_away(
+                current_username)
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error setting status to away: {e}")
             self.show_message("Error", f"Error setting status to away: {e}")
@@ -309,11 +235,10 @@ class InvitationMenu(Gtk.Box):
     def on_back_to_idle(self, button):
         """Set player status back to idle."""
         try:
-            current_player_id = str(self.gui.game_data.client.repo.get_id_from_username(
-                self.gui.game_data.client.client_player))
-            result = self.gui.game_data.client.repo.change_status(
-                current_player_id, "idle")
-            self.show_message("Success", "Status set back to idle")
+            current_username = self.gui.game_data.client.client_player
+            result = self.gui.game_data.server.handle_communication.command_back(
+                current_username)
+            self.show_message("Result", result)
         except Exception as e:
             print(f"Error setting status to idle: {e}")
             self.show_message("Error", f"Error setting status to idle: {e}")

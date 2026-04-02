@@ -23,21 +23,11 @@ class BoardView(Gtk.DrawingArea):
 
         self.offset_x = self.offset_y = 0
         self.ghost_x = self.ghost_y = None
-        self.background: GdkPixbuf.Pixbuf | None = None
 
         self._setup_input_controllers()
         self.game_data.is_dragging = False
         self.set_focusable(True)
         self.grab_focus()
-
-    def set_background(self, image_path: str) -> None:
-        """Load a background image for the board."""
-        if os.path.exists(image_path):
-            self.background = GdkPixbuf.Pixbuf.new_from_file(image_path)
-        else:
-            self.background = None
-        print(image_path)
-        self.queue_draw()
 
     # ---------- internal helpers ----------------------------------------
 
@@ -121,21 +111,9 @@ class BoardView(Gtk.DrawingArea):
     ) -> None:
         """Main draw callback passed to ``set_draw_func``.
 
-        Paints the board background, all placed tiles, optionally the tile
+        Paints all placed tiles, optionally the tile
         currently being dragged, and any meeples.
         """
-
-        # draw background image if available
-        if self.background:
-            scaled = self.background.scale_simple(
-                width, height, GdkPixbuf.InterpType.BILINEAR
-            )
-
-            Gdk.cairo_set_source_pixbuf(cr, scaled, 0, 0)
-            cr.paint()
-        else:
-            cr.set_source_rgb(0.6, 0.6, 0.6)
-            cr.paint()
 
         board_data = self.game_data.game.get_board_data()
         if not board_data:
