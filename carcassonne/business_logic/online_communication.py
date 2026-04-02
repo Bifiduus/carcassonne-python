@@ -165,8 +165,9 @@ class OnlineCommunication:
             return "You cannot play when the game is ended.\n" + board + "\n"
         if game.play_move(move):
             board: str = game.get_printed_board()
+            board_message = f"Board game:\n{board}\n"
             group: int = self.server.repo.get_party_id(client_id)
-            self.server.send_to_group(group, board)
+            self.server.send_to_group(group, board_message)
             return "Move played.\n" + board + "\n"
         board: str = game.get_printed_board()
         return "Move not played.\n" + board + "\n"

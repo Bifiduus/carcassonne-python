@@ -150,7 +150,7 @@ class Server(IServerService):
             if check:
                 host_id: int = self.repo.get_host_from_party(party)
                 players = self.repo.get_party(str(host_id))
-                if len(players) == 1:
+                if len(players) <= 1:
                     client_username: str = self.repo.get_username(str(host_id))
                     self.send_to_client(
                         client_username, "You cannot play alone..."
