@@ -177,7 +177,7 @@ class GameCLI:
             and not self.game.end_game()
             and self.game.get_current_player().is_ai_player()
         ):
-            self.game.play_ai_turn()
+            self.game.play_ai_turn(self.game)
             self.game.get_board()
 
     def _on_game_over(self) -> None:

@@ -24,7 +24,7 @@ class GameModeManager:
 
     def get_mode(self) -> str:
         """Return the current mode resolved from the existing config keys."""
-        settings = self.game.game_configuration.settings
+        settings = self.game.get_game_configuration()
         contest_enabled = bool(settings.get("contest", False))
         contest_file = str(settings.get("contest_file", "") or "").strip()
         blitz_enabled = bool(settings.get("blitz", False))
@@ -45,7 +45,7 @@ class GameModeManager:
         return self.contest_manager.run(filename)
 
     def get_configured_blitz_minutes(self) -> int:
-        raw_value = self.game.game_configuration.settings.get("time", 30)
+        raw_value = self.game.get_game_configuration().get("time", 30)
         try:
             minutes = int(raw_value)
         except (TypeError, ValueError):
@@ -55,7 +55,7 @@ class GameModeManager:
     def reset_for_current_state(self) -> None:
         mode = self.get_mode()
         self.blitz_manager.reset(
-            player_ids=self.game.players_order,
+            player_ids=self.game.get_players_order(),
             enabled=mode == "blitz",
             minutes=self.get_configured_blitz_minutes(),
         )

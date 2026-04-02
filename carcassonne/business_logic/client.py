@@ -148,6 +148,8 @@ class Client(IClientService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:
+            if message.find("Server ->") != -1:
+                return
             message = message.removeprefix("Server -> ")
             client_id, message = message.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()

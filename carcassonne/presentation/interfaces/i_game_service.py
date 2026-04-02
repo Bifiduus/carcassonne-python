@@ -79,7 +79,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def play_ai_turn(self):
+    def play_ai_turn(self, game=None):
         pass
 
     @abstractmethod
