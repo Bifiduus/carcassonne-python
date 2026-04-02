@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[11pt]{article}
 
 \usepackage{pdp}
 
@@ -6,9 +6,10 @@
 %	REPORT INFORMATION
 %------------------------------------------------------------------------------
 
-\title{ProjectName -- C/Java/Python}
-\subtitle{Rapport final}
-\author{Étudiant1, Étudiant2, Étudiant3, Étudiant4, Étudiant5}
+\title{Carcassonne -- Python}
+\subtitle{Rapport préliminaire}
+\author{Anthony BEAUVIEUX, Tony HUANG, Maxence SALIN, Clément SIMON, Loïc THIN}
+\date{}
 
 %------------------------------------------------------------------------------
 
@@ -25,79 +26,476 @@
 %	MAIN MATTER
 %------------------------------------------------------------------------------
 
-\section*{Introduction}
+\section{Présentation du jeu}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\subsection{Contexte}
 
-Pellentesque iaculis molestie euismod. In hac habitasse platea dictumst. Duis eu
-gravida sem. Vivamus pulvinar, tellus auctor sollicitudin iaculis, quam massa
-blandit ligula, in mollis est tellus et velit. Nulla gravida sapien nibh, nec
-faucibus lorem aliquam sed. Curabitur rutrum elit purus, et congue neque
-venenatis vitae. Sed non magna nisi. Pellentesque euismod non ipsum a hendrerit.
-Pellentesque vehicula tincidunt lacinia. Sed rhoncus porttitor facilisis.
+\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par Klaus-Jürgen Wrede en 2000, conçu pour 2 à 6 joueurs.
+Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l’ensemble des éléments présents sur le plateau est visible de tous les joueurs.
 
-Etiam sed molestie odio. Nunc cursus sollicitudin est vitae posuere. Nullam
-pellentesque metus eu dui porttitor bibendum. Morbi egestas arcu ut urna dictum
-placerat non non nisl. Quisque non ante in eros cursus pulvinar. Sed augue
-libero, eleifend a urna eget, pellentesque condimentum odio. Sed sed dui non
-diam mattis interdum eget sed urna. Integer consectetur, erat id rutrum posuere,
-dui velit dictum mi, quis tincidunt magna diam sit amet nunc. Etiam dui augue,
-sollicitudin rhoncus nisl a, rhoncus tempor purus.
+\begin{wrapfigure}{l}{0.25\textwidth}
+  \centering
+  \captionsetup{justification=centering}
+    \frame{\includegraphics[width=0.1\textwidth]{images/carcassonne_starting_tile.png}}
+    \caption{Tuile de départ}\label{fig:tuile_de_départ}
+  \end{wrapfigure}
 
-Suspendisse cursus erat et metus fermentum ullamcorper. Etiam eros arcu, dapibus
-quis efficitur ut, congue id nunc. Pellentesque aliquam venenatis convallis.
-Nulla nisi justo, aliquet quis lacus eget, aliquet maximus velit. Maecenas ex
-turpis, iaculis eget dignissim non, efficitur vel mi. Maecenas pharetra elit
-ornare sem suscipit ornare id id sapien. Vivamus sem neque, consectetur vitae
-aliquet non, finibus eu lectus. Fusce aliquam ipsum ut viverra vehicula. Donec
-ultrices varius nulla vel finibus. Donec convallis fringilla ante id porta.
+La version considérée ici utilise les 72 tuiles du jeu de base.
+Parmi ces tuiles, se trouve la tuile de départ (figure \ref{fig:tuile_de_départ}) qui est placée au centre du plateau avant le début de la partie. 
+Cette tuile est la même pour chaque partie et comporte une \textit{City} en haut (couleur marron), une \textit{Road} qui traverse la tuile de gauche à droite et un \textit{Field} en bas.
+Chaque joueur dispose de 7 pions de sa couleur pour marquer des points au cours de la partie.
+Le but du jeu est que les joueurs construisent progressivement le plateau, à tour de rôle, en posant des tuiles de manière cohérente et en plaçant stratégiquement leurs pions pour accumuler des points.
+Le vainqueur est le joueur qui totalise le plus de points à la fin de la partie.
 
-\section{Première section}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
 
-\section{Seconde section}
+\subsection{Règles}
 
-Voici un exemple de code en Python :
+Les règles de \textbf{Carcassonne} utilisées sont celles de la version 2012\cite{rulescarcassonne}.
 
-{\large
-  \begin{minted}[frame=single]{python}
-def hello_world():
-    print("Hello, World!")
-hello_world()
+\subsubsection{Spécificités}
+\begin{description}[style=nextline]
+  \item[Tuile] Chaque tuile possède quatre côtés ainsi qu’un centre.
+  Chaque côté correspond à un type de terrain parmi \textit{Road}, \textit{City} ou \textit{Field}.
+  Le centre peut représenter une \textit{City}, un \textit{Field}, une \textit{Banner} ou un \textit{Monastery}.
+  \begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    
+  \begin{minipage}{0.35\textwidth}
+    \centering
+    \frame{\includegraphics[width=0.20\textwidth]{images/carcassonne_example_tile_monastery.png}}
+    \caption{Exemple d'une tuile où des \textit{Fields} possèdent un \textit{Monastery}}\label{fig:exemple_tuile_1}
+  \end{minipage}
+  \hspace{0.5cm}
+ \begin{minipage}{0.35\textwidth}
+    \centering
+    \frame{\includegraphics[width=0.20\textwidth]{images/carcassonne_example_tile_banner.png}}
+    \caption{Exemple d'une tuile où une \textit{City} possède une \textit{Banner}}\label{fig:exemple_tuile_2}
+  \end{minipage}
+  
+  \end{figure}
+
+  \item[Pion] Lorsqu’un pion est placé sur une tuile, il prend un rôle en fonction du type de terrain occupé :
+  \textit{Knight} sur une \textit{City}, \textit{Farmer} sur un \textit{Field}, \textit{Thief} sur une \textit{Road}
+  et \textit{Monk} sur un \textit{Monastery}.
+\end{description}
+
+
+
+\subsubsection{Déroulement d'un tour}
+
+Les joueurs jouent à tour de rôle selon un ordre prédéfini (généralement dans le sens horaire, en commençant par le joueur le plus jeune). 
+Lors de son tour, un joueur effectue les actions suivantes dans l’ordre indiqué :
+
+\begin{enumerate}
+  \item \textbf{Piocher une tuile :}  
+  Le joueur pioche une tuile dans la pioche actuellement active. Cette tuile est visible par l’ensemble des joueurs.
+
+  \item \textbf{Placer la tuile :}  
+  La tuile piochée doit être placée sur le plateau en respectant les règles suivantes :
+  \begin{itemize}
+    \item[-] La tuile doit être adjacente à au moins une autre tuile déjà posée.
+    \item[-] Les côtés en contact doivent correspondre à des terrains de même type.
+  \end{itemize}
+
+  \item \textbf{Placer un pion (optionnel) :}  
+  Le joueur peut placer un pion sur un élément de terrain de la tuile qu’il vient de poser (\textit{City}, \textit{Road}, \textit{Field}, \textit{Monastery}).
+
+  \item \textbf{Restriction de placement des pions :}  
+  Si l’élément de terrain choisi est relié à un élément du même type déjà occupé par un pion, aucun nouveau pion ne peut y être placé.
+  Les \textit{Road} et \textit{City} agissent comme des séparateurs entre les \textit{Field}.
+
+  \item \textbf{Résolution des terrains complétés :}  
+  Si la pose de la tuile permet de compléter un ou plusieurs terrains, ceux-ci sont résolus immédiatement et les joueurs concernés marquent des points selon certaines règles. (voir partie \ref{subsubsec:score})
+
+  \item \textbf{Retour des pions :}  
+  Tous les pions associés à des \textit{City}, \textit{Road} ou \textit{Monastery} complétés durant le tour actuel sont retirés du plateau et rendus à leurs propriétaires. Les pions \textit{Farmer} restent en jeu jusqu’à la fin de la partie.
+
+\end{enumerate}
+
+\subsubsection{Score}
+\label{subsubsec:score}
+Les points sont attribués à deux moments :
+\begin{itemize}
+  \item[$\bullet$] Pendant la partie : dès qu’un terrain  (\textit{City}, \textit{Road}, \textit{Monastery}) est complété (figure \ref{fig:example_tour}).
+  \item[$\bullet$] À la fin de la partie : pour les terrains incomplets (\textit{City}, \textit{Road}, \textit{Monastery}) ainsi que pour les \textit{Field}.
+\end{itemize}
+
+Les joueurs ajoutent alors à leur score les points correspondant aux terrains selon les règles suivantes :
+
+  \begin{description}[style=nextline]
+  \item[ \textcolor{gray}{Road} :]
+  Une \textit{Road} rapporte 1 point par tuile la composant au joueur possédant le plus de pions (\textit{Thief}) sur cette \textit{Road}.
+  En cas d’égalité, tous les joueurs concernés marquent ces points.
+
+  \item[ \textcolor{brown}{City} :]
+  Une \textit{City} complète rapporte 2 points par tuile qui la compose ainsi que 2 points par \textit{Banner} présent,
+  pour le joueur possédant le plus de pions (\textit{Knight}). Si la \textit{City} est incomplète à la fin de la partie, chaque tuile rapporte 1 point et chaque \textit{Banner} rapporte également 1 point.
+  En cas d’égalité, les points sont attribués à tous les joueurs concernés.
+
+  \item[ \textcolor{red}{Monastery} :]
+  Un \textit{Monastery} rapporte 1 point par tuile ayant un sommet ou côté en commun, y compris la tuile du \textit{Monastery}. Le score maximal d'un \textit{Monastery} est donc de 9 points.
+
+  \item[ \textcolor{green}{Field} :]
+  Chaque ensemble de \textit{Fields} connectés ou isolés est attribué au joueur possédant le plus de pions (\textit{Farmer}).
+  Il marque alors 3 points par \textit{City} complète adjacente aux \textit{Field}.
+  En cas d’égalité,tous les joueurs concernés marquent ces points.
+\end{description}
+
+A l’issue du décompte final, le joueur ayant obtenu le plus grand nombre de points remporte la partie.
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \frame{\includegraphics[width=0.60\textwidth]{images/carcassonne_exemple_partie_complete.png}}
+    \centering
+    \caption{Exemple de terrains complétés, avec deux \textit{City} entourées en rouge et une \textit{Road} entourée en bleu}\label{fig:example_tour}
+\end{figure}
+
+
+\subsection{Complexité}
+
+Bien que les règles de \textbf{Carcassonne} soient relativement simples, le jeu présente une richesse stratégique importante qui augmente à mesure que le plateau s’étend. 
+Les choix offerts aux joueurs se multiplient progressivement en fonction de la configuration du plateau, des tuiles restantes et du placement des pions.
+
+Contrairement à des jeux déterministes comme les échecs ou le shogi, \textbf{Carcassonne} introduit une composante stochastique via la pioche des tuiles, ce qui complexifie l’anticipation des coups futurs. 
+Néanmoins, il demeure un jeu à information parfaite dans la mesure où l’ensemble des éléments placés sur le plateau est visible par tous les joueurs à tout instant.
+
+La complexité combinatoire du jeu est particulièrement élevée en raison du nombre important de tuiles, de leurs différentes orientations possibles et des multiples placements légaux sur le plateau. 
+La taille de l’arbre de jeu est estimée à environ $10^{194}$\cite{heyden2009implementing}, ce qui rend toute exploration exhaustive irréaliste.
+Par conséquent, la résolution complète du jeu par des méthodes de recherche brute-force n’est pas envisageable.
+
+Dans ce contexte, l’utilisation d’algorithmes de recherche heuristique et d’approximation apparaît comme
+une solution nécessaire pour proposer des décisions pertinentes dans un temps de calcul raisonnable.
+
+
+
+
+\section{Algorithmes et structures de données}
+
+Dans le cadre de ce projet, \textbf{Carcassonne} est considéré sous une forme restreinte pour la partie de réalisation d'intelligence artificielle afin de rendre possible l’utilisation d’algorithmes classiques de recherche dans les jeux.
+
+Bien que \textbf{Carcassonne} ne soit pas strictement un jeu à somme nulle et qu’il comporte une composante stochastique liée à la pioche des tuiles, certaines hypothèses simplificatrices sont adoptées.
+En particulier, les décisions sont évaluées à partir de fonctions heuristiques estimant l’avantage relatif d’un joueur par rapport à son adversaire à un instant donné.
+
+Cette modélisation permet l’utilisation d’algorithmes de recherche tels que Minimax et ses variantes, tout en restant consciente des limites théoriques de leur application à un jeu de cette nature.
+
+Plusieurs algorithmes jouent ainsi un rôle central dans la réalisation des besoins du projet, notamment :
+\begin{itemize}
+  \item[-] \textbf{Minimax}\cite{minimax}, pour déterminer les coups optimaux en modélisant l’opposition entre les joueurs ;
+  \item[-] \textbf{Alpha-Beta}, qui permet de réduire le nombre d’états explorés en élaguant les branches non pertinentes de l’arbre de jeu ;
+  \item[-] \textbf{Iterative Deepening}, utilisé afin de borner le temps de calcul tout en améliorant progressivement la qualité des décisions ;
+  \item[-] \textbf{des fonctions d’évaluation heuristiques}, servant à estimer la qualité d’un état de jeu ;
+  \item[-] des approches basées sur \textit{Monte Carlo Tree Search}\cite{monte_carlo}, envisagées pour des stratégies alternatives ;
+  \item[-] des algorithmes de génération aléatoire, tels que le mélange de \textit{Fisher–Yates}, nécessaires à la gestion équitable de la pioche.
+\end{itemize}
+
+La mise en œuvre efficace de ces algorithmes repose sur des structures de données adaptées permettant de représenter l’état du jeu et d’en faciliter la manipulation. 
+Le plateau de jeu, constitué de tuiles connectées par leurs côtés, peut être modélisé à l’aide de graphes, offrant une représentation naturelle des relations d’adjacence entre les tuiles. 
+Egalement, des piles peuvent être employées pour gérer certains mécanismes séquentiels, tels que la pioche des tuiles ou la sauvegarde temporaire d’états lors de l’exploration de l’arbre de jeu.
+
+Dans la suite de cette section, nous nous concentrerons plus particulièrement sur les quatre premiers algorithmes présentés qui constituent le cœur du système de prise de décision implémenté dans le projet.
+
+\subsection{Algorithme Minimax}
+
+L'algorithme Minimax a pour but de déterminer les coups les plus optimaux pour un joueur à un état donné du jeu face à l’adversaire qui minimise le score du joueur “max”.
+Ainsi, l’algorithme parcourt récursivement une partie de l’arbre des états du jeu, limitée par une profondeur maximale fixée afin de contenir la complexité de recherche.
+Chaque score d’une feuille est alors calculé via une fonction d’évaluation prédéfinie. Ce score remonte à son nœud parent qui sélectionne la valeur maximale ou minimale de ses nœuds enfants selon le joueur qu’il représente, et ainsi de suite jusqu’à la racine.
+L’algorithme possède 3 paramètres représentant l’état du jeu courant, la profondeur restante à explorer par rapport à l’état actuel, et un booléen à vrai lors du tour du joueur “max” et à faux sinon.
+
+Voici le pseudocode de l’algorithme Minimax :
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction minimax(etat, profondeur, joueur_max):
+    SI profondeur = 0 OU estFeuille(etat) ALORS
+        RETOURNER evalueHeuristique(joueur_max, etat)
+    FIN SI
+    SI joueur_max ALORS
+        valeur = -infini
+        POUR TOUT successeur s de etat FAIRE
+            valeur = max(valeur, minimax(s, profondeur - 1, FAUX))
+        FIN POUR TOUT
+    FIN SI
+    SINON
+        valeur = +infini
+        POUR TOUT successeur s de etat FAIRE
+            valeur = min(valeur, minimax(s, profondeur - 1, VRAI))
+        FIN POUR TOUT
+    FIN SINON
+    RETOURNER valeur
+FIN FONCTION
+
   \end{minted}
 }
 
-Un exemple d'image flottante (Fig.~\ref{fig:example}).
 
-\begin{figure}[!ht]
-  \centering
-  \frame{\includegraphics[width=.85\textwidth]{layered_architectures.png}}
-  \caption{Une architecture en couches}\label{fig:example}
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \frame{\includegraphics[width=0.60\textwidth]{images/minimax.png}}
+    \centering
+    \caption{Exemple d'un arbre de jeu partiel exploré par l'algorithme Minimax\cite{heyden2009implementing}}\label{fig:minimax_example}
 \end{figure}
 
-\section*{Conclusion}
+À la profondeur maximale à explorer, les feuilles remontent la valeur 4 (et non la valeur 3) lors du tour du joueur “max” pour maximiser son gain. 
+Ainsi, au tour suivant, le joueur “min” récupère cette valeur 4 (et non la valeur 8) afin de minimiser le gain de son adversaire. 
+Enfin, le joueur “max” récupère la valeur 4 (et non la valeur 2) pour maximiser son gain minimal. 
+Il finit alors la recherche à la racine de l’arbre, ayant désormais connaissance d’une succession de coups optimaux à jouer pour obtenir un score de 4 en sa faveur à cette profondeur demandée.
 
-Suspendisse sit amet nisi placerat, vestibulum nisl vel, iaculis nunc.
-Suspendisse quis libero vel ipsum gravida congue nec id arcu. Donec vel mi
-viverra, commodo urna vitae, tincidunt lectus. Fusce pellentesque, lectus a
-placerat vestibulum, magna lectus placerat nibh, vehicula pellentesque lacus
-erat non nulla. Suspendisse maximus, turpis at suscipit egestas, libero massa
-ultrices libero, at tincidunt velit eros a eros. Maecenas id tempor nunc.
-Phasellus condimentum porttitor sapien in sagittis. Proin in metus diam. Mauris
-in turpis sed ex viverra iaculis. Sed lobortis, tellus vitae congue blandit, leo
-elit auctor libero, id tempor ante dolor quis quam. Donec eget ligula quam.
-Maecenas porttitor massa vel felis elementum tristique.
+\subsection{Technique Iterative Deepening}
+
+L'algorithme Minimax avec approfondissement itératif (Iterative Deepening) est une technique de parcours progressif des profondeurs sur l’arbre des états d’un jeu. 
+Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur “max” est enregistré en remplaçant le précédent, et sera alors renvoyé après épuisement du temps donné. 
+Cette technique a pour avantage de déterminer une solution optimale à une profondeur quelconque même sur une courte durée, tandis que l’exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après une durée indéterminée.
+
+\subsection{Algorithme Alpha-Beta}
+
+Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l’arbre des états d’un jeu en élaguant les branches qui n’apportent aucun gain nouveau pour le joueur “max”. 
+En stockant la meilleure valeur courante pour le joueur maximal ($\alpha$) et celle pour le joueur “min” ($\beta$) lors du parcours, l’algorithme n’évalue plus certains nœuds non-significatifs (et leurs potentiels enfants) quand $\alpha \geq \beta$, en réduisant potentiellement son temps d'exécution selon l’arbre donné.
+
+\subsection{Fonction d’évaluation heuristique}
+
+Étant donné l’impossibilité d’explorer l’arbre de jeu jusqu’à des états terminaux, l’algorithme Minimax repose sur une fonction d’évaluation heuristique permettant d’estimer la qualité d’un état de jeu intermédiaire.
+Cette fonction associe une valeur numérique à un état donné, représentant l’avantage relatif du joueur courant par rapport à son adversaire.
+
+L’évaluation repose notamment sur les critères suivants :
+\begin{itemize}
+  \item [$\bullet$] le score actuel des joueurs ;
+  \item [$\bullet$] le potentiel de complétion des routes, cités et monastères en cours ;
+  \item [$\bullet$] le nombre de pions disponibles pour chaque joueur ;
+  \item [$\bullet$] la présence de pions bloqués sur des structures difficilement complétables ;
+  \item [$\bullet$] le contrôle des champs adjacents à des cités complètes.
+\end{itemize}
+
+Ces différents éléments sont pondérés afin de refléter leur importance stratégique au cours de la partie.
+La fonction d’évaluation ne prétend pas fournir une estimation parfaite, mais permet de guider efficacement la recherche vers des coups jugés prometteurs.
+
+\subsection{Lien avec le projet}
+
+Les différentes techniques sont combinées dans le projet afin de rendre la recherche de coups pertinents possible malgré la complexité combinatoire élevée de Carcassonne. 
+L’approche adoptée, mêlant Minimax, élagage Alpha-Beta, approfondissement itératif et fonctions d’évaluation heuristique, permet de guider efficacement la prise de décision des intelligences artificielles tout en respectant des contraintes de temps réalistes.
+La modélisation du plateau sous forme de graphes, associée à l’utilisation de structures de données adaptées comme les tables de hachage et les piles, assure une manipulation efficace de l’état du jeu et des configurations intermédiaires.
+
+Ainsi, bien que l’exploration exhaustive de l’arbre de jeu reste impossible, le système mis en place fournit des conseils et des stratégies de qualité, exploitant de manière pragmatique les ressources computationnelles disponibles. 
+Cette combinaison d’algorithmes et de structures de données constitue le cœur de l’intelligence artificielle du projet et offre une base solide pour l’extension future des fonctionnalités, telles que l’intégration de stratégies plus sophistiquées ou de variantes du jeu.
+
+
+
+\section{Architecture}
+Dans cette section, nous présentons l’architecture logicielle retenue pour l’implémentation du jeu Carcassonne.
+Le projet adopte une architecture 3-tiers\cite{n_tier_architecture} visant à séparer clairement les responsabilités afin d’améliorer la maintenabilité, la testabilité et l’évolutivité du code.
+Cette architecture nous paraît pertinente compte tenu du support naturel de la programmation orientée objet en Python. De plus, le projet amène naturellement à une structuration de ce genre.
+Cette architecture est structurée autour de trois modules principaux : Présentation, Logique Métier et Données, organisés selon des dépendances unidirectionnelles.
+
+\subsection{Découpage en modules}
+
+\begin{tcolorbox}[
+  colback=gray!5,
+  colframe=black,
+  boxrule=0.8pt,
+  arc=2mm
+]
+\large\textbf{Module Présentation}\normalsize
+\vspace{0.3em}
+
+Le module Présentation est responsable des interactions avec l’utilisateur et de l’affichage de l’état du jeu.
+Il comprend notamment la gestion des commandes à travers le shell en CLI ou des actions à partir de la GUI, l’affichage du plateau, des tuiles, des meeples et des scores à travers CLI ou GUI.
+
+Ce module ne contient aucune règle métier. Il délègue toute décision concernant la validité des actions ou l’évolution du jeu au module Logique Métier.
+
+\vspace{0.5em}
+\textbf{Responsabilités principales :}
+\begin{itemize}
+  \item[$\bullet$] Interprétation des actions utilisateur
+
+
+  \item[$\bullet$] Appels aux interfaces de la logique métier
+
+
+  \item[$\bullet$] Rafraîchissement de l’affichage
+\end{itemize}
+
+\medskip
+\hrule
+\medskip
+
+\large\textbf{Module Logique Métier}\normalsize
+\vspace{0.3em}
+
+Le module Logique Métier constitue le cœur du jeu.
+Il encapsule l’ensemble des règles du jeu et gère l’état interne de la partie.
+Il est notamment responsable de la mise à jour du plateau (via une liste d’adjacence), du calcul des scores, de la gestion des tours de jeu et des conditions de fin de partie. 
+Il prend également en charge les actions des intelligences artificielles, à l’aide de fonctions d’évaluation, ainsi que la gestion de l’état du serveur et des parties en cours.
+
+Ce module est totalement indépendant de l’interface graphique et de la persistance.
+
+\vspace{0.5em}
+\textbf{Responsabilités principales :}
+
+\begin{itemize}
+  \item[$\bullet$] Implémentation des règles du jeu 
+  \item[$\bullet$] Gestion de l’état de la partie 
+  \item[$\bullet$] Gestion des IA de jeu 
+  \item[$\bullet$] Gestion des actions liées au serveur
+\end{itemize}
+
+
+\medskip
+\hrule
+\medskip
+
+\large\textbf{Module Données}\normalsize
+\vspace{0.3em}
+
+Le module Données est dédié à la persistance et à la gestion des informations liées au jeu.
+Il s'occupe de la sauvegarde et du chargement des parties, de l’enregistrement de l’historique de jeu, ainsi que de la conservation des données relatives aux intelligences artificielles, notamment les structures de données et les meilleurs coups mémorisés dans le cadre de l’iterative deepening.
+Il gère également la persistance des parties en cours, de l’état du serveur et des informations associées aux joueurs.
+
+Ce module n’implémente aucune règle métier et n’interagit jamais directement avec l’interface utilisateur.
+
+\vspace{0.5em}
+\textbf{Responsabilités principales :}
+\begin{itemize}
+  \item[$\bullet$] Sauvegarde des informations liées au jeu de près ou de loin (avec IA et serveurs) ;
+  \item[$\bullet$] Possibilité de sauvegarder les parties en cours pour les recharger (dans des fichiers au format répondant aux fonctionnalités).
+\end{itemize}
+
+\end{tcolorbox}
+
+\subsection{Dépendances entre modules}
+Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{fig:UML_diagram}), conformément au principe d’architecture N-tiers.
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=1\textwidth]{images/UML_diagram.png}}
+    \centering
+    \caption{Diagramme UML du projet}\label{fig:UML_diagram}
+\end{figure}
+
+Ainsi, le module Présentation dépend uniquement du module Logique Métier, qu’il sollicite via des interfaces dédiées pour afficher l’état du jeu et transmettre les actions de l’utilisateur, sans accès direct aux données.
+Le module Logique Métier dépend uniquement du module Données pour la persistance des informations, cette interaction étant réalisée au moyen d’interfaces de persistance abstraites.
+Aucune dépendance directe n’existe entre la Présentation et les Données.
+
+Cette organisation garantit une séparation claire des responsabilités et limite le couplage entre les composants.
+
+\subsection{Interfaces principales}
+
+Les interactions entre modules sont réalisées exclusivement via des interfaces bien définies.
+
+Interface Présentation $\rightarrow$ Logique Métier
+
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+place_tile(tile, position)
+place_meeple(position)
+get_game_state()
+is_game_over()
+  \end{minted}
+}
+
+
+
+Ces interfaces permettent à la présentation d’agir sur le jeu sans connaître l’implémentation interne des règles.
+
+Interface Logique Métier $\rightarrow$ Données
+
+Exemples de services exposés :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+save_game(game_state)
+load_game()
+  \end{minted}
+}
+
+
+
+
+La logique métier délègue la persistance au module Données via ces interfaces abstraites.
+
+
+\section{Explication approfondie}
+
+\subsection{IA}
+
+\subsection{Fichier de configuration}
+
+\section{Revue critique du projet}
+
+\subsection{Cahier des charges}
+
+\subsection{Performance}
+
+\subsection{Limites et bugs}
+
+\subsection{Perspectives d’amélioration}
+
+\section{Liste des besoins}
+
+\begin{longtable}{|c|l|c|}
+\hline
+\textbf{N°} & \textbf{Description du besoin} & \textbf{Statut} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{N°} & \textbf{Description du besoin} & \textbf{Statut} \\
+\hline
+\endhead
+
+F1 & Lancement du programme & Non fait \\ \hline
+F2 & Fichier de configuration & Non fait \\ \hline
+F3 & Internationalisation (i18n) & Non fait \\ \hline
+F4 & Interface en ligne de commande & Non fait \\ \hline
+F5 & Interface graphique & Non fait \\ \hline
+F6 & Mode blitz & Non fait \\ \hline
+F7 & Mode contest & Non fait \\ \hline
+F8 & Graine aléatoire & Non fait \\ \hline
+F9 & Mélange des tuiles & Non fait \\ \hline
+F10 & Options spécifiques & Non fait \\ \hline
+
+F11 & Gestion des règles & Non fait \\ \hline
+F12 & Gestion des erreurs utilisateur & Non fait \\ \hline
+F13 & Gestion du undo/redo & Non fait \\ \hline
+F14 & Gestion des conseils & Non fait \\ \hline
+
+F15 & Shell interactif & Non fait \\ \hline
+F16 & Proposer de sauvegarder avant quitter & Non fait \\ \hline
+F17 & Édition de la commande en cours & Non fait \\ \hline
+F18 & Historique des commandes tapées & Non fait \\ \hline
+F19 & Complétion des commandes & Non fait \\ \hline
+F20 & Notation des coups & Non fait \\ \hline
+
+F21 & Sauvegarde et restauration d’une partie & Non fait \\ \hline
+F22 & Commentaires dans la sauvegarde & Non fait \\ \hline
+F23 & Format des paramètres du jeu & Non fait \\ \hline
+F24 & Format du plateau de jeu & Non fait \\ \hline
+F25 & Format de l’historique & Non fait \\ \hline
+
+F26 & Module \textit{graph} & Non fait \\ \hline
+F27 & Algorithmes de manipulation des graphes & Non fait \\ \hline
+
+F28 & Menus de l’application & Non fait \\ \hline
+F29 & Raccourcis clavier & Non fait \\ \hline
+F30 & Drag'n'drop & Non fait \\ \hline
+
+F31 & Temps de réflexion borné & Non fait \\ \hline
+F32 & Minimax avec $\alpha$$\beta$-pruning & Non fait \\ \hline
+F33 & Fonctions d’évaluation pour Minimax & Non fait \\ \hline
+F34 & Approfondissement itératif de Minimax & Non fait \\ \hline
+F35 & Profondeur de recherche de Minimax & Non fait \\ \hline
+F36 & Monte Carlo Tree Search (MCTS) & Non fait \\ \hline
+F37 & Fonction de sélection par Machine Learning & Non fait \\ \hline
+
+F38 & Découverte de serveurs et connexion client-
+serveur basique & Non fait \\ \hline
+F39 & Serveur multi-clients et gestion de parties & Non fait \\ \hline
+F40 & Système d’invitations et gestion avancée des
+joueurs & Non fait \\ \hline
+
+\end{longtable}
+
 
 %------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
@@ -106,19 +504,5 @@ Maecenas porttitor massa vel felis elementum tristique.
 \nocite{*}
 \bibliographystyle{plain}
 \bibliography{bibliography}
-
-%------------------------------------------------------------------------------
-% BACK MATTER
-%------------------------------------------------------------------------------
-\appendix
-
-\section{Section en annexe}
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
 
 \end{document}
