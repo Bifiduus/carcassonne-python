@@ -409,8 +409,10 @@ class Client(IClientService):
 
             print(_("Client disconnection complete."))
         except Exception as e:
-            print(
-                _("Error during client disconnection: {error}").format(
-                    error=e
-                )
-            )
+            print(f"Error during client disconnection: {e}")
+
+    def register_message_visitor(
+        self, visitor: IClientMessageVisitor
+    ) -> None:
+        """Register observer/visitor for incoming server messages."""
+        self.message_visitor = visitor

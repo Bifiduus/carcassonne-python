@@ -378,3 +378,11 @@ class ServerMenu(Gtk.Box):
         dialog.set_markup(message)
         dialog.connect("response", lambda d, r: d.destroy())
         dialog.present()
+
+    def visit_server_message(self, message: str, server: str):
+        """Receive server messages via visitor integration."""
+        self.show_message(
+            "Server Event",
+            f"Server {server}: {message}"
+        )
+
