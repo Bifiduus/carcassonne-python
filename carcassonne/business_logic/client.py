@@ -8,6 +8,9 @@ from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.presentation.interfaces.i_client_message_visitor import (
+    IClientMessageVisitor,
+)
 
 
 class Client(IClientService):
@@ -30,6 +33,7 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         self._recv_thread = None
         self.shutdown_event = threading.Event()
+        self.message_visitor: IClientMessageVisitor | None = None
         # Registering phase
         if not self.repo.is_accounted_for():
             print("You should create an online account.\n")
@@ -173,6 +177,10 @@ class Client(IClientService):
                     server, self.temporary_username
                 )
                 self.temporary_username = ""
+
+        # Notify any GUI visitor about incoming server message
+        if self.message_visitor is not None:
+            self.message_visitor.visit_server_message(message, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
@@ -335,3 +343,9 @@ class Client(IClientService):
             print("Client disconnection complete")
         except Exception as e:
             print(f"Error during client disconnection: {e}")
+
+    def register_message_visitor(
+        self, visitor: IClientMessageVisitor
+    ) -> None:
+        """Register observer/visitor for incoming server messages."""
+        self.message_visitor = visitor
