@@ -12,7 +12,6 @@ from carcassonne.business_logic.interfaces.i_games_repository import (
 )
 from carcassonne.business_logic.server import Server
 from carcassonne.datas.games_repository import GameRepository
-from carcassonne.presentation.gui.create_gui import CreateGui
 from carcassonne.presentation.interfaces.i_client_service import IClientService
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game.game import Game
@@ -291,17 +290,24 @@ def main() -> int:
         try:
             move = game.game_mode_manager.run_contest()
         except ValueError as exc:
-            print(_("Contest error: {error}").format(
-                error=exc), file=sys.stderr)
+            print(
+                _("Contest error: {error}").format(error=exc),
+                file=sys.stderr,
+            )
             return 1
         print(move)
     if args.file:
-        print(_("Loading game from file: {filename}").format(
-            filename=args.file))
+        print(
+            _("Loading game from file: {filename}").format(
+                filename=args.file
+            )
+        )
     if args.verbose:
         print(_("Verbose mode enabled."))
     if args.gui:
         print(_("GUI mode enabled."))
+        from carcassonne.presentation.gui.create_gui import CreateGui
+
         CreateGui(game)
     else:
         game_cli = GameCLI(game, server_service, client_service)
@@ -310,3 +316,7 @@ def main() -> int:
     # Call a function to start the game
 
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

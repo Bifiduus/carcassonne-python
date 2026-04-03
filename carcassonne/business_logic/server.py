@@ -22,7 +22,11 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
-    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
+    def __init__(
+        self,
+        repo: IGamesRepository | None = None,
+        daemon: bool = False,
+    ):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
@@ -243,7 +247,10 @@ class Server(IServerService):
                     if self.daemon:
                         answer = ""
                     else:
-                        answer = f"Server -> Client{client_index}: {response}\n"
+                        answer = (
+                            f"Server -> Client{client_index}: "
+                            f"{response}\n"
+                        )
 
                     try:
                         client_socket.send(answer.encode())
@@ -486,20 +493,19 @@ class Server(IServerService):
         )
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
-        try:
-            assert self.repo, "The database should not be None"
-            username: str = self.repo.get_username(invited_player_id)
-            host_name: str = self.repo.get_username(invitee_player_id)
-            message = "Server: You have received an invitation "\
-                f"from {host_name}.\n"
-            message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
-            with self.clients_lock:
-                if username not in self.client_sockets:
-                    print(f"Client {username} not connected")
-                    return
-                invited_client: socket.socket = self.client_sockets[username]
-                ok = self.repo.send_invitation(invited_player_id,
-                                               invitee_player_id)
+        username: str = self.repo.get_username(invited_player_id)
+        invited_client: socket.socket = self.client_sockets[username]
+        host_name: str = self.repo.get_username(invitee_player_id)
+        message = "Server: You have received an invitation "\
+            f"from {host_name}.\n"
+        message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
+        with self.clients_lock:
+            try:
+                assert self.repo, "The database should not be None"
+                ok = self.repo.send_invitation(
+                    invited_player_id,
+                    invitee_player_id,
+                )
                 if ok:
                     invited_client.sendall(message.encode())
         except KeyError:

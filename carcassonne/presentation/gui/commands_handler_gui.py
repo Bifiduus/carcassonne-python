@@ -79,7 +79,7 @@ def on_config(gui) -> None:
 def on_info(gui) -> None:
     import carcassonne
 
-    message = f"""Carcassonne Python
+    message = """Carcassonne Python
 
 Version: {carcassonne.__version__}
 
@@ -90,7 +90,10 @@ Version: {carcassonne.__version__}
 - Anthony BEAUVIEUX --- Logique de jeu
 - Tony HUANG --- Graine, shuffle et logique de jeu
 """
-    message = message.format(authors_label=_("Authors"))
+    message = message.format(
+        carcassonne=carcassonne,
+        authors_label=_("Authors"),
+    )
     gui.info_message.show_info(message)
 
 

@@ -70,7 +70,7 @@ class Client(IClientService):
         if ip not in self.available_servers:
             print(_("Error: there is no server with that IP address."))
             return False
-        server_port, _ = self.available_servers[ip]
+        server_port = self.available_servers[ip][0]
 
         if port is None:
             port = server_port
