@@ -115,9 +115,6 @@ class OnlineCommunication:
         """Send notification to host that an invitation was accepted."""
         if host_id in self.server.client_sockets:
             try:
-                host_username: str = self.server.repo.get_username(
-                    str(host_id)
-                )
                 invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
                 message = (
@@ -134,9 +131,6 @@ class OnlineCommunication:
         """Send notification to host that an invitation was rejected."""
         if host_id in self.server.client_sockets:
             try:
-                host_username: str = self.server.repo.get_username(
-                    str(host_id)
-                )
                 invitee_name: str = self.server.repo.get_username(invitee_id)
                 host_socket = self.server.client_sockets[host_id]
                 message = (
