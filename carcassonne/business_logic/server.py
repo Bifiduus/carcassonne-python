@@ -22,7 +22,11 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
-    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
+    def __init__(
+        self,
+        repo: IGamesRepository | None = None,
+        daemon: bool = False,
+    ):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
@@ -225,7 +229,10 @@ class Server(IServerService):
                     if self.daemon:
                         answer = ""
                     else:
-                        answer = f"Server -> Client{client_index}: {response}\n"
+                        answer = (
+                            f"Server -> Client{client_index}: "
+                            f"{response}\n"
+                        )
 
                     client_socket.send(answer.encode())
                 else:
@@ -442,8 +449,10 @@ class Server(IServerService):
         with self.clients_lock:
             try:
                 assert self.repo, "The database should not be None"
-                ok = self.repo.send_invitation(invited_player_id,
-                                                invitee_player_id)
+                ok = self.repo.send_invitation(
+                    invited_player_id,
+                    invitee_player_id,
+                )
                 if ok:
                     invited_client.sendall(message.encode())
             except Exception as e:
