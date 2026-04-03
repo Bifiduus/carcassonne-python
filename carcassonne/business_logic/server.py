@@ -269,9 +269,7 @@ class Server(IServerService):
                         message, client_socket, client_index
                     )
         except Exception as e:
-            # Only print if not a shutdown scenario
-            if not self.should_stop.is_set() and "Bad file descriptor" not in str(e):
-                print(f"Error handling client: {e}")
+            print(_("Error handling client: {error}").format(error=e))
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]

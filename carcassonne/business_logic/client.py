@@ -71,11 +71,10 @@ class Client(IClientService):
         """
         if ip is None or ip == "":
             ip = self.server_service.server_name
-        with self.servers_lock:
-            if ip not in self.available_servers:
-                print("Error: There is no server with such an ip.")
-                return False
-            server_port, _ = self.available_servers[ip]
+        if ip not in self.available_servers:
+            print(_("Error: there is no server with that IP address."))
+            return False
+        server_port, _ = self.available_servers[ip]
 
         if port is None:
             port = server_port
@@ -373,15 +372,13 @@ class Client(IClientService):
             if self.client:
                 try:
                     self.client.shutdown(socket.SHUT_RDWR)
-                except (OSError, BrokenPipeError):
-                    # Already closed or broken, that's fine
-                    pass
-                finally:
-                    try:
-                        self.client.close()
-                    except Exception:
-                        pass
-                    self.client = None
+                except Exception as e:
+                    print(
+                        _("Error closing client socket: {error}").format(
+                            error=e
+                        )
+                    )
+                self.client = None
 
             # 4. Wait for receive thread to finish (with timeout)
             if self._recv_thread and self._recv_thread.is_alive():
