@@ -1,6 +1,8 @@
 from gi.repository import Gtk
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -14,7 +16,7 @@ class AiMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Ai")
+        title = Gtk.Label(label=_("AI"))
         title.add_css_class("section-title")
         self.append(title)
 
@@ -23,13 +25,13 @@ class AiMenu(Gtk.Box):
             orientation=Gtk.Orientation.VERTICAL, spacing=6
         )
         self.ai_choice = Gtk.ComboBoxText()
-        # Exemple de résolutions courantes
+        # Available AI modes.
         ais = ["Random", "Minimax", "Monte Carlo"]
         for ai in ais:
-            self.ai_choice.append_text(ai)
-        # Valeurs par défaut
+            self.ai_choice.append_text(_(ai))
+        # Default value.
         self.ai_choice.set_active(0)
-        ai_choice_box.append(Gtk.Label(label="AI:"))
+        ai_choice_box.append(Gtk.Label(label=_("AI:")))
         ai_choice_box.append(self.ai_choice)
         # Connect signal to apply AI selection immediately
         self.ai_choice.connect("changed", self.on_ai_selected)
@@ -40,8 +42,8 @@ class AiMenu(Gtk.Box):
             orientation=Gtk.Orientation.VERTICAL, spacing=6
         )
         self.ai_players_entry = Gtk.Entry()
-        self.ai_players_entry.set_placeholder_text("1-4")
-        ai_players_box.append(Gtk.Label(label="Number of AI players:"))
+        self.ai_players_entry.set_placeholder_text(_("1-4"))
+        ai_players_box.append(Gtk.Label(label=_("Number of AI players:")))
         self.ai_players_entry.connect("changed", self.on_ai_players_changed)
 
         ai_players_box.append(self.ai_players_entry)
@@ -49,7 +51,7 @@ class AiMenu(Gtk.Box):
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
@@ -62,9 +64,9 @@ class AiMenu(Gtk.Box):
 
         # Map display names to internal AI mode names
         ai_mode_map = {
-            "Random": "random",
-            "Minimax": "minimax",
-            "Monte Carlo": "mcts",
+            _("Random"): "random",
+            _("Minimax"): "minimax",
+            _("Monte Carlo"): "mcts",
         }
 
         ai_mode = ai_mode_map.get(ai_selection, "minimax")

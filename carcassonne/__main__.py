@@ -19,13 +19,14 @@ from carcassonne.business_logic.game.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.graph_data import GraphData
+from carcassonne.i18n import configure_i18n, gettext as _
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message: str):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
-        print(f"error: {message}", file=sys.stderr)
+        print(f"{_('error')}: {message}", file=sys.stderr)
         self.print_help(sys.stderr)
         raise SystemExit(1)
 
@@ -36,21 +37,25 @@ ALREADY_SHUTTING_DOWN: bool = False
 def shutdown_all(signum, frame, server_service: IServerService,
                  client_service: IClientService):
     global ALREADY_SHUTTING_DOWN
-    print(f"Signal {signum} received: shutting down both client and server.")
+    print(
+        _(
+            "Signal {signum} received: shutting down both client and server."
+        ).format(signum=signum)
+    )
     if ALREADY_SHUTTING_DOWN:
-        print("Already shutting down, ignoring additional signal.")
+        print(_("Already shutting down, ignoring additional signal."))
         return
     ALREADY_SHUTTING_DOWN = True
     try:
         if client_service is not None:
             client_service.disconnect()
     except Exception as e:
-        print(f"Error shutting down client: {e}")
+        print(_("Error shutting down client: {error}").format(error=e))
     try:
         if server_service is not None:
             server_service.server_stop()
     except Exception as e:
-        print(f"Error shutting down server: {e}")
+        print(_("Error shutting down server: {error}").format(error=e))
 
 
 def main() -> int:
@@ -58,70 +63,72 @@ def main() -> int:
     """
     Starting point of the program.
     """
+    configure_i18n()
+
     parser = ArgumentParser()
     parser.add_argument(
         "-V",
         "--version",
-        help="display the version of the program",
+        help=_("display the version of the program"),
         action="store_true",
     )
     parser.add_argument(
         "-v",
         "--verbose",
-        help="increase verbosity",
+        help=_("increase verbosity"),
         action="store_true",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        help="enable debug messages",
+        help=_("enable debug messages"),
         action="store_true",
     )
     parser.add_argument(
         "-x",
         "--shuffle",
         metavar="SHUFFLE",
-        help="algorithme de mélange (fisher-yates|naive)",
+        help=_("shuffle algorithm (fisher-yates|naive)"),
         choices=["fisher-yates", "naive"],
         default="fisher-yates",
     )
     parser.add_argument(
         "-s",
         "--seed",
-        help="seed for shuffle randomness",
+        help=_("seed for shuffle randomness"),
         type=int,
     )
 
     parser.add_argument(
         "-g",
         "--gui",
-        help="enable GUI mode",
+        help=_("enable GUI mode"),
         action="store_true",
     )
 
     parser.add_argument(
         "-f",
         "--file",
-        help="name of the file to load a game",
+        help=_("name of the file to load a game"),
         type=str,
     )
 
     parser.add_argument(
         "-b",
         "--blitz",
-        help="enable blitz mode",
+        help=_("enable blitz mode"),
         action="store_true",
     )
     parser.add_argument(
         "-c",
         "--contest",
-        help="enable contest mode",
+        help=_("enable contest mode"),
         action="store_true",
     )
     parser.add_argument(
         "-t",
         "--time",
-        help="set time limit in minutes",
+        help=_("set time limit in minutes"),
         type=int,
         default=None,
     )
@@ -129,7 +136,7 @@ def main() -> int:
     parser.add_argument(
         "-p",
         "--players",
-        help="number of players (default: 2)",
+        help=_("number of players (default: 2)"),
         type=int,
         default=2,
     )
@@ -137,7 +144,7 @@ def main() -> int:
     parser.add_argument(
         "-r",
         "--river",
-        help="enable river mode",
+        help=_("enable river mode"),
         action="store_true",
         default=False,
     )
@@ -145,7 +152,7 @@ def main() -> int:
     parser.add_argument(
         "-at",
         "--ai-time",
-        help="max seconds for AI moves (default: 5s)",
+        help=_("max seconds for AI moves (default: 5s)"),
         type=int,
         default=5,
     )
@@ -153,7 +160,7 @@ def main() -> int:
     parser.add_argument(
         "-am",
         "--ai-mode",
-        help="AI algorithm we use (default: star2.5 (= minimax with pruning))",
+        help=_("AI algorithm used (default: random)"),
         type=str,
         default="random",
         choices=["random", "minimax", "iterative", "mcts"],
@@ -162,8 +169,8 @@ def main() -> int:
     parser.add_argument(
         "-amd",
         "--ai-minimax-depth",
-        help=(
-            "depth of the ai tree search "
+        help=_(
+            "depth of the AI tree search "
             "(default: maximum depth = 80 playable tiles)"
         ),
         type=int,
@@ -172,7 +179,7 @@ def main() -> int:
 
     parser.add_argument(
         "--ai-minimax-scoring",
-        help=(
+        help=_(
             "evaluation function for minimax/iterative "
             "(baseline|short_term|disruption)"
         ),
@@ -184,7 +191,7 @@ def main() -> int:
     parser.add_argument(
         "-ams",
         "--ai-mcts-selection",
-        help="selection function for mcts (UCT|ML, default: UCT)",
+        help=_("selection function for mcts (UCT|ML, default: UCT)"),
         type=str.upper,
         choices=["UCT", "ML"],
         default="UCT",
@@ -194,21 +201,24 @@ def main() -> int:
         "-S",
         "--server",
         help=(
-            "join a server on port [PORT] "
-            "(default: don't join any server, start in local mode)"),
+            _(
+                "join a server on port [PORT] "
+                "(default: don't join any server, start in local mode)"
+            )
+        ),
         type=str,
     )
 
     parser.add_argument(
         "-D",
         "--daemon",
-        help="Lance le serveur en mode sans interface.",
+        help=_("start the server without an interface"),
         action="store_true",
     )
 
     args: argparse.Namespace = parser.parse_args()
     if args.version:
-        print(f"Carcassonne: version {__version__}")
+        print(_("Carcassonne: version {version}").format(version=__version__))
         return 0
 
     if args.contest and not args.file:
@@ -229,7 +239,7 @@ def main() -> int:
         config_overrides["num_ai_players"] = args.players - 1
     elif args.time is not None:
         print(
-            "Warning: --time is ignored because --blitz is not enabled.",
+            _("Warning: --time is ignored because --blitz is not enabled."),
             file=sys.stderr,
         )
     if args.ai_time:
@@ -241,7 +251,7 @@ def main() -> int:
         config_overrides["ai_minimax_scoring"] = args.ai_minimax_scoring
     config_overrides["ai_mcts_selection"] = args.ai_mcts_selection
     if args.river:
-        print("River mode enabled.")
+        print(_("River mode enabled."))
         config_overrides["river"] = True
 
     game_data: IGraphData = GraphData()
@@ -262,7 +272,7 @@ def main() -> int:
     signal.signal(signal.SIGINT, handler)
 
     if args.daemon:
-        print("Starting server in daemon mode (no interface).")
+        print(_("Starting server in daemon mode (no interface)."))
         server_service.server_start()
 
     if args.server:
@@ -274,22 +284,22 @@ def main() -> int:
     game.game_data.shuffle_algo = args.shuffle
     game.game_data.default_seed = args.seed
     if args.version:
-        print(f"Carcassonne: version {__version__}")
+        print(_("Carcassonne: version {version}").format(version=__version__))
     if args.debug:
-        print("Debug mode enabled.", file=sys.stderr)
+        print(_("Debug mode enabled."), file=sys.stderr)
     if args.contest:
         try:
             move = game.game_mode_manager.run_contest()
         except ValueError as exc:
-            print(f"Contest error: {exc}", file=sys.stderr)
+            print(_("Contest error: {error}").format(error=exc), file=sys.stderr)
             return 1
         print(move)
     if args.file:
-        print(f"Loading game from file: {args.file}")
+        print(_("Loading game from file: {filename}").format(filename=args.file))
     if args.verbose:
-        print("Verbose mode enabled.")
+        print(_("Verbose mode enabled."))
     if args.gui:
-        print("GUI mode enabled.")
+        print(_("GUI mode enabled."))
         CreateGui(game)
     else:
         game_cli = GameCLI(game, server_service, client_service)

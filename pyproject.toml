@@ -31,6 +31,9 @@ version = {attr = "carcassonne.__version__"} # Get version from package dynamica
 [tool.setuptools.packages.find]
 exclude = ["pdp*"]
 
+[tool.setuptools.package-data]
+carcassonne = ["locale/*/LC_MESSAGES/*.po", "locale/*/LC_MESSAGES/*.mo"]
+
 [tool.pytest.ini_options]
 addopts = [ # Add options for pytest
   "--cov=carcassonne",

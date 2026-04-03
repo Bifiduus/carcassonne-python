@@ -10,6 +10,7 @@ The command handler functions are designed to be called from the GameCLI class
 """
 
 from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
@@ -18,62 +19,67 @@ def new_game(self, args, client_service: IClientService) -> None:
         client_service.send_to_server("new " + args)
         return
     self.game.start_new_game()
-    print("Nouvelle partie commencée.")
+    print(_("New game started."))
 
 
 def help(self) -> None:
-    print("Commandes disponibles:")
-    print("  new <args>         - Démarre une nouvelle partie")
-    print("  help               - Affiche cette aide")
-    print("  quit               - Quitte le jeu")
-    print("  load <file>        - Charge une partie depuis un fichier")
-    print("  save <file>        - Sauvegarde la partie dans un fichier")
-    print("  shuffle            - Mélange les tuiles de la pioche")
-    print("  draw               - Pioche une tuile")
+    print(_("Available commands:"))
+    print(_("  new <args>         - Start a new game"))
+    print(_("  help               - Display this help message"))
+    print(_("  quit               - Quit the game"))
+    print(_("  load <file>        - Load a game from a file"))
+    print(_("  save <file>        - Save the game to a file"))
+    print(_("  shuffle            - Shuffle the deck"))
+    print(_("  draw               - Draw a tile"))
+    print(_("  hint               - Show a hint for the current tile"))
     print(
-        "  hint               - Donne un indice pour le placement de la tuile"
+        _("  undo [N]           - Undo the last move or the last N moves")
     )
     print(
-        "  undo [N]           - Annule le dernier coup ou les N derniers coups"
+        _(
+            "  redo [N]           - Redo the last undone move or the last "
+            "N undone moves"
+        )
     )
+    print(_("  show hand          - Display the current player's hand"))
     print(
-        "  redo [N]           - Rétablit le dernier coup annulé ou les "
-        "N derniers coups annulés"
+        _(
+            "  show time [ID]     - Display the remaining time of all "
+            "players or of player ID"
+        )
     )
-    print("  show hand          - Affiche la main du joueur courant")
+    print(_("  show score         - Display the players' scores"))
+    print(_("  show history       - Display the move history"))
+    print(_("  show configuration - Display the current game configuration"))
+    print(_("  set (PARAM=VALUE)  - Set a configuration parameter"))
+    print(_("  play <move>        - Play the specified move"))
+    print(_("  server start [PORT] - Start the server on port [PORT]"))
+    print(_("  server list        - Display the list of available servers"))
+    print(_("  server stop        - Stop the server"))
     print(
-        "  show time [ID]     - Affiche le temps restant de tous les "
-        "joueurs ou du joueur ID"
+        _(
+            "  join [IP[:PORT]]   - Connect the client to the given server "
+            "or to its own server"
+        )
     )
-    print("  show score         - Affiche le score des joueurs")
-    print("  show history       - Affiche l'historique des coups joués")
-    print("  show configuration - Affiche la configuration actuelle du jeu")
-    print("  set (PARAM=VALUE)  - Définit un paramètre de configuration")
-    print("  play <move>        - Joue le coup spécifié par <move>")
-    print("  server start [PORT] - Lance le serveur sur le port [PORT]")
-    print("  server list        - Affiche la liste des serveurs disponible")
-    print("  server stop        - Arrête le serveur")
+    print(_("  quit               - Quit the server"))
+    print(_("  ping               - Display the server ping"))
+    print(_("  server status      - Display the server status"))
     print(
-        "  join [IP[:PORT]]   - Connecte le client au serveur à l'adresse"
-        " donnée ou à son propre serveur"
+        _(
+            "  players [PLAYER_ID] - Display connected players or "
+            "information about player [PLAYER_ID]"
+        )
     )
-    print("  quit               - Quitte le serveur")
-    print("  ping               - Affiche le ping du serveur")
-    print("  server status      - Affiche le status du serveur")
+    print(_("  scoreboard         - Display the server scoreboard"))
     print(
-        "  players [PLAYER_ID] - Affiche les joueurs connectés ou"
-        " des informations sur le joueur [PLAYER_ID] si [PLAYER_ID]"
+        _("  new PLAYER_ID ..   - Start a game with the proposed players")
     )
-    print("  scoreboard         - Affiche le scoreboard du serveur")
-    print(
-        "  new PLAYER_ID ..   - Commence une partie avec le"
-        " ou les joueurs proposé(s)"
-    )
-    print("  accept             - Accepte l'invitation reçu")
-    print("  decline            - Refuse l'invitation reçu")
-    print("  cancel             - Annule l'invitation envoyée")
-    print('  away               - Change le status en "away"')
-    print('  back               - Change le status en "idle"')
+    print(_("  accept             - Accept the received invitation"))
+    print(_("  decline            - Decline the received invitation"))
+    print(_("  cancel             - Cancel the sent invitation"))
+    print(_('  away               - Change the status to "away"'))
+    print(_('  back               - Change the status to "idle"'))
 
 
 def quit(
@@ -83,20 +89,20 @@ def quit(
         client_service.send_to_server("quit")
         return
     if server_service.is_server_running():
-        print("You should close your server first.")
+        print(_("You should close your server first."))
         return
     else:
         saved: int | None = -1
         while saved == -1:
-            confirm: str = input("Save the game before quitting?[y/N] ")
+            confirm: str = input(_("Save the game before quitting? [y/N] "))
             if confirm != "y":
-                print("Abandon de la commande de quitter.")
+                print(_("Quit command aborted."))
                 self.running = False
                 saved = 0
             else:
-                filename: str = input("Nom du fichier de sauvegarde: ")
+                filename: str = input(_("Save file name: "))
                 saved: None = save(self, filename, client_service)
-        print("Quitte le jeu. À bientôt!")
+        print(_("Quitting the game. See you soon!"))
         self.running = False
 
 
@@ -105,9 +111,13 @@ def load(self, filename, client_service: IClientService) -> None:
         client_service.send_to_server(f"load {filename}")
     else:
         if self.game.load_game_from_file(filename) == 0:
-            print(f"Partie chargée depuis {filename}.")
+            print(_("Game loaded from {filename}.").format(filename=filename))
         else:
-            print(f"Erreur lors du chargement de la partie depuis {filename}.")
+            print(
+                _("Failed to load the game from {filename}.").format(
+                    filename=filename
+                )
+            )
 
 
 def save(self, filename, client_service: IClientService) -> None:
@@ -115,7 +125,7 @@ def save(self, filename, client_service: IClientService) -> None:
         client_service.send_to_server(f"save {filename}")
     else:
         if self.game.save_game_to_file(filename) == 0:
-            print(f"Partie sauvegardée dans {filename}.")
+            print(_("Game saved to {filename}.").format(filename=filename))
 
 
 def shuffle(self, client_service: IClientService) -> None:
@@ -124,8 +134,11 @@ def shuffle(self, client_service: IClientService) -> None:
     else:
         seed = self.game.shuffle_deck()
         print(
-            f"Pioche mélangée. Algo: {self.game.game_data.shuffle_algo}."
-            f" Seed: {seed}")
+            _("Deck shuffled. Algorithm: {algorithm}. Seed: {seed}").format(
+                algorithm=self.game.game_data.shuffle_algo,
+                seed=seed,
+            )
+        )
 
 
 def draw(self, client_service: IClientService) -> None:
@@ -144,7 +157,7 @@ def draw(self, client_service: IClientService) -> None:
 
 def hint(self, client_service) -> None:
     # hint = self.game.getPlacementHint()
-    print("Indice pour le placement de la tuile: ")
+    print(_("Hint for placing the tile: "))
 
 
 def undo(self, N, client_service: IClientService) -> None:
@@ -152,7 +165,7 @@ def undo(self, N, client_service: IClientService) -> None:
         client_service.send_to_server("undo")
     else:
         self.game.undo()
-        print(f"Derniers {N} coups annulés.")
+        print(_("Last {count} move(s) undone.").format(count=N))
 
 
 def redo(self, N, client_service: IClientService) -> None:
@@ -160,7 +173,7 @@ def redo(self, N, client_service: IClientService) -> None:
         client_service.send_to_server("redo")
     else:
         self.game.redo()
-        print(f"Derniers {N} coups rétablis.")
+        print(_("Last {count} move(s) redone.").format(count=N))
 
 
 def show_hand(self, client_service: IClientService) -> None:
@@ -168,9 +181,13 @@ def show_hand(self, client_service: IClientService) -> None:
         client_service.send_to_server("show hand")
     else:
         if self.game.game_data.current_hand is None:
-            print("Aucune tuile en main.")
+            print(_("No tile in hand."))
         else:
-            print(f"Tuile en main: {self.game.game_data.current_hand}")
+            print(
+                _("Tile in hand: {tile}").format(
+                    tile=self.game.game_data.current_hand
+                )
+            )
 
 
 def _format_clock(remaining_seconds: float) -> str:
@@ -181,42 +198,46 @@ def _format_clock(remaining_seconds: float) -> str:
 
 def show_time(self, player_id_raw: str | None = None) -> None:
     if not self.game.get_game_configuration().get("blitz", False):
-        print("Mode blitz désactivé.")
+        print(_("Blitz mode is disabled."))
         return
 
     if player_id_raw is None or player_id_raw == "":
         players_times = self.game.get_all_players_remaining_time_seconds()
         if not players_times:
-            print("Mode blitz désactivé.")
+            print(_("Blitz mode is disabled."))
             return
-        print("Temps restants:")
+        print(_("Remaining times:"))
         for player_id, remaining_seconds in players_times:
             print(
-                f"- Joueur {player_id}: "
-                f"{_format_clock(float(remaining_seconds))}"
+                _("- Player {player_id}: {clock}").format(
+                    player_id=player_id,
+                    clock=_format_clock(float(remaining_seconds)),
+                )
             )
         return
 
     try:
         player_id = int(player_id_raw)
     except ValueError:
-        print("Usage: show time [PLAYER_ID]")
+        print(_("Usage: show time [PLAYER_ID]"))
         return
 
     remaining_seconds = self.game.get_player_remaining_time_seconds(player_id)
     if remaining_seconds is None:
-        print(f"Joueur inconnu: {player_id}")
+        print(_("Unknown player: {player_id}").format(player_id=player_id))
         return
 
     print(
-        f"Temps restant joueur {player_id}: "
-        f"{_format_clock(float(remaining_seconds))}"
+        _("Remaining time for player {player_id}: {clock}").format(
+            player_id=player_id,
+            clock=_format_clock(float(remaining_seconds)),
+        )
     )
 
 
 def show_score(self, client_service: IClientService) -> None:
     # scores = self.game.getPlayerScores()
-    print("Scores des joueurs:")
+    print(_("Player scores:"))
     # for player, score in scores.items():
     #    print(f"  {player}: {score}")
 
@@ -226,7 +247,7 @@ def show_history(self, game, client_service: IClientService) -> None:
         client_service.send_to_server("show history")
     else:
         history = game.get_history()
-        print("Historique des coups joués:")
+        print(_("Move history:"))
         for move in history:
             print(f" {move}")
 
@@ -236,7 +257,7 @@ def show_configuration(self, game, client_service: IClientService) -> None:
         client_service.send_to_server("show configuration")
     else:
         config = game.get_game_configuration()
-        print("Configuration actuelle du jeu:")
+        print(_("Current game configuration:"))
         for key, value in config.items():
             print(f"  {key}: {value}")
 
@@ -246,7 +267,12 @@ def set_parameter(self, param, value, client_service: IClientService) -> None:
         client_service.send_to_server(f"set {param}={value}")
     else:
         # self.game.setGameParameter(param, value)
-        print(f"Paramètre '{param}' défini à '{value}'.")
+        print(
+            _("Parameter '{param}' set to '{value}'.").format(
+                param=param,
+                value=value,
+            )
+        )
 
 
 def play(self, move, game, client_service: IClientService) -> None:
@@ -279,7 +305,7 @@ def show_board(self, game, client_service: IClientService) -> None:
 
 def show_server_list(self, client_service: IClientService):
     server_list = client_service.list_available_servers()
-    print("Available servers list:")
+    print(_("Available servers list:"))
     for server in server_list:
         print(f"{server}:{server_list[server]}")
 

@@ -1,0 +1,582 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: carcassonne 0.1.0\n"
+"POT-Creation-Date: 2026-04-03 00:00+0000\n"
+"PO-Revision-Date: 2026-04-03 00:00+0000\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "error"
+msgstr "erreur"
+
+msgid "Signal {signum} received: shutting down both client and server."
+msgstr "Signal {signum} reçu : arrêt du client et du serveur."
+
+msgid "Already shutting down, ignoring additional signal."
+msgstr "Arrêt déjà en cours, signal supplémentaire ignoré."
+
+msgid "Error shutting down client: {error}"
+msgstr "Erreur lors de l'arrêt du client : {error}"
+
+msgid "Error shutting down server: {error}"
+msgstr "Erreur lors de l'arrêt du serveur : {error}"
+
+msgid "display the version of the program"
+msgstr "afficher la version du programme"
+
+msgid "increase verbosity"
+msgstr "augmenter la verbosité"
+
+msgid "enable debug messages"
+msgstr "activer les messages de débogage"
+
+msgid "shuffle algorithm (fisher-yates|naive)"
+msgstr "algorithme de mélange (fisher-yates|naive)"
+
+msgid "seed for shuffle randomness"
+msgstr "graine pour le mélange aléatoire"
+
+msgid "enable GUI mode"
+msgstr "activer le mode GUI"
+
+msgid "name of the file to load a game"
+msgstr "nom du fichier à charger"
+
+msgid "enable blitz mode"
+msgstr "activer le mode blitz"
+
+msgid "enable contest mode"
+msgstr "activer le mode concours"
+
+msgid "set time limit in minutes"
+msgstr "définir la limite de temps en minutes"
+
+msgid "number of players (default: 2)"
+msgstr "nombre de joueurs (par défaut : 2)"
+
+msgid "enable river mode"
+msgstr "activer le mode rivière"
+
+msgid "max seconds for AI moves (default: 5s)"
+msgstr "secondes maximales pour les coups de l'IA (par défaut : 5 s)"
+
+msgid "AI algorithm used (default: random)"
+msgstr "algorithme d'IA utilisé (par défaut : random)"
+
+msgid "depth of the AI tree search (default: maximum depth = 80 playable tiles)"
+msgstr "profondeur de recherche de l'arbre de l'IA (par défaut : profondeur maximale = 80 tuiles jouables)"
+
+msgid "evaluation function for minimax/iterative (baseline|short_term|disruption)"
+msgstr "fonction d'évaluation pour minimax/iterative (baseline|short_term|disruption)"
+
+msgid "selection function for mcts (UCT|ML, default: UCT)"
+msgstr "fonction de sélection pour mcts (UCT|ML, par défaut : UCT)"
+
+msgid "join a server on port [PORT] (default: don't join any server, start in local mode)"
+msgstr "rejoindre un serveur sur le port [PORT] (par défaut : ne rejoindre aucun serveur, démarrer en mode local)"
+
+msgid "start the server without an interface"
+msgstr "démarrer le serveur sans interface"
+
+msgid "Carcassonne: version {version}"
+msgstr "Carcassonne : version {version}"
+
+msgid "Warning: --time is ignored because --blitz is not enabled."
+msgstr "Avertissement : --time est ignoré car --blitz n'est pas activé."
+
+msgid "River mode enabled."
+msgstr "Mode rivière activé."
+
+msgid "Starting server in daemon mode (no interface)."
+msgstr "Démarrage du serveur en mode démon (sans interface)."
+
+msgid "Debug mode enabled."
+msgstr "Mode débogage activé."
+
+msgid "Contest error: {error}"
+msgstr "Erreur de concours : {error}"
+
+msgid "Loading game from file: {filename}"
+msgstr "Chargement de la partie depuis : {filename}"
+
+msgid "Verbose mode enabled."
+msgstr "Mode verbeux activé."
+
+msgid "GUI mode enabled."
+msgstr "Mode GUI activé."
+
+msgid "Welcome to Carcassonne"
+msgstr "Bienvenue dans Carcassonne"
+
+msgid "Type 'help' to see the list of commands."
+msgstr "Tapez 'help' pour voir la liste des commandes."
+
+msgid "Game over."
+msgstr "Fin de partie."
+
+msgid "=== Game finished! Final scores ==="
+msgstr "=== Partie terminée ! Scores finaux ==="
+
+msgid "  {rank}. {username}: {score} points"
+msgstr "  {rank}. {username} : {score} points"
+
+msgid "Command rejected: it is not your turn or your time has run out."
+msgstr "Commande refusée : ce n'est pas votre tour ou votre temps est écoulé."
+
+msgid "Unknown command. Type 'help' to see the list of commands."
+msgstr "Commande inconnue. Tapez 'help' pour voir la liste des commandes."
+
+msgid "New game started."
+msgstr "Nouvelle partie commencée."
+
+msgid "Available commands:"
+msgstr "Commandes disponibles :"
+
+msgid "  new <args>         - Start a new game"
+msgstr "  new <args>         - Démarre une nouvelle partie"
+
+msgid "  help               - Display this help message"
+msgstr "  help               - Affiche cette aide"
+
+msgid "  quit               - Quit the game"
+msgstr "  quit               - Quitte le jeu"
+
+msgid "  load <file>        - Load a game from a file"
+msgstr "  load <file>        - Charge une partie depuis un fichier"
+
+msgid "  save <file>        - Save the game to a file"
+msgstr "  save <file>        - Sauvegarde la partie dans un fichier"
+
+msgid "  shuffle            - Shuffle the deck"
+msgstr "  shuffle            - Mélange la pioche"
+
+msgid "  draw               - Draw a tile"
+msgstr "  draw               - Pioche une tuile"
+
+msgid "  hint               - Show a hint for the current tile"
+msgstr "  hint               - Donne un indice pour la tuile actuelle"
+
+msgid "  undo [N]           - Undo the last move or the last N moves"
+msgstr "  undo [N]           - Annule le dernier coup ou les N derniers coups"
+
+msgid "  redo [N]           - Redo the last undone move or the last N undone moves"
+msgstr "  redo [N]           - Rétablit le dernier coup annulé ou les N derniers coups annulés"
+
+msgid "  show hand          - Display the current player's hand"
+msgstr "  show hand          - Affiche la main du joueur courant"
+
+msgid "  show time [ID]     - Display the remaining time of all players or of player ID"
+msgstr "  show time [ID]     - Affiche le temps restant de tous les joueurs ou du joueur ID"
+
+msgid "  show score         - Display the players' scores"
+msgstr "  show score         - Affiche le score des joueurs"
+
+msgid "  show history       - Display the move history"
+msgstr "  show history       - Affiche l'historique des coups"
+
+msgid "  show configuration - Display the current game configuration"
+msgstr "  show configuration - Affiche la configuration actuelle du jeu"
+
+msgid "  set (PARAM=VALUE)  - Set a configuration parameter"
+msgstr "  set (PARAM=VALUE)  - Définit un paramètre de configuration"
+
+msgid "  play <move>        - Play the specified move"
+msgstr "  play <move>        - Joue le coup indiqué"
+
+msgid "  server start [PORT] - Start the server on port [PORT]"
+msgstr "  server start [PORT] - Lance le serveur sur le port [PORT]"
+
+msgid "  server list        - Display the list of available servers"
+msgstr "  server list        - Affiche la liste des serveurs disponibles"
+
+msgid "  server stop        - Stop the server"
+msgstr "  server stop        - Arrête le serveur"
+
+msgid "  join [IP[:PORT]]   - Connect the client to the given server or to its own server"
+msgstr "  join [IP[:PORT]]   - Connecte le client au serveur indiqué ou à son propre serveur"
+
+msgid "  quit               - Quit the server"
+msgstr "  quit               - Quitte le serveur"
+
+msgid "  ping               - Display the server ping"
+msgstr "  ping               - Affiche le ping du serveur"
+
+msgid "  server status      - Display the server status"
+msgstr "  server status      - Affiche l'état du serveur"
+
+msgid "  players [PLAYER_ID] - Display connected players or information about player [PLAYER_ID]"
+msgstr "  players [PLAYER_ID] - Affiche les joueurs connectés ou les informations sur le joueur [PLAYER_ID]"
+
+msgid "  scoreboard         - Display the server scoreboard"
+msgstr "  scoreboard         - Affiche le classement du serveur"
+
+msgid "  new PLAYER_ID ..   - Start a game with the proposed players"
+msgstr "  new PLAYER_ID ..   - Commence une partie avec les joueurs proposés"
+
+msgid "  accept             - Accept the received invitation"
+msgstr "  accept             - Accepte l'invitation reçue"
+
+msgid "  decline            - Decline the received invitation"
+msgstr "  decline            - Refuse l'invitation reçue"
+
+msgid "  cancel             - Cancel the sent invitation"
+msgstr "  cancel             - Annule l'invitation envoyée"
+
+msgid "  away               - Change the status to \"away\""
+msgstr "  away               - Passe le statut à \"away\""
+
+msgid "  back               - Change the status to \"idle\""
+msgstr "  back               - Passe le statut à \"idle\""
+
+msgid "You should close your server first."
+msgstr "Vous devez d'abord fermer votre serveur."
+
+msgid "Save the game before quitting? [y/N] "
+msgstr "Sauvegarder la partie avant de quitter ? [y/N] "
+
+msgid "Quit command aborted."
+msgstr "Commande de fermeture annulée."
+
+msgid "Save file name: "
+msgstr "Nom du fichier de sauvegarde : "
+
+msgid "Quitting the game. See you soon!"
+msgstr "Fermeture du jeu. À bientôt !"
+
+msgid "Game loaded from {filename}."
+msgstr "Partie chargée depuis {filename}."
+
+msgid "Failed to load the game from {filename}."
+msgstr "Échec du chargement de la partie depuis {filename}."
+
+msgid "Game saved to {filename}."
+msgstr "Partie sauvegardée dans {filename}."
+
+msgid "Deck shuffled. Algorithm: {algorithm}. Seed: {seed}"
+msgstr "Pioche mélangée. Algorithme : {algorithm}. Graine : {seed}"
+
+msgid "Hint for placing the tile: "
+msgstr "Indice pour le placement de la tuile : "
+
+msgid "Last {count} move(s) undone."
+msgstr "Les {count} derniers coups ont été annulés."
+
+msgid "Last {count} move(s) redone."
+msgstr "Les {count} derniers coups ont été rétablis."
+
+msgid "No tile in hand."
+msgstr "Aucune tuile en main."
+
+msgid "Tile in hand: {tile}"
+msgstr "Tuile en main : {tile}"
+
+msgid "Blitz mode is disabled."
+msgstr "Le mode blitz est désactivé."
+
+msgid "Remaining times:"
+msgstr "Temps restants :"
+
+msgid "- Player {player_id}: {clock}"
+msgstr "- Joueur {player_id} : {clock}"
+
+msgid "Usage: show time [PLAYER_ID]"
+msgstr "Utilisation : show time [PLAYER_ID]"
+
+msgid "Unknown player: {player_id}"
+msgstr "Joueur inconnu : {player_id}"
+
+msgid "Remaining time for player {player_id}: {clock}"
+msgstr "Temps restant pour le joueur {player_id} : {clock}"
+
+msgid "Player scores:"
+msgstr "Scores des joueurs :"
+
+msgid "Move history:"
+msgstr "Historique des coups :"
+
+msgid "Current game configuration:"
+msgstr "Configuration actuelle du jeu :"
+
+msgid "Parameter '{param}' set to '{value}'."
+msgstr "Paramètre '{param}' défini à '{value}'."
+
+msgid "Available servers list:"
+msgstr "Liste des serveurs disponibles :"
+
+msgid "Singleplayer"
+msgstr "Solo"
+
+msgid "Multiplayer"
+msgstr "Multijoueur"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "Quit"
+msgstr "Quitter"
+
+msgid "Game"
+msgstr "Jeu"
+
+msgid "Keybinds"
+msgstr "Raccourcis"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Fullscreen"
+msgstr "Plein écran"
+
+msgid "Width:"
+msgstr "Largeur :"
+
+msgid "Height:"
+msgstr "Hauteur :"
+
+msgid "Apply resolution"
+msgstr "Appliquer la résolution"
+
+msgid "AI"
+msgstr "IA"
+
+msgid "Random seed:"
+msgstr "Graine aléatoire :"
+
+msgid "Leave blank for random"
+msgstr "Laisser vide pour aléatoire"
+
+msgid "Blitz mode"
+msgstr "Mode blitz"
+
+msgid "Contest mode"
+msgstr "Mode concours"
+
+msgid "Choose contest file"
+msgstr "Choisir le fichier de concours"
+
+msgid "Time limit (minutes):"
+msgstr "Limite de temps (minutes) :"
+
+msgid "Select contest file"
+msgstr "Sélectionner le fichier de concours"
+
+msgid "Please select a contest file."
+msgstr "Veuillez sélectionner un fichier de concours."
+
+msgid "Load game"
+msgstr "Charger une partie"
+
+msgid "Failed to load game from {filename}"
+msgstr "Échec du chargement de la partie depuis {filename}"
+
+msgid "Save game"
+msgstr "Sauvegarder la partie"
+
+msgid "Failed to save game to {filename}"
+msgstr "Échec de la sauvegarde de la partie dans {filename}"
+
+msgid "Authors"
+msgstr "Auteurs"
+
+msgid "Pause is not implemented yet."
+msgstr "La pause n'est pas encore implémentée."
+
+msgid "Draw tile (t)"
+msgstr "Piocher une tuile (t)"
+
+msgid "End turn (space)"
+msgstr "Terminer le tour (espace)"
+
+msgid "Back to menu"
+msgstr "Retour au menu"
+
+msgid "New game"
+msgstr "Nouvelle partie"
+
+msgid "Configuration"
+msgstr "Configuration"
+
+msgid "Info"
+msgstr "Infos"
+
+msgid "File"
+msgstr "Fichier"
+
+msgid "Undo"
+msgstr "Annuler"
+
+msgid "Redo"
+msgstr "Rétablir"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Hint"
+msgstr "Indice"
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Press key..."
+msgstr "Appuyez sur une touche..."
+
+msgid "Key already used."
+msgstr "Touche déjà utilisée."
+
+msgid "You should create an online account."
+msgstr "Vous devez créer un compte en ligne."
+
+msgid ">> Your username is: "
+msgstr ">> Votre nom d'utilisateur est : "
+
+msgid ">> Your password is: "
+msgstr ">> Votre mot de passe est : "
+
+msgid "Error: there is no server with that IP address."
+msgstr "Erreur : aucun serveur ne correspond à cette adresse IP."
+
+msgid "Unable to connect to {ip}:{port} -> {error}"
+msgstr "Impossible de se connecter à {ip}:{port} -> {error}"
+
+msgid "Server closed the connection."
+msgstr "Le serveur a fermé la connexion."
+
+msgid "Socket error: {error}"
+msgstr "Erreur de socket : {error}"
+
+msgid "Error receiving from server: {error}"
+msgstr "Erreur lors de la réception depuis le serveur : {error}"
+
+msgid "Error closing client socket: {error}"
+msgstr "Erreur lors de la fermeture du socket client : {error}"
+
+msgid "Would you like to try another username? (y/n)\n>> "
+msgstr "Voulez-vous essayer un autre nom d'utilisateur ? (y/n)\n>> "
+
+msgid "username:\n>> "
+msgstr "nom d'utilisateur :\n>> "
+
+msgid "Error binding socket: {error}"
+msgstr "Erreur lors du bind du socket : {error}"
+
+msgid "Invalid port in message: {message}"
+msgstr "Port invalide dans le message : {message}"
+
+msgid "Invalid message format: {message}"
+msgstr "Format de message invalide : {message}"
+
+msgid "Error receiving message: {error}"
+msgstr "Erreur lors de la réception du message : {error}"
+
+msgid "Error: no client socket found."
+msgstr "Erreur : aucun socket client trouvé."
+
+msgid "No server response"
+msgstr "Aucune réponse du serveur"
+
+msgid "Not connected to any server."
+msgstr "Connecté à aucun serveur."
+
+msgid "Failed to send: {error}"
+msgstr "Échec de l'envoi : {error}"
+
+msgid "Starting client disconnection..."
+msgstr "Début de la déconnexion du client..."
+
+msgid "Warning: receive thread did not terminate within timeout."
+msgstr "Avertissement : le thread de réception ne s'est pas terminé dans le délai imparti."
+
+msgid "Error joining receive thread: {error}"
+msgstr "Erreur lors de l'attente du thread de réception : {error}"
+
+msgid "Client disconnection complete."
+msgstr "Déconnexion du client terminée."
+
+msgid "Error during client disconnection: {error}"
+msgstr "Erreur pendant la déconnexion du client : {error}"
+
+msgid "Server started on port {port}"
+msgstr "Serveur démarré sur le port {port}"
+
+msgid "Error starting server: {error}"
+msgstr "Erreur au démarrage du serveur : {error}"
+
+msgid "Accepted connection from a client."
+msgstr "Connexion d'un client acceptée."
+
+msgid "Error accepting connection: {error}"
+msgstr "Erreur lors de l'acceptation de la connexion : {error}"
+
+msgid "Server stopped."
+msgstr "Serveur arrêté."
+
+msgid "Error handling client: {error}"
+msgstr "Erreur lors du traitement du client : {error}"
+
+msgid "Status not changed."
+msgstr "Statut inchangé."
+
+msgid "Status changed to {status}."
+msgstr "Statut changé en {status}."
+
+msgid "List of current players: {players}"
+msgstr "Liste des joueurs actuels : {players}"
+
+msgid "All invitations cancelled."
+msgstr "Toutes les invitations ont été annulées."
+
+msgid "No invitations cancelled."
+msgstr "Aucune invitation annulée."
+
+msgid "Your invitation(s) have been cancelled."
+msgstr "Vos invitation(s) ont été annulée(s)."
+
+msgid "Error cleaning the party's players!"
+msgstr "Erreur lors du nettoyage des joueurs de la partie !"
+
+msgid "Bye {username}!"
+msgstr "Au revoir {username} !"
+
+msgid "Port: {port}, Clients: {clients}, Current parties: {parties}"
+msgstr "Port : {port}, Clients : {clients}, Parties en cours : {parties}"
+
+msgid "Scoreboard:"
+msgstr "Classement :"
+
+msgid "Id: {id}, username: {username}, victories: {victories}, defeats: {defeats}, total games: {total_games}"
+msgstr "Id : {id}, nom : {username}, victoires : {victories}, défaites : {defeats}, parties totales : {total_games}"
+
+msgid "{invitee_name} has accepted your invitation!"
+msgstr "{invitee_name} a accepté votre invitation !"
+
+msgid "{invitee_name} has rejected your invitation!"
+msgstr "{invitee_name} a refusé votre invitation !"
+
+msgid "Current history:"
+msgstr "Historique actuel :"
+
+msgid "Score:"
+msgstr "Score :"
+
+msgid "{player}: {score} points."
+msgstr "{player} : {score} points."
+
+msgid "The deck is empty!"
+msgstr "La pioche est vide !"
+
+msgid "You already have a tile in hand."
+msgstr "Vous avez déjà une tuile en main."
+
+msgid "Tile drawn: {tile}"
+msgstr "Tuile piochée : {tile}"
+
+msgid "Failed to save the game to {filename}."
+msgstr "Échec de la sauvegarde de la partie dans {filename}."

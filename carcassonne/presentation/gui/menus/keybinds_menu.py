@@ -2,6 +2,8 @@ from gi.repository import Gtk
 
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -15,13 +17,13 @@ class KeybindsMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Keybinds")
+        title = Gtk.Label(label=_("Keybinds"))
         title.add_css_class("section-title")
         self.append(title)
 
         # --- keybinds button -------------------------------------------------
         # -------- FILE KEYBINDS --------
-        file_title = Gtk.Label(label="File")
+        file_title = Gtk.Label(label=_("File"))
         file_title.add_css_class("heading")
         self.append(file_title)
 
@@ -29,7 +31,7 @@ class KeybindsMenu(Gtk.Box):
         self.append(file_box)
 
         # -------- GAME KEYBINDS --------
-        game_title = Gtk.Label(label="Game")
+        game_title = Gtk.Label(label=_("Game"))
         game_title.add_css_class("heading")
         self.append(game_title)
 
@@ -38,7 +40,7 @@ class KeybindsMenu(Gtk.Box):
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
@@ -47,11 +49,11 @@ class KeybindsMenu(Gtk.Box):
         # ------------------------------------------------------------------
 
     def on_back(self, button):
-        """Return to the main menu"""
+        """Return to the options menu."""
         self.gui.window.stack.set_visible_child_name("options_menu")
 
     def build_keybind_section(self, keybind_dict):
-        """Create a column of keybind rows"""
+        """Create a column of keybind rows."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
 
         for action, key in keybind_dict.items():
@@ -78,7 +80,7 @@ class KeybindsMenu(Gtk.Box):
         return box
 
     def on_rebind_clicked(self, button, action, button_widget, keybind_dict):
-        button_widget.set_label("Press key...")
+        button_widget.set_label(_("Press key..."))
 
         controller = Gtk.EventControllerKey.new()
         controller.connect(
@@ -111,7 +113,7 @@ class KeybindsMenu(Gtk.Box):
         )
 
         if key in all_keys:
-            print("Key already used!")
+            print(_("Key already used."))
             button_widget.set_label(keybind_dict[action])
             self.remove_controller(controller)
             return True
