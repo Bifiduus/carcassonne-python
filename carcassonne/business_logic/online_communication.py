@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from carcassonne.business_logic.game.game import Game
+from carcassonne.i18n import gettext as _
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.server import Server
@@ -17,15 +18,20 @@ class OnlineCommunication:
 
     def command_quit(self, client_username: str) -> str:
         self.server.repo.client_quit(client_username)
-        return f"Bye {client_username}!\n"
+        return _("Bye {username}!").format(username=client_username) + "\n"
 
     def command_server_status(self):
         assert (
             self.server.server is not None
         ), "No server to execute the command on..."
-        answer = f"Port: {self.server.server.getsockname()[1]}, "
-        answer += f"Clients: {len(self.server.connected_clients)}, "
-        answer += f"Current Parties: {len(self.server.current_games_list)}\n"
+        answer = _(
+            "Port: {port}, Clients: {clients}, Current parties: {parties}"
+        ).format(
+            port=self.server.server.getsockname()[1],
+            clients=len(self.server.connected_clients),
+            parties=len(self.server.current_games_list),
+        )
+        answer += "\n"
         return answer
 
     def command_new(self, message: str, client_id: str) -> str:
@@ -62,12 +68,20 @@ class OnlineCommunication:
 
     def command_scoreboard(self) -> str:
         rows = self.server.repo.get_scoreboard()
-        scoreboard: str = "Scoreboard:\n"
+        scoreboard: str = _("Scoreboard:") + "\n"
         for row in rows:
             scoreboard += (
-                f"Id: {row['id']}, username: {row['username']},"
-                f" victories: {row['victories']}, defeats: {row['defeats']},"
-                f" total games: {row['total_games']}\n"
+                _(
+                    "Id: {id}, username: {username}, victories: {victories}, "
+                    "defeats: {defeats}, total games: {total_games}"
+                ).format(
+                    id=row["id"],
+                    username=row["username"],
+                    victories=row["victories"],
+                    defeats=row["defeats"],
+                    total_games=row["total_games"],
+                )
+                + "\n"
             )
         return scoreboard  # Affiche le tableau des scores
         # joueurs qui ont joué sur le serveur (nombre de
@@ -99,27 +113,41 @@ class OnlineCommunication:
 
     def notify_host_of_acceptance(self, host_id: int, invitee_id: str):
         """Send notification to host that an invitation was accepted."""
-        try:
-            host_username: str = self.server.repo.get_username(
-                str(host_id)
-            )
-            invitee_name: str = self.server.repo.get_username(invitee_id)
-            message = f"{invitee_name} has accepted your invitation!\n"
-            self.server.send_to_client(host_username, message)
-        except Exception as e:
-            print(f"Error notifying host {host_id}: {e}")
+        if host_id in self.server.client_sockets:
+            try:
+                host_username: str = self.server.repo.get_username(
+                    str(host_id)
+                )
+                invitee_name: str = self.server.repo.get_username(invitee_id)
+                host_socket = self.server.client_sockets[host_id]
+                message = (
+                    _("{invitee_name} has accepted your invitation!").format(
+                        invitee_name=invitee_name
+                    )
+                    + "\n"
+                )
+                host_socket.send(message.encode())
+            except Exception as e:
+                print(f"Error notifying host {host_id}: {e}")
 
     def notify_host_of_rejection(self, host_id: int, invitee_id: str):
         """Send notification to host that an invitation was rejected."""
-        try:
-            host_username: str = self.server.repo.get_username(
-                str(host_id)
-            )
-            invitee_name: str = self.server.repo.get_username(invitee_id)
-            message = f"{invitee_name} has rejected your invitation!\n"
-            self.server.send_to_client(host_username, message)
-        except Exception as e:
-            print(f"Error notifying host {host_id}: {e}")
+        if host_id in self.server.client_sockets:
+            try:
+                host_username: str = self.server.repo.get_username(
+                    str(host_id)
+                )
+                invitee_name: str = self.server.repo.get_username(invitee_id)
+                host_socket = self.server.client_sockets[host_id]
+                message = (
+                    _("{invitee_name} has rejected your invitation!").format(
+                        invitee_name=invitee_name
+                    )
+                    + "\n"
+                )
+                host_socket.send(message.encode())
+            except Exception as e:
+                print(f"Error notifying host {host_id}: {e}")
 
     def command_cancel(self, client_id: str, players: str) -> str:
         answer = ""
@@ -185,14 +213,17 @@ class OnlineCommunication:
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         game.set_game_configuration(param, value)
-        return f"Paramètre '{param}' défini à '{value}'."
+        return _("Parameter '{param}' set to '{value}'.").format(
+            param=param,
+            value=value,
+        )
 
     def command_config(self, client_id: str) -> str:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         config = game.get_game_configuration()
-        answer = "Configuration actuelle du jeu:"
+        answer = _("Current game configuration:")
         for key, value in config.items():
             answer += f"  {key}: {value}"
         return answer
@@ -204,7 +235,7 @@ class OnlineCommunication:
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
         history = game.get_history()
-        answer = "Current history:"
+        answer = _("Current history:")
         for move in history:
             answer += f" {move}"
         return answer
@@ -221,10 +252,15 @@ class OnlineCommunication:
         else:
             game.score_manager.score_end_of_turn(
                 game.game_data.graph, game.game_data.players)
-        answer = "Score:"
+        answer = _("Score:")
         for player in game.game_data.players.values():
-            answer += f"{player.get_username()} "\
-                f"{'AI' if player.is_ai else ''}: {player.score} points.\n"
+            player_label = player.get_username()
+            if player.is_ai:
+                player_label = f"{player_label} {_('AI')}"
+            answer += _("{player}: {score} points.").format(
+                player=player_label,
+                score=player.score,
+            ) + "\n"
         return answer
 
     def command_hand(self, client_id: str) -> str:
@@ -235,9 +271,11 @@ class OnlineCommunication:
         game: Game = self.server.current_games_list[game_id][1]
         answer = ""
         if game.game_data.current_hand is None:
-            answer = "Aucune tuile en main."
+            answer = _("No tile in hand.")
         else:
-            answer = f"Tuile en main: {game.game_data.current_hand}"
+            answer = _("Tile in hand: {tile}").format(
+                tile=game.game_data.current_hand
+            )
         return answer
 
     def command_redo(self, client_id: str) -> str:
@@ -249,7 +287,7 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         game.redo()
-        return "Derniers coups rétablis."
+        return _("Last moves redone.")
 
     def command_undo(self, client_id: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
@@ -260,7 +298,7 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         game.undo()
-        return "Derniers coups annulés."
+        return _("Last moves undone.")
 
     def command_hint(self, client_id: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
@@ -282,11 +320,11 @@ class OnlineCommunication:
         tile = game.draw_tile()
         answer = ""
         if tile is None:
-            answer = "La pioche est vide!"
+            answer = _("The deck is empty!")
         elif already_had_tile:
-            answer = "Vous avez déjà une tuile en main."
+            answer = _("You already have a tile in hand.")
         else:
-            answer = f"Tuile piochée: {tile}"
+            answer = _("Tile drawn: {tile}").format(tile=tile)
         return answer
 
     def command_shuffle(self, client_id: str) -> str:
@@ -298,8 +336,10 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         seed = game.shuffle_deck()
-        return f"Pioche mélangée. Algo: {game.game_data.shuffle_algo}."\
-            f" Seed: {seed}"
+        return _("Deck shuffled. Algorithm: {algorithm}. Seed: {seed}").format(
+            algorithm=game.game_data.shuffle_algo,
+            seed=seed,
+        )
 
     def command_save(self, client_id: str, message: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
@@ -311,8 +351,10 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         if game.save_game_to_file(filename) == 0:
-            return f"Partie sauvegardée dans {filename}."
-        return f"Erreur de la sauvegarde dans {filename}."
+            return _("Game saved to {filename}.").format(filename=filename)
+        return _("Failed to save the game to {filename}.").format(
+            filename=filename
+        )
 
     def command_load(self, client_id: str, message: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
@@ -324,5 +366,7 @@ class OnlineCommunication:
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
         if game.load_game_from_file(filename) == 0:
-            return f"Partie chargée depuis {filename}."
-        return f"Erreur du chargement depuis {filename}."
+            return _("Game loaded from {filename}.").format(filename=filename)
+        return _("Failed to load the game from {filename}.").format(
+            filename=filename
+        )

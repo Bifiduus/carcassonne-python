@@ -18,6 +18,7 @@ from carcassonne.presentation.gui.menus.singleplayer_menu import (
     SingleplayerMenu,
 )
 from carcassonne.presentation.gui.menus.options_menu import OptionsMenu
+from carcassonne.i18n import gettext as _
 
 
 import gi
@@ -54,13 +55,12 @@ class GameGUI(Gtk.Application):
 
         # simple controls used in the overlay; the handlers delegate to the
         # command module directly so the GUI doesn't need to know game logic.
-        self.button_draw = Gtk.Button(label="Draw Tile (t)")
-        # self.button_draw.add_css_class("orange-buttons")
+        self.button_draw = Gtk.Button(label=_("Draw tile (t)"))
         self.button_draw.connect(
             "clicked", lambda b: commands_handler_gui.on_draw_gui(self)
         )
 
-        self.button_end_turn = Gtk.Button(label="End Turn (space)")
+        self.button_end_turn = Gtk.Button(label=_("End turn (space)"))
         self.button_end_turn.connect(
             "clicked", lambda b: commands_handler_gui.on_end_turn_gui(self)
         )
@@ -170,7 +170,7 @@ class GameGUI(Gtk.Application):
         overlay.add_overlay(self.players_view)
 
         # back button in top-right corner
-        back_button = Gtk.Button(label="Back to Menu")
+        back_button = Gtk.Button(label=_("Back to menu"))
         back_button.set_margin_top(10)
         back_button.set_margin_end(10)
         back_button.set_halign(Gtk.Align.END)

@@ -1,6 +1,8 @@
 from gi.repository import Gtk
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -10,7 +12,7 @@ class InfoMessage:
 
     def show_info(self, message: str):
         dialog = Gtk.Dialog()
-        dialog.set_title("Information")
+        dialog.set_title(_("Information"))
         dialog.set_modal(True)
         dialog.set_transient_for(self.gui.window.window)
 
@@ -31,8 +33,7 @@ class InfoMessage:
         # Add to dialog content area
         dialog.get_content_area().append(scrolled)
 
-        # Add OK button
-        dialog.add_button("OK", Gtk.ResponseType.OK)
+        dialog.add_button(_("OK"), Gtk.ResponseType.OK)
         dialog.connect("response", lambda d, r: d.destroy())
 
         dialog.present()

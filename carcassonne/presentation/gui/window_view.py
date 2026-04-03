@@ -3,6 +3,8 @@ import math
 
 from gi.repository import Gio, Gtk, GLib
 
+from carcassonne.i18n import gettext as _
+
 
 class WindowView:
     """Helper that builds the top-level application window and the
@@ -76,28 +78,28 @@ class WindowView:
 
     def _build_file_menu(self, header: Gtk.HeaderBar):
         menu_file = Gio.Menu()
-        menu_file.append("New Game", "app.new")
-        menu_file.append("Load Game", "app.load")
-        menu_file.append("Save Game", "app.save")
-        menu_file.append("Configuration", "app.config")
-        menu_file.append("Info", "app.info")
-        menu_file.append("Quit", "app.quit")
+        menu_file.append(_("New game"), "app.new")
+        menu_file.append(_("Load game"), "app.load")
+        menu_file.append(_("Save game"), "app.save")
+        menu_file.append(_("Configuration"), "app.config")
+        menu_file.append(_("Info"), "app.info")
+        menu_file.append(_("Quit"), "app.quit")
         for action, key in self.file_keybinds.items():
             self.application.set_accels_for_action(action, ["<Primary>" + key])
-        file_button = self.create_menu_button("File", menu_file)
+        file_button = self.create_menu_button(_("File"), menu_file)
         file_button.add_css_class("headers_buttons")
         header.pack_start(file_button)
 
     def _build_game_menu(self, header: Gtk.HeaderBar):
         menu_game = Gio.Menu()
-        menu_game.append("Undo", "app.undo")
-        menu_game.append("Redo", "app.redo")
-        menu_game.append("Pause", "app.pause")
-        menu_game.append("Hint", "app.hint")
+        menu_game.append(_("Undo"), "app.undo")
+        menu_game.append(_("Redo"), "app.redo")
+        menu_game.append(_("Pause"), "app.pause")
+        menu_game.append(_("Hint"), "app.hint")
         for action, key in self.game_keybinds.items():
             self.application.set_accels_for_action(action, ["<Primary>" + key])
 
-        game_button = self.create_menu_button("Game", menu_game)
+        game_button = self.create_menu_button(_("Game"), menu_game)
         game_button.add_css_class("headers_buttons")
         header.pack_start(game_button)
 
@@ -119,14 +121,14 @@ class WindowView:
         self.application.add_action(action)
 
     def hide_menus(self):
-        """Cache les menus (ex: pendant le jeu ou après un clic)."""
+        """Hide menus, for example during gameplay."""
         if self.file_button:
             self.file_button.set_visible(False)
         if self.game_button:
             self.game_button.set_visible(False)
 
     def show_menus(self):
-        """Réaffiche les menus."""
+        """Show menus again."""
         if self.file_button:
             self.file_button.set_visible(True)
         if self.game_button:
@@ -147,7 +149,7 @@ class WindowView:
     def _animate_header(self):
         self._t += 0.02
 
-        # couleurs animées (effet fluide)
+        # Animated colors for a fluid header effect.
         r = int((math.sin(self._t) + 1) * 127)
         g = int((math.sin(self._t + 2) + 1) * 127)
         b = int((math.sin(self._t + 4) + 1) * 127)

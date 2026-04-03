@@ -3,6 +3,8 @@ import os
 
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -31,20 +33,20 @@ class SingleplayerMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Game")
+        title = Gtk.Label(label=_("Game"))
         title.add_css_class("section-title")
         self.append(title)
 
-        ai_button = Gtk.Button(label="Ai")
-        ai_button.add_css_class("orange-buttons")
+        ai_button = Gtk.Button(label=_("AI"))
+        ai_button.add_css_class("options-buttons")
         ai_button.connect("clicked", self.on_ai_options)
         self.append(ai_button)
 
         # --- random seed --------------------------------------------------
         seed_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        seed_label = Gtk.Label(label="Random seed:")
+        seed_label = Gtk.Label(label=_("Random seed:"))
         self.entry_seed = Gtk.Entry()
-        self.entry_seed.set_placeholder_text("(leave blank for random)")
+        self.entry_seed.set_placeholder_text(_("Leave blank for random"))
         self.entry_seed.connect("changed", self.on_seed_changed)
         seed_box.append(seed_label)
         seed_box.append(self.entry_seed)
@@ -53,17 +55,16 @@ class SingleplayerMenu(Gtk.Box):
         # --- game mode ----------------------------------------------------
         mode_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         mode_box.set_halign(Gtk.Align.CENTER)
-        self.blitz_cb = Gtk.CheckButton(label="Blitz mode")
-        self.contest_cb = Gtk.CheckButton(label="Contest mode")
-        self.river_cb = Gtk.CheckButton(label="River mode")
+        self.blitz_cb = Gtk.CheckButton(label=_("Blitz mode"))
+        self.contest_cb = Gtk.CheckButton(label=_("Contest mode"))
         # file chooser only enabled when contest is active
-        self.file_button = Gtk.Button(label="Choose contest file")
+        self.file_button = Gtk.Button(label=_("Choose contest file"))
         self.file_button.connect("clicked", self.on_choose_file)
 
         self.time_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=6
         )
-        entry_label = Gtk.Label(label="Time limit (minutes):")
+        entry_label = Gtk.Label(label=_("Time limit (minutes):"))
         self.entry_time = Gtk.Entry()
         self.entry_time.connect("changed", self.on_time_changed)
         self.time_box.append(entry_label)
@@ -88,8 +89,8 @@ class SingleplayerMenu(Gtk.Box):
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_back = Gtk.Button(label="Back")
-        btn_back.add_css_class("red-buttons")
+        btn_back = Gtk.Button(label=_("Back"))
+        btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
 
@@ -105,7 +106,7 @@ class SingleplayerMenu(Gtk.Box):
 
     def on_choose_file(self, button):
         self.gui.window.window.present()
-        dialog = Gtk.FileDialog(title="Select contest file")
+        dialog = Gtk.FileDialog(title=_("Select contest file"))
 
         dialog.open(self.gui.window.window, None, self.on_file_selected)
 
@@ -182,7 +183,7 @@ class SingleplayerMenu(Gtk.Box):
         """Validate configuration and start a new game."""
         # Validate contest file if contest mode is selected
         if self.contest_cb.get_active() and not self.selected_file:
-            print("Please select a contest file")
+            print(_("Please select a contest file."))
             return
 
         # Start the new game with the seed value

@@ -12,6 +12,7 @@ import readline
 import threading
 import time
 
+from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 COMMANDS = [
@@ -100,8 +101,8 @@ class GameCLI:
         return self.game.get_current_player().get_id() == self.local_player_id
 
     def run(self):
-        print("Welcome to Carcassonne")
-        print("Type 'help' for the list of commands.\n")
+        print(_("Welcome to Carcassonne"))
+        print(_("Type 'help' to see the list of commands.") + "\n")
 
         self._start_input_loop()
         last_tick = time.monotonic()
@@ -115,7 +116,7 @@ class GameCLI:
                     last_tick = now
                 time.sleep(self._tick_sleep_seconds)
         except KeyboardInterrupt:
-            print("\nFin de partie.")
+            print("\n" + _("Game over."))
             self.running = False
         finally:
             self._stop_event.set()
@@ -157,7 +158,7 @@ class GameCLI:
                 self.running = False
                 break
             except KeyboardInterrupt:
-                print("\nFin de partie.")
+                print("\n" + _("Game over."))
                 self.running = False
                 break
 
@@ -193,7 +194,7 @@ class GameCLI:
         self.running = False
         self._stop_event.set()
         self.game.get_board()
-        print("\n=== Partie terminée ! Scores finaux ===")
+        print("\n" + _("=== Game finished! Final scores ==="))
         players_order = self.game.get_players_order()
         results = []
         for pid in players_order:
@@ -203,14 +204,22 @@ class GameCLI:
             results.append((score, username))
         results.sort(key=lambda x: -x[0])
         for rank, (score, username) in enumerate(results, start=1):
-            print(f"  {rank}. {username}: {score} points")
+            print(
+                _("  {rank}. {username}: {score} points").format(
+                    rank=rank,
+                    username=username,
+                    score=score,
+                )
+            )
 
     def handle_command(self, command):
         is_turn_bound_command = self._is_turn_bound_command(command)
         if is_turn_bound_command and not self._local_player_can_act():
             print(
-                "Commande refusée: ce n'est pas votre tour"
-                " ou votre temps est écoulé."
+                _(
+                    "Command rejected: it is not your turn"
+                    " or your time has run out."
+                )
             )
             return
 
@@ -310,7 +319,7 @@ class GameCLI:
 
         else:
             print(
-                "Commande inconnue. Tapez 'help' pour la liste des commandes."
+                _("Unknown command. Type 'help' to see the list of commands.")
             )
 
         if command:
