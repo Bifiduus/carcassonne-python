@@ -187,7 +187,10 @@ class Server(IServerService):
         return self.should_stop.is_set()
 
     def client_is_registered(self, client_socket: socket.socket) -> bool:
-        return self.registered_clients[client_socket]
+        try:
+            return self.registered_clients.get(client_socket, False)
+        except Exception:
+            return False
 
     def handle_client(self, client_socket: socket.socket):
         """
@@ -196,61 +199,106 @@ class Server(IServerService):
 
         try:
             while True:
-                data = client_socket.recv(1500)
-                if data.decode() == "":
+                try:
+                    data = client_socket.recv(1500)
+                except (OSError, socket.error) as e:
+                    # Socket closed or broken (during shutdown)
+                    if not self.should_stop.is_set():
+                        print(f"Socket error during recv: {e}")
+                    break
+
+                if not data or data.decode() == "":
                     continue
-                client, message = data.decode().split(":")
+
+                try:
+                    client, message = data.decode().split(":")
+                except ValueError:
+                    # Malformed message
+                    continue
+
                 message = message.strip()
-                client_index = self.repo.get_id_from_username(
-                    client)
-                # Wheter the client is registered or not,
-                #  if it sends "quit",
-                #  we consider it as a disconnection
+                try:
+                    client_index = self.repo.get_id_from_username(client)
+                except Exception:
+                    # Client not found
+                    continue
+
+                # Whether the client is registered or not,
+                # if it sends "quit", we consider it as a disconnection
                 if message == "quit":
-                    answer = self.handle_communication.command_quit(
-                        client)
+                    answer = self.handle_communication.command_quit(client)
                     self.send_to_clients(answer)
                     break
-                if self.client_is_registered(client_socket):
 
+                if self.client_is_registered(client_socket):
                     # Process data
                     response = self.process_message(str(client_index), message)
                     # fonction qui check le statut d'une invitation et
-                    #  l'envoie à l'host
+                    # l'envoie à l'host
                     if self.daemon:
                         answer = ""
                     else:
                         answer = f"Server -> Client{client_index}: {response}\n"
 
-                    client_socket.send(answer.encode())
+                    try:
+                        client_socket.send(answer.encode())
+                    except (OSError, socket.error, BrokenPipeError) as e:
+                        # Socket broken during send
+                        if not self.should_stop.is_set():
+                            print(f"Socket error during send: {e}")
+                        break
                 else:
                     self.handle_client_registering(
                         message, client_socket, client_index
                     )
         except Exception as e:
-            print(f"Error handling client: {e}")
+            # Only print if not a shutdown scenario
+            if not self.should_stop.is_set() and "Bad file descriptor" not in str(e):
+                print(f"Error handling client: {e}")
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]
-                self.repo.set_unproper_client(username)
+                try:
+                    self.repo.set_unproper_client(username)
+                except Exception:
+                    pass
         finally:
             # Handle improper client disconnections using repository
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]
-                if not self.repo.is_proper_client(username):
-                    self.repo.set_timeout_for_player(
-                        username, self.CLIENT_TIMEOUT)
-                    self.handle_communication.command_quit(username)
-            client_socket.close()
+                try:
+                    if not self.repo.is_proper_client(username):
+                        self.repo.set_timeout_for_player(
+                            username, self.CLIENT_TIMEOUT)
+                        self.handle_communication.command_quit(username)
+                except Exception:
+                    pass
+
+            # Close socket safely
+            try:
+                client_socket.close()
+            except (OSError, socket.error):
+                # Already closed, that's fine
+                pass
+
             # Remove client from the list
             with self.clients_lock:
                 if client_socket in self.connected_clients:
                     self.connected_clients.remove(client_socket)
                 if client_socket in self.player_clients:
                     username = self.player_clients[client_socket]
-                    del self.client_sockets[username]
-                    del self.player_clients[client_socket]
-                    del self.registered_clients[client_socket]
+                    try:
+                        del self.client_sockets[username]
+                    except KeyError:
+                        pass
+                    try:
+                        del self.player_clients[client_socket]
+                    except KeyError:
+                        pass
+                    try:
+                        del self.registered_clients[client_socket]
+                    except KeyError:
+                        pass
 
     def handle_client_registering(
         self, message: str, client_socket: socket.socket, client_index: int
@@ -274,9 +322,10 @@ class Server(IServerService):
                     success = False
             if success:
                 answer = f"{preface}Successfull registering !\n"
-                self.registered_clients[client_socket] = True
-                self.client_sockets[username] = client_socket
-                self.player_clients[client_socket] = username
+                with self.clients_lock:
+                    self.registered_clients[client_socket] = True
+                    self.client_sockets[username] = client_socket
+                    self.player_clients[client_socket] = username
                 self.send_to_clients(f"{username} is now connected !\n")
             else:
                 answer = f"{preface}Your registration has failed...\n"
@@ -287,11 +336,17 @@ class Server(IServerService):
 
     def send_to_clients(self, message: str):
         preface: str = "Server -> Client"
-        for client_socket in self.client_sockets.values():
-            username: str = self.player_clients[client_socket]
-            id = self.repo.get_id_from_username(username)
-            message = preface + f"{id}: " + message
-            client_socket.send(message.encode())
+        with self.clients_lock:
+            for client_socket in list(self.client_sockets.values()):
+                try:
+                    if client_socket not in self.player_clients:
+                        continue
+                    username: str = self.player_clients[client_socket]
+                    id = self.repo.get_id_from_username(username)
+                    formatted_message = preface + f"{id}: " + message
+                    client_socket.send(formatted_message.encode())
+                except Exception as e:
+                    print(f"Error sending to client: {e}")
 
     def check_username_taken(self, username: str):
         answer: bool = self.repo.player_exists(username)
@@ -428,21 +483,26 @@ class Server(IServerService):
         )
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
-        username: str = self.repo.get_username(invited_player_id)
-        invited_client: socket.socket = self.client_sockets[username]
-        host_name: str = self.repo.get_username(invitee_player_id)
-        message = "Server: You have received an invitation "\
-            f"from {host_name}.\n"
-        message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
-        with self.clients_lock:
-            try:
-                assert self.repo, "The database should not be None"
+        try:
+            assert self.repo, "The database should not be None"
+            username: str = self.repo.get_username(invited_player_id)
+            host_name: str = self.repo.get_username(invitee_player_id)
+            message = "Server: You have received an invitation "\
+                f"from {host_name}.\n"
+            message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
+            with self.clients_lock:
+                if username not in self.client_sockets:
+                    print(f"Client {username} not connected")
+                    return
+                invited_client: socket.socket = self.client_sockets[username]
                 ok = self.repo.send_invitation(invited_player_id,
-                                                invitee_player_id)
+                                               invitee_player_id)
                 if ok:
                     invited_client.sendall(message.encode())
-            except Exception as e:
-                print(f"Error sending invitation: {e}")
+        except KeyError:
+            print(f"Client socket not found for {invited_player_id}")
+        except Exception as e:
+            print(f"Error sending invitation: {e}")
 
     def server_stop(self):
         """
@@ -550,55 +610,19 @@ class Server(IServerService):
         return ok
 
     def send_to_client(self, username: str, message: str) -> bool:
-        client_socket = self.client_sockets[username]
-        client_index = self.repo.get_id_from_username(username)
-        preface = f"Server -> Client{client_index}"
-        try:
-            client_socket.send(f"{preface}: {message}\n".encode())
-        except Exception as e:
-            print(f"Error handling client: {e}")
-            return False
-        return True
-
-    def number_current_games(self) -> int:
-        return len(self.current_games_list)
-
-    def get_connected_players(self) -> list[dict[str, str]]:
-        """Return a list of connected players with their ID, name, and status."""
-        players = []
         with self.clients_lock:
-            for socket, username in self.player_clients.items():
-                client_id = self.repo.get_id_from_username(username)
-                status = self.repo.get_status(str(client_id))
-                players.append({
-                    "id": str(client_id),
-                    "name": username,
-                    "status": status
-                })
-        return players
-
-    def start_new_game_with_players(self, player_ids: list[str]) -> str:
-        """Start a new game with the specified players if they are idle and connected."""
-        if not player_ids:
-            return "Error: No player IDs provided"
-
-        # Check if all players exist and are connected and idle
-        connected_players = self.get_connected_players()
-        connected_ids = {p['id'] for p in connected_players}
-        idle_players = {p['id']
-                        for p in connected_players if p['status'] == 'idle'}
-
-        for pid in player_ids:
-            if pid not in connected_ids:
-                return f"Error: Player {pid} is not connected"
-            if pid not in idle_players:
-                return f"Error: Player {pid} is not idle"
-
-        # All checks passed, create the party
-        try:
-            client_ids_int = [int(pid) for pid in player_ids]
-            host_id = str(client_ids_int[0])  # Use first player as host
-            self.create_new_party(client_ids_int, host_id)
-            return f"New game started with players: {', '.join(player_ids)}"
-        except Exception as e:
-            return f"Error starting game: {str(e)}"
+            try:
+                if username not in self.client_sockets:
+                    print(f"Client {username} socket not found")
+                    return False
+                client_socket = self.client_sockets[username]
+                client_index = self.repo.get_id_from_username(username)
+                preface = f"Server -> Client{client_index}"
+                client_socket.send(f"{preface}: {message}\n".encode())
+                return True
+            except KeyError:
+                print(f"Client {username} socket not found")
+                return False
+            except Exception as e:
+                print(f"Error sending to client {username}: {e}")
+                return False
