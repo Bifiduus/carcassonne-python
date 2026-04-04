@@ -1,4 +1,4 @@
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 import os
 
 import gi
@@ -19,6 +19,7 @@ class ServerMenu(Gtk.Box):
 
         self.gui = gui
         self.current_port = "N/A"
+        self._popup_pending = False
 
         self.set_halign(Gtk.Align.CENTER)
         self.set_valign(Gtk.Align.CENTER)
@@ -214,7 +215,7 @@ class ServerMenu(Gtk.Box):
         main_box.append(listbox)
 
         btn_close = Gtk.Button(label="Close")
-        btn_close.connect("clicked", lambda b: popup.close())
+        btn_close.connect("clicked", lambda b: popup.destroy())
         main_box.append(btn_close)
 
         popup.set_child(main_box)
@@ -222,12 +223,19 @@ class ServerMenu(Gtk.Box):
 
     def on_join_server(self, button, server, popup):
         """Rejoindre un serveur sélectionné."""
-        print(f"Joining server: {server}")
-
-        self.gui.game_data.client.join_server(server)
-
-        popup.close()
-        self.update_connection_buttons()
+        try:
+            print(f"Joining server: {server}")
+            result = self.gui.game_data.client.join_server(server)
+            if result:
+                # Ferme la popup de manière sécurisée
+                GLib.idle_add(popup.destroy)
+                self.update_connection_buttons()
+            else:
+                self.show_message("Error", "Failed to join server")
+            # Response will arrive via visit_server_message() from server
+        except Exception as e:
+            print(f"Error joining server: {e}")
+            self.show_message("Error", f"Error joining server: {e}")
 
     def on_start_server(self, button):
         """Start the server on the specified port."""
@@ -337,11 +345,12 @@ class ServerMenu(Gtk.Box):
     def on_disconnect_from_server(self, button):
         """Disconnect from the current server."""
         try:
-            self.gui.game_data.client.disconnect()
-            print("Disconnected from server")
-            self.show_message(
-                "Success", "Disconnected from server successfully")
-            self.update_connection_buttons()
+            result = self.gui.game_data.client.disconnect()
+            if not result:
+                self.show_message("Error", "Failed to disconnect")
+            else:
+                self.update_connection_buttons()
+            # Response will arrive via visit_server_message() from server
         except Exception as e:
             print(f"Error disconnecting from server: {e}")
             self.show_message("Error", f"Error disconnecting from server: {e}")
@@ -360,29 +369,75 @@ class ServerMenu(Gtk.Box):
     def on_ping_server(self, button):
         """Ping the connected server."""
         try:
-            result = self.gui.game_data.client.ping()
-            self.show_message("Ping Result", result)
+            result = self.gui.game_data.client.send_to_server("ping")
+            if not result:
+                self.show_message("Error", "Failed to send ping request")
+            # Response will arrive via visit_server_message() from server
         except Exception as e:
             print(f"Error pinging server: {e}")
             self.show_message("Error", f"Error pinging server: {e}")
 
-    def show_message(self, title: str, message: str):
-        """Show a message dialog."""
-        dialog = Gtk.MessageDialog(
-            transient_for=self.gui.window.window,
-            modal=True,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.OK,
-            text=title
-        )
-        dialog.set_markup(message)
-        dialog.connect("response", lambda d, r: d.destroy())
-        dialog.present()
+    def show_message(self, title: str, message):
+        """Show a message dialog (GTK4 compatible)."""
+        if isinstance(message, bool):
+            message = "Success" if message else "Failure"
+        elif message is None:
+            message = "No response received"
+        else:
+            message = str(message)
+
+        def _show_dialog():
+            try:
+                parent_window = None
+                if (hasattr(self, 'gui') and self.gui and
+                        hasattr(self.gui, 'window') and self.gui.window and
+                        hasattr(self.gui.window, 'window')):
+                    parent_window = self.gui.window.window
+
+                dialog = Gtk.Window(title=title)
+                dialog.set_modal(True)
+                dialog.set_transient_for(parent_window)
+                dialog.set_default_size(300, 150)
+                dialog.set_resizable(False)
+
+                box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+                box.set_margin_top(20)
+                box.set_margin_bottom(20)
+                box.set_margin_start(20)
+                box.set_margin_end(20)
+
+                label = Gtk.Label(label=message)
+                label.set_wrap(True)
+                label.set_selectable(True)
+                box.append(label)
+
+                btn_ok = Gtk.Button(label="OK")
+                btn_ok.set_halign(Gtk.Align.CENTER)
+                btn_ok.connect("clicked", lambda b: dialog.close())
+                box.append(btn_ok)
+
+                dialog.set_child(box)
+                dialog.present()
+                btn_ok.grab_focus()
+            except Exception as e:
+                print(f"{title}: {message}")
+                print(f"Erreur affichage dialog: {e}")
+            return False
+
+        GLib.idle_add(_show_dialog)
 
     def visit_server_message(self, message: str, server: str):
-        """Receive server messages via visitor integration."""
-        self.show_message(
-            "Server Event",
-            f"Server {server}: {message}"
-        )
+        """Appelé depuis un thread réseau → déléguer au thread GTK."""
+        if self._popup_pending:
+            return  # ignore si une popup est déjà en attente
+        self._popup_pending = True
+        GLib.idle_add(self._handle_server_message, message, server)
 
+    def _handle_server_message(self, message: str, server: str):
+        try:
+            self.show_message("Server Event", f"Server {server}: {message}")
+        except Exception as e:
+            print(f"Erreur dans _handle_server_message: {e}")
+        finally:
+            self._popup_pending = False  # libère le verrou
+        return False

@@ -43,6 +43,13 @@ class GameGUI(Gtk.Application):
         self.running = True
         self._end_game_dialog_shown = False
 
+        # Placeholder views for early visitor registration compatibility
+        self.server_view = None
+        self.invitation_view = None
+
+        # Backward compatibility for old code paths expecting .server
+        self.server = None
+
         # global CSS and shared helpers
         utils.load_css()
 
@@ -101,6 +108,8 @@ class GameGUI(Gtk.Application):
         )
         self.server_view = ServerMenu(self)
         window.stack.add_named(self.server_view, "server")
+        # sync legacy "server" attribute for backward compatibility
+        self.server = self.server_view
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
@@ -109,6 +118,7 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(self.ai_view, "ai_menu")
         self.invitation_view = InvitationMenu(self)
         window.stack.add_named(self.invitation_view, "invitation")
+        self.invitation = self.invitation_view
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
