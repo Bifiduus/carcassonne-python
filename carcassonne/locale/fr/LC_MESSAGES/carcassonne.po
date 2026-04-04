@@ -41,8 +41,8 @@ msgstr "graine pour le mélange aléatoire"
 msgid "enable GUI mode"
 msgstr "activer le mode GUI"
 
-msgid "name of the file to load a game"
-msgstr "nom du fichier à charger"
+msgid "name of the contest file to load in contest mode"
+msgstr "nom du fichier de contest à charger en mode contest"
 
 msgid "enable blitz mode"
 msgstr "activer le mode blitz"
