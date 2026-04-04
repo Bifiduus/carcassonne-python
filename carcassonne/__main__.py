@@ -108,7 +108,7 @@ def main() -> int:
     parser.add_argument(
         "-f",
         "--file",
-        help=_("name of the file to load a game"),
+        help=_("name of the contest file to load in contest mode"),
         type=str,
     )
 
