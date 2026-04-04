@@ -18,7 +18,6 @@ from carcassonne.presentation.gui.menus.singleplayer_menu import (
     SingleplayerMenu,
 )
 from carcassonne.presentation.gui.menus.options_menu import OptionsMenu
-from carcassonne.i18n import gettext as _
 
 
 import gi
@@ -55,12 +54,13 @@ class GameGUI(Gtk.Application):
 
         # simple controls used in the overlay; the handlers delegate to the
         # command module directly so the GUI doesn't need to know game logic.
-        self.button_draw = Gtk.Button(label=_("Draw tile (t)"))
+        self.button_draw = Gtk.Button(label="Draw Tile (t)")
+        # self.button_draw.add_css_class("orange-buttons")
         self.button_draw.connect(
             "clicked", lambda b: commands_handler_gui.on_draw_gui(self)
         )
 
-        self.button_end_turn = Gtk.Button(label=_("End turn (space)"))
+        self.button_end_turn = Gtk.Button(label="End Turn (space)")
         self.button_end_turn.connect(
             "clicked", lambda b: commands_handler_gui.on_end_turn_gui(self)
         )
@@ -106,16 +106,26 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(
             self.multiplayer_options_view, "multiplayer_menu"
         )
-        self.server_view = ServerMenu(self)
+        self.server_view = ServerMenu(
+            self,
+            client_service=self.game_data.client,
+            server_service=self.game_data.server
+        )
         window.stack.add_named(self.server_view, "server")
+        # sync legacy "server" attribute for backward compatibility
+        self.server = self.server_view
         self.options_view = OptionsMenu(self)
         window.stack.add_named(self.options_view, "options_menu")
         self.keybinds_view = KeybindsMenu(self)
         window.stack.add_named(self.keybinds_view, "keybinds_menu")
         self.ai_view = AiMenu(self)
         window.stack.add_named(self.ai_view, "ai_menu")
-        self.invitation_view = InvitationMenu(self)
+        self.invitation_view = InvitationMenu(
+            self,
+            client_service=self.game_data.client
+        )
         window.stack.add_named(self.invitation_view, "invitation")
+        self.invitation = self.invitation_view
 
         # register actions used by the menus and shortcuts
         register = utils.register_action
@@ -160,7 +170,7 @@ class GameGUI(Gtk.Application):
         overlay.add_overlay(self.players_view)
 
         # back button in top-right corner
-        back_button = Gtk.Button(label=_("Back to menu"))
+        back_button = Gtk.Button(label="Back to Menu")
         back_button.set_margin_top(10)
         back_button.set_margin_end(10)
         back_button.set_halign(Gtk.Align.END)

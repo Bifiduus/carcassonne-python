@@ -264,7 +264,9 @@ class Server(IServerService):
                         message, client_socket, client_index
                     )
         except Exception as e:
-            print(_("Error handling client: {error}").format(error=e))
+            # Only print if not a shutdown scenario
+            if not self.should_stop.is_set() and "Bad file descriptor" not in str(e):
+                print(f"Error handling client: {e}")
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]
@@ -493,19 +495,20 @@ class Server(IServerService):
         )
 
     def send_invitation(self, invited_player_id: str, invitee_player_id: str):
-        username: str = self.repo.get_username(invited_player_id)
-        invited_client: socket.socket = self.client_sockets[username]
-        host_name: str = self.repo.get_username(invitee_player_id)
-        message = "Server: You have received an invitation "\
-            f"from {host_name}.\n"
-        message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
-        with self.clients_lock:
-            try:
-                assert self.repo, "The database should not be None"
-                ok = self.repo.send_invitation(
-                    invited_player_id,
-                    invitee_player_id,
-                )
+        try:
+            assert self.repo, "The database should not be None"
+            username: str = self.repo.get_username(invited_player_id)
+            host_name: str = self.repo.get_username(invitee_player_id)
+            message = "Server: You have received an invitation "\
+                f"from {host_name}.\n"
+            message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
+            with self.clients_lock:
+                if username not in self.client_sockets:
+                    print(f"Client {username} not connected")
+                    return
+                invited_client: socket.socket = self.client_sockets[username]
+                ok = self.repo.send_invitation(invited_player_id,
+                                               invitee_player_id)
                 if ok:
                     invited_client.sendall(message.encode())
         except KeyError:
@@ -619,15 +622,22 @@ class Server(IServerService):
         return ok
 
     def send_to_client(self, username: str, message: str) -> bool:
-        client_socket = self.client_sockets[username]
-        client_index = self.repo.get_id_from_username(username)
-        preface = f"Server -> Client{client_index}"
-        try:
-            client_socket.send(f"{preface}: {message}\n".encode())
-        except Exception as e:
-            print(f"Error handling client: {e}")
-            return False
-        return True
+        with self.clients_lock:
+            try:
+                if username not in self.client_sockets:
+                    print(f"Client {username} socket not found")
+                    return False
+                client_socket = self.client_sockets[username]
+                client_index = self.repo.get_id_from_username(username)
+                preface = f"Server -> Client{client_index}"
+                client_socket.send(f"{preface}: {message}\n".encode())
+                return True
+            except KeyError:
+                print(f"Client {username} socket not found")
+                return False
+            except Exception as e:
+                print(f"Error sending to client {username}: {e}")
+                return False
 
     def number_current_games(self) -> int:
         return len(self.current_games_list)
