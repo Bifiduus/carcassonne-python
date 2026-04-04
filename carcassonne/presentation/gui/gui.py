@@ -106,7 +106,11 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(
             self.multiplayer_options_view, "multiplayer_menu"
         )
-        self.server_view = ServerMenu(self)
+        self.server_view = ServerMenu(
+            self,
+            client_service=self.game_data.client,
+            server_service=self.game_data.server
+        )
         window.stack.add_named(self.server_view, "server")
         # sync legacy "server" attribute for backward compatibility
         self.server = self.server_view
@@ -116,7 +120,10 @@ class GameGUI(Gtk.Application):
         window.stack.add_named(self.keybinds_view, "keybinds_menu")
         self.ai_view = AiMenu(self)
         window.stack.add_named(self.ai_view, "ai_menu")
-        self.invitation_view = InvitationMenu(self)
+        self.invitation_view = InvitationMenu(
+            self,
+            client_service=self.game_data.client
+        )
         window.stack.add_named(self.invitation_view, "invitation")
         self.invitation = self.invitation_view
 

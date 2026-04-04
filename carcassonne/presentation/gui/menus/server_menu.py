@@ -3,6 +3,9 @@ import os
 
 import gi
 
+from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.presentation.interfaces.i_server_service import IServerService
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -12,12 +15,19 @@ class ServerMenu(Gtk.Box):
     This menu provides controls for server management including
     starting/stopping the server, viewing server status, managing
     connected players, and accessing server statistics.
+
+    Follows 3-tier architecture by depending on IClientService and IServerService interfaces.
     """
 
-    def __init__(self, gui):
+    def __init__(self, gui, client_service: IClientService = None, server_service: IServerService = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
+        # Use interfaces for services (3-tier architecture)
+        self.client_service = client_service or (
+            gui.game_data.client if gui.game_data else None)
+        self.server_service = server_service or (
+            gui.game_data.server if gui.game_data else None)
         self.current_port = "N/A"
         self._popup_pending = False
 
@@ -179,7 +189,7 @@ class ServerMenu(Gtk.Box):
 
     def on_server_list(self, button):
         """Show the server list."""
-        servers = self.gui.game_data.client.list_available_servers()
+        servers = self.client_service.list_available_servers()
         self.show_server_popup(servers)
 
     def show_server_popup(self, servers):
@@ -225,7 +235,7 @@ class ServerMenu(Gtk.Box):
         """Rejoindre un serveur sélectionné."""
         try:
             print(f"Joining server: {server}")
-            result = self.gui.game_data.client.join_server(server)
+            result = self.client_service.join_server(server)
             if result:
                 # Ferme la popup de manière sécurisée
                 GLib.idle_add(popup.destroy)
@@ -241,7 +251,7 @@ class ServerMenu(Gtk.Box):
         """Start the server on the specified port."""
         port = self.entry_port.get_text() or "12345"
         try:
-            self.gui.game_data.server.server_start(port)
+            self.server_service.server_start(port)
             self.current_port = port
             print(f"Server started successfully on port {port}")
             # Show success message
@@ -254,7 +264,7 @@ class ServerMenu(Gtk.Box):
     def on_stop_server(self, button):
         """Stop the running server."""
         try:
-            self.gui.game_data.server.server_stop()
+            self.server_service.server_stop()
             print("Server stopped")
             self.show_message("Success", "Server stopped successfully")
             self.update_connection_buttons()
@@ -265,11 +275,11 @@ class ServerMenu(Gtk.Box):
     def on_server_status(self, button):
         """Show server status information."""
         try:
-            is_running = self.gui.game_data.server.is_server_running()
+            is_running = self.server_service.is_server_running()
 
             connected_clients = len(
-                self.gui.game_data.server.connected_clients)
-            active_games = self.gui.game_data.server.number_current_games()
+                self.server_service.connected_clients)
+            active_games = self.server_service.number_current_games()
 
             status_text = f"Server Running: {is_running}\n"
             status_text += f"Port: {self.current_port}\n"
@@ -284,7 +294,7 @@ class ServerMenu(Gtk.Box):
     def on_show_players(self, button):
         """Show list of connected players."""
         try:
-            players = self.gui.game_data.server.get_connected_players()
+            players = self.server_service.get_connected_players()
 
             if players:
                 players_text = "\n".join([f"ID: {p['id']}, Name: {p['name']}, Status: {p['status']}"
@@ -300,8 +310,8 @@ class ServerMenu(Gtk.Box):
     def on_show_scoreboard(self, button):
         """Show server scoreboard."""
         try:
-            scoreboard = self.gui.game_data.server.repo.get_scoreboard()
-            connected_players = self.gui.game_data.server.get_connected_players()
+            scoreboard = self.server_service.repo.get_scoreboard()
+            connected_players = self.server_service.get_connected_players()
             connected_usernames = {p['name'] for p in connected_players}
 
             if scoreboard:
@@ -329,12 +339,12 @@ class ServerMenu(Gtk.Box):
         """Update the visibility of connection buttons based on current state."""
         try:
             # Check if client is connected to a server
-            is_connected = self.gui.game_data.client.connected_to_a_server()
+            is_connected = self.client_service.connected_to_a_server()
             self.btn_disconnect.set_visible(is_connected)
             self.btn_ping.set_visible(is_connected)
 
             # Check if local server is running
-            server_running = self.gui.game_data.server.is_server_running()
+            server_running = self.server_service.is_server_running()
             self.btn_stop_local_server.set_visible(server_running)
         except Exception as e:
             print(f"Error updating connection buttons: {e}")
@@ -345,7 +355,7 @@ class ServerMenu(Gtk.Box):
     def on_disconnect_from_server(self, button):
         """Disconnect from the current server."""
         try:
-            result = self.gui.game_data.client.disconnect()
+            result = self.client_service.disconnect()
             if not result:
                 self.show_message("Error", "Failed to disconnect")
             else:
@@ -358,7 +368,7 @@ class ServerMenu(Gtk.Box):
     def on_stop_local_server(self, button):
         """Stop the local server."""
         try:
-            self.gui.game_data.server.server_stop()
+            self.server_service.server_stop()
             print("Local server stopped")
             self.show_message("Success", "Local server stopped successfully")
             self.update_connection_buttons()
@@ -369,7 +379,7 @@ class ServerMenu(Gtk.Box):
     def on_ping_server(self, button):
         """Ping the connected server."""
         try:
-            result = self.gui.game_data.client.send_to_server("ping")
+            result = self.client_service.send_to_server("ping")
             if not result:
                 self.show_message("Error", "Failed to send ping request")
             # Response will arrive via visit_server_message() from server
