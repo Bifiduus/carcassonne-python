@@ -8,10 +8,8 @@ from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.i18n import gettext as _
+from carcassonne.presentation.interfaces.i_client_message_visitor import IClientMessageVisitor
 from carcassonne.presentation.interfaces.i_client_service import IClientService
-from carcassonne.presentation.interfaces.i_client_message_visitor import (
-    IClientMessageVisitor,
-)
 
 
 class Client(IClientService):
@@ -34,12 +32,10 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         self._recv_thread = None
         self.shutdown_event = threading.Event()
-
         # Thread-safety locks
         # Protects: has_joined_server, client_id, connected_server
         self.state_lock = threading.Lock()
         self.servers_lock = threading.Lock()  # Protects: available_servers
-
         self.message_visitor: IClientMessageVisitor | None = None
 
         # Registering phase
@@ -71,10 +67,11 @@ class Client(IClientService):
         """
         if ip is None or ip == "":
             ip = self.server_service.server_name
-        if ip not in self.available_servers:
-            print(_("Error: there is no server with that IP address."))
-            return False
-        server_port = self.available_servers[ip][0]
+        with self.servers_lock:
+            if ip not in self.available_servers:
+                print("Error: There is no server with such an ip.")
+                return False
+            server_port, _ = self.available_servers[ip]
 
         if port is None:
             port = server_port
@@ -372,13 +369,15 @@ class Client(IClientService):
             if self.client:
                 try:
                     self.client.shutdown(socket.SHUT_RDWR)
-                except Exception as e:
-                    print(
-                        _("Error closing client socket: {error}").format(
-                            error=e
-                        )
-                    )
-                self.client = None
+                except (OSError, BrokenPipeError):
+                    # Already closed or broken, that's fine
+                    pass
+                finally:
+                    try:
+                        self.client.close()
+                    except Exception:
+                        pass
+                    self.client = None
 
             # 4. Wait for receive thread to finish (with timeout)
             if self._recv_thread and self._recv_thread.is_alive():
@@ -409,7 +408,11 @@ class Client(IClientService):
 
             print(_("Client disconnection complete."))
         except Exception as e:
-            print(f"Error during client disconnection: {e}")
+            print(
+                _("Error during client disconnection: {error}").format(
+                    error=e
+                )
+            )
 
     def register_message_visitor(
         self, visitor: IClientMessageVisitor
