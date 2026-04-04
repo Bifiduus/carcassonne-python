@@ -35,15 +35,13 @@ class Client(IClientService):
         self._recv_thread = None
         self.shutdown_event = threading.Event()
 
-
-<< << << < HEAD
         # Thread-safety locks
         # Protects: has_joined_server, client_id, connected_server
         self.state_lock = threading.Lock()
         self.servers_lock = threading.Lock()  # Protects: available_servers
-== == == =
+
         self.message_visitor: IClientMessageVisitor | None = None
->>>>>> > 84c166c(added Visitor design pattern)
+
         # Registering phase
         if not self.repo.is_accounted_for():
             print(_("You should create an online account.") + "\n")
