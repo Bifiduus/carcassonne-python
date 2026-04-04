@@ -30,6 +30,10 @@ class Client(IClientService):
         self.server_name = server_service.server_name
         self._recv_thread = None
         self.shutdown_event = threading.Event()
+        # Thread-safety locks
+        # Protects: has_joined_server, client_id, connected_server
+        self.state_lock = threading.Lock()
+        self.servers_lock = threading.Lock()  # Protects: available_servers
         # Registering phase
         if not self.repo.is_accounted_for():
             print("You should create an online account.\n")
@@ -57,12 +61,13 @@ class Client(IClientService):
         - Once connected a background thread is started to receive messages
           from the server and dispatch them to `handle_server_message`.
         """
-        if ip is (None or ""):
+        if ip is None or ip == "":
             ip = self.server_service.server_name
-        if ip not in self.available_servers:
-            print("Error: There is no server with such an ip.")
-            return False
-        server_port, _ = self.available_servers[ip]
+        with self.servers_lock:
+            if ip not in self.available_servers:
+                print("Error: There is no server with such an ip.")
+                return False
+            server_port, _ = self.available_servers[ip]
 
         if port is None:
             port = server_port
@@ -71,7 +76,8 @@ class Client(IClientService):
         self.client.settimeout(timeout)
         try:
             self.client.connect((ip, port))
-            self.connected_to_server = ip
+            with self.state_lock:
+                self.connected_server = ip
         except Exception as e:
             print(f"Unable to connect to {ip}:{port} -> {e}")
             self.client.close()
@@ -102,7 +108,8 @@ class Client(IClientService):
             target=self._receive_loop, args=(ip,), daemon=True
         )
         self._recv_thread.start()
-        self.has_joined_server = True
+        with self.state_lock:
+            self.has_joined_server = True
         return True
 
     def _receive_loop(self, server: str):
@@ -124,8 +131,9 @@ class Client(IClientService):
                         print("Server closed the connection")
                         break
                     self.handle_server_message(data.decode(), server)
-                    if not self.has_joined_server:
-                        break
+                    with self.state_lock:
+                        if not self.has_joined_server:
+                            break
                 except socket.timeout:
                     continue  # Check for shutdown_event and loop again
                 except OSError as e:
@@ -148,28 +156,29 @@ class Client(IClientService):
         """
         assert self.repo is not None, "No games repository."
         if self.client:
-            if message.find("Server ->") != -1:
+            message_content = message
+            if message.find("Server ->") == -1:
                 return
-            message = message.removeprefix("Server -> ")
-            client_id, message = message.split(":", 1)
+            message_content = message.removeprefix("Server -> ")
+            client_id, message_content = message_content.split(":", 1)
             client_id = client_id.removeprefix("Client").strip()
-            message = message.strip()
+            message_content = message_content.strip()
             print()
-            print(message)
-            if message.startswith("OPPONENT_MOVE"):
+            print(message_content)
+            if message_content.startswith("OPPONENT_MOVE"):
                 self.send_to_server("board")
 
             # not own server
-            if message == "Your registration has failed...":
+            if message_content == "Your registration has failed...":
                 answer = input(
                     "Would you like to try another username ? (y/n)\n>> ")
                 if answer.lower() == "y":
                     username = input("username:\n>> ")
                     self.temporary_username = username
-                    message = f"username={username} password="\
-                        f"{self.repo.get_password(0)}\n"
-                    self.send_to_server(message)
-            if (message == "Successfull registering !" and
+                    msg = f"username={username} password="\
+                        f"{self.repo.get_password(1)}\n"
+                    self.send_to_server(msg)
+            if (message_content == "Successfull registering !" and
                     self.temporary_username != ""):
                 self.repo.set_new_username_for_server(
                     server, self.temporary_username
@@ -203,7 +212,9 @@ class Client(IClientService):
                         ip, port_str = message_part.split(":", 1)
                         try:
                             port = int(port_str)
-                            self.available_servers[ip] = (port, time.time())
+                            with self.servers_lock:
+                                self.available_servers[ip] = (
+                                    port, time.time())
                         except ValueError:
                             print(f"Invalid port in message: {message_part}")
                     else:
@@ -218,9 +229,10 @@ class Client(IClientService):
 
         s.close()
         self.check_servers_last_time_sent()
-        available_servers: dict[str, int] = {}
-        for server in self.available_servers:
-            available_servers[server] = self.available_servers[server][0]
+        with self.servers_lock:
+            available_servers: dict[str, int] = {}
+            for server in self.available_servers:
+                available_servers[server] = self.available_servers[server][0]
         return available_servers
 
     def check_servers_last_time_sent(self):
@@ -228,14 +240,15 @@ class Client(IClientService):
         Remove servers from available_servers if they haven't sent a message
         within SERVER_TIMEOUT seconds.
         """
-        current_time = time.time()
-        to_remove = []
-        for name, (port, last_time) in self.available_servers.items():
-            if current_time - last_time >= self.SERVER_TIMEOUT:
-                to_remove.append(name)
-        for name in to_remove:
-            del self.available_servers[name]
-        return self.available_servers
+        with self.servers_lock:
+            current_time = time.time()
+            to_remove = []
+            for name, (port, last_time) in self.available_servers.items():
+                if current_time - last_time >= self.SERVER_TIMEOUT:
+                    to_remove.append(name)
+            for name in to_remove:
+                del self.available_servers[name]
+            return self.available_servers
 
     def create_default_online_player(
         self, username: str, password: str, server: str = "127.0.1.1"
@@ -264,7 +277,8 @@ class Client(IClientService):
         return "No server response"  # Or implement actual ping logic
 
     def connected_to_a_server(self) -> bool:
-        return bool(self.client and self.has_joined_server)
+        with self.state_lock:
+            return bool(self.client and self.has_joined_server)
 
     def send_to_server(self, text: str) -> bool:
         """
@@ -275,11 +289,12 @@ class Client(IClientService):
             print("Not connected to any server")
             return False
         try:
+            with self.state_lock:
+                if self.client_id is None:
+                    assert self.repo, "The database should not be None"
+                    self.client_id = self.repo.get_next_available_id()
+                ip = self.connected_server
 
-            if self.client_id is None:
-                assert self.repo, "The database should not be None"
-                self.client_id = self.repo.get_next_available_id()
-            ip = self.connected_to_server
             if self.repo.has_no_special_username(ip):
                 username = self.repo.get_online_player(
                     self.server_service.server_name
@@ -288,10 +303,16 @@ class Client(IClientService):
                 username = self.repo.get_online_player(ip)
 
             if text == "quit":
-                self.has_joined_server = False
+                with self.state_lock:
+                    self.has_joined_server = False
             text = f"{username}: " + text
             self.client.sendall(text.encode())
             return True
+        except (BrokenPipeError, ConnectionResetError, OSError) as e:
+            # Socket is broken, likely during shutdown
+            if "quit" not in str(text).lower():
+                print(f"Failed to send: {e}")
+            return False
         except Exception as e:
             print(f"Failed to send: {e}")
             return False
@@ -304,19 +325,34 @@ class Client(IClientService):
         print("Starting client disconnection...")
 
         try:
-            self.send_to_server("Bad client disconnection\n")
-            # 1. Signal the receive loop to stop
-            self.has_joined_server = False
+            # 1. Try to send disconnect message (but don't fail if socket is broken)
+            try:
+                if self.client and self.connected_to_a_server():
+                    self.send_to_server("Bad client disconnection\n")
+            except (BrokenPipeError, OSError, ConnectionResetError):
+                # Socket already broken, just continue with cleanup
+                pass
+
+            # 2. Signal the receive loop to stop
+            with self.state_lock:
+                self.has_joined_server = False
             self.shutdown_event.set()
-            # 2. Close the client socket
+
+            # 3. Close the client socket
             if self.client:
                 try:
                     self.client.shutdown(socket.SHUT_RDWR)
-                except Exception as e:
-                    print(f"Error closing client socket: {e}")
-                self.client = None
+                except (OSError, BrokenPipeError):
+                    # Already closed or broken, that's fine
+                    pass
+                finally:
+                    try:
+                        self.client.close()
+                    except Exception:
+                        pass
+                    self.client = None
 
-            # 3. Wait for receive thread to finish (with timeout)
+            # 4. Wait for receive thread to finish (with timeout)
             if self._recv_thread and self._recv_thread.is_alive():
                 try:
                     self._recv_thread.join(timeout=3.0)
@@ -327,12 +363,14 @@ class Client(IClientService):
                 except Exception as e:
                     print(f"Error joining receive thread: {e}")
 
-            # 4. Clear available servers
-            self.available_servers.clear()
+            # 5. Clear available servers
+            with self.servers_lock:
+                self.available_servers.clear()
 
-            # 5. Reset connection state
-            self.temporary_username = ""
-            self.connected_server = ""
+            # 6. Reset connection state
+            with self.state_lock:
+                self.temporary_username = ""
+                self.connected_server = ""
 
             print("Client disconnection complete")
         except Exception as e:

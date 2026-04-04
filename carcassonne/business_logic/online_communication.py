@@ -99,37 +99,27 @@ class OnlineCommunication:
 
     def notify_host_of_acceptance(self, host_id: int, invitee_id: str):
         """Send notification to host that an invitation was accepted."""
-        if host_id in self.server.client_sockets:
-            try:
-                host_username: str = self.server.repo.get_username(
-                    str(host_id)
-                )
-                invitee_name: str = self.server.repo.get_username(invitee_id)
-                host_socket = self.server.client_sockets[host_id]
-                message = (
-                    f"{invitee_name}"
-                    "has accepted your invitation!\n"
-                )
-                host_socket.send(message.encode())
-            except Exception as e:
-                print(f"Error notifying host {host_id}: {e}")
+        try:
+            host_username: str = self.server.repo.get_username(
+                str(host_id)
+            )
+            invitee_name: str = self.server.repo.get_username(invitee_id)
+            message = f"{invitee_name} has accepted your invitation!\n"
+            self.server.send_to_client(host_username, message)
+        except Exception as e:
+            print(f"Error notifying host {host_id}: {e}")
 
     def notify_host_of_rejection(self, host_id: int, invitee_id: str):
         """Send notification to host that an invitation was rejected."""
-        if host_id in self.server.client_sockets:
-            try:
-                host_username: str = self.server.repo.get_username(
-                    str(host_id)
-                )
-                invitee_name: str = self.server.repo.get_username(invitee_id)
-                host_socket = self.server.client_sockets[host_id]
-                message = (
-                    f"{invitee_name}"
-                    " has rejected your invitation!\n"
-                )
-                host_socket.send(message.encode())
-            except Exception as e:
-                print(f"Error notifying host {host_id}: {e}")
+        try:
+            host_username: str = self.server.repo.get_username(
+                str(host_id)
+            )
+            invitee_name: str = self.server.repo.get_username(invitee_id)
+            message = f"{invitee_name} has rejected your invitation!\n"
+            self.server.send_to_client(host_username, message)
+        except Exception as e:
+            print(f"Error notifying host {host_id}: {e}")
 
     def command_cancel(self, client_id: str, players: str) -> str:
         answer = ""
