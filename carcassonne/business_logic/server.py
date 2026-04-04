@@ -1,8 +1,8 @@
 import time
 import socket
 import select
-import threading
 
+from threading import Thread, Event, Lock
 from carcassonne.business_logic.game.game import Game
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.online_communication import OnlineCommunication
@@ -30,12 +30,12 @@ class Server(IServerService):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
-        self.should_stop = threading.Event()
+        self.should_stop = Event()
         self.server_thread = None
         self.daemon = daemon
         # List to track connected client sockets
         self.connected_clients: list[socket.socket] = []
-        self.clients_lock = threading.Lock()  # Lock for thread-safe access
+        self.clients_lock = Lock()  # Lock for thread-safe access
         # Needed to keep track of the different games
         self.current_games_list: dict[int, tuple[str, Game]] = {}
         # Map client_username -> socket
@@ -44,7 +44,7 @@ class Server(IServerService):
         self.player_clients: dict[socket.socket, str] = {}
         self.registered_clients: dict[socket.socket, bool] = {}
         # Track each client handler thread (for clean shutdown)
-        self.client_threads: list[threading.Thread] = []
+        self.client_threads: list[Thread] = []
         # repository for persistence
         self.repo = repo if repo is not None else GameRepository()
         assert self.repo, "The database should not be None"
@@ -71,7 +71,7 @@ class Server(IServerService):
             print(_("Error starting server: {error}").format(error=e))
             return
         self.should_stop.set()
-        self.server_thread = threading.Thread(
+        self.server_thread = Thread(
             target=self.server_running, args=(port,)
         )
         self.server_thread.start()
@@ -84,7 +84,7 @@ class Server(IServerService):
             try:
                 # Timeout to check self.running periodically
                 self.server.settimeout(1.0)
-                r, _, _ = select.select([self.server], [], [], 1.0)
+                r, w, x = select.select([self.server], [], [], 1.0)
                 for s in r:
                     if s is self.server:
                         client_socket, addr = self.server.accept()
@@ -93,7 +93,7 @@ class Server(IServerService):
                             self.connected_clients.append(client_socket)
                             self.registered_clients[client_socket] = False
                         # Handle client in a new thread
-                        client_thread = threading.Thread(
+                        client_thread = Thread(
                             target=self.handle_client, args=(client_socket,)
                         )
                         client_thread.start()
