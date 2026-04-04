@@ -12,6 +12,7 @@ from carcassonne.datas.games_repository import GameRepository
 from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
+from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
@@ -21,7 +22,11 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
-    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
+    def __init__(
+        self,
+        repo: IGamesRepository | None = None,
+        daemon: bool = False,
+    ):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
@@ -61,9 +66,9 @@ class Server(IServerService):
             self.server.bind(("", int(port)))
             self.server.listen()
             self.server.settimeout(1.0)
-            print(f"Server started on port {port}")
+            print(_("Server started on port {port}").format(port=port))
         except Exception as e:
-            print(f"Error starting server: {e}")
+            print(_("Error starting server: {error}").format(error=e))
             return
         self.should_stop.set()
         self.server_thread = threading.Thread(
@@ -93,7 +98,7 @@ class Server(IServerService):
                         )
                         client_thread.start()
                         self.client_threads.append(client_thread)
-                        print("Accepted connection from a client.")
+                        print(_("Accepted connection from a client."))
 
                 # Timeout to check pending invitations periodically
                 assert self.repo, "The database should not be None"
@@ -130,9 +135,13 @@ class Server(IServerService):
                 continue  # Check self.running again
             except Exception as e:
                 if self.should_stop.is_set():
-                    print(f"Error accepting connection: {e}")
+                    print(
+                        _("Error accepting connection: {error}").format(
+                            error=e
+                        )
+                    )
                 break
-        print("Server stopped")
+        print(_("Server stopped."))
 
     def check_client_timeouts(self):
         """Check for clients that have exceeded their timeout
@@ -238,7 +247,10 @@ class Server(IServerService):
                     if self.daemon:
                         answer = ""
                     else:
-                        answer = f"Server -> Client{client_index}: {response}\n"
+                        answer = (
+                            f"Server -> Client{client_index}: "
+                            f"{response}\n"
+                        )
 
                     try:
                         client_socket.send(answer.encode())

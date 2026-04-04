@@ -1,6 +1,8 @@
 from carcassonne.presentation.gui import utils
 from gi.repository import Gtk
 
+from carcassonne.i18n import gettext as _
+
 """
 Lists of commands that can be triggered from the GUI, and their handlers.
 """
@@ -18,7 +20,7 @@ def on_new(game):
 def on_load(gui) -> None:
     """Show a file picker and load a saved game."""
     gui.window.window.present()
-    dialog = Gtk.FileDialog(title="Load game")
+    dialog = Gtk.FileDialog(title=_("Load game"))
 
     def on_file_selected(dialog, result):
         try:
@@ -34,7 +36,9 @@ def on_load(gui) -> None:
                 gui.tile_preview.set_filename("")
                 gui.window.stack.set_visible_child_name("game")
             else:
-                print(f"Failed to load game from {filename}")
+                print(_("Failed to load game from {filename}").format(
+                    filename=filename
+                ))
         except Exception:
             # Cancelled or failed; ignore.
             pass
@@ -45,16 +49,18 @@ def on_load(gui) -> None:
 def on_save(gui) -> None:
     """Show a file picker and save the current game."""
     gui.window.window.present()
-    dialog = Gtk.FileDialog(title="Save game")
+    dialog = Gtk.FileDialog(title=_("Save game"))
 
     def on_file_selected(dialog, result):
         try:
             file = dialog.save_finish(result)
             filename = file.get_path()
             if gui.game_data.game.save_game_to_file(filename) == 0:
-                print(f"Game saved to {filename}")
+                print(_("Game saved to {filename}").format(filename=filename))
             else:
-                print(f"Failed to save game to {filename}")
+                print(_("Failed to save game to {filename}").format(
+                    filename=filename
+                ))
         except Exception:
             # Cancelled or failed; ignore.
             pass
@@ -64,7 +70,7 @@ def on_save(gui) -> None:
 
 def on_config(gui) -> None:
     config = gui.game_data.game_configuration()
-    print("Configuration actuelle du jeu:")
+    print(_("Current game configuration:"))
     for key, value in config.items():
         print(f"  {key}: {value}")
     gui.window.stack.set_visible_child_name("singleplayer_menu")
@@ -73,17 +79,21 @@ def on_config(gui) -> None:
 def on_info(gui) -> None:
     import carcassonne
 
-    message = f"""Carcassonne Python
+    message = """Carcassonne Python
 
 Version: {carcassonne.__version__}
 
-Authors:
+{authors_label}:
 - Clément SIMON --- Serveur
 - Maxence SALIN --- Client GUI/CLI
 - Loic THIN --- IA et Logique de jeu
 - Anthony BEAUVIEUX --- Logique de jeu
 - Tony HUANG --- Graine, shuffle et logique de jeu
 """
+    message = message.format(
+        carcassonne=carcassonne,
+        authors_label=_("Authors"),
+    )
     gui.info_message.show_info(message)
 
 
@@ -105,7 +115,7 @@ def on_redo(game) -> None:
 
 
 def on_pause() -> None:
-    print("to add pause")
+    print(_("Pause is not implemented yet."))
 
 
 def on_hint(gui):

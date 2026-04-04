@@ -7,6 +7,7 @@ from carcassonne.business_logic.server import Server
 from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
+from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_client_service import IClientService
 
 
@@ -36,9 +37,9 @@ class Client(IClientService):
         self.servers_lock = threading.Lock()  # Protects: available_servers
         # Registering phase
         if not self.repo.is_accounted_for():
-            print("You should create an online account.\n")
-            username = input(">> Your username is: ")
-            password = input(">> Your password is: ")
+            print(_("You should create an online account.") + "\n")
+            username = input(_(">> Your username is: "))
+            password = input(_(">> Your password is: "))
             self.create_default_online_player(
                 username, password, self.server_name
             )
@@ -79,7 +80,13 @@ class Client(IClientService):
             with self.state_lock:
                 self.connected_server = ip
         except Exception as e:
-            print(f"Unable to connect to {ip}:{port} -> {e}")
+            print(
+                ("Unable to connect to {ip}:{port} -> {error}").format(
+                    ip=ip,
+                    port=port,
+                    error=e,
+                )
+            )
             self.client.close()
             self.client = None
             return False
@@ -128,7 +135,7 @@ class Client(IClientService):
                     if not data:
                         break  # Connection closed by server
                     if data.decode().endswith("Server Shutdown\n"):
-                        print("Server closed the connection")
+                        print(_("Server closed the connection."))
                         break
                     self.handle_server_message(data.decode(), server)
                     with self.state_lock:
@@ -137,16 +144,20 @@ class Client(IClientService):
                 except socket.timeout:
                     continue  # Check for shutdown_event and loop again
                 except OSError as e:
-                    print(f"Socket error: {e}")
+                    print(_("Socket error: {error}").format(error=e))
                     continue
         except Exception as e:
-            print(f"Error receiving from server: {e}")
+            print(_("Error receiving from server: {error}").format(error=e))
         finally:
             if self.client:
                 try:
                     self.client.close()
                 except Exception as e:
-                    print(f"Error closing client socket: {e}")
+                    print(
+                        _("Error closing client socket: {error}").format(
+                            error=e
+                        )
+                    )
             self.client = None
 
     def handle_server_message(self, message: str, server: str):
@@ -171,9 +182,10 @@ class Client(IClientService):
             # not own server
             if message_content == "Your registration has failed...":
                 answer = input(
-                    "Would you like to try another username ? (y/n)\n>> ")
+                    _("Would you like to try another username? (y/n)\n>> ")
+                )
                 if answer.lower() == "y":
-                    username = input("username:\n>> ")
+                    username = input(_("username:\n>> "))
                     self.temporary_username = username
                     msg = f"username={username} password="\
                         f"{self.repo.get_password(1)}\n"
@@ -196,7 +208,7 @@ class Client(IClientService):
             s.bind(("", 12346))
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
-            print(f"Error binding socket: {e}")
+            print(_("Error binding socket: {error}").format(error=e))
             return {}
 
         start_time = time.time()
@@ -216,15 +228,23 @@ class Client(IClientService):
                                 self.available_servers[ip] = (
                                     port, time.time())
                         except ValueError:
-                            print(f"Invalid port in message: {message_part}")
+                            print(
+                                _("Invalid port in message: {message}").format(
+                                    message=message_part
+                                )
+                            )
                     else:
-                        print(f"Invalid message format: {message_part}")
+                        print(
+                            _("Invalid message format: {message}").format(
+                                message=message_part
+                            )
+                        )
                 else:
                     break  # Timeout reached
             except socket.timeout:
                 break
             except Exception as e:
-                print(f"Error receiving message: {e}")
+                print(_("Error receiving message: {error}").format(error=e))
                 break
 
         s.close()
@@ -267,14 +287,14 @@ class Client(IClientService):
         start = time.time()
         self.send_to_server("ping")
         if self.client is None:
-            return "Error: no client socket found."
+            return _("Error: no client socket found.")
         data = self.client.recv(1500)
         message = data.decode()
         if message.find("pong\n") != -1:
             end = time.time()
             return f"pong\nTime={end - start}ms"
 
-        return "No server response"  # Or implement actual ping logic
+        return _("No server response")  # Or implement actual ping logic
 
     def connected_to_a_server(self) -> bool:
         with self.state_lock:
@@ -286,7 +306,7 @@ class Client(IClientService):
         connected.
         """
         if not self.client:
-            print("Not connected to any server")
+            print(_("Not connected to any server."))
             return False
         try:
             with self.state_lock:
@@ -314,7 +334,7 @@ class Client(IClientService):
                 print(f"Failed to send: {e}")
             return False
         except Exception as e:
-            print(f"Failed to send: {e}")
+            print(_("Failed to send: {error}").format(error=e))
             return False
 
     def disconnect(self):
@@ -322,7 +342,7 @@ class Client(IClientService):
         Disconnect from the server gracefully with proper resource cleanup.
         This handles both normal and forceful shutdowns.
         """
-        print("Starting client disconnection...")
+        print(_("Starting client disconnection..."))
 
         try:
             # 1. Try to send disconnect message (but don't fail if socket is broken)
@@ -358,10 +378,17 @@ class Client(IClientService):
                     self._recv_thread.join(timeout=3.0)
                     if self._recv_thread.is_alive():
                         print(
-                            "Warning: Receive thread did not terminate "
-                            "within timeout")
+                            _(
+                                "Warning: receive thread did not terminate "
+                                "within timeout."
+                            )
+                        )
                 except Exception as e:
-                    print(f"Error joining receive thread: {e}")
+                    print(
+                        _("Error joining receive thread: {error}").format(
+                            error=e
+                        )
+                    )
 
             # 5. Clear available servers
             with self.servers_lock:
@@ -372,6 +399,10 @@ class Client(IClientService):
                 self.temporary_username = ""
                 self.connected_server = ""
 
-            print("Client disconnection complete")
+            print(_("Client disconnection complete."))
         except Exception as e:
-            print(f"Error during client disconnection: {e}")
+            print(
+                _("Error during client disconnection: {error}").format(
+                    error=e
+                )
+            )

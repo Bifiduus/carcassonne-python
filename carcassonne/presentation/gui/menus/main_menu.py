@@ -2,6 +2,8 @@
 
 from gi.repository import Gtk
 
+from carcassonne.i18n import gettext as _
+
 
 class MainMenu:
     @staticmethod
@@ -24,13 +26,13 @@ class MainMenu:
         title = Gtk.Label(label="Carcassonne")
         title.add_css_class("main-title")
 
-        btn_single = Gtk.Button(label="Singleplayer")
+        btn_single = Gtk.Button(label=_("Singleplayer"))
         btn_single.add_css_class("game-buttons")
-        btn_multi = Gtk.Button(label="Multiplayer")
+        btn_multi = Gtk.Button(label=_("Multiplayer"))
         btn_multi.add_css_class("game-buttons")
-        btn_options = Gtk.Button(label="Options")
+        btn_options = Gtk.Button(label=_("Options"))
         btn_options.add_css_class("options-buttons")
-        btn_quit = Gtk.Button(label="Quit")
+        btn_quit = Gtk.Button(label=_("Quit"))
         btn_quit.add_css_class("quit-button")
 
         btn_single.connect("clicked", gui.start_singleplayer)

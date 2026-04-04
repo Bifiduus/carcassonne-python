@@ -7,6 +7,7 @@ from typing import Any
 from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
+from carcassonne.i18n import gettext as _
 
 
 @dataclass
@@ -360,8 +361,8 @@ class GameRepository(IGamesRepository):
             ),
         )
         if rows is None:
-            return "Status not changed."
-        return f"Status changed to {status}."
+            return _("Status not changed.")
+        return _("Status changed to {status}.").format(status=status)
 
     def current_players(self) -> str:
         rows = self._execute_query(
@@ -369,7 +370,7 @@ class GameRepository(IGamesRepository):
             " WHERE status!='away' AND connected=True;"
         )
         answer = [(r["player_id"], r["username"], r["status"]) for r in rows]
-        return f"List of current players: {answer}"
+        return _("List of current players: {players}").format(players=answer)
 
     def invitation_received(self, client_id: str) -> tuple[int, int]:
         rows = self._execute_query(
@@ -476,14 +477,14 @@ class GameRepository(IGamesRepository):
                 (group_id,)
             )
             if bool(rows):
-                return "All invitations cancelled."
-            return "No invitations cancelled."
+                return _("All invitations cancelled.")
+            return _("No invitations cancelled.")
         for player_id in players:
             rows = self._execute_non_query(
                 "DELETE FROM pending_invitations WHERE invited_player=?;",
                 (int(player_id),),
             )
-        return "Your invitation(s) have been cancelled."
+        return _("Your invitation(s) have been cancelled.")
 
     def check_all_invitations_timeout(self, timeout) -> list[int]:
         rows = self._execute_query(
@@ -544,7 +545,7 @@ class GameRepository(IGamesRepository):
     def clean_party(self, party: int):
         check = self.clean_party_players(party)
         if not check:
-            print("Error cleaning the party's players !")
+            print(_("Error cleaning the party's players!"))
             return
         self._execute_non_query(
             "DELETE FROM current_games WHERE group_id=?;", (party,)

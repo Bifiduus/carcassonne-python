@@ -2,6 +2,8 @@ from gi.repository import Gtk
 
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -15,25 +17,25 @@ class OptionsMenu(Gtk.Box):
         self.set_valign(Gtk.Align.CENTER)
         self.set_margin_top(20)
 
-        title = Gtk.Label(label="Options")
+        title = Gtk.Label(label=_("Options"))
         title.add_css_class("section-title")
         self.append(title)
 
         # --- game options button ---------------------------------------------
-        keybinds_button = Gtk.Button(label="Game")
+        keybinds_button = Gtk.Button(label=_("Game"))
         keybinds_button.add_css_class("options-buttons")
         keybinds_button.connect("clicked", self.on_game_options)
         self.append(keybinds_button)
 
         # --- keybinds button -------------------------------------------------
-        keybinds_button = Gtk.Button(label="Keybinds")
+        keybinds_button = Gtk.Button(label=_("Keybinds"))
         keybinds_button.add_css_class("options-buttons")
         keybinds_button.connect("clicked", self.on_keybinds)
         self.append(keybinds_button)
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("back-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
@@ -43,7 +45,7 @@ class OptionsMenu(Gtk.Box):
 
         options_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         options_box.set_halign(Gtk.Align.CENTER)
-        self.fullscreen_cb = Gtk.CheckButton(label="Fullscreen")
+        self.fullscreen_cb = Gtk.CheckButton(label=_("Fullscreen"))
 
         options_box.append(self.fullscreen_cb)
         self.append(options_box)
@@ -53,23 +55,22 @@ class OptionsMenu(Gtk.Box):
         self.width_combo = Gtk.ComboBoxText()
         self.height_combo = Gtk.ComboBoxText()
 
-        # Exemple de résolutions courantes
+        # Common screen resolutions.
         resolutions = [(800, 600), (1024, 768), (1280, 720), (1920, 1080)]
         for w, h in resolutions:
             self.width_combo.append_text(str(w))
             self.height_combo.append_text(str(h))
 
-        # Valeurs par défaut
+        # Default values.
         self.width_combo.set_active(0)
         self.height_combo.set_active(0)
 
-        res_box.append(Gtk.Label(label="Width:"))
+        res_box.append(Gtk.Label(label=_("Width:")))
         res_box.append(self.width_combo)
-        res_box.append(Gtk.Label(label="Height:"))
+        res_box.append(Gtk.Label(label=_("Height:")))
         res_box.append(self.height_combo)
 
-        # bouton pour appliquer la résolution
-        apply_btn = Gtk.Button(label="Apply Resolution")
+        apply_btn = Gtk.Button(label=_("Apply resolution"))
         apply_btn.connect("clicked", self.apply_resolution)
         res_box.append(apply_btn)
 
@@ -88,7 +89,7 @@ class OptionsMenu(Gtk.Box):
         if self.fullscreen_cb.get_active():
             self.gui.window.fullscreen()
         else:
-            # applique la résolution sélectionnée si on quitte le fullscreen
+            # Apply the selected resolution when leaving fullscreen.
             self.apply_resolution()
 
     def apply_resolution(self, button=None):
