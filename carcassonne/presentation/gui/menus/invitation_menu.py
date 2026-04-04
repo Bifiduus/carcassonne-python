@@ -4,6 +4,8 @@ import ast
 
 import gi
 
+from carcassonne.presentation.interfaces.i_client_service import IClientService
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -12,12 +14,17 @@ class InvitationMenu(Gtk.Box):
 
     This menu provides controls for sending invitations, accepting/declining
     invitations, managing player status, and viewing player information.
+
+    Follows 3-tier architecture by depending on IClientService interface.
     """
 
-    def __init__(self, gui):
+    def __init__(self, gui, client_service: IClientService = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
+        # Use interface for client service (3-tier architecture)
+        self.client_service = client_service or (
+            gui.game_data.client if gui.game_data else None)
 
         # store last visitor message for external retrieval / tests
         self.last_server_message = None
@@ -164,7 +171,7 @@ class InvitationMenu(Gtk.Box):
         player_id = self.entry_player_id.get_text().strip()
         try:
             message = "players " + player_id if player_id else "players"
-            result = self.gui.game_data.client.send_to_server(message)
+            result = self.client_service.send_to_server(message)
             if not result:
                 self.show_message("Erreur", "Impossible d'envoyer la requête.")
             # Pas de popup ici : la réponse viendra via visit_server_message()
@@ -179,7 +186,7 @@ class InvitationMenu(Gtk.Box):
             return
 
         try:
-            result = self.gui.game_data.client.send_to_server(
+            result = self.client_service.send_to_server(
                 "new " + invite_id)
             if not result:
                 self.show_message("Error", "Failed to send invitation request")
@@ -191,7 +198,7 @@ class InvitationMenu(Gtk.Box):
     def on_accept_invitation(self, button):
         """Accept the current invitation."""
         try:
-            result = self.gui.game_data.client.send_to_server("accept")
+            result = self.client_service.send_to_server("accept")
             if not result:
                 self.show_message("Error", "Failed to send acceptance")
             # Response will arrive via visit_server_message() from server
@@ -202,7 +209,7 @@ class InvitationMenu(Gtk.Box):
     def on_decline_invitation(self, button):
         """Decline the current invitation."""
         try:
-            result = self.gui.game_data.client.send_to_server("decline")
+            result = self.client_service.send_to_server("decline")
             if not result:
                 self.show_message("Error", "Failed to send decline response")
             # Response will arrive via visit_server_message() from server
@@ -213,7 +220,7 @@ class InvitationMenu(Gtk.Box):
     def on_cancel_invitation(self, button):
         """Cancel a sent invitation."""
         try:
-            result = self.gui.game_data.client.send_to_server("cancel")
+            result = self.client_service.send_to_server("cancel")
             if not result:
                 self.show_message("Error", "Failed to send cancellation")
             # Response will arrive via visit_server_message() from server
@@ -224,7 +231,7 @@ class InvitationMenu(Gtk.Box):
     def on_set_away(self, button):
         """Set player status to away."""
         try:
-            result = self.gui.game_data.client.send_to_server("away")
+            result = self.client_service.send_to_server("away")
             if not result:
                 self.show_message("Error", "Failed to send away status")
             # Response will arrive via visit_server_message() from server
@@ -235,7 +242,7 @@ class InvitationMenu(Gtk.Box):
     def on_back_to_idle(self, button):
         """Set player status back to idle."""
         try:
-            result = self.gui.game_data.client.send_to_server("back")
+            result = self.client_service.send_to_server("back")
             if not result:
                 self.show_message("Error", "Failed to send idle status")
             # Response will arrive via visit_server_message() from server
