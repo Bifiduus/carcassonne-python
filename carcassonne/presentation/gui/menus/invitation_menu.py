@@ -382,7 +382,10 @@ class InvitationMenu(Gtk.Box):
     def _display_player_list(self, message: str):
         """Affiche la liste des joueurs de manière sécurisée."""
         try:
-            prefixes = [_("List of current players: "), "List of current players: "]
+            prefixes = [
+                _("List of current players: "),
+                "List of current players: ",
+            ]
             list_str = None
             for prefix in prefixes:
                 if message.startswith(prefix):

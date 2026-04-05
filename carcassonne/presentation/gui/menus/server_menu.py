@@ -348,7 +348,9 @@ class ServerMenu(Gtk.Box):
         try:
             scoreboard = self.server_service.repo.get_scoreboard()
             connected_players = self.server_service.get_connected_players()
-            connected_usernames = {p['name'] for p in connected_players}
+            connected_usernames = {
+                player["name"] for player in connected_players
+            }
 
             if scoreboard:
                 # Filter scoreboard to only connected players
@@ -362,7 +364,8 @@ class ServerMenu(Gtk.Box):
                         [
                             (
                                 _(
-                                    "{username}: {wins} wins, {losses} losses, "
+                                    "{username}: {wins} wins, "
+                                    "{losses} losses, "
                                     "{games} games played"
                                 ).format(
                                     username=p["username"],
