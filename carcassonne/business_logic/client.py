@@ -8,8 +8,12 @@ from carcassonne.business_logic.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_client_message_visitor import IClientMessageVisitor
-from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.presentation.interfaces.i_client_message_visitor import (
+    IClientMessageVisitor,
+)
+from carcassonne.presentation.interfaces.i_client_service import (
+    IClientService,
+)
 
 
 class Client(IClientService):
@@ -352,7 +356,8 @@ class Client(IClientService):
         print(_("Starting client disconnection..."))
 
         try:
-            # 1. Try to send disconnect message (but don't fail if socket is broken)
+            # 1. Try to send disconnect message
+            # (but don't fail if socket is broken)
             try:
                 if self.client and self.connected_to_a_server():
                     self.send_to_server("Bad client disconnection\n")

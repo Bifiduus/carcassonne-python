@@ -1,5 +1,4 @@
 from gi.repository import Gtk, GLib
-import os
 import ast
 
 import gi
@@ -325,7 +324,8 @@ class InvitationMenu(Gtk.Box):
             print(f"Erreur dans _handle_server_message: {e}")
         finally:
             self._popup_pending = False  # libère le verrou
-        return False  # Important : dire à GLib de ne pas rappeler cette fonction
+        # Important : dire a GLib de ne pas rappeler cette fonction.
+        return False
 
     def _display_player_list(self, message: str):
         """Affiche la liste des joueurs de manière sécurisée."""

@@ -1,5 +1,4 @@
 from gi.repository import Gtk
-import os
 
 import gi
 
@@ -94,7 +93,7 @@ class MultiplayerMenu(Gtk.Box):
         self.main_grid.attach(self.center_box, 1, 0, 1, 1)
         self.main_grid.attach(self.players_box, 2, 0, 1, 1)
 
-        # --- show all players --------------------------------------------------
+        # --- show all players --------------------------------------------
         # now always visible in right sidebar: no dedicated button needed
         self.refresh_players_view()
         self.refresh_scoreboard_view()
@@ -171,8 +170,12 @@ class MultiplayerMenu(Gtk.Box):
         for player in players:
             row_box = Gtk.Box(
                 orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            player_text = (
+                f"ID: {player['id']}, Name: {player['name']}, "
+                f"Status: {player['status']}"
+            )
             label = Gtk.Label(
-                label=f"ID: {player['id']}, Name: {player['name']}, Status: {player['status']}",
+                label=player_text,
                 xalign=0,
             )
             row_box.append(label)
@@ -186,7 +189,7 @@ class MultiplayerMenu(Gtk.Box):
         self.players_box.set_visible(True)
 
     def refresh_scoreboard_view(self):
-        """Refresh scoreboard sidebar from server if running, else show empty."""
+        """Refresh scoreboard sidebar if server runs, else show empty."""
         try:
             if self.gui.game_data.server.is_server_running():
                 players = self.gui.game_data.server.repo.get_scoreboard()
@@ -213,8 +216,12 @@ class MultiplayerMenu(Gtk.Box):
             row_box = Gtk.Box(
                 orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
             total_games = player['victories'] + player['defeats']
+            score_text = (
+                f"{player['username']}: {player['victories']} wins, "
+                f"{player['defeats']} losses, {total_games} games"
+            )
             label = Gtk.Label(
-                label=f"{player['username']}: {player['victories']} wins, {player['defeats']} losses, {total_games} games",
+                label=score_text,
                 xalign=0,
             )
             row_box.append(label)

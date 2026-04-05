@@ -3,7 +3,7 @@ from carcassonne.presentation.gui.game_data_gui import GameDataGui
 
 
 class ClientMenuMessageVisitor:
-    """Composite visitor delivering server events into appropriate menu widgets."""
+    """Route server events to the appropriate menu widgets."""
 
     def __init__(self, game_gui):
         self._game_gui = game_gui
@@ -16,8 +16,18 @@ class ClientMenuMessageVisitor:
             if invitation_menu is not None:
                 invitation_menu.visit_server_message(message, server)
         # Status/invitation related responses go to invitation menu
-        elif any(keyword in message.lower() for keyword in
-                 ["invitation", "accept", "decline", "cancel", "away", "idle", "status"]):
+        elif any(
+            keyword in message.lower()
+            for keyword in [
+                "invitation",
+                "accept",
+                "decline",
+                "cancel",
+                "away",
+                "idle",
+                "status",
+            ]
+        ):
             invitation_menu = self._game_gui.invitation_view
             if invitation_menu is not None:
                 invitation_menu.visit_server_message(message, server)
@@ -33,7 +43,7 @@ class CreateGui:
         game_data = GameDataGui(game, client_service, server_service)
         game_gui = GameGUI(game_data)
 
-        # On passe game_gui entier : les vues seront résolues au moment de l'appel
+        # On passe game_gui entier : les vues seront resolues a l'appel.
         if hasattr(client_service, "register_message_visitor"):
             visitor = ClientMenuMessageVisitor(game_gui)
             client_service.register_message_visitor(visitor)

@@ -3,7 +3,6 @@ from gi.repository import Gtk
 import gi
 
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.gui import utils
 
 gi.require_version("Gtk", "4.0")
 

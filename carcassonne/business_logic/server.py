@@ -22,7 +22,11 @@ class Server(IServerService):
     INVITATION_TIMEOUT = 300
     CLIENT_TIMEOUT = 60
 
-    def __init__(self, repo: IGamesRepository | None = None, daemon: bool = False):
+    def __init__(
+        self,
+        repo: IGamesRepository | None = None,
+        daemon: bool = False,
+    ):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None
@@ -261,7 +265,10 @@ class Server(IServerService):
                     )
         except Exception as e:
             # Only print if not a shutdown scenario
-            if not self.should_stop.is_set() and "Bad file descriptor" not in str(e):
+            if (
+                not self.should_stop.is_set()
+                and "Bad file descriptor" not in str(e)
+            ):
                 print(f"Error handling client: {e}")
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
@@ -639,10 +646,10 @@ class Server(IServerService):
         return len(self.current_games_list)
 
     def get_connected_players(self) -> list[dict[str, str]]:
-        """Return a list of connected players with their ID, name, and status."""
+        """Return connected players with ID, name, and status."""
         players = []
         with self.clients_lock:
-            for socket, username in self.player_clients.items():
+            for client_socket, username in self.player_clients.items():
                 client_id = self.repo.get_id_from_username(username)
                 status = self.repo.get_status(str(client_id))
                 players.append({
@@ -653,7 +660,7 @@ class Server(IServerService):
         return players
 
     def start_new_game_with_players(self, player_ids: list[str]) -> str:
-        """Start a new game with the specified players if they are idle and connected."""
+        """Start a game if all provided players are connected and idle."""
         if not player_ids:
             return "Error: No player IDs provided"
 

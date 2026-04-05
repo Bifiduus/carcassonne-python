@@ -2,8 +2,6 @@
 
 from gi.repository import Gtk
 
-from carcassonne.i18n import gettext as _
-
 
 class MainMenu:
     @staticmethod

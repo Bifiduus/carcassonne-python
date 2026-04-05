@@ -164,11 +164,15 @@ def hint(self, client_service) -> None:
     if move:
         try:
             parsed = parse_move(move)
-            description = f"Placez la tuile à la position {parsed['target_id']} sur le côté {parsed['target_side']}, tournée de {parsed['rotation'] * 90} degrés."
+            description = (
+                f"Placez la tuile à la position {parsed['target_id']} "
+                f"sur le côté {parsed['target_side']}, tournée de "
+                f"{parsed['rotation'] * 90} degrés."
+            )
             if parsed['meeple']:
                 description += f" et placez un meeple sur {parsed['meeple']}."
             print(f"Conseil: {description}")
-        except Exception as e:
+        except Exception:
             print(f"Conseil: Jouez le coup {move}")
     else:
         print("Aucun conseil disponible.")

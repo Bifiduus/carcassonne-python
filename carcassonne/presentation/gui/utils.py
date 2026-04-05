@@ -65,7 +65,8 @@ def load_css() -> None:
         letter-spacing: 0px;
         color: #fffdfb;
         letter-spacing: 2px;
-        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000,
+                 -1px 1px 0 #000, 1px 1px 0 #000;
     }
 
     .section-title {
@@ -74,7 +75,8 @@ def load_css() -> None:
     font-weight: 900;
     letter-spacing: 0px;
     color: #fffdfb;
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000,
+                 -1px 1px 0 #000, 1px 1px 0 #000;
     }
 
     /*orange buttons*/

@@ -1,5 +1,4 @@
 from gi.repository import Gtk, GLib
-import os
 
 import gi
 
@@ -16,10 +15,16 @@ class ServerMenu(Gtk.Box):
     starting/stopping the server, viewing server status, managing
     connected players, and accessing server statistics.
 
-    Follows 3-tier architecture by depending on IClientService and IServerService interfaces.
+    Follows 3-tier architecture by depending on IClientService and
+    IServerService interfaces.
     """
 
-    def __init__(self, gui, client_service: IClientService = None, server_service: IServerService = None):
+    def __init__(
+        self,
+        gui,
+        client_service: IClientService = None,
+        server_service: IServerService = None,
+    ):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
@@ -50,7 +55,7 @@ class ServerMenu(Gtk.Box):
 
         self.append(self.main_box)
 
-        # --- search servers  --------------------------------------------------
+        # --- search servers ------------------------------------------------
         server_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         btn_server = Gtk.Button(label="Server list")
         btn_server.add_css_class("orange-buttons")
@@ -297,8 +302,15 @@ class ServerMenu(Gtk.Box):
             players = self.server_service.get_connected_players()
 
             if players:
-                players_text = "\n".join([f"ID: {p['id']}, Name: {p['name']}, Status: {p['status']}"
-                                         for p in players])
+                players_text = "\n".join(
+                    [
+                        (
+                            f"ID: {p['id']}, Name: {p['name']}, "
+                            f"Status: {p['status']}"
+                        )
+                        for p in players
+                    ]
+                )
             else:
                 players_text = "No players connected"
 
@@ -317,12 +329,25 @@ class ServerMenu(Gtk.Box):
             if scoreboard:
                 # Filter scoreboard to only connected players
                 filtered_scoreboard = [
-                    p for p in scoreboard if p['username'] in connected_usernames]
+                    p
+                    for p in scoreboard
+                    if p['username'] in connected_usernames
+                ]
                 if filtered_scoreboard:
-                    scoreboard_text = "\n".join([f"{p['username']}: {p['victories']} wins, {p['defeats']} losses, {p['victories'] + p['defeats']} games played"
-                                                 for p in filtered_scoreboard])
+                    scoreboard_text = "\n".join(
+                        [
+                            (
+                                f"{p['username']}: {p['victories']} wins, "
+                                f"{p['defeats']} losses, "
+                                f"{p['victories'] + p['defeats']} games played"
+                            )
+                            for p in filtered_scoreboard
+                        ]
+                    )
                 else:
-                    scoreboard_text = "No connected players with scoreboard data"
+                    scoreboard_text = (
+                        "No connected players with scoreboard data"
+                    )
             else:
                 scoreboard_text = "No scoreboard data available"
 
@@ -336,7 +361,7 @@ class ServerMenu(Gtk.Box):
         self.gui.window.stack.set_visible_child_name("multiplayer_menu")
 
     def update_connection_buttons(self):
-        """Update the visibility of connection buttons based on current state."""
+        """Update connection-button visibility from current state."""
         try:
             # Check if client is connected to a server
             is_connected = self.client_service.connected_to_a_server()
