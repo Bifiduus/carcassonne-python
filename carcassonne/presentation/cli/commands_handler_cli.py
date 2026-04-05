@@ -187,16 +187,30 @@ def undo(self, N, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("undo")
     else:
+        before_past = len(self.game.game_data.history.past_moves)
+        before_future = len(self.game.game_data.history.future_moves)
         self.game.undo()
-        print(_("Last {count} move(s) undone.").format(count=N))
+        after_past = len(self.game.game_data.history.past_moves)
+        after_future = len(self.game.game_data.history.future_moves)
+        if before_past == after_past and before_future == after_future:
+            print(_("No move to undo."))
+        else:
+            print(_("Last {count} move(s) undone.").format(count=N))
 
 
 def redo(self, N, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("redo")
     else:
+        before_past = len(self.game.game_data.history.past_moves)
+        before_future = len(self.game.game_data.history.future_moves)
         self.game.redo()
-        print(_("Last {count} move(s) redone.").format(count=N))
+        after_past = len(self.game.game_data.history.past_moves)
+        after_future = len(self.game.game_data.history.future_moves)
+        if before_past == after_past and before_future == after_future:
+            print(_("No move to redo."))
+        else:
+            print(_("Last {count} move(s) redone.").format(count=N))
 
 
 def show_hand(self, client_service: IClientService) -> None:
@@ -304,7 +318,7 @@ def play(self, move, game, client_service: IClientService) -> None:
         return
     result = game.play_move(move)
     game.get_board()
-    if not game.is_undo_history_empty():
+    if result and not game.is_undo_history_empty():
         game.clear_undo_history()
     if result:
         while game.get_current_player().is_ai_player():

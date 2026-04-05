@@ -59,6 +59,9 @@ class DummyBlitzManager:
         self.ensure_calls += 1
         return True
 
+    def _has_playable_player(self) -> bool:
+        return True
+
 
 class DummyGameData:
     def __init__(self) -> None:
@@ -72,6 +75,7 @@ class DummyGameData:
         self.graph = object()
         self.tiles_info = object()
         self.deck = Deck()
+        self._end_game_scored = False
 
     def get_current_player(self) -> DummyPlayer:
         return self.players[0]
@@ -80,6 +84,7 @@ class DummyGameData:
         # Mimic the production reset behavior that recreates history/board.
         self.history = History()
         self.board = DummyBoard()
+        self._end_game_scored = False
 
 
 def test_undo_then_redo_preserves_history_stacks() -> None:

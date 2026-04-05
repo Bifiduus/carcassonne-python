@@ -56,14 +56,30 @@ class UndoRedoManager:
         self.game_data.history.push_past(last_undone_record)
         return last_undone_record
 
+    @staticmethod
+    def _tile_code_from_move(move_str: str) -> str:
+        """Return the tile code embedded in a move string.
+
+        Args:
+            move_str: A move string such as ``"CFFF/0N0"`` or
+                ``"FSRS/m/1W0"``.
+
+        Returns:
+            The tile code, e.g. ``"CFFF"`` or ``"FSRS/m"``.
+        """
+        parts = move_str.split("/")
+        if len(parts) >= 2 and len(parts[1]) == 1:
+            return f"{parts[0]}/{parts[1]}"
+        return parts[0]
+
     def _advance_deck_for_replayed_move(self, move_str: str) -> None:
         """Advance deck state so replay mirrors original draw order.
 
         Args:
             move_str: The recorded move string (e.g. "D/4/3/0").
         """
-        tile_code = move_str.split("/")[0]
-        # River tiles are identified by the "S" prefix in their code.
+        tile_code = self._tile_code_from_move(move_str).split("/")[0]
+        # River tiles are identified by the presence of "S" in their code.
         if "S" in tile_code:
             self.game_data.deck.draw_river_tile()
         else:
@@ -176,14 +192,44 @@ class UndoRedoManager:
             # Keep the deck pointer in sync with how many tiles were drawn.
             self._advance_deck_for_replayed_move(move_record.move_str)
 
-        # The current player is determined by the position in the turn order,
-        # which cycles through players_order with each played move.
-        self.game_data.current_player_order_list = len(past_moves) % len(
-            self.game_data.players_order
-        )
+        # The current player is whoever would play the next undone move.
+        # Using len(past_moves) % len(players_order) is wrong when
+        # players_order[0] is an AI (random shuffle at game start): it would
+        # point to the AI, causing _tick_once to auto-play and consume the
+        # tile that belongs to the human.
+        if future_moves:
+            next_player_id = future_moves[-1].player_id
+            self.game_data.current_player_order_list = (
+                self.game_data.players_order.index(next_player_id)
+            )
+        else:
+            self.game_data.current_player_order_list = len(
+                past_moves
+            ) % len(self.game_data.players_order)
 
         # Reapply end-game scoring if the rebuilt state is already terminal.
         self._apply_end_game_score_if_needed()
 
         # Advance past any AI players who cannot act at this point.
         self.blitz_manager._ensure_current_player_playable()
+
+        if future_moves:
+            # Restore the tile the human had in hand so their next `draw`
+            # returns the correct tile without touching the deck at all.
+            self.game_data.current_hand = self._tile_code_from_move(
+                future_moves[-1].move_str
+            )
+            # Align the deck so that draws following the human's replay
+            # deliver the same tiles as the original game sequence.
+            # future_moves[:-1] are the AI moves to be replayed afterwards;
+            # iterate in reverse so that [0] (first to draw) ends up on top.
+            for record in reversed(future_moves[:-1]):
+                tile = self._tile_code_from_move(record.move_str)
+                if "S" in tile.split("/")[0]:
+                    lst = self.game_data.deck.river_tiles
+                    if tile in lst:
+                        lst.insert(0, lst.pop(lst.index(tile)))
+                else:
+                    lst = self.game_data.deck.tiles
+                    if tile in lst:
+                        lst.append(lst.pop(lst.index(tile)))

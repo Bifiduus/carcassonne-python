@@ -37,11 +37,15 @@ class GameDataGui:
         commands_handler_gui.on_undo(self.game)
         if self.board_view:
             self.board_view.refresh()
+        if self.gui and hasattr(self.gui, "players_view"):
+            self.gui.players_view.refresh()
 
     def redo(self):
         commands_handler_gui.on_redo(self.game)
         if self.board_view:
             self.board_view.refresh()
+        if self.gui and hasattr(self.gui, "players_view"):
+            self.gui.players_view.refresh()
 
     def save(self):
         pass
