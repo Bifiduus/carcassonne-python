@@ -2,6 +2,8 @@ from gi.repository import Gtk
 
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -48,7 +50,7 @@ class MultiplayerMenu(Gtk.Box):
         self.scoreboard_box.set_hexpand(False)
         self.scoreboard_box.add_css_class("scoreboard-sidebar")
 
-        scoreboard_title = Gtk.Label(label="Scoreboard")
+        scoreboard_title = Gtk.Label(label=_("Scoreboard"))
         scoreboard_title.add_css_class("section-title")
         self.scoreboard_box.append(scoreboard_title)
 
@@ -74,7 +76,7 @@ class MultiplayerMenu(Gtk.Box):
         self.players_box.set_hexpand(False)
         self.players_box.add_css_class("players-sidebar")
 
-        players_title = Gtk.Label(label="Players")
+        players_title = Gtk.Label(label=_("Players"))
         players_title.add_css_class("section-title")
         self.players_box.append(players_title)
 
@@ -84,7 +86,7 @@ class MultiplayerMenu(Gtk.Box):
         # no hide button: always visible
         self.players_box.set_visible(True)
 
-        title = Gtk.Label(label="Multiplayer")
+        title = Gtk.Label(label=_("Multiplayer"))
         title.add_css_class("section-title")
         self.center_box.append(title)
 
@@ -101,7 +103,7 @@ class MultiplayerMenu(Gtk.Box):
         # --- server management menu button -----------------------------
         server_mgmt_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_server_mgmt = Gtk.Button(label="Server Management")
+        btn_server_mgmt = Gtk.Button(label=_("Server management"))
         btn_server_mgmt.add_css_class("orange-buttons")
         btn_server_mgmt.connect("clicked", self.on_server_management)
         btn_server_mgmt.set_hexpand(False)
@@ -112,7 +114,7 @@ class MultiplayerMenu(Gtk.Box):
         # --- invitation management menu button -----------------------------
         invitation_mgmt_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_invitation_mgmt = Gtk.Button(label="Party Invitations")
+        btn_invitation_mgmt = Gtk.Button(label=_("Party invitations"))
         btn_invitation_mgmt.add_css_class("orange-buttons")
         btn_invitation_mgmt.connect("clicked", self.on_invitation_management)
         btn_invitation_mgmt.set_hexpand(False)
@@ -122,7 +124,7 @@ class MultiplayerMenu(Gtk.Box):
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
@@ -170,9 +172,12 @@ class MultiplayerMenu(Gtk.Box):
         for player in players:
             row_box = Gtk.Box(
                 orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-            player_text = (
-                f"ID: {player['id']}, Name: {player['name']}, "
-                f"Status: {player['status']}"
+            player_text = _(
+                "ID: {id}, Name: {name}, Status: {status}"
+            ).format(
+                id=player["id"],
+                name=player["name"],
+                status=player["status"],
             )
             label = Gtk.Label(
                 label=player_text,
@@ -216,9 +221,13 @@ class MultiplayerMenu(Gtk.Box):
             row_box = Gtk.Box(
                 orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
             total_games = player['victories'] + player['defeats']
-            score_text = (
-                f"{player['username']}: {player['victories']} wins, "
-                f"{player['defeats']} losses, {total_games} games"
+            score_text = _(
+                "{username}: {wins} wins, {losses} losses, {games} games"
+            ).format(
+                username=player["username"],
+                wins=player["victories"],
+                losses=player["defeats"],
+                games=total_games,
             )
             label = Gtk.Label(
                 label=score_text,

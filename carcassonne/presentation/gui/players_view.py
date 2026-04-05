@@ -21,6 +21,8 @@ from typing import Any
 from gi.repository import Gtk
 import gi
 
+from carcassonne.i18n import gettext as _
+
 gi.require_version("Gtk", "4.0")
 
 
@@ -37,7 +39,7 @@ class PlayersView(Gtk.Box):
         self.set_margin_start(10)
 
         # ---- titre ----
-        self.title = Gtk.Label(label="<b>Players</b>")
+        self.title = Gtk.Label(label=f"<b>{_('Players')}</b>")
         self.title.set_use_markup(True)
         self.append(self.title)
 

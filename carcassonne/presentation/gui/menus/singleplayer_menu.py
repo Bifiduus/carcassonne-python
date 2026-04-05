@@ -37,7 +37,7 @@ class SingleplayerMenu(Gtk.Box):
         title.add_css_class("section-title")
         self.append(title)
 
-        ai_button = Gtk.Button(label="Ai")
+        ai_button = Gtk.Button(label=_("AI"))
         ai_button.add_css_class("orange-buttons")
         ai_button.connect("clicked", self.on_ai_options)
         self.append(ai_button)
@@ -55,9 +55,9 @@ class SingleplayerMenu(Gtk.Box):
         # --- game mode ----------------------------------------------------
         mode_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         mode_box.set_halign(Gtk.Align.CENTER)
-        self.blitz_cb = Gtk.CheckButton(label="Blitz mode")
-        self.contest_cb = Gtk.CheckButton(label="Contest mode")
-        self.river_cb = Gtk.CheckButton(label="River mode")
+        self.blitz_cb = Gtk.CheckButton(label=_("Blitz mode"))
+        self.contest_cb = Gtk.CheckButton(label=_("Contest mode"))
+        self.river_cb = Gtk.CheckButton(label=_("River mode"))
         # file chooser only enabled when contest is active
         self.file_button = Gtk.Button(label=_("Choose contest file"))
         self.file_button.connect("clicked", self.on_choose_file)
@@ -90,7 +90,7 @@ class SingleplayerMenu(Gtk.Box):
 
         # --- start / back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)

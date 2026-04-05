@@ -46,7 +46,7 @@ class AiMenu(Gtk.Box):
         for func in selection_functions:
             self.selection_choice.append_text(func)
         self.selection_choice.set_active(0)
-        self.selection_box.append(Gtk.Label(label="Selection Function:"))
+        self.selection_box.append(Gtk.Label(label=_("Selection function:")))
         self.selection_box.append(self.selection_choice)
         self.selection_choice.connect("changed", self.on_selection_changed)
         self.selection_box.set_visible(False)  # Hidden by default
@@ -66,7 +66,7 @@ class AiMenu(Gtk.Box):
 
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        btn_back = Gtk.Button(label="Back")
+        btn_back = Gtk.Button(label=_("Back"))
         btn_back.add_css_class("orange-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_box.append(btn_back)
@@ -79,10 +79,10 @@ class AiMenu(Gtk.Box):
 
         # Map display names to internal AI mode names
         ai_mode_map = {
-            "Random": "random",
-            "Minimax": "minimax",
-            "Monte Carlo": "mcts",
-            "Iterative": "iterative",
+            _("Random"): "random",
+            _("Minimax"): "minimax",
+            _("Monte Carlo"): "mcts",
+            _("Iterative"): "iterative",
         }
 
         ai_mode = ai_mode_map.get(ai_selection, "minimax")
@@ -91,7 +91,7 @@ class AiMenu(Gtk.Box):
         self.gui.game_data.game.set_game_configuration("ai_mode", ai_mode)
 
         # Show/hide selection function based on AI mode
-        if ai_selection == "Monte Carlo":
+        if ai_selection == _("Monte Carlo"):
             self.selection_box.set_visible(True)
             # Set the selection function
             selection = self.selection_choice.get_active_text()

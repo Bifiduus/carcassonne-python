@@ -101,8 +101,8 @@ class GameCLI:
         return self.game.get_current_player().get_id() == self.local_player_id
 
     def run(self):
-        print("Welcome to Carcassonne")
-        print("Type 'help' for the list of commands.\n")
+        print(_("Welcome to Carcassonne"))
+        print(_("Type 'help' to see the list of commands.") + "\n")
 
         self._start_input_loop()
         last_tick = time.monotonic()

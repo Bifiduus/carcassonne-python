@@ -2,6 +2,7 @@ from gi.repository import Gtk, GLib
 
 import gi
 
+from carcassonne.i18n import gettext as _
 from carcassonne.presentation.interfaces.i_client_service import IClientService
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
@@ -49,7 +50,7 @@ class ServerMenu(Gtk.Box):
         self.main_box.set_valign(Gtk.Align.START)
         self.main_box.set_hexpand(True)
 
-        title = Gtk.Label(label="Server Management")
+        title = Gtk.Label(label=_("Server management"))
         title.add_css_class("section-title")
         self.main_box.append(title)
 
@@ -57,7 +58,7 @@ class ServerMenu(Gtk.Box):
 
         # --- search servers ------------------------------------------------
         server_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_server = Gtk.Button(label="Server list")
+        btn_server = Gtk.Button(label=_("Server list"))
         btn_server.add_css_class("orange-buttons")
         btn_server.connect("clicked", self.on_server_list)
         btn_server.set_hexpand(False)
@@ -72,7 +73,7 @@ class ServerMenu(Gtk.Box):
             orientation=Gtk.Orientation.VERTICAL, spacing=6)
         server_control_box.set_halign(Gtk.Align.CENTER)
 
-        server_control_title = Gtk.Label(label="Server Control")
+        server_control_title = Gtk.Label(label=_("Server control"))
         server_control_title.add_css_class("section-title")
         server_control_title.set_halign(Gtk.Align.CENTER)
         server_control_box.append(server_control_title)
@@ -80,7 +81,7 @@ class ServerMenu(Gtk.Box):
         # Port input
         port_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         port_box.set_halign(Gtk.Align.CENTER)
-        port_label = Gtk.Label(label="Port:")
+        port_label = Gtk.Label(label=_("Port:"))
         self.entry_port = Gtk.Entry()
         self.entry_port.set_placeholder_text("12345")
         self.entry_port.set_text("12345")
@@ -93,12 +94,12 @@ class ServerMenu(Gtk.Box):
             orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         buttons_box.set_halign(Gtk.Align.CENTER)
 
-        btn_start_server = Gtk.Button(label="Start Server")
+        btn_start_server = Gtk.Button(label=_("Start server"))
         btn_start_server.add_css_class("orange-buttons")
         btn_start_server.connect("clicked", self.on_start_server)
         buttons_box.append(btn_start_server)
 
-        btn_stop_server = Gtk.Button(label="Stop Server")
+        btn_stop_server = Gtk.Button(label=_("Stop server"))
         btn_stop_server.add_css_class("orange-buttons")
         btn_stop_server.connect("clicked", self.on_stop_server)
         buttons_box.append(btn_stop_server)
@@ -111,24 +112,24 @@ class ServerMenu(Gtk.Box):
         info_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
-        info_title = Gtk.Label(label="Server Information")
+        info_title = Gtk.Label(label=_("Server information"))
         info_title.add_css_class("section-title")
         info_box.append(info_title)
 
         # Status button
-        btn_status = Gtk.Button(label="Server Status")
+        btn_status = Gtk.Button(label=_("Server status"))
         btn_status.add_css_class("orange-buttons")
         btn_status.connect("clicked", self.on_server_status)
         info_box.append(btn_status)
 
         # Players button
-        btn_players = Gtk.Button(label="Connected Players")
+        btn_players = Gtk.Button(label=_("Connected players"))
         btn_players.add_css_class("orange-buttons")
         btn_players.connect("clicked", self.on_show_players)
         info_box.append(btn_players)
 
         # Scoreboard button
-        btn_scoreboard = Gtk.Button(label="Scoreboard")
+        btn_scoreboard = Gtk.Button(label=_("Scoreboard"))
         btn_scoreboard.add_css_class("orange-buttons")
         btn_scoreboard.connect("clicked", self.on_show_scoreboard)
         info_box.append(btn_scoreboard)
@@ -139,7 +140,7 @@ class ServerMenu(Gtk.Box):
         connection_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
-        connection_title = Gtk.Label(label="Connection Management")
+        connection_title = Gtk.Label(label=_("Connection management"))
         connection_title.add_css_class("section-title")
         connection_box.append(connection_title)
 
@@ -149,21 +150,21 @@ class ServerMenu(Gtk.Box):
         connection_buttons_box.set_halign(Gtk.Align.CENTER)
 
         # Disconnect button (only shown if connected)
-        self.btn_disconnect = Gtk.Button(label="Disconnect from Server")
+        self.btn_disconnect = Gtk.Button(label=_("Disconnect from server"))
         self.btn_disconnect.add_css_class("orange-buttons")
         self.btn_disconnect.connect("clicked", self.on_disconnect_from_server)
         self.btn_disconnect.set_visible(False)  # Hidden by default
         connection_buttons_box.append(self.btn_disconnect)
 
         # Ping button (only shown if connected)
-        self.btn_ping = Gtk.Button(label="Ping Server")
+        self.btn_ping = Gtk.Button(label=_("Ping server"))
         self.btn_ping.add_css_class("orange-buttons")
         self.btn_ping.connect("clicked", self.on_ping_server)
         self.btn_ping.set_visible(False)  # Hidden by default
         connection_buttons_box.append(self.btn_ping)
 
         # Stop local server button (only shown if server is running)
-        self.btn_stop_local_server = Gtk.Button(label="Stop Local Server")
+        self.btn_stop_local_server = Gtk.Button(label=_("Stop local server"))
         self.btn_stop_local_server.add_css_class("orange-buttons")
         self.btn_stop_local_server.connect(
             "clicked", self.on_stop_local_server)
@@ -180,7 +181,7 @@ class ServerMenu(Gtk.Box):
         # --- Back Button -------------------------------------------------
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        btn_back = Gtk.Button(label="Back to Multiplayer")
+        btn_back = Gtk.Button(label=_("Back to multiplayer"))
         btn_back.add_css_class("red-buttons")
         btn_back.connect("clicked", self.on_back)
         btn_back.set_hexpand(False)
@@ -200,7 +201,7 @@ class ServerMenu(Gtk.Box):
     def show_server_popup(self, servers):
         """Affiche une popup avec la liste des serveurs."""
 
-        popup = Gtk.Window(title="Available Servers")
+        popup = Gtk.Window(title=_("Available servers"))
         popup.set_modal(True)
         popup.set_transient_for(self.gui.window.window)
         popup.set_default_size(300, 400)
@@ -219,7 +220,7 @@ class ServerMenu(Gtk.Box):
 
             label = Gtk.Label(label=f"{server}:{servers[server]}", xalign=0)
 
-            btn_join = Gtk.Button(label="Join")
+            btn_join = Gtk.Button(label=_("Join"))
             btn_join.connect("clicked", self.on_join_server, server, popup)
 
             row_box.append(label)
@@ -229,7 +230,7 @@ class ServerMenu(Gtk.Box):
 
         main_box.append(listbox)
 
-        btn_close = Gtk.Button(label="Close")
+        btn_close = Gtk.Button(label=_("Close"))
         btn_close.connect("clicked", lambda b: popup.destroy())
         main_box.append(btn_close)
 
@@ -246,11 +247,14 @@ class ServerMenu(Gtk.Box):
                 GLib.idle_add(popup.destroy)
                 self.update_connection_buttons()
             else:
-                self.show_message("Error", "Failed to join server")
+                self.show_message(_("Error"), _("Failed to join server."))
             # Response will arrive via visit_server_message() from server
         except Exception as e:
             print(f"Error joining server: {e}")
-            self.show_message("Error", f"Error joining server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error joining server: {error}").format(error=e),
+            )
 
     def on_start_server(self, button):
         """Start the server on the specified port."""
@@ -259,23 +263,31 @@ class ServerMenu(Gtk.Box):
             self.server_service.server_start(port)
             self.current_port = port
             print(f"Server started successfully on port {port}")
-            # Show success message
-            self.show_message("Success", f"Server started on port {port}")
+            self.show_message(
+                _("Success"),
+                _("Server started on port {port}").format(port=port),
+            )
             self.update_connection_buttons()
         except Exception as e:
             print(f"Error starting server: {e}")
-            self.show_message("Error", f"Error starting server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error starting server: {error}").format(error=e),
+            )
 
     def on_stop_server(self, button):
         """Stop the running server."""
         try:
             self.server_service.server_stop()
-            print("Server stopped")
-            self.show_message("Success", "Server stopped successfully")
+            print(_("Server stopped."))
+            self.show_message(_("Success"), _("Server stopped successfully."))
             self.update_connection_buttons()
         except Exception as e:
             print(f"Error stopping server: {e}")
-            self.show_message("Error", f"Error stopping server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error stopping server: {error}").format(error=e),
+            )
 
     def on_server_status(self, button):
         """Show server status information."""
@@ -286,15 +298,24 @@ class ServerMenu(Gtk.Box):
                 self.server_service.connected_clients)
             active_games = self.server_service.number_current_games()
 
-            status_text = f"Server Running: {is_running}\n"
-            status_text += f"Port: {self.current_port}\n"
-            status_text += f"Connected Clients: {connected_clients}\n"
-            status_text += f"Active Games: {active_games}"
+            status_text = _("Server running: {running}\n").format(
+                running=is_running
+            )
+            status_text += _("Port: {port}\n").format(port=self.current_port)
+            status_text += _("Connected clients: {count}\n").format(
+                count=connected_clients
+            )
+            status_text += _("Active games: {count}").format(
+                count=active_games
+            )
 
-            self.show_message("Server Status", status_text)
+            self.show_message(_("Server status"), status_text)
         except Exception as e:
             print(f"Error getting server status: {e}")
-            self.show_message("Error", f"Error getting server status: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error getting server status: {error}").format(error=e),
+            )
 
     def on_show_players(self, button):
         """Show list of connected players."""
@@ -312,12 +333,15 @@ class ServerMenu(Gtk.Box):
                     ]
                 )
             else:
-                players_text = "No players connected"
+                players_text = _("No players connected.")
 
-            self.show_message("Connected Players", players_text)
+            self.show_message(_("Connected players"), players_text)
         except Exception as e:
             print(f"Error getting players: {e}")
-            self.show_message("Error", f"Error getting players: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error getting players: {error}").format(error=e),
+            )
 
     def on_show_scoreboard(self, button):
         """Show server scoreboard."""
@@ -337,24 +361,33 @@ class ServerMenu(Gtk.Box):
                     scoreboard_text = "\n".join(
                         [
                             (
-                                f"{p['username']}: {p['victories']} wins, "
-                                f"{p['defeats']} losses, "
-                                f"{p['victories'] + p['defeats']} games played"
+                                _(
+                                    "{username}: {wins} wins, {losses} losses, "
+                                    "{games} games played"
+                                ).format(
+                                    username=p["username"],
+                                    wins=p["victories"],
+                                    losses=p["defeats"],
+                                    games=p["victories"] + p["defeats"],
+                                )
                             )
                             for p in filtered_scoreboard
                         ]
                     )
                 else:
-                    scoreboard_text = (
-                        "No connected players with scoreboard data"
+                    scoreboard_text = _(
+                        "No connected players with scoreboard data."
                     )
             else:
-                scoreboard_text = "No scoreboard data available"
+                scoreboard_text = _("No scoreboard data available.")
 
-            self.show_message("Server Scoreboard", scoreboard_text)
+            self.show_message(_("Server scoreboard"), scoreboard_text)
         except Exception as e:
             print(f"Error getting scoreboard: {e}")
-            self.show_message("Error", f"Error getting scoreboard: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error getting scoreboard: {error}").format(error=e),
+            )
 
     def on_back(self, button):
         """Return to the multiplayer menu."""
@@ -382,42 +415,59 @@ class ServerMenu(Gtk.Box):
         try:
             result = self.client_service.disconnect()
             if not result:
-                self.show_message("Error", "Failed to disconnect")
+                self.show_message(_("Error"), _("Failed to disconnect."))
             else:
                 self.update_connection_buttons()
             # Response will arrive via visit_server_message() from server
         except Exception as e:
             print(f"Error disconnecting from server: {e}")
-            self.show_message("Error", f"Error disconnecting from server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error disconnecting from server: {error}").format(
+                    error=e
+                ),
+            )
 
     def on_stop_local_server(self, button):
         """Stop the local server."""
         try:
             self.server_service.server_stop()
-            print("Local server stopped")
-            self.show_message("Success", "Local server stopped successfully")
+            print(_("Local server stopped."))
+            self.show_message(
+                _("Success"),
+                _("Local server stopped successfully."),
+            )
             self.update_connection_buttons()
         except Exception as e:
             print(f"Error stopping local server: {e}")
-            self.show_message("Error", f"Error stopping local server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error stopping local server: {error}").format(error=e),
+            )
 
     def on_ping_server(self, button):
         """Ping the connected server."""
         try:
             result = self.client_service.send_to_server("ping")
             if not result:
-                self.show_message("Error", "Failed to send ping request")
+                self.show_message(
+                    _("Error"),
+                    _("Failed to send ping request."),
+                )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
             print(f"Error pinging server: {e}")
-            self.show_message("Error", f"Error pinging server: {e}")
+            self.show_message(
+                _("Error"),
+                _("Error pinging server: {error}").format(error=e),
+            )
 
     def show_message(self, title: str, message):
         """Show a message dialog (GTK4 compatible)."""
         if isinstance(message, bool):
-            message = "Success" if message else "Failure"
+            message = _("Success") if message else _("Failure")
         elif message is None:
-            message = "No response received"
+            message = _("No response received.")
         else:
             message = str(message)
 
@@ -446,7 +496,7 @@ class ServerMenu(Gtk.Box):
                 label.set_selectable(True)
                 box.append(label)
 
-                btn_ok = Gtk.Button(label="OK")
+                btn_ok = Gtk.Button(label=_("OK"))
                 btn_ok.set_halign(Gtk.Align.CENTER)
                 btn_ok.connect("clicked", lambda b: dialog.close())
                 box.append(btn_ok)
@@ -470,7 +520,13 @@ class ServerMenu(Gtk.Box):
 
     def _handle_server_message(self, message: str, server: str):
         try:
-            self.show_message("Server Event", f"Server {server}: {message}")
+            self.show_message(
+                _("Server event"),
+                _("Server {server}: {message}").format(
+                    server=server,
+                    message=message,
+                ),
+            )
         except Exception as e:
             print(f"Erreur dans _handle_server_message: {e}")
         finally:

@@ -148,11 +148,11 @@ def draw(self, client_service: IClientService) -> None:
         already_had_tile: bool = self.game.game_data.current_hand is not None
         tile = self.game.draw_tile()
         if tile is None:
-            print("La pioche est vide!")
+            print(_("The deck is empty!"))
         elif already_had_tile:
-            print("Vous avez déjà une tuile en main.")
+            print(_("You already have a tile in hand."))
         else:
-            print(f"Tuile piochée: {tile}")
+            print(_("Tile drawn: {tile}").format(tile=tile))
 
 
 def hint(self, client_service) -> None:
@@ -164,18 +164,23 @@ def hint(self, client_service) -> None:
     if move:
         try:
             parsed = parse_move(move)
-            description = (
-                f"Placez la tuile à la position {parsed['target_id']} "
-                f"sur le côté {parsed['target_side']}, tournée de "
-                f"{parsed['rotation'] * 90} degrés."
+            description = _(
+                "Place the tile at position {target_id} on side "
+                "{target_side}, rotated by {degrees} degrees."
+            ).format(
+                target_id=parsed["target_id"],
+                target_side=parsed["target_side"],
+                degrees=parsed["rotation"] * 90,
             )
             if parsed['meeple']:
-                description += f" et placez un meeple sur {parsed['meeple']}."
-            print(f"Conseil: {description}")
+                description += _(" and place a meeple on {meeple}.").format(
+                    meeple=parsed["meeple"]
+                )
+            print(_("Hint: {description}").format(description=description))
         except Exception:
-            print(f"Conseil: Jouez le coup {move}")
+            print(_("Hint: play move {move}").format(move=move))
     else:
-        print("Aucun conseil disponible.")
+        print(_("No hint available."))
 
 
 def undo(self, N, client_service: IClientService) -> None:

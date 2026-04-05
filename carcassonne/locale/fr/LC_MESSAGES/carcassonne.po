@@ -580,3 +580,279 @@ msgstr "Tuile piochée : {tile}"
 
 msgid "Failed to save the game to {filename}."
 msgstr "Échec de la sauvegarde de la partie dans {filename}."
+
+msgid "Start game"
+msgstr "Démarrer la partie"
+
+msgid "Players"
+msgstr "Joueurs"
+
+msgid "River mode"
+msgstr "Mode rivière"
+
+msgid "Selection function:"
+msgstr "Fonction de sélection :"
+
+msgid "Iterative"
+msgstr "Itératif"
+
+msgid "Scoreboard"
+msgstr "Classement"
+
+msgid "Server management"
+msgstr "Gestion du serveur"
+
+msgid "Party invitations"
+msgstr "Invitations de partie"
+
+msgid "ID: {id}, Name: {name}, Status: {status}"
+msgstr "ID : {id}, Nom : {name}, Statut : {status}"
+
+msgid "{username}: {wins} wins, {losses} losses, {games} games"
+msgstr "{username} : {wins} victoires, {losses} défaites, {games} parties"
+
+msgid "Server list"
+msgstr "Liste des serveurs"
+
+msgid "Server control"
+msgstr "Contrôle du serveur"
+
+msgid "Start server"
+msgstr "Démarrer le serveur"
+
+msgid "Stop server"
+msgstr "Arrêter le serveur"
+
+msgid "Server information"
+msgstr "Informations du serveur"
+
+msgid "Connected players"
+msgstr "Joueurs connectés"
+
+msgid "Connection management"
+msgstr "Gestion de la connexion"
+
+msgid "Disconnect from server"
+msgstr "Se déconnecter du serveur"
+
+msgid "Ping server"
+msgstr "Ping du serveur"
+
+msgid "Stop local server"
+msgstr "Arrêter le serveur local"
+
+msgid "Back to multiplayer"
+msgstr "Retour au multijoueur"
+
+msgid "Available servers"
+msgstr "Serveurs disponibles"
+
+msgid "Join"
+msgstr "Rejoindre"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Failed to join server."
+msgstr "Échec de la connexion au serveur."
+
+msgid "Error joining server: {error}"
+msgstr "Erreur lors de la connexion au serveur : {error}"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Server started on port {port}"
+msgstr "Serveur démarré sur le port {port}"
+
+msgid "Error starting server: {error}"
+msgstr "Erreur au démarrage du serveur : {error}"
+
+msgid "Server stopped successfully."
+msgstr "Serveur arrêté avec succès."
+
+msgid "Error stopping server: {error}"
+msgstr "Erreur lors de l'arrêt du serveur : {error}"
+
+msgid "Server running: {running}\n"
+msgstr "Serveur actif : {running}\n"
+
+msgid "Connected clients: {count}\n"
+msgstr "Clients connectés : {count}\n"
+
+msgid "Active games: {count}"
+msgstr "Parties actives : {count}"
+
+msgid "No players connected."
+msgstr "Aucun joueur connecté."
+
+msgid "{username}: {wins} wins, {losses} losses, {games} games played"
+msgstr "{username} : {wins} victoires, {losses} défaites, {games} parties jouées"
+
+msgid "No connected players with scoreboard data."
+msgstr "Aucun joueur connecté n'a de données de classement."
+
+msgid "No scoreboard data available."
+msgstr "Aucune donnée de classement disponible."
+
+msgid "Server scoreboard"
+msgstr "Classement du serveur"
+
+msgid "Error getting scoreboard: {error}"
+msgstr "Erreur lors de la récupération du classement : {error}"
+
+msgid "Failed to disconnect."
+msgstr "Échec de la déconnexion."
+
+msgid "Error disconnecting from server: {error}"
+msgstr "Erreur lors de la déconnexion du serveur : {error}"
+
+msgid "Local server stopped successfully."
+msgstr "Serveur local arrêté avec succès."
+
+msgid "Error stopping local server: {error}"
+msgstr "Erreur lors de l'arrêt du serveur local : {error}"
+
+msgid "Failed to send ping request."
+msgstr "Échec de l'envoi de la requête de ping."
+
+msgid "Error pinging server: {error}"
+msgstr "Erreur lors du ping du serveur : {error}"
+
+msgid "Failure"
+msgstr "Échec"
+
+msgid "No response received."
+msgstr "Aucune réponse reçue."
+
+msgid "Server event"
+msgstr "Événement serveur"
+
+msgid "Server {server}: {message}"
+msgstr "Serveur {server} : {message}"
+
+msgid "Player information"
+msgstr "Informations joueur"
+
+msgid "Player ID:"
+msgstr "ID joueur :"
+
+msgid "Enter player ID or leave empty for all"
+msgstr "Entrez un ID joueur ou laissez vide pour tous"
+
+msgid "Show players"
+msgstr "Afficher les joueurs"
+
+msgid "Invitation management"
+msgstr "Gestion des invitations"
+
+msgid "Invite player ID:"
+msgstr "Inviter l'ID joueur :"
+
+msgid "Player ID to invite"
+msgstr "ID joueur à inviter"
+
+msgid "Send invitation"
+msgstr "Envoyer l'invitation"
+
+msgid "Accept invitation"
+msgstr "Accepter l'invitation"
+
+msgid "Decline invitation"
+msgstr "Refuser l'invitation"
+
+msgid "Cancel invitation"
+msgstr "Annuler l'invitation"
+
+msgid "Status management"
+msgstr "Gestion du statut"
+
+msgid "Set away"
+msgstr "Passer absent"
+
+msgid "Back to idle"
+msgstr "Retour à idle"
+
+msgid "Unable to send the request."
+msgstr "Impossible d'envoyer la requête."
+
+msgid "Error: {error}"
+msgstr "Erreur : {error}"
+
+msgid "Please enter a player ID to invite."
+msgstr "Veuillez saisir un ID joueur à inviter."
+
+msgid "Failed to send invitation request."
+msgstr "Échec de l'envoi de la demande d'invitation."
+
+msgid "Error sending invitation: {error}"
+msgstr "Erreur lors de l'envoi de l'invitation : {error}"
+
+msgid "Failed to send acceptance."
+msgstr "Échec de l'envoi de l'acceptation."
+
+msgid "Error accepting invitation: {error}"
+msgstr "Erreur lors de l'acceptation de l'invitation : {error}"
+
+msgid "Failed to send decline response."
+msgstr "Échec de l'envoi du refus."
+
+msgid "Error declining invitation: {error}"
+msgstr "Erreur lors du refus de l'invitation : {error}"
+
+msgid "Failed to send cancellation."
+msgstr "Échec de l'envoi de l'annulation."
+
+msgid "Error cancelling invitation: {error}"
+msgstr "Erreur lors de l'annulation de l'invitation : {error}"
+
+msgid "Failed to send away status."
+msgstr "Échec de l'envoi du statut absent."
+
+msgid "Error setting status to away: {error}"
+msgstr "Erreur lors du passage au statut absent : {error}"
+
+msgid "Failed to send idle status."
+msgstr "Échec de l'envoi du statut idle."
+
+msgid "Error setting status to idle: {error}"
+msgstr "Erreur lors du retour au statut idle : {error}"
+
+msgid "Connected players"
+msgstr "Joueurs connectés"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Raw response:\n{message}"
+msgstr "Réponse brute :\n{message}"
+
+msgid "Error while displaying: {error}"
+msgstr "Erreur lors de l'affichage : {error}"
+
+msgid "The deck is empty!"
+msgstr "La pioche est vide !"
+
+msgid "You already have a tile in hand."
+msgstr "Vous avez déjà une tuile en main."
+
+msgid "Tile drawn: {tile}"
+msgstr "Tuile piochée : {tile}"
+
+msgid "Place the tile at position {target_id} on side {target_side}, rotated by {degrees} degrees."
+msgstr "Placez la tuile à la position {target_id} sur le côté {target_side}, tournée de {degrees} degrés."
+
+msgid " and place a meeple on {meeple}."
+msgstr " et placez un meeple sur {meeple}."
+
+msgid "Hint: {description}"
+msgstr "Conseil : {description}"
+
+msgid "Hint: play move {move}"
+msgstr "Conseil : jouez le coup {move}"
+
+msgid "No hint available."
+msgstr "Aucun conseil disponible."

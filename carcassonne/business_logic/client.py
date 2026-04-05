@@ -73,7 +73,7 @@ class Client(IClientService):
             ip = self.server_service.server_name
         with self.servers_lock:
             if ip not in self.available_servers:
-                print("Error: There is no server with such an ip.")
+                print(_("Error: there is no server with that IP address."))
                 return False
             server_port, _ = self.available_servers[ip]
 
