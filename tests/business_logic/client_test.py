@@ -24,8 +24,9 @@ def build_client(repo=None):
 
 
 class FakeTCPSocket:
-    def __init__(self, connect_error=None) -> None:
+    def __init__(self, connect_error=None, close_error=None) -> None:
         self.connect_error = connect_error
+        self.close_error = close_error
         self.connected = None
         self.timeout = None
         self.closed = False
@@ -51,6 +52,8 @@ class FakeTCPSocket:
 
     def close(self):
         self.closed = True
+        if self.close_error is not None:
+            raise self.close_error
 
 
 class FakeUDPSocket:
@@ -127,6 +130,34 @@ def test_join_server_covers_missing_server_success_and_connection_error(
     assert "Unable to connect to 10.0.0.1:4242" in capsys.readouterr().out
 
 
+def test_join_server_defaults_to_current_server_name_and_uses_server_specific_username(
+    monkeypatch,
+) -> None:
+    client, repo, server_service = build_client()
+    client.available_servers = {"127.0.0.1": (4242, 0.0)}
+    repo.has_no_special_username.return_value = False
+    repo.get_online_player.side_effect = lambda server: {
+        "127.0.0.1": "alice-remote"
+    }[server]
+    fake_socket = FakeTCPSocket()
+    fake_thread = Mock()
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.socket.socket",
+        lambda *args, **kwargs: fake_socket,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.threading.Thread",
+        lambda *args, **kwargs: fake_thread,
+    )
+    sent_messages = []
+    client.send_to_server = lambda text: sent_messages.append(text) or True
+
+    assert client.join_server() is True
+    assert fake_socket.connected == (server_service.server_name, 4242)
+    assert sent_messages == ["username=alice-remote password=pw"]
+
+
 def test_receive_loop_processes_messages_and_handles_shutdown(monkeypatch, capsys) -> None:
     client, _, _ = build_client()
     handled = []
@@ -169,6 +200,48 @@ def test_receive_loop_processes_messages_and_handles_shutdown(monkeypatch, capsy
     assert "Socket error: broken" in capsys.readouterr().out
 
 
+def test_receive_loop_handles_timeouts_state_changes_and_close_errors(
+    monkeypatch, capsys
+) -> None:
+    client, _, _ = build_client()
+
+    class ReceiveSocket:
+        def __init__(self):
+            self.messages = [socket.timeout("wait"), b"Server -> Client1: ok"]
+            self.closed = False
+
+        def settimeout(self, value):
+            self.timeout = value
+
+        def recv(self, size):
+            item = self.messages.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+        def close(self):
+            self.closed = True
+            raise RuntimeError("close fail")
+
+    import socket
+
+    receive_socket = ReceiveSocket()
+    client.client = receive_socket
+    client.has_joined_server = True
+
+    def handle_message(message, server):
+        with client.state_lock:
+            client.has_joined_server = False
+
+    client.handle_server_message = handle_message
+    client._receive_loop("srv")
+
+    output = capsys.readouterr().out
+    assert "Error closing client socket: close fail" in output
+    assert receive_socket.closed is True
+    assert client.client is None
+
+
 def test_handle_server_message_covers_board_request_registration_retry_and_visitor(
     monkeypatch, capsys
 ) -> None:
@@ -203,6 +276,25 @@ def test_handle_server_message_covers_board_request_registration_retry_and_visit
     assert client.temporary_username == ""
     visitor.visit_server_message.assert_called()
     assert "OPPONENT_MOVE did something" in capsys.readouterr().out
+
+
+def test_handle_server_message_ignores_invalid_messages_and_declined_rename(
+    capsys,
+) -> None:
+    client, _, _ = build_client()
+    client.client = object()
+    client.send_to_server = Mock()
+
+    client.handle_server_message("bad-format", "srv")
+
+    with patch("builtins.input", side_effect=["n"]):
+        client.handle_server_message(
+            "Server -> Client1: Your registration has failed...",
+            "srv",
+        )
+
+    assert client.send_to_server.call_count == 0
+    assert "Your registration has failed..." in capsys.readouterr().out
 
 
 def test_list_available_servers_and_timeout_cleanup_cover_valid_and_invalid_messages(
@@ -253,6 +345,53 @@ def test_list_available_servers_and_timeout_cleanup_cover_valid_and_invalid_mess
     )
     assert client.list_available_servers() == {}
     assert "Error binding socket: bind failed" in capsys.readouterr().out
+
+
+def test_list_available_servers_handles_invalid_format_and_receive_errors(
+    monkeypatch, capsys
+) -> None:
+    client, _, _ = build_client()
+    udp_socket = FakeUDPSocket(messages=[(b"invalid-message", ("127.0.0.1", 1))])
+    times = iter([0.0, 0.0, 0.0, 1.0, 1.0, 6.0])
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.socket.socket",
+        lambda *args, **kwargs: udp_socket,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.select.select",
+        lambda *args, **kwargs: ([udp_socket], [], []),
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.time.time",
+        lambda: next(times),
+    )
+
+    assert client.list_available_servers(timeout=5.0) == {}
+    assert "Invalid message format: invalid-message" in capsys.readouterr().out
+
+    client, _, _ = build_client()
+    failing_udp_socket = FakeUDPSocket()
+
+    def raise_recvfrom(size):
+        raise RuntimeError("recv fail")
+
+    failing_udp_socket.recvfrom = raise_recvfrom
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.socket.socket",
+        lambda *args, **kwargs: failing_udp_socket,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.select.select",
+        lambda *args, **kwargs: ([failing_udp_socket], [], []),
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.time.time",
+        lambda: 0.0,
+    )
+
+    assert client.list_available_servers(timeout=0.1) == {}
+    assert "Error receiving message: recv fail" in capsys.readouterr().out
 
 
 def test_create_player_ping_connection_send_disconnect_and_visitor_registration(
@@ -306,3 +445,43 @@ def test_create_player_ping_connection_send_disconnect_and_visitor_registration(
     visitor = Mock()
     client.register_message_visitor(visitor)
     assert client.message_visitor is visitor
+
+
+def test_ping_send_to_server_and_disconnect_cover_remaining_branches(
+    monkeypatch, capsys
+) -> None:
+    client, repo, _ = build_client()
+    fake_socket = FakeTCPSocket()
+    fake_socket.recv = lambda size: b"nope"
+    client.client = fake_socket
+    client.has_joined_server = True
+    client.connected_server = "srv"
+    assert client.ping() == "No server response"
+
+    repo.has_no_special_username.return_value = False
+    repo.get_online_player.side_effect = lambda server: {"srv": "alice-srv"}[
+        server
+    ]
+    weird_socket = FakeTCPSocket()
+    weird_socket.sendall = Mock(side_effect=RuntimeError("weird"))
+    client.client = weird_socket
+    client.has_joined_server = True
+    client.connected_server = "srv"
+    assert client.send_to_server("quit") is False
+    assert client.has_joined_server is False
+    assert "Failed to send: weird" in capsys.readouterr().out
+
+    client, _, _ = build_client()
+    broken_socket = FakeTCPSocket()
+    broken_socket.shutdown = Mock(side_effect=OSError("shutdown failed"))
+    client.client = broken_socket
+    client.has_joined_server = True
+    client.connected_server = "srv"
+    client.send_to_server = Mock(side_effect=BrokenPipeError("broken"))
+    recv_thread = Mock()
+    recv_thread.is_alive.return_value = True
+    client._recv_thread = recv_thread
+    client.disconnect()
+
+    output = capsys.readouterr().out
+    assert "Warning: receive thread did not terminate within timeout." in output

@@ -1,3 +1,4 @@
+import socket
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -7,9 +8,15 @@ from carcassonne.business_logic.server import Server
 
 
 class FakeSocket:
-    def __init__(self, bind_error=None, send_error=None) -> None:
+    def __init__(
+        self,
+        bind_error=None,
+        send_error=None,
+        close_error=None,
+    ) -> None:
         self.bind_error = bind_error
         self.send_error = send_error
+        self.close_error = close_error
         self.bound = None
         self.closed = False
         self.sent = []
@@ -30,6 +37,8 @@ class FakeSocket:
 
     def close(self):
         self.closed = True
+        if self.close_error is not None:
+            raise self.close_error
 
     def send(self, data):
         if self.send_error is not None:
@@ -40,6 +49,41 @@ class FakeSocket:
         if self.send_error is not None:
             raise self.send_error
         self.sent.append(data)
+
+
+class FakeAcceptingServerSocket(FakeSocket):
+    def __init__(self, accepted_client=None, accept_error=None) -> None:
+        super().__init__()
+        self.accepted_client = accepted_client or FakeSocket()
+        self.accept_error = accept_error
+        self.accept_calls = 0
+
+    def accept(self):
+        self.accept_calls += 1
+        if self.accept_error is not None:
+            raise self.accept_error
+        return self.accepted_client, ("127.0.0.1", 9999)
+
+
+class FakeBroadcastSocket(FakeSocket):
+    def __init__(self) -> None:
+        super().__init__()
+        self.broadcasts = []
+
+    def sendto(self, data, address):
+        self.broadcasts.append((data, address))
+
+
+class FakeRecvSocket(FakeSocket):
+    def __init__(self, messages, send_error=None, close_error=None) -> None:
+        super().__init__(send_error=send_error, close_error=close_error)
+        self.messages = list(messages)
+
+    def recv(self, size):
+        item = self.messages.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
 
 
 def make_server(monkeypatch, repo=None):
@@ -340,3 +384,245 @@ def test_server_stop_get_game_and_server_state_cleanup(monkeypatch, capsys) -> N
     assert server.player_clients == {}
     assert server.registered_clients == {}
     assert "Server shutdown complete" in capsys.readouterr().out
+
+
+def test_server_running_accepts_clients_broadcasts_and_checks_timeouts(
+    monkeypatch, capsys
+) -> None:
+    repo = Mock()
+    repo.check_all_invitations_timeout.return_value = [1]
+    repo.get_username.return_value = "Alice"
+    server = make_server(monkeypatch, repo)
+    accepted_client = FakeSocket()
+    server_socket = FakeAcceptingServerSocket(accepted_client=accepted_client)
+    udp_socket = FakeBroadcastSocket()
+    spawned_threads = []
+
+    class FakeThread:
+        def __init__(self, *args, **kwargs) -> None:
+            self.args = args
+            self.kwargs = kwargs
+            self.started = False
+            spawned_threads.append(self)
+
+        def start(self):
+            self.started = True
+
+    server.server = server_socket
+    server.should_stop.set()
+    server.send_to_client = Mock()
+    server.launch_availables_games = Mock()
+    server.clean_finished_games = Mock()
+
+    def fake_check_client_timeouts():
+        server.should_stop.clear()
+
+    server.check_client_timeouts = Mock(side_effect=fake_check_client_timeouts)
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.select.select",
+        lambda *args, **kwargs: ([server_socket], [], []),
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.Thread",
+        FakeThread,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.socket.socket",
+        lambda *args, **kwargs: udp_socket,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.time.time",
+        lambda: 0.0,
+    )
+
+    server.server_running("4242")
+
+    assert server.connected_clients == [accepted_client]
+    assert server.registered_clients[accepted_client] is False
+    assert len(server.client_threads) == 1
+    assert spawned_threads[0].started is True
+    server.send_to_client.assert_called_once_with(
+        "Alice", "Your invitation timed out.."
+    )
+    server.launch_availables_games.assert_called_once_with()
+    server.clean_finished_games.assert_called_once_with()
+    server.check_client_timeouts.assert_called_once_with()
+    assert udp_socket.broadcasts == [
+        (b"127.0.0.1:4242", ("<broadcast>", 12346))
+    ]
+    assert "Accepted connection from a client." in capsys.readouterr().out
+
+
+def test_server_running_handles_timeout_then_generic_error(
+    monkeypatch, capsys
+) -> None:
+    repo = Mock()
+    repo.check_all_invitations_timeout.return_value = []
+    server = make_server(monkeypatch, repo)
+    server.server = FakeSocket()
+    server.should_stop.set()
+    outcomes = iter([socket.timeout("wait"), RuntimeError("boom")])
+
+    def fake_select(*args, **kwargs):
+        outcome = next(outcomes)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.select.select",
+        fake_select,
+    )
+
+    server.server_running("4242")
+
+    output = capsys.readouterr().out
+    assert "Error accepting connection: boom" in output
+    assert "Server stopped." in output
+
+
+def test_handle_client_registers_processes_messages_and_cleans_up(
+    monkeypatch,
+) -> None:
+    repo = Mock()
+    repo.registering.return_value = True
+    repo.get_id_from_username.side_effect = lambda username: {"Alice": 1}[
+        username
+    ]
+    repo.is_proper_client.side_effect = [True, False]
+    server = make_server(monkeypatch, repo)
+    server.server = object()
+    server.handle_communication = Mock()
+    server.handle_communication.command_ping.return_value = "pong"
+    server.handle_communication.command_quit.return_value = "bye"
+    client_socket = FakeRecvSocket(
+        [
+            b"Alice: username=Alice password=pw",
+            b"Alice: ping",
+            b"Alice: quit",
+        ]
+    )
+    server.connected_clients = [client_socket]
+    server.registered_clients = {client_socket: False}
+
+    server.handle_client(client_socket)
+
+    assert client_socket.closed is True
+    assert any(message.endswith(b"Successfull registering !\n") for message in client_socket.sent)
+    assert any(message.endswith(b"pong\n") for message in client_socket.sent)
+    repo.set_timeout_for_player.assert_called_once_with(
+        "Alice", server.CLIENT_TIMEOUT
+    )
+    assert server.handle_communication.command_quit.call_count == 2
+    assert client_socket not in server.connected_clients
+    assert server.client_sockets == {}
+    assert server.player_clients == {}
+    assert server.registered_clients == {}
+
+
+def test_handle_client_marks_improper_clients_on_processing_errors(
+    monkeypatch, capsys
+) -> None:
+    repo = Mock()
+    repo.get_id_from_username.return_value = 1
+    repo.is_proper_client.return_value = False
+    server = make_server(monkeypatch, repo)
+    server.server = object()
+    server.handle_communication = Mock()
+    server.handle_communication.command_ping.side_effect = RuntimeError("boom")
+    server.handle_communication.command_quit.return_value = "bye"
+    client_socket = FakeRecvSocket([b"Alice: ping"])
+    server.connected_clients = [client_socket]
+    server.registered_clients = {client_socket: True}
+    server.player_clients = {client_socket: "Alice"}
+    server.client_sockets = {"Alice": client_socket}
+
+    server.handle_client(client_socket)
+
+    output = capsys.readouterr().out
+    assert "Error handling client: boom" in output
+    repo.set_unproper_client.assert_called_once_with("Alice")
+    repo.set_timeout_for_player.assert_called_once_with(
+        "Alice", server.CLIENT_TIMEOUT
+    )
+    assert client_socket not in server.connected_clients
+
+
+def test_server_stop_logs_errors_and_thread_warnings(monkeypatch, capsys) -> None:
+    repo = Mock()
+    repo.client_quit.side_effect = RuntimeError("quit fail")
+    repo.close.side_effect = RuntimeError("repo fail")
+    server = make_server(monkeypatch, repo)
+
+    server.server_thread = Mock()
+    server.server_thread.is_alive.return_value = True
+    server.server = FakeSocket(close_error=RuntimeError("close fail"))
+    client_socket = FakeSocket(
+        send_error=RuntimeError("send fail"),
+        close_error=RuntimeError("client close fail"),
+    )
+    server.connected_clients = [client_socket]
+    server.player_clients = {client_socket: "Alice"}
+    server.client_sockets = {"Alice": client_socket}
+    server.registered_clients = {client_socket: True}
+
+    client_thread = Mock()
+    client_thread.is_alive.return_value = True
+    server.client_threads = [client_thread]
+
+    backup_game = Mock()
+    backup_game.save_game_to_file.side_effect = RuntimeError("backup fail")
+    server.current_games_list = {99: ("Party", backup_game)}
+
+    server.server_stop()
+
+    output = capsys.readouterr().out
+    assert "Error closing server socket: close fail" in output
+    assert "Error sending shutdown message: send fail" in output
+    assert "Error closing client socket: client close fail" in output
+    assert "Error cleaning up game 99: backup fail" in output
+    assert "Warning: a client thread did not finish in time" in output
+    assert "Error closing repository: repo fail" in output
+    assert "Warning: Server thread did not terminate within timeout" in output
+
+
+def test_server_starting_game_and_invitation_cover_additional_error_paths(
+    monkeypatch, capsys
+) -> None:
+    repo = Mock()
+    repo.get_username.side_effect = lambda player_id: {"1": "Alice", "2": "Bob"}[
+        player_id
+    ]
+    repo.get_party_id.return_value = 8
+    server = make_server(monkeypatch, repo)
+
+    server.send_invitation("2", "1")
+    assert "Client Bob not connected" in capsys.readouterr().out
+
+    fake_party_game = Mock()
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.GraphData",
+        Mock(return_value="graph"),
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.server.Game",
+        Mock(return_value=fake_party_game),
+    )
+    repo.create_game.side_effect = RuntimeError("db fail")
+    message = server.create_new_party([1, 2], "1")
+
+    assert message == "Your party has been created successfully !\n"
+    assert "Error creating party in repository: db fail" in capsys.readouterr().out
+
+    server.get_connected_players = Mock(
+        return_value=[
+            {"id": "1", "status": "idle"},
+            {"id": "2", "status": "idle"},
+        ]
+    )
+    server.create_new_party = Mock(side_effect=RuntimeError("cannot start"))
+    assert (
+        server.start_new_game_with_players(["1", "2"])
+        == "Error starting game: cannot start"
+    )

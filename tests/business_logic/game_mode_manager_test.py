@@ -78,6 +78,12 @@ class DummyGame:
         return self.game_data.players[player_id]
 
 
+class EmptyPlayersGame(DummyGame):
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.game_data.players_order = []
+
+
 class GameModeManagerTestCase(unittest.TestCase):
     def create_manager(self, settings):
         game = DummyGame(settings)
@@ -148,6 +154,19 @@ class GameModeManagerTestCase(unittest.TestCase):
 
         self.assertEqual(manager.get_configured_blitz_minutes(), 30)
 
+    def test_get_configured_blitz_minutes_rejects_non_positive_values(self):
+        manager, _ = self.create_manager({"blitz": True, "time": 0})
+
+        self.assertEqual(manager.get_configured_blitz_minutes(), 30)
+
+    def test_has_playable_player_handles_empty_and_default_modes(self):
+        empty_game = EmptyPlayersGame({"blitz": True, "time": 5})
+        manager = GameModeManager(DummyBlitzManager(), empty_game)
+        self.assertFalse(manager.has_playable_player())
+
+        manager, _ = self.create_manager({"blitz": False, "time": 5})
+        self.assertTrue(manager.has_playable_player())
+
     def test_has_playable_player_returns_false_when_all_players_are_timed_out(self):
         manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
         blitz_manager.timed_out_player_ids = {0, 1}
@@ -162,6 +181,34 @@ class GameModeManagerTestCase(unittest.TestCase):
 
         self.assertTrue(result)
         self.assertEqual(manager.game.game_data.current_player_order_list, 1)
+
+    def test_advance_to_next_playable_player_handles_empty_default_and_all_timed_out(self):
+        empty_game = EmptyPlayersGame({"blitz": True, "time": 5})
+        manager = GameModeManager(DummyBlitzManager(), empty_game)
+        self.assertFalse(manager.advance_to_next_playable_player())
+
+        manager, blitz_manager = self.create_manager({"blitz": False, "time": 5})
+        self.assertTrue(manager.advance_to_next_playable_player())
+
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0, 1}
+        self.assertFalse(manager.advance_to_next_playable_player())
+
+    def test_skip_current_player_handles_empty_players_and_default_mode(self):
+        empty_game = EmptyPlayersGame({"blitz": True, "time": 5})
+        manager = GameModeManager(DummyBlitzManager(), empty_game)
+        self.assertFalse(manager.skip_current_player())
+
+        manager, blitz_manager = self.create_manager({"blitz": False, "time": 5})
+        manager.game.game_data.current_hand = "CFFF"
+        self.assertTrue(manager.skip_current_player())
+        self.assertEqual(blitz_manager.start_turn_calls, [])
+
+    def test_skip_current_player_returns_false_when_no_player_can_continue(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0, 1}
+
+        self.assertFalse(manager.skip_current_player())
 
     def test_skip_current_player_clears_hand_and_starts_next_playable_player(self):
         manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
@@ -184,6 +231,20 @@ class GameModeManagerTestCase(unittest.TestCase):
         self.assertEqual(manager.game.game_data.current_player_order_list, 1)
         self.assertEqual(blitz_manager.active_player_id, 1)
 
+    def test_ensure_current_player_playable_handles_non_blitz_and_unavailable_players(self):
+        manager, _ = self.create_manager({"blitz": False, "time": 5})
+        self.assertTrue(manager.ensure_current_player_playable())
+
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0, 1}
+        self.assertFalse(manager.ensure_current_player_playable())
+
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        manager.reset_for_current_state()
+        blitz_manager.start_turn_calls.clear()
+        self.assertTrue(manager.ensure_current_player_playable())
+        self.assertEqual(blitz_manager.start_turn_calls, [])
+
     def test_tick_skips_to_next_player_when_current_one_times_out(self):
         manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
         blitz_manager.tick_result = True
@@ -193,6 +254,29 @@ class GameModeManagerTestCase(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(manager.game.game_data.current_player_order_list, 1)
         self.assertEqual(blitz_manager.active_player_id, 1)
+
+    def test_tick_handles_non_blitz_no_playable_player_and_no_timeout(self):
+        manager, _ = self.create_manager({"blitz": False, "time": 5})
+        self.assertFalse(manager.tick())
+
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0, 1}
+        self.assertFalse(manager.tick())
+
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        manager.reset_for_current_state()
+        blitz_manager.start_turn_calls.clear()
+        self.assertFalse(manager.tick())
+        self.assertEqual(blitz_manager.start_turn_calls, [])
+
+    def test_current_player_time_helper_returns_blitz_value(self):
+        manager, _ = self.create_manager({"blitz": True, "time": 5})
+        manager.reset_for_current_state()
+
+        self.assertEqual(
+            manager.get_current_player_remaining_time_seconds(),
+            300.0,
+        )
 
     def test_time_helpers_return_none_or_empty_when_blitz_is_disabled(self):
         manager, _ = self.create_manager({"blitz": False, "time": 5})

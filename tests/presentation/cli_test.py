@@ -50,6 +50,27 @@ def build_cli():
         return cli_module.GameCLI(game, server, client), game, server, client
 
 
+def test_cli_init_ignores_missing_history_file() -> None:
+    game = Mock()
+    game.get_game_configuration.return_value = {}
+    game.get_current_player.return_value = DummyPlayer(1)
+    server = Mock()
+    client = Mock()
+
+    with (
+        patch.object(cli_module.readline, "set_completer"),
+        patch.object(cli_module.readline, "parse_and_bind"),
+        patch.object(
+            cli_module.readline,
+            "read_history_file",
+            side_effect=FileNotFoundError,
+        ),
+    ):
+        cli = cli_module.GameCLI(game, server, client)
+
+    assert cli.local_player_id == 1
+
+
 def test_completer_and_cli_helpers_cover_basic_cases() -> None:
     with patch.object(cli_module.readline, "get_line_buffer", return_value="sh"):
         assert cli_module.completer("sh", 0) == "shuffle"
@@ -288,3 +309,85 @@ def test_run_executes_main_loop_and_writes_history() -> None:
         cli.run()
 
     write_history.assert_called_once_with(".carcassonne_history")
+
+
+def test_run_handles_keyboard_interrupt_and_joins_input_thread(capsys) -> None:
+    cli, _, _, _ = build_cli()
+    cli._input_thread = Mock()
+    cli._input_thread.join = Mock()
+
+    with (
+        patch.object(cli, "_start_input_loop"),
+        patch.object(
+            cli_module.time,
+            "monotonic",
+            side_effect=[0.0, KeyboardInterrupt()],
+        ),
+        patch.object(cli_module.time, "sleep"),
+        patch.object(cli_module.readline, "write_history_file") as write_history,
+    ):
+        cli.run()
+
+    assert "Game over." in capsys.readouterr().out
+    cli._input_thread.join.assert_called_once_with(timeout=0.2)
+    write_history.assert_called_once_with(".carcassonne_history")
+
+
+def test_start_input_loop_skips_when_thread_is_already_running() -> None:
+    cli, _, _, _ = build_cli()
+    cli._input_thread = Mock()
+    cli._input_thread.is_alive.return_value = True
+
+    with patch.object(cli_module.threading, "Thread") as thread_ctor:
+        cli._start_input_loop()
+
+    thread_ctor.assert_not_called()
+
+
+def test_input_loop_handles_ai_bootstrap_game_over_and_input_errors(capsys) -> None:
+    cli, game, _, _ = build_cli()
+    ai_player = DummyPlayer(2, is_ai=True)
+    human_player = DummyPlayer(1, is_ai=False)
+    game.get_current_player.side_effect = [ai_player, human_player, human_player]
+    game.end_game.return_value = True
+    cli._on_game_over = Mock()
+
+    cli._input_loop()
+
+    game.play_ai_turn.assert_called_once_with(game)
+    cli._on_game_over.assert_called_once_with()
+
+    cli, game, _, _ = build_cli()
+    game.get_current_player.return_value = human_player
+    game.end_game.return_value = False
+    with patch("builtins.input", side_effect=EOFError):
+        cli._input_loop()
+    assert cli.running is False
+
+    cli, game, _, _ = build_cli()
+    game.get_current_player.return_value = human_player
+    game.end_game.return_value = False
+    with patch("builtins.input", side_effect=KeyboardInterrupt):
+        cli._input_loop()
+    assert "Game over." in capsys.readouterr().out
+
+
+def test_on_game_over_ignores_repeated_calls() -> None:
+    cli, game, _, _ = build_cli()
+    cli.running = False
+
+    cli._on_game_over()
+
+    game.get_board.assert_not_called()
+
+
+def test_handle_command_supports_set_without_value() -> None:
+    cli, _, _, client = build_cli()
+
+    with (
+        patch.object(cli_module.readline, "add_history"),
+        patch.object(cli_module.commands_handler_cli, "set_parameter") as setter,
+    ):
+        cli.handle_command("set blitz")
+
+    setter.assert_called_once_with(cli, "blitz", None, client)
