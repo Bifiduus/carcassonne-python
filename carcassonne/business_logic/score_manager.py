@@ -22,6 +22,15 @@ DIRECTION_MAP = {
 
 class ScoreManager:
     def __init__(self):
+        """Initialize ScoreManager.
+
+        ScoreManager is a stateless utility class that supports scoring
+        calculations for all terrain components (roads, cities, monasteries,
+        fields) at both mid-game (end-of-turn) and end-of-game phases.
+
+        Returns:
+            None.
+        """
         pass
 
     @staticmethod
