@@ -10,6 +10,9 @@ class DummyBlitzManager:
         self.active_player_id = None
         self.remaining_time_seconds_by_player = {}
         self.timed_out_player_ids = set()
+        self.start_turn_calls = []
+        self.tick_result = False
+        self.timeout_message = "timed out"
 
     def reset(self, player_ids, enabled, minutes=30):
         self.enabled = enabled
@@ -24,15 +27,16 @@ class DummyBlitzManager:
 
     def start_turn(self, player_id):
         self.active_player_id = player_id
+        self.start_turn_calls.append(player_id)
 
     def get_remaining_seconds(self, player_id):
         return self.remaining_time_seconds_by_player[player_id]
 
     def tick(self):
-        return False
+        return self.tick_result
 
     def get_timeout_message(self):
-        return ""
+        return self.timeout_message
 
 
 class DummyPlayer:
@@ -138,6 +142,75 @@ class GameModeManagerTestCase(unittest.TestCase):
         self.assertTrue(blitz_manager.enabled)
         self.assertEqual(blitz_manager.active_player_id, 0)
         self.assertEqual(blitz_manager.get_remaining_seconds(0), 300.0)
+
+    def test_get_configured_blitz_minutes_falls_back_to_default(self):
+        manager, _ = self.create_manager({"blitz": True, "time": "invalid"})
+
+        self.assertEqual(manager.get_configured_blitz_minutes(), 30)
+
+    def test_has_playable_player_returns_false_when_all_players_are_timed_out(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0, 1}
+
+        self.assertFalse(manager.has_playable_player())
+
+    def test_advance_to_next_playable_player_skips_timed_out_players(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0}
+
+        result = manager.advance_to_next_playable_player()
+
+        self.assertTrue(result)
+        self.assertEqual(manager.game.game_data.current_player_order_list, 1)
+
+    def test_skip_current_player_clears_hand_and_starts_next_playable_player(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        manager.game.game_data.current_hand = "CFFF"
+
+        result = manager.skip_current_player()
+
+        self.assertTrue(result)
+        self.assertIsNone(manager.game.game_data.current_hand)
+        self.assertEqual(manager.game.game_data.current_player_order_list, 1)
+        self.assertEqual(blitz_manager.active_player_id, 1)
+
+    def test_ensure_current_player_playable_starts_timer_for_next_available_player(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.timed_out_player_ids = {0}
+
+        result = manager.ensure_current_player_playable()
+
+        self.assertTrue(result)
+        self.assertEqual(manager.game.game_data.current_player_order_list, 1)
+        self.assertEqual(blitz_manager.active_player_id, 1)
+
+    def test_tick_skips_to_next_player_when_current_one_times_out(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        blitz_manager.tick_result = True
+
+        result = manager.tick()
+
+        self.assertTrue(result)
+        self.assertEqual(manager.game.game_data.current_player_order_list, 1)
+        self.assertEqual(blitz_manager.active_player_id, 1)
+
+    def test_time_helpers_return_none_or_empty_when_blitz_is_disabled(self):
+        manager, _ = self.create_manager({"blitz": False, "time": 5})
+
+        self.assertIsNone(manager.get_current_player_remaining_time_seconds())
+        self.assertIsNone(manager.get_player_remaining_time_seconds(0))
+        self.assertEqual(manager.get_all_players_remaining_time_seconds(), [])
+
+    def test_time_helpers_handle_unknown_player_and_timeout_message(self):
+        manager, blitz_manager = self.create_manager({"blitz": True, "time": 5})
+        manager.reset_for_current_state()
+
+        self.assertEqual(manager.get_timeout_message(), "timed out")
+        self.assertIsNone(manager.get_player_remaining_time_seconds(42))
+        self.assertEqual(
+            manager.get_all_players_remaining_time_seconds(),
+            [(0, 300.0), (1, 300.0)],
+        )
 
 
 if __name__ == "__main__":

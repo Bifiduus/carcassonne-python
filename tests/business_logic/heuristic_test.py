@@ -31,13 +31,18 @@ class DummyGraph:
         return []
 
 
-class DummyGameState:
+class DummyGameData:
     def __init__(self, player_meeples=7, opponent_meeples=7):
         self.players = {
             0: DummyPlayer(0, meeples=player_meeples),
             1: DummyPlayer(1, meeples=opponent_meeples),
         }
         self.graph = DummyGraph()
+
+
+class DummyGameState:
+    def __init__(self, player_meeples=7, opponent_meeples=7):
+        self.game_data = DummyGameData(player_meeples, opponent_meeples)
 
 
 def test_extract_features_treats_committed_meeples_as_positive():
