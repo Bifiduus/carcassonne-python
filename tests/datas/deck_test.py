@@ -109,3 +109,28 @@ def test_shuffle_naive_is_less_uniform_than_fisher_yates_on_three_tiles():
     assert len(counts) == 6
     assert len(set(counts.values())) > 1
     assert _chi_square_uniformity(counts) > 0
+
+
+def test_draw_and_draw_river_tile_report_empty_sources(capsys):
+    deck = Deck()
+    deck.tiles = []
+    deck.river_tiles = []
+
+    assert deck.draw() is None
+    assert deck.draw_river_tile() is None
+
+    captured = capsys.readouterr()
+    assert "Deck is empty" in captured.out
+    assert "No more river tiles" in captured.out
+
+
+def test_append_prepends_tile_and_is_empty_reflects_current_state():
+    deck = Deck()
+    deck.tiles = []
+
+    assert deck.is_empty() is True
+
+    deck.append("CFFF")
+
+    assert deck.tiles == ["CFFF"]
+    assert deck.is_empty() is False

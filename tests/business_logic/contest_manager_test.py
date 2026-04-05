@@ -78,6 +78,22 @@ class ContestManagerTestCase(unittest.TestCase):
         ):
             manager.run("contest_state.txt")
 
+    def test_load_position_raises_when_game_loader_fails(self):
+        game = DummyGame()
+        game.load_game_from_file = lambda filename: 1
+        manager = ContestManager(game)
+
+        with self.assertRaises(ValueError):
+            manager._load_position("contest_state.txt")
+
+    def test_compute_move_raises_when_ai_finds_no_legal_move(self):
+        game = DummyGame()
+        game.play_ai_turn = lambda game=None: None
+        manager = ContestManager(game)
+
+        with self.assertRaises(ValueError):
+            manager._compute_move()
+
 
 if __name__ == "__main__":
     unittest.main()
