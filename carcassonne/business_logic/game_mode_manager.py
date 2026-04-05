@@ -39,9 +39,7 @@ class GameModeManager:
 
     def run_contest(self) -> str:
         """Execute the contest flow and return the move to print."""
-        filename = str(
-            self.game.game_configuration.settings.get("contest_file", "")
-        )
+        filename = str(self.game.get_game_configuration().get("contest_file", ""))
         return self.contest_manager.run(filename)
 
     def get_configured_blitz_minutes(self) -> int:
@@ -64,41 +62,44 @@ class GameModeManager:
             self.blitz_manager.start_turn(current_player_id)
 
     def has_playable_player(self) -> bool:
-        if not self.game.players_order:
+        players_order = self.game.get_players_order()
+        if not players_order:
             return False
         if self.get_mode() != "blitz":
             return True
-        for player_id in self.game.players_order:
+        for player_id in players_order:
             if not self.blitz_manager.is_player_timed_out(player_id):
                 return True
         return False
 
     def advance_to_next_playable_player(self) -> bool:
-        if not self.game.players_order:
+        players_order = self.game.get_players_order()
+        if not players_order:
             return False
         if self.get_mode() != "blitz":
             return True
 
-        for _ in range(len(self.game.players_order)):
-            player_id = self.game.players_order[
-                self.game.current_player_order_list
+        for _ in range(len(players_order)):
+            player_id = players_order[
+                self.game.game_data.current_player_order_list
             ]
             if not self.blitz_manager.is_player_timed_out(player_id):
                 return True
-            self.game.current_player_order_list = (
-                self.game.current_player_order_list + 1
-            ) % len(self.game.players_order)
+            self.game.game_data.current_player_order_list = (
+                self.game.game_data.current_player_order_list + 1
+            ) % len(players_order)
         return False
 
     def skip_current_player(self) -> bool:
         """Skip current player and advance to the next playable player."""
-        if not self.game.players_order:
+        players_order = self.game.get_players_order()
+        if not players_order:
             return False
 
-        self.game.current_hand = None
-        self.game.current_player_order_list = (
-            self.game.current_player_order_list + 1
-        ) % len(self.game.players_order)
+        self.game.game_data.current_hand = None
+        self.game.game_data.current_player_order_list = (
+            self.game.game_data.current_player_order_list + 1
+        ) % len(players_order)
 
         if not self.advance_to_next_playable_player():
             return False
@@ -151,7 +152,7 @@ class GameModeManager:
         if self.get_mode() != "blitz":
             return None
         self.tick()
-        if player_id not in self.game.players:
+        if player_id not in self.game.game_data.players:
             return None
         return self.blitz_manager.get_remaining_seconds(player_id)
 
@@ -166,5 +167,5 @@ class GameModeManager:
                 player_id,
                 self.blitz_manager.get_remaining_seconds(player_id),
             )
-            for player_id in self.game.players_order
+            for player_id in self.game.get_players_order()
         ]

@@ -291,6 +291,7 @@ def main() -> int:
             )
             return 1
         print(move)
+        return 0
     if args.file:
         print(
             _("Loading game from file: {filename}").format(

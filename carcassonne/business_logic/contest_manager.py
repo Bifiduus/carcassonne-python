@@ -36,16 +36,17 @@ class ContestManager:
         """Let the built-in AI play one turn and read back the move."""
         current_player = self.game.get_current_player()
         original_is_ai = current_player.is_ai
-        previous_history_length = len(self.game.history.past_moves)
+        history = self.game.game_data.history
+        previous_history_length = len(history.past_moves)
 
         with contextlib.redirect_stdout(io.StringIO()):
             try:
                 current_player.is_ai = True
-                self.game.play_ai_turn()
+                self.game.play_ai_turn(self.game)
             finally:
                 current_player.is_ai = original_is_ai
 
-        if len(self.game.history.past_moves) <= previous_history_length:
+        if len(history.past_moves) <= previous_history_length:
             raise ValueError("no legal move found for the current position")
 
-        return self.game.history.past_moves[-1].move_str
+        return history.past_moves[-1].move_str

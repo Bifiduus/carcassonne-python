@@ -136,7 +136,7 @@ class GameCLI:
 
     def _input_loop(self) -> None:
         while self.game.get_current_player().is_ai_player():
-            self.game.play_ai_turn()
+            self.game.play_ai_turn(self.game)
 
         while (
             self.game.get_current_player().is_ai_player()
@@ -145,7 +145,7 @@ class GameCLI:
             with self._game_lock:
                 if not self.running or self.game.end_game():
                     break
-                self.game.play_ai_turn()
+                self.game.play_ai_turn(self.game)
 
         if self.game.end_game():
             self._on_game_over()

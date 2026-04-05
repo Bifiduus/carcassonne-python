@@ -62,7 +62,7 @@ def test_play_ai_turn_discards_unplayable_tile_before_search(monkeypatch):
     )
     monkeypatch.setattr(game, "play_move", fake_play_move)
 
-    game.play_ai_turn()
+    game.play_ai_turn(game)
 
     assert played_moves == ["CRRF/0N0"]
     assert game.tiles_info.tiles_count["CCFF"] == discarded_count_before

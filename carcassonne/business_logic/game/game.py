@@ -57,7 +57,8 @@ class Game(IGameService):
             self,
         )
         self.river = None
-        self.start_new_game()
+        if self.game_mode_manager.get_mode() != "contest":
+            self.start_new_game()
 
     def _configured_blitz_minutes(self) -> int:
         return self.game_mode_manager.get_configured_blitz_minutes()

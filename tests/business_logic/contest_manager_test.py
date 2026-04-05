@@ -24,6 +24,7 @@ class DummyGame:
             "ai_mcts_selection": "UCT",
         }
         self.history = type("History", (), {"past_moves": []})()
+        self.game_data = type("GameData", (), {"history": self.history})()
         self.player = DummyPlayer(0)
         self.player.is_ai = False
 
@@ -40,7 +41,7 @@ class DummyGame:
     def draw_tile(self) -> str | None:
         return self.current_hand
 
-    def play_ai_turn(self) -> None:
+    def play_ai_turn(self, game=None) -> None:
         self.played = True
         record = type("Record", (), {"move_str": "CFFF/0N0"})()
         self.history.past_moves.append(record)
