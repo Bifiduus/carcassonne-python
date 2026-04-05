@@ -25,6 +25,13 @@ SOUTHEAST_MATRIX = (2, 2)
 
 class RulesManager:
 
+    opposite_side_matrix = {
+        0: SOUTH_MATRIX,
+        1: WEST_MATRIX,
+        2: NORTH_MATRIX,
+        3: EAST_MATRIX,
+    }
+
     match_matrix = {
         "NW": NORTHWEST_MATRIX,
         "N": NORTH_MATRIX,
@@ -38,8 +45,78 @@ class RulesManager:
     }
 
     def __init__(self, tiles_info: ITilesInfo):
+        """Initialize RulesManager.
 
+        Args:
+            tiles_info: Tile definitions and metadata for move validation.
+
+        Returns:
+            None.
+        """
         self.tiles_info = tiles_info
+        self._graph_logic = None
+
+    def _get_graph_logic(self) -> GraphLogic:
+        """Retrieve or initialize the shared GraphLogic instance.
+
+        Uses lazy initialization to avoid repeated object allocation during
+        move validation.
+
+        Args:
+            None.
+
+        Returns:
+            Shared GraphLogic instance.
+        """
+        if self._graph_logic is None:
+            self._graph_logic = GraphLogic()
+        return self._graph_logic
+
+    @staticmethod
+    def _extract_placement_data(placement_info: str) -> tuple[list[int], str]:
+        """Parse placement specification into numeric tile ID, orientation.
+
+        Extracts integers and cardinal direction letters from a placement
+        specification string.
+
+        Args:
+            placement_info: Placement spec (e.g. "12N" for tile 12, side N).
+
+        Returns:
+            Tuple of ([tile_id, orientation], direction_letters).
+        """
+        placement_numbers = [
+            int(x) for x in re.findall(r"\d+", placement_info)
+        ]
+        target_side = "".join(c for c in placement_info if c.isalpha())
+        return placement_numbers, target_side
+
+    @staticmethod
+    def _find_component_set_name(
+        graph: IGraphData,
+        land_type: str,
+        tile_id: int,
+        land_pos: str,
+    ) -> str | None:
+        """Locate which component set contains a specific tile position.
+
+        Searches for the named component containing a given tile and position.
+
+        Args:
+            graph: Current graph state with components.
+            land_type: Terrain type key (e.g., "R", "C", "M", "S").
+            tile_id: Tile identifier to search for.
+            land_pos: Position on the tile (e.g., "N", "C", "SE").
+
+        Returns:
+            Component set name (e.g., "R2") if found, otherwise None.
+        """
+        lands = graph.lands_components.get(land_type, {})
+        for set_name, component_set in lands.items():
+            for tile_id_in_set, directions in component_set:
+                if tile_id_in_set == tile_id and land_pos in directions:
+                    return set_name
+        return None
 
     def can_place_meeple_on_tile_side(
         self,
@@ -48,71 +125,87 @@ class RulesManager:
         graph: IGraphData,
         current_player_id: int | None = None,
     ) -> bool:
+        """Validate meeple placement by simulating placement in isolated graph.
+
+        Tests whether placing a meeple on the target component would cause a
+        conflict with existing meeples. Uses a simulated placement to avoid
+        mutating the live game state.
+
+        Args:
+            move_parts: Parsed move components.
+                ([tile_code, center?, placement, meeple]).
+            counter: Index in move_parts for meeple placement position.
+            graph: Current game graph.
+            current_player_id: Player placing the meeple (optional,
+                overrides conflict).
+
+        Returns:
+            True if meeple placement is valid, False otherwise.
+        """
         tile_code = move_parts[0]
         side_placement = move_parts[counter]
         placement_info = move_parts[counter - 1]
+        placement_numbers, target_side = self._extract_placement_data(
+            placement_info
+        )
+        # Early read-only check: get tile position without copying graph.
+        tile_pos = graph.get_position(
+            vertex_id=placement_numbers[0],
+            side=self.tiles_info.direction_dict[target_side],
+        )
+        if tile_pos is None:
+            return False
         # Use an isolated copy so rule checks do not mutate the live game
         # state (land components, vertices, meeples, etc.).
         graph_copy = copy.deepcopy(graph)
-        integers_placement = [
-            int(x) for x in re.findall(r"\d+", placement_info)
-        ]
-        attach_direction = "".join(c for c in placement_info if c.isalpha())
-        tile_pos = graph_copy.get_position(
-            vertex_id=integers_placement[0],
-            side=self.tiles_info.direction_dict[attach_direction],
-        )
-        if tile_pos is None:
-            # print("Error in getting position")
-            return False
         turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
-        # turn = graph_copy.get_turn_number()
-        tile_id = turn
+        new_tile_id = turn
         graph_copy.add_vertex(
             vertex_id=turn,
             name=tile_code,
             middle=move_parts[1] if counter == 3 else "",
-            orientation=integers_placement[1],
+            orientation=placement_numbers[1],
             position=tile_pos,
         )
-        graph_logic = GraphLogic()
+        graph_logic = self._get_graph_logic()
         graph_logic.add_lands_components(
-            tile_id=tile_id, graph=graph_copy, tiles_info=self.tiles_info
+            tile_id=new_tile_id,
+            graph=graph_copy,
+            tiles_info=self.tiles_info,
         )
-        vertex = graph_copy.get_vertex(tile_id)
+        vertex = graph_copy.get_vertex(new_tile_id)
         land_matrix = vertex.get_matrix()
         land_type = land_matrix[self.match_matrix[side_placement][0]][
             self.match_matrix[side_placement][1]
         ]
         if land_type == "S":
-            graph_copy.remove_vertex(tile_id)
+            graph_copy.remove_vertex(new_tile_id)
             return False
         if not land_type or land_type not in graph_copy.lands_components:
-            graph_copy.remove_vertex(tile_id)
+            graph_copy.remove_vertex(new_tile_id)
             return False
-        land_pos = Tile.direction_matrix[integers_placement[1]][
+        land_pos = Tile.direction_matrix[placement_numbers[1]][
             self.match_matrix[side_placement][0]
         ][self.match_matrix[side_placement][1]]
-        set_name_to_place = None
-        for set_name, sets in graph_copy.lands_components[land_type].items():
-            for tileid, directions in sets:
-                if tileid == tile_id and land_pos in directions:
-                    set_name_to_place = set_name
-        if set_name_to_place is None:
-            # print("Error in finding the land component
-            #  to place the meeple on")
-            graph_copy.remove_vertex(tile_id)
+        component_set_name = self._find_component_set_name(
+            graph_copy,
+            land_type,
+            new_tile_id,
+            land_pos,
+        )
+        if component_set_name is None:
+            graph_copy.remove_vertex(new_tile_id)
             return False
         for meeple in graph_copy.get_meeples():
-            if meeple.lands_components == set_name_to_place:
+            if meeple.lands_components == component_set_name:
                 if (
                     current_player_id is not None
                     and meeple.player_id == current_player_id
                 ):
                     continue
-                graph_copy.remove_vertex(tile_id)
+                graph_copy.remove_vertex(new_tile_id)
                 return False
-        graph_copy.remove_vertex(tile_id)
+        graph_copy.remove_vertex(new_tile_id)
         return True
 
     def are_equal_sides(
@@ -123,57 +216,48 @@ class RulesManager:
         graph: IGraphData,
         river_manager: RiverManager,
     ) -> bool:
-        """
-        Checks if the sides of two tiles from the computed move are equal.
+        """Check if terrain sides match between new tile and neighbor tiles.
 
-        This handles two formats for `tile2_details`:
-        - a tile code (e.g. `CRRF`) where we compare the corresponding side
-        - a move spec (e.g. `12N2`) where the first number is the tile id,
-          the second character is the side (N/S/W/E), and the second number
-          is the rotation applied to the tile to place
+        Validates that the new tile's edges align with existing neighbors.
+        Handles river rules when active.
 
-        Rotation arithmetic uses modulo, so negatives wrap
-        (e.g. `(2 - 3) % 4 == 3`).
+        Args:
+            tile1: New tile being placed (land matrix edges).
+            tile1pos: Board position of the new tile.
+            orientation: Rotation applied to tile1 (0-3).
+            graph: Current game graph with placed neighbors.
+            river_manager: River state and validation rules.
 
-        Returns True if the sides are equal, False otherwise.
+        Returns:
+            True if all matching sides are equal, False otherwise.
         """
         consider_river_rules = river_manager.is_river_active()
         is_river_over = river_manager.game_data.is_river_over()
         river_checked = False
 
-        for dir in range(4):
-            next_pos = graph.get_position_by_pos(tile1pos, dir)
-            for _, vertex in graph.get_verticies().items():
-                if vertex.get_position() == next_pos:
-                    tile2 = vertex.get_matrix()
-                    land1 = tile1[(dir - orientation) % 4]
-                    if dir == 0:
-                        tile2_coord = SOUTH_MATRIX
-                    elif dir == 1:
-                        tile2_coord = WEST_MATRIX
-                    elif dir == 2:
-                        tile2_coord = NORTH_MATRIX
-                    elif dir == 3:
-                        tile2_coord = EAST_MATRIX
+        # Build position->vertex dict once to enable O(1) lookups per neighbor.
+        # More efficient than scanning all vertices for each of 4 directions.
+        vertices_by_position = {
+            vertex.get_position(): vertex
+            for vertex in graph.get_verticies().values()
+        }
 
-                    land2 = tile2[tile2_coord[0]][tile2_coord[1]]
+        for direction_index in range(4):
+            next_pos = graph.get_position_by_pos(tile1pos, direction_index)
+            neighbor_vertex = vertices_by_position.get(next_pos)
+            if neighbor_vertex is None:
+                continue
 
-                    if land1 != land2:
-                        """print("position : " + str(tile1pos) + ",
-                          and land 1 of " + str(tile1) +
-                          " with orientation " +
-                              str(orientation) + " and direction "
-                                + str(dir) + " is " + land1)
-                        print("position : " +
-                        str(next_pos) + ", and land 2 of "
-                          + vertex.get_name() + " with orientation " +
-                              str(vertex.get_orientation()) + " and direction "
-                                + str((dir + 2) % 4) + " is " + land2)"""
-                        return False
+            tile2 = neighbor_vertex.get_matrix()
+            land1 = tile1[(direction_index - orientation) % 4]
+            tile2_coord = self.opposite_side_matrix[direction_index]
+            land2 = tile2[tile2_coord[0]][tile2_coord[1]]
 
-                    if consider_river_rules and land1 == "S":
-                        river_checked = True
-                    break
+            if land1 != land2:
+                return False
+
+            if consider_river_rules and land1 == "S":
+                river_checked = True
 
         if consider_river_rules and not is_river_over and not river_checked:
             return False
@@ -187,154 +271,138 @@ class RulesManager:
         river_manager: RiverManager,
         current_player_id: int | None = None,
     ) -> bool:
-        """
-        Checks if the given move is legal in the current game state.
+        """Verify move legality: availability, placement, and game rules.
 
-        Returns True if the move is legal, False otherwise.
-        """
-        counter = 0
+        Checks that the tile is available, can be placed at the target
+        position, sides match neighbors, river rules are satisfied, and
+        meeples are legal.
 
-        counter += 1
-        if len(move_parts[counter]) == 1:
+        Args:
+            move_parts: Parsed move components.
+            graph: Current game graph.
+            river_manager: River placement validator.
+            current_player_id: Player ID for meeple conflict checks (optional).
+
+        Returns:
+            True if the move is legal, False otherwise.
+        """
+        part_index = 0
+
+        part_index += 1
+        if len(move_parts[part_index]) == 1:
             if not self.tiles_info.is_tile_left(
-                move_parts[counter - 1] + "/" + move_parts[counter]
+                move_parts[part_index - 1] + "/" + move_parts[part_index]
             ):
-                # print("no tiles left of that type with that center")
                 return False
-            counter += 1
+            part_index += 1
         else:
-            if not self.tiles_info.is_tile_left(move_parts[counter - 1]):
-                # print("no tiles left of that type without center")
+            if not self.tiles_info.is_tile_left(move_parts[part_index - 1]):
                 return False
 
-        integers_placement = [
-            int(x) for x in re.findall(r"\d+", move_parts[counter])
-        ]
-        attach_direction = "".join(
-            c for c in move_parts[counter] if c.isalpha()
+        placement_numbers, target_side = self._extract_placement_data(
+            move_parts[part_index]
         )
 
-        if not graph.get_verticies()[integers_placement[0]].is_neighbor_free(
-            self.tiles_info.direction_dict[attach_direction]
+        if not graph.get_verticies()[placement_numbers[0]].is_neighbor_free(
+            self.tiles_info.direction_dict[target_side]
         ):
-            # print("Target tile already has a neighbor on that side.")
             return False
 
         tile_pos = graph.get_position(
-            integers_placement[0],
-            self.tiles_info.direction_dict[attach_direction],
+            placement_numbers[0],
+            self.tiles_info.direction_dict[target_side],
         )
         if not self.are_equal_sides(
             move_parts[0],
             tile_pos,
-            integers_placement[1],
+            placement_numbers[1],
             graph,
             river_manager,
         ):
-            # print("Tile sides do not match neighboring tiles.")
             return False
 
-        # Verify that stream is good if we are with stream tiles
+        # Check river extension rules: stream direction continuity and
+        # placement validity.
         if not river_manager.check_river_turn(move_parts):
-            # print(
-            #     "River shouldn't take two turns in the"
-            #     " same rotation two times in a row"
-            # )
             return False
 
-            # Verify meeple placement if applicable
-            # TODO : can_place_meeple_on_tile_side(move_parts[0] : str,
-            # move_parts[counter] str, game : IGameService) -> bool
-        counter += 1
-        if len(move_parts) - 1 == counter:
+        part_index += 1
+        if len(move_parts) - 1 == part_index:
             if not self.can_place_meeple_on_tile_side(
-                move_parts, counter, graph, current_player_id
+                move_parts,
+                part_index,
+                graph,
+                current_player_id,
             ):
-                # print("Meeple cannot be placed on that side.")
                 return False
 
         return True
 
     def is_correctly_formed_move(self, move: str, graph: IGraphData) -> bool:
+        """Verify move format and syntax compliance.
+
+        Checks string format, part count, tile availability, placement syntax,
+        and meeple placement validity without checking game state legality.
+
+        Args:
+            move: Move string with format "tile[/center]/placement[/meeple]".
+            graph: Current game graph (used for tile ID validation).
+
+        Returns:
+            True if the move is correctly formed, False otherwise.
         """
-        Checks if the given move is correctly formed.
 
-        This includes checks for:
-        - Move being a string.
-        - Move having the correct number of parts when split by '/'.
-        - Valid tile code and center if applicable.
-        - Valid target tile ID, orientation, and rotation.
-        - Valid meeple placement if applicable.
-
-        Returns True if the move is correctly formed, False otherwise.
-        """
-
-        counter = 0
+        part_index = 0
         if not isinstance(move, str):
-            # print("the move needs to be a str\n")
-            return
+            return False
 
         move_parts = move.split("/")
         if not 2 <= len(move_parts) <= 4:
-            # print("Move format is invalid.\n")
-            return
-        if move_parts[counter] not in self.tiles_info.tiles_dict:
-            # print("Unknown tile code in move.")
-            return
+            return False
+        if move_parts[part_index] not in self.tiles_info.tiles_dict:
+            return False
 
-        counter += 1
-        if len(move_parts[counter]) == 1:
+        part_index += 1
+        if len(move_parts[part_index]) == 1:
             if (
-                move_parts[counter]
-                not in self.tiles_info.tiles_dict[move_parts[counter - 1]]
+                move_parts[part_index]
+                not in self.tiles_info.tiles_dict[move_parts[part_index - 1]]
             ):
-                # print("the tile you try to place doesn't have that center")
-                return
-            counter += 1
+                return False
+            part_index += 1
         else:
             if (
                 "void"
-                not in self.tiles_info.tiles_dict[move_parts[counter - 1]]
+                not in self.tiles_info.tiles_dict[move_parts[part_index - 1]]
             ):
-                # print("the tile you try to place needs a center")
-                return
+                return False
 
-        if len(move_parts) <= counter:
-            # print("the move misses the tile placement details")
-            return
+        if len(move_parts) <= part_index:
+            return False
 
-        integers_placement = [
-            int(x) for x in re.findall(r"\d+", move_parts[counter])
-        ]
-        if len(integers_placement) != 2:
-            # print("Placement must contain 2 integers: tile id and rotation.")
-            return
+        placement_numbers, target_side = self._extract_placement_data(
+            move_parts[part_index]
+        )
+        if len(placement_numbers) != 2:
+            return False
         if (
-            integers_placement[0]
+            placement_numbers[0]
             >= max(graph.get_verticies().keys(), default=-1) + 1
         ):
-            print("the tile you try to attach yours to has an invalid number")
-            return
-        attach_direction = "".join(
-            c for c in move_parts[counter] if c.isalpha()
-        )
-        if len(attach_direction) != 1:
-            # print("Placement needs exactly one direction character.")
-            return
-        if attach_direction not in self.tiles_info.direction_list:
-            # print("Side must be one of N, S, W, E.")
-            return
-        if not (0 <= integers_placement[1] <= 3):
-            # print("Rotation must be between 0 and 3.")
-            return
+            return False
+        if len(target_side) != 1:
+            return False
+        if target_side not in self.tiles_info.direction_list:
+            return False
+        if not (0 <= placement_numbers[1] <= 3):
+            return False
 
-        counter += 1
-        if len(move_parts) == counter - 1:
-            if move_parts[counter] not in (
+        part_index += 1
+        if len(move_parts) - 1 == part_index:
+            if move_parts[part_index] not in (
                 self.tiles_info.meeple_placement_list
             ):
-                # print("Meeple side must be NE, N, NW, SE, S, SW, W, E or C.")
-                return
+                return False
 
         return True
 
@@ -345,13 +413,21 @@ class RulesManager:
         river_manager: RiverManager,
         current_player_id: int | None = None,
     ) -> bool:
-        """
-        Check whether a move is valid in the current game state.
+        """Perform complete move validation (format + legality).
 
-        This wraps `is_legal_move` and prints feedback for CLI usage.
+        Wraps `is_correctly_formed_move()` and `is_legal_move()` for full
+        validation in a single call.
+
+        Args:
+            move: Move string to validate.
+            graph: Current game graph.
+            river_manager: River placement validator.
+            current_player_id: Player ID (optional).
+
+        Returns:
+            True if the move is valid, False otherwise.
         """
         if not self.is_correctly_formed_move(move, graph=graph):
-            # print("failed at is_correct")
             return False
 
         if not self.is_legal_move(
@@ -359,11 +435,4 @@ class RulesManager:
         ):
             return False
 
-        return True
-
-    def get_game_history(self) -> list:
-        return self.history.list_history()
-
-    def current_player_is_human(self) -> bool:
-        # TODO : is_human_player(game : IGameService) -> bool
         return True
