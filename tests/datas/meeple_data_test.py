@@ -12,7 +12,15 @@ def test_meeple_position_label_and_repr_are_human_readable() -> None:
 
 
 def test_meeple_post_init_rejects_invalid_positions() -> None:
-    meeple = Meeple(player_id=1, tile_id=4, position=9, lands_components="C1")
-
     with pytest.raises(ValueError):
-        meeple.__post_init__()
+        Meeple(player_id=1, tile_id=4, position=9, lands_components="C1")
+
+
+def test_meeple_post_init_rejects_negative_player_id() -> None:
+    with pytest.raises(ValueError):
+        Meeple(player_id=-1, tile_id=4, position=8, lands_components="C1")
+
+
+def test_meeple_post_init_rejects_negative_tile_id() -> None:
+    with pytest.raises(ValueError):
+        Meeple(player_id=1, tile_id=-1, position=8, lands_components="C1")
