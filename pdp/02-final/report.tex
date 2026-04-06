@@ -546,9 +546,36 @@ Notre projet de Carcassonne en Python a été bien différent de ce que nous avi
 Dans cette section, nous allons expliquer en détail les différentes étapes de notre développement, les choix que nous avons faits, ainsi que les difficultés que nous avons rencontrées pour deux fonctionnalités principales.
 
 
-\subsection{IA}
+\subsection{Première fonctionnalité : Joueur artificiel}
 
-\subsection{Fichier de configuration}
+\subsection{Seconde fonctionnalité : Jeu en réseau}
+
+\subsubsection{Serveur}
+La première fonction du serveur est server\_start, cette fonction démarre le serveur en TCP sur un port donné en argument, si aucun port n’est donné, le port 12345 sera utilisé par défaut. Suite à cela un thread pour le serveur est créé et démarré sur la fonction server\_running.
+La fonction server\_running est une fonction permettant d’accepter des connexions clients tant que le serveur tourne. De plus, un timer est mis en place pour envoyer périodiquement les informations nécessaires aux clients, pour qu’ils puissent se connecter. Cela est fait par UDP broadcast toutes les 10 secondes. Cette fonction prend aussi en charge les lancements et fin de parties ainsi que les time-out des invitations de chaque client. Finalement, chaque socket de client accepté est dirigé sur son propre thread vers la fonction handle\_client.
+Pour effectuer tout cela, plusieurs fonctions internes sont utilisées. La première est check\_all\_invitations\_timeout, celle-ci renvoie la liste des clients qui ont reçu une invitation mais pour lesquelles le délai est dépassé.
+launch\_availables\_games est la fonction qui permet de lancer toutes les parties qui peuvent l’être, c'est-à-dire les parties pour lesquelles les invitations ont toutes étaient résolues et le nombre de joueurs est correct.
+Conjointement à cette fonction, la fonction clean\_finished\_games se charge de nettoyer les parties terminées.
+La fonction check\_clients\_timeout se charge de vérifier si les clients qui ont effectué une déconnexion inopinée ont dépassé leur temps de time-out.
+Suite à cela, chaque socket de client est redirigé dans son propre thread vers la fonction handle\_client, celle-ci se charge de la communication entre le serveur et un client.
+Si le client souhaite quitter, un message est envoyé à tous les clients du serveur.
+La commande “quit” est la seule commande qui peut être effectuée sans être enregistré auprès du serveur. Si le client n’est pas encore enregistré, la fonction handle\_client\_registering se charge de l’enregistrer. Différents messages sont renvoyés au client selon le fait que l’enregistrement se passe bien ou pas. Dans le dernier cas deux messages principaux peuvent être envoyés, soit le nom d’utilisateur est déjà pris soit le client est sous un time-out pour déconnexion inopinée.
+Une fois que le client est enregistré auprès du serveur, celui-ci prend en charge les messages du client et envoie les réponses appropriées via la fonction process\_message qui utilise la classe online\_communications afin d’avoir les réponses. La gestion de nombreuses erreurs est présente dans cette fonction, de plus quoiqu’il arrive les structures de données du serveur seront mises à jour.
+
+
+\subsubsection{Client}
+Le fichier client.py correspond sert principalement à envoyer et recevoir des informations au serveur auquel on est connecté.
+La première fonction utilisée est create\_default\_online\_player, celle ci se charge de créer un compte pour un serveur donné, par défaut il s’agit de son propre serveur, toutefois si un problème d’authentification est rencontré ( pour un serveur externe ), cette fonction permet d'enregistrer un compte spécifique à un serveur donné, avec donc un nouvel username mais le même mot de passe.
+La deuxième fonction que l’on rencontre est list\_available\_servers. Il s’agit d’une fonction qui va écouter sur le port 12346 pour toute transmission UDP broadcast d’un serveur et en faire une liste, tout serveur n’ayant pas envoyé de messages pendant un certain temps est effacé de cette liste, par la fonction check\_servers\_last\_time\_sent qui regarde la date de la dernière diffusion de chacun des serveurs de la liste.
+Suite à cette fonction, join\_server sert à rejoindre un serveur présent dans la liste des serveurs disponible. Si aucun argument n’est donné à cette fonction, la fonction prendra les arguments nécessaires auprès du serveur personnel, si celui-ci est dans la liste des serveurs disponible, sinon aucune connexion n’est faite. Si une connexion est faite, un thread est créé pour gérer la communication avec le serveur, du côté client.
+La fonction interne \_receive\_loop se charge de lire les messages pendant que la connexion est établie, si elle reçoit un message du serveur concernant un shutdown, la boucle finit sinon les messages sont envoyés à la fonction handle\_server\_message.
+Cette fonction sert à envoyer les messages du serveur au GUI, si le GUI est disponible.
+Toutefois, cette fonction se charge aussi d’automatiser certains comportements du client, par exemple quand un client essaye de se connecter pour la première fois et que le serveur renvoie un message énonçant que son username est déjà pris, la fonction laisse le choix au client de changer son username. En CLI, cette fonction affiche les messages du serveur sous une forme plus agréable.
+Une autre fonction principale est send\_to\_server, cette fonction plutôt simple, envoie le message passé en paramètre au serveur, sous la forme “username: message”.
+La fonction connected\_to\_a\_server est une fonction servant la logique interne du client.
+La dernière fonction est disconnect, celle-ci prend en charge les déconnexions brutes et normales, elle se charge de nettoyer toutes les ressources de la session, qui ne sont pas des ressources de la base de données.
+
+Il existe aussi la fonction register\_message\_visitor qui utilise l’idée du design pattern visitor afin de pouvoir capturer les messages envoyés par le serveur, pour le GUI.
 
 \section{Revue critique du projet}
 
@@ -566,51 +593,71 @@ Dans cette section, nous allons discuter de la manière dont nous avons respect�
 
 Cette première partie du projet a été globalement respectée. Nous avons pris le temps avant de rendre le projet de vérifier le bon fonctionnement des tests et de vérifier que les différents bibliothèques utilisées étaient en accord avec les besoins.
 Des tests ont été mis en place tout au long du projet pour vérifier le bon fonctionnement de notre code et pour nous assurer que les différentes fonctionnalités étaient correctement implémentées.
-Le projet a alors une couverture globale de ?? ce qui est supérieur à ce qui était demandé dans le cahier des charges.
+Grâce à cette approche, le projet atteint alors une couverture globale d'environ 90\%, supérieure à celle exigée dans le cahier des charges.
 
 
 \subsubsection{Besoins généraux}
 
 Cette partie a été relativement simple à respecter.
-La plus grande difficulté de cette partie a été de mettre en place le fichier de configuration qui est en lien avec tous les composants du projet auquel nous avons ajouté des fonctionnalités supplémentaires au fur et à mesure du projet.
+La principale difficulté a toutefois résidé dans la mise en place du fichier de configuration en lien avec l’ensemble des fonctionnalités supplémentaires ajoutées au fil du projet.
 
 \subsubsection{Options au lancement}
 
-Cette partie a été simple à réaliser. Les besoins de cette partie n'était principalement que des options de lancements qui sont relativement simples à implémenter.
-Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leur test statistique.
+Cette partie a été simple à mettre en œuvre. Les besoins portaient principalement sur des options de lancement relativement faciles à implémenter.
+Il a néanmoins fallu intégrer différents modes de jeu comme le mode \textit{Blitz} ou \textit{Contest} ainsi que l'extension \textit{The River}. 
+Ces éléments ont été réalisés en fin de projet une fois les fonctionnalités de base implémentées ce qui a facilité leur intégration.
+Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leurs tests statistiques.
+Pour valider la fonctionnalité de mélange, nous avons utilisé deux niveaux de tests. 
+
+
+Le premier est un ensemble de tests fonctionnels déterministes : pour un même paquet initial, un même algorithme et une même graine (seed), le résultat doit toujours être identique. 
+Nous vérifions également que le mélange conserve exactement le multiensemble des tuiles, c’est-à-dire qu’aucune tuile n’est perdue, dupliquée ou modifiée. 
+Dans le cas du paquet rivière, nous vérifions en plus que la dernière tuile spéciale reste fixée en fin de paquet. Ces tests garantissent la reproductibilité et l’intégrité des structures de données, mais ils ne suffisent pas à évaluer l’uniformité statistique.
+
+Pour comparer l’uniformité des algorithmes, nous avons choisi un paquet réduit de trois tuiles distinctes. 
+Ce choix est justifié par le fait que le paquet réel contient des doublons, ce qui rend l’analyse des permutations plus difficile, tandis qu’un paquet de trois éléments permet une étude exhaustive et exacte. 
+Avec Fisher-Yates, l’algorithme effectue successivement un choix parmi 3 possibilités puis un choix parmi 2 possibilités, soit $3 \times 2 = 6$ trajectoires, exactement le nombre de permutations possibles. 
+L’énumération complète montre que chacune des 6 permutations est obtenue une seule fois : la distribution est donc uniforme. 
+À l’inverse, l’algorithme naïf effectue 3 échanges avec à chaque fois 3 choix possibles, soit $3^3 = 27$ trajectoires. 
+L’énumération exhaustive donne alors des effectifs $(5,5,5,4,4,4)$ pour les 6 permutations, au lieu d’une répartition uniforme. 
+Cela montre que plusieurs suites d’échanges conduisent plus souvent à certaines permutations qu’à d’autres.
+Ces résultats confirment les propriétés théoriques des deux méthodes : Fisher\-Yates est uniforme lorsque les indices sont tirés uniformément, alors que l’algorithme naïf est structurellement biaisé. 
+Nous avons donc retenu Fisher\-Yates comme algorithme par défaut, tandis que l’algorithme naïf est conservé à des fins de comparaison expérimentale.
+
 
 \subsubsection{Gestion du jeu}
 
-La gestion des règles a été la grande première étape du projet mais également la première difficulté majeure. En effet, les règles de Carcassonne sont relativement complexes à implémenter.
-Entre la connectivité des tuiles, les différentes conditions de placement des pions, les différentes conditions de scoring, il a fallu faire preuve de rigueur pour implémenter correctement les règles du jeu.
+La gestion des règles de base du jeu a constitué la première grande étape du projet mais aussi l’une des premières difficultés majeures. En effet, les règles de Carcassonne sont relativement complexes à implémenter.
+Entre la connectivité des tuiles, les conditions de placement des pions, les conditions de scoring, une grande rigueur a été nécessaire afin de garantir une implémentation correcte du jeu.
 \begin{itemize}
-  \item [$\bullet$] Les règles de base ont été simples à implémenter.
-  \item [$\bullet$] La gestion du score a été un grand défi. En effet, il a faullu mettre en place de la connexivité notamment pour les champs qui peuvent se situer entre des routes et des cités. 
-  Cette partie nous a pris beaucoup de temps et a été source de nombreux bugs, nous ayant alors ralentis dans le déroulement du projet.
+  \item [$\bullet$] Les règles de base comme le placement des tuiles et des pions ont été relativement simples à implémenter notamment grâce à une bonne modélisation du plateau de jeu et des tuiles avec le module graph.
+  \item [$\bullet$] •	En revanche, la gestion du score a représenté un défi majeur. Elle a nécessité la mise en place de composantes connexes, en particulier pour les champs pouvant s’étendre entre routes et cités. 
+  Cette partie s’est révélée longue et complexe, générant de nombreux bugs et ralentissant ainsi l’avancement du projet.
 \end{itemize}
 
 \subsubsection{Command Line Interface (CLI)}
 
-Le CLI a été relativement simple à implémenter, notamment grâce à l’utilisation de bibliothèques telles que \textit{readline} de Python qui facilite la saisie de commande et de l'historique.
-En effet, l'importation de cette bibliothèque permet, sans grand effort, de valider deux besoins de cette partie :
+Le CLI a été relativement simple à implémenter notamment grâce à l’utilisation de bibliothèques comme readline en Python qui facilite la saisie des commandes ainsi que la gestion de leur historique. En effet, l’intégration de cette bibliothèque a permis de répondre aisément à deux besoins principaux :
 \begin{itemize}
   \item[-] Édition de la commande en cours
   \item[-] Historique des commandes tapées
 \end{itemize}
-Il a alors uniquement été nécessaire de faire des fonctions pour l'auto-complétion des commandes et de leurs arguments pour répondre au besoin F19 de complétion des commandes.
-Nous pouvons néanmoins penser à certaines améliorations possibles telles que la mise en point d'un design pattern pour la gestion des commandes du besoin F15.
-Ce design pattern aurait ainsi permis de faciliter la mise en place des commandes pour le GUI.
+Il a toutefois été nécessaire de développer des fonctions spécifiques pour l’auto-complétion des commandes et de leurs arguments afin de satisfaire le besoin F19.
+Des améliorations restent envisageables, notamment la mise en place d’un design pattern dédié à la gestion des commandes (besoin F15). 
+Une telle approche aurait permis de structurer davantage le système et de faciliter, par la suite, l’implémentation des commandes dans le GUI.
+
 
 \subsubsection{Format de sauvegarde}
 
-Cette partie s'est réalisé au fur et à mesure que nous avancions dans le projet.
-Nous avons d'abord implémenté une sauvegarde basique de l'état du jeu puis nous avons ajouté des fonctionnalités supplémentaires telles que le format de l'historique et la conformité avec le fichier de configuration.
-Cette partie aborde également le format du plateau de jeu qui a été relativement simple à implémenter, celui-ci n'étant pas très complexe à représenter de manière textuelle.
+Cette partie a été développée progressivement au fil de l’avancement du projet. 
+Nous avons d’abord mis en place une sauvegarde basique de l’état du jeu, avant d’y ajouter des fonctionnalités complémentaires, telles que la gestion du format de l’historique et la conformité avec le fichier de configuration.
+Elle inclut également la représentation du plateau de jeu, qui s’est révélée relativement simple à implémenter, celui-ci étant peu complexe à exprimer sous forme textuelle.
+
 
 \subsubsection{Structures de données}
 
-La mise en place d'un graphe pour représenter le plateau de jeu a été la première étapde du projet.
-Ce graphe nous a permis de gérer efficacement les différentes connexivités entre les tuiles notamment pour la gestion du score des champs en utilisant des composantes connexes.
+La mise en place d'un graphe pour représenter le plateau de jeu a été la première étape du projet.
+Ce graphe nous a permis de gérer efficacement les différentes connectivités entre les tuiles notamment pour la gestion du score des champs en utilisant des composantes connexes.
 Toutefois, l'implémentation de ce graphe étant été faite au début du projet, il a été source de nombreux bugs et de difficultés dans la suite du projet.
 Nous pouvons notamment parler de la non existence de réelle classe \textit{Tile} où ce qui est stocké dans le graphe est en réalité appelé \textit{Vertex} ce qui a compliqué la gestion du code notamment lors de l'implémentation du GUI.
 
@@ -623,42 +670,13 @@ Cela a été plus difficile que le CLI car il a fallu mettre en place différent
 Une difficulté rencontrée par exemple a été de pouvoir poser une tuile sur le plateau de jeu.
 Le GUI utilise des coordonnées x et y pour représenter les positions sur le plateau de jeu alors que le module de logique métier utilise une tuile et une orientation pour représenter les positions sur le plateau de jeu.
 Il a alors fallu faire le lien entre ces deux représentations pour pouvoir poser une tuile sur le plateau de jeu à partir du GUI.
-
-\begin{minted}[frame=single]{python}
-    def find_neighbor_at(
-        self, x: int, y: int
-    ) -> tuple[Optional[int], Optional[int]]:
-        """
-        Cherche une tuile voisine autour de (x, y).
-
-        Retourne un tuple (vertex_id, side_relative_to_new_tile)
-        side_relative_to_new_tile : côté de la nouvelle tuile où est collé
-        le voisin
-        """
-        # Mapping direction → offset
-        neighbors_offset = {
-            NORTH_DIR: (0, -1),
-            EAST_DIR: (1, 0),
-            SOUTH_DIR: (0, 1),
-            WEST_DIR: (-1, 0),
-        }
-
-        for side, (dx, dy) in neighbors_offset.items():
-            nx, ny = x + dx, y + dy
-            for vertex in self.vertices.values():
-                vx, vy = vertex.get_position()
-                if (vx, vy) == (nx, ny):
-                    # side représente le côté de la nouvelle tuile où ce voisin
-                    # est collé
-                    opposite_side = (side + 2) % 4
-                    return vertex.get_id(), opposite_side
-\end{minted}
-
-Cette fonction permet de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
+Nous avons mis en place une fonction permettant de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
 
 
 Malgré tous ces défis, il reste quelques améliorations possibles pour le GUI pour le rendre cohérent avec tous les besoins du projet.
+
 \subsubsection{Joueur artificiel}
+
 La partie sur les joueurs artificiels a été la partie la plus dure du projet. En effet, comme abordé dans la section \ref{subsec:minimax}, Carcassonne est un jeu à la fois stochastique et à information parfaite
 ce qui rend l’implémentation de Minimax inutilisable dans sa forme classique.
 Il a fallu ainsi implémenter une version adaptée de Minimax avec des noeuds chance pour prendre en compte la pioche des tuiles.
@@ -688,8 +706,8 @@ L'amérioration la plus évidente serait la mise en forme de notre code. En effe
 Il aurait été ainsi intéressant de mettre en place un design pattern pour la gestion des commandes par exemple, ou bien de structurer notre code de manière plus claire et lisible.
 Cela a été du à un manque d'imagination de notre part pour prévoir une implémentation claire et lisible pour le futur. 
 Nous aurions du consacrer plus de temps à la réflexion sur l'implémentation de notre code avant de nous lancer dans le développement ce qui nous aurait permis d'avoir une meilleure vision d'ensemble du projet et ainsi éviter de faire des choix d'implémentation qui ont rendu notre code plus difficile à maintenir et à faire évoluer.
-Nous avons essayé de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement. 
-Cela a été le cas de notre fichier \textit{game.py} qui était au départ relié à beaucoup trop de fonctionnalités différentes, ou bien au fichier \textit{gui.py} qui était lui aussi relié à beaucoup de fonctionnalités différentes concernant le GUI.
+Nous avons essayé de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement.
+Nous en avons fait les frais notamment lors de la restructuration des fichiers \textit{game.py} et \textit{gui.py} qui faisaient plus de 1000 lignes et qui étaient au départ relié à beaucoup trop de fonctionnalités différentes.
 
 
 
