@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -47,59 +48,75 @@ class SaveHandler:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
             return -1
-        if not filename.endswith(".txt"):
-            filename += ".txt"
-        file = open(filename, "w")
 
-        file.write("[Settings]\n")
-        for key, value in self.game.get_game_configuration().items():
-            serialized_value = self.serialize_value(value)
-            file.write(f"{key}: {serialized_value}\n")
+        path = Path(filename)
+        if path.name == "" or path.name in [".", ".."]:
+            print("Error: Invalid filename.")
+            return -1
+        if path.suffix != ".txt":
+            path = path.with_suffix(".txt")
+        parent = path.parent
+        if parent and not parent.exists():
+            try:
+                parent.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                print(f"Error: Could not create directory {parent}")
+                return -1
+        try:
+            with open(path, "w") as file:
 
-        file.write("\n")
-        file.write("[GameState]\n")
-        # + who is the current player, scores, etc.
-        number_of_ai_players = self.game.get_number_of_ai_players()
-        file.write(
-            "NumberOfPlayers: "
-            + str(len(self.game.game_data.players) - number_of_ai_players)
-            + ","
-            + str(number_of_ai_players)
-            + "\n"
-        )
-        file.write(
-            "PlayersOrder: ["
-            + ", ".join(
-                [
-                    f"{player_id} "
-                    for player_id in self.game.game_data.players_order
-                ]
-            )
-            + "]\n"
-        )
-        file.write(
-            "GameScore: ["
-            + ", ".join(
-                [
-                    f"{player.get_id()}: {player.get_score().score} "
-                    for player in self.game.game_data.players.values()
-                ]
-            )
-            + "]\n"
-        )
-        file.write("Seed: " + str(self.game.game_data.seed) + "\n")
-        file.write("\n")
-        file.write("[History]\n")
-        moves_history = self.game.get_history()
-        moves_history.reverse()
-        while moves_history is not None and len(moves_history) > 0:
-            for player in range(self.game.get_number_of_players()):
-                if len(moves_history) == 0:
-                    break
-                move = moves_history.pop()
-                file.write(move + " ")
-        file.write("\n")
-        file.close()
+                file.write("[Settings]\n")
+                for key, value in self.game.get_game_configuration().items():
+                    serialized_value = self.serialize_value(value)
+                    file.write(f"{key}={serialized_value}\n")
+
+                file.write("\n")
+                file.write("[GameState]\n")
+                # + who is the current player, scores, etc.
+                number_of_ai_players = self.game.get_number_of_ai_players()
+                file.write(
+                    "NumberOfPlayers: "
+                    + str(len(self.game.game_data.players) - number_of_ai_players)
+                    + ","
+                    + str(number_of_ai_players)
+                    + "\n"
+                )
+                file.write(
+                    "PlayersOrder: ["
+                    + ", ".join(
+                        [
+                            f"{player_id} "
+                            for player_id in self.game.game_data.players_order
+                        ]
+                    )
+                    + "]\n"
+                )
+                file.write(
+                    "GameScore: ["
+                    + ", ".join(
+                        [
+                            f"{player.get_id()}: {player.get_score().score} "
+                            for player in self.game.game_data.players.values()
+                        ]
+                    )
+                    + "]\n"
+                )
+                file.write("Seed: " + str(self.game.game_data.seed) + "\n")
+                file.write("\n")
+                file.write("[History]\n")
+                moves_history = self.game.get_history()
+                moves_history.reverse()
+                while moves_history is not None and len(moves_history) > 0:
+                    for player in range(self.game.get_number_of_players()):
+                        if len(moves_history) == 0:
+                            break
+                        move = moves_history.pop()
+                        file.write(move + " ")
+                file.write("\n")
+                file.close()
+        except OSError:
+            print(f"Error: Could not write to file {path}")
+            return -1
         return 0
 
     def handle_keybinds_load(self, line: str, section: str):
@@ -116,17 +133,28 @@ class SaveHandler:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.")
             return -1
-        if not filename.endswith(".txt"):
-            filename += ".txt"
-        try:
-            file = open(filename, "r")
-        except OSError:
-            print(f"Error: Could not open file {filename}")
+
+        path = Path(filename)
+        if path.name == "" or path.name in {".", ".."}:
+            print("Error: Invalid filename.")
             return -1
+
+        if path.suffix != ".txt":
+            path = path.with_suffix(".txt")
+
+        if path.is_dir():
+            print(f"Error: {path} is a directory, not a file.")
+            return -1
+
+        try:
+            with path.open("r") as file:
+                lines = file.readlines()
+        except OSError:
+            print(f"Error: Could not open file {path}")
+            return -1
+
         # Clear current game state before loading a new one.
         self.game.start_load_game()
-
-        lines = file.readlines()
         settings_section = False
         game_state_section = False
         history_section = False
@@ -195,7 +223,7 @@ class SaveHandler:
                 # This is a placeholder for demonstration purposes.
                 # Configuration of the game, shuffle algorithm and seed.
 
-                setting, value = line.split(":", 1)
+                setting, value = line.split("=", 1)
                 if setting.strip() in self.keybinds_settings:
                     self.handle_keybinds_load(value, setting.strip())
                 elif setting.strip() in self.boolean_settings:
@@ -284,9 +312,10 @@ class SaveHandler:
                         player_move.split(":")[1]
                         if ":" in player_move
                         else player_move
-                    )
-                    self.game.game_data.current_hand = move
-                    if move != self.game.draw_tile():
+                    ).removesuffix(";")
+                    tile = self.game.game_data.extract_tile_code(move)
+                    self.game.game_data.current_hand = tile
+                    if tile != self.game.draw_tile():
                         print("The move doesn't match the seed !")
                     # Assuming line is in the format "player_id:details"
                     self.game.play_move(move)
