@@ -1,3 +1,4 @@
+import sys
 from gi.repository import Gtk
 
 import gi
@@ -154,7 +155,7 @@ class MultiplayerMenu(Gtk.Box):
             players = self.gui.game_data.server.get_connected_players()
             self.show_connected_players_sidebar(players)
         except Exception as e:
-            print(f"Error getting players: {e}")
+            print(f"Error getting players: {e}", file=sys.stderr)
             self.show_empty_sidebar()
 
     def _clear_players_listbox(self):
@@ -202,7 +203,7 @@ class MultiplayerMenu(Gtk.Box):
             else:
                 self.show_empty_scoreboard()
         except Exception as e:
-            print(f"Error getting scoreboard: {e}")
+            print(f"Error getting scoreboard: {e}", file=sys.stderr)
             self.show_empty_scoreboard()
 
     def _clear_scoreboard_listbox(self):

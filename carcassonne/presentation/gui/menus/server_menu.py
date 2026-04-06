@@ -1,3 +1,4 @@
+import sys
 from gi.repository import Gtk, GLib
 
 import gi
@@ -250,7 +251,7 @@ class ServerMenu(Gtk.Box):
                 self.show_message(_("Error"), _("Failed to join server."))
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error joining server: {e}")
+            print(f"Error joining server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error joining server: {error}").format(error=e),
@@ -269,7 +270,7 @@ class ServerMenu(Gtk.Box):
             )
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error starting server: {e}")
+            print(f"Error starting server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error starting server: {error}").format(error=e),
@@ -283,7 +284,7 @@ class ServerMenu(Gtk.Box):
             self.show_message(_("Success"), _("Server stopped successfully."))
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error stopping server: {e}")
+            print(f"Error stopping server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error stopping server: {error}").format(error=e),
@@ -311,7 +312,7 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Server status"), status_text)
         except Exception as e:
-            print(f"Error getting server status: {e}")
+            print(f"Error getting server status: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error getting server status: {error}").format(error=e),
@@ -337,7 +338,7 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Connected players"), players_text)
         except Exception as e:
-            print(f"Error getting players: {e}")
+            print(f"Error getting players: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error getting players: {error}").format(error=e),
@@ -386,7 +387,7 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Server scoreboard"), scoreboard_text)
         except Exception as e:
-            print(f"Error getting scoreboard: {e}")
+            print(f"Error getting scoreboard: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error getting scoreboard: {error}").format(error=e),
@@ -408,7 +409,7 @@ class ServerMenu(Gtk.Box):
             server_running = self.server_service.is_server_running()
             self.btn_stop_local_server.set_visible(server_running)
         except Exception as e:
-            print(f"Error updating connection buttons: {e}")
+            print(f"Error updating connection buttons: {e}", file=sys.stderr)
             self.btn_disconnect.set_visible(False)
             self.btn_ping.set_visible(False)
             self.btn_stop_local_server.set_visible(False)
@@ -423,7 +424,7 @@ class ServerMenu(Gtk.Box):
                 self.update_connection_buttons()
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error disconnecting from server: {e}")
+            print(f"Error disconnecting from server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error disconnecting from server: {error}").format(
@@ -442,7 +443,7 @@ class ServerMenu(Gtk.Box):
             )
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error stopping local server: {e}")
+            print(f"Error stopping local server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error stopping local server: {error}").format(error=e),
@@ -459,7 +460,7 @@ class ServerMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error pinging server: {e}")
+            print(f"Error pinging server: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error pinging server: {error}").format(error=e),

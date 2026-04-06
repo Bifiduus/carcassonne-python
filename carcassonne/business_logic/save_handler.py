@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -46,12 +47,12 @@ class SaveHandler:
 
     def save_game_to_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.")
+            print("Error: Invalid filename.", file=sys.stderr)
             return -1
 
         path = Path(filename)
         if path.name == "" or path.name in [".", ".."]:
-            print("Error: Invalid filename.")
+            print("Error: Invalid filename.", file=sys.stderr)
             return -1
         if path.suffix != ".txt":
             path = path.with_suffix(".txt")
@@ -60,7 +61,8 @@ class SaveHandler:
             try:
                 parent.mkdir(parents=True, exist_ok=True)
             except OSError:
-                print(f"Error: Could not create directory {parent}")
+                print(
+                    f"Error: Could not create directory {parent}", file=sys.stderr)
                 return -1
         try:
             with open(path, "w") as file:
@@ -115,7 +117,7 @@ class SaveHandler:
                 file.write("\n")
                 file.close()
         except OSError:
-            print(f"Error: Could not write to file {path}")
+            print(f"Error: Could not write to file {path}", file=sys.stderr)
             return -1
         return 0
 
@@ -131,26 +133,27 @@ class SaveHandler:
 
     def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.")
+            print("Error: Invalid filename.", file=sys.stderr)
             return -1
 
         path = Path(filename)
         if path.name == "" or path.name in {".", ".."}:
-            print("Error: Invalid filename.")
+            print("Error: Invalid filename.", file=sys.stderr)
             return -1
 
         if path.suffix != ".txt":
             path = path.with_suffix(".txt")
 
         if path.is_dir():
-            print(f"Error: {path} is a directory, not a file.")
+            print(f"Error: {path} is a directory, not a file.",
+                  file=sys.stderr)
             return -1
 
         try:
             with path.open("r") as file:
                 lines = file.readlines()
         except OSError:
-            print(f"Error: Could not open file {path}")
+            print(f"Error: Could not open file {path}", file=sys.stderr)
             return -1
 
         # Clear current game state before loading a new one.
@@ -316,7 +319,7 @@ class SaveHandler:
                     tile = self.game.game_data.extract_tile_code(move)
                     self.game.game_data.current_hand = tile
                     if tile != self.game.draw_tile():
-                        print("The move doesn't match the seed !")
+                        print("The move doesn't match the seed !", file=sys.stderr)
                     # Assuming line is in the format "player_id:details"
                     self.game.play_move(move)
 

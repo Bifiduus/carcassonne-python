@@ -1,3 +1,4 @@
+import sys
 from carcassonne.presentation.gui import utils
 from gi.repository import Gtk
 
@@ -36,9 +37,12 @@ def on_load(gui) -> None:
                 gui.tile_preview.set_filename("")
                 gui.window.stack.set_visible_child_name("game")
             else:
-                print(_("Failed to load game from {filename}").format(
-                    filename=filename
-                ))
+                print(
+                    _("Failed to load game from {filename}").format(
+                        filename=filename
+                    ),
+                    file=sys.stderr,
+                )
         except Exception:
             # Cancelled or failed; ignore.
             pass
@@ -58,9 +62,12 @@ def on_save(gui) -> None:
             if gui.game_data.game.save_game_to_file(filename) == 0:
                 print(_("Game saved to {filename}").format(filename=filename))
             else:
-                print(_("Failed to save game to {filename}").format(
-                    filename=filename
-                ))
+                print(
+                    _("Failed to save game to {filename}").format(
+                        filename=filename
+                    ),
+                    file=sys.stderr,
+                )
         except Exception:
             # Cancelled or failed; ignore.
             pass

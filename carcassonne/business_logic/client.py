@@ -1,3 +1,4 @@
+import sys
 import select
 import socket
 import threading
@@ -73,7 +74,7 @@ class Client(IClientService):
             ip = self.server_service.server_name
         with self.servers_lock:
             if ip not in self.available_servers:
-                print(_("Error: there is no server with that IP address."))
+                print(_("Error: there is no server with that IP address."), file=sys.stderr)
                 return False
             server_port = self.available_servers[ip][0]
 
@@ -92,7 +93,8 @@ class Client(IClientService):
                     ip=ip,
                     port=port,
                     error=e,
-                )
+                ),
+                file=sys.stderr,
             )
             self.client.close()
             self.client = None
@@ -151,10 +153,13 @@ class Client(IClientService):
                 except socket.timeout:
                     continue  # Check for shutdown_event and loop again
                 except OSError as e:
-                    print(_("Socket error: {error}").format(error=e))
+                    print(_("Socket error: {error}").format(error=e), file=sys.stderr)
                     continue
         except Exception as e:
-            print(_("Error receiving from server: {error}").format(error=e))
+            print(
+                _("Error receiving from server: {error}").format(error=e),
+                file=sys.stderr,
+            )
         finally:
             if self.client:
                 try:
@@ -163,7 +168,8 @@ class Client(IClientService):
                     print(
                         _("Error closing client socket: {error}").format(
                             error=e
-                        )
+                        ),
+                        file=sys.stderr,
                     )
             self.client = None
 
@@ -219,7 +225,7 @@ class Client(IClientService):
             s.bind(("", 12346))
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
-            print(_("Error binding socket: {error}").format(error=e))
+            print(_("Error binding socket: {error}").format(error=e), file=sys.stderr)
             return {}
 
         start_time = time.time()
@@ -255,7 +261,7 @@ class Client(IClientService):
             except socket.timeout:
                 break
             except Exception as e:
-                print(_("Error receiving message: {error}").format(error=e))
+                print(_("Error receiving message: {error}").format(error=e), file=sys.stderr)
                 break
 
         s.close()
@@ -342,10 +348,10 @@ class Client(IClientService):
         except (BrokenPipeError, ConnectionResetError, OSError) as e:
             # Socket is broken, likely during shutdown
             if "quit" not in str(text).lower():
-                print(f"Failed to send: {e}")
+                print(f"Failed to send: {e}", file=sys.stderr)
             return False
         except Exception as e:
-            print(_("Failed to send: {error}").format(error=e))
+            print(_("Failed to send: {error}").format(error=e), file=sys.stderr)
             return False
 
     def disconnect(self):

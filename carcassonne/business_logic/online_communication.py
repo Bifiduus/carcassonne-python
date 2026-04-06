@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 from typing import TYPE_CHECKING
 
 from carcassonne.business_logic.game.game import Game
@@ -125,7 +126,7 @@ class OnlineCommunication:
                 )
                 host_socket.send(message.encode())
             except Exception as e:
-                print(f"Error notifying host {host_id}: {e}")
+                print(f"Error notifying host {host_id}: {e}", file=sys.stderr)
 
     def notify_host_of_rejection(self, host_id: int, invitee_id: str):
         """Send notification to host that an invitation was rejected."""
@@ -141,7 +142,7 @@ class OnlineCommunication:
                 )
                 host_socket.send(message.encode())
             except Exception as e:
-                print(f"Error notifying host {host_id}: {e}")
+                print(f"Error notifying host {host_id}: {e}", file=sys.stderr)
 
     def command_cancel(self, client_id: str, players: str) -> str:
         answer = ""

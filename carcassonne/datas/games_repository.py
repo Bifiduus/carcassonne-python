@@ -1,3 +1,4 @@
+import sys
 import sqlite3
 import threading
 from dataclasses import dataclass
@@ -554,7 +555,7 @@ class GameRepository(IGamesRepository):
     def clean_party(self, party: int):
         check = self.clean_party_players(party)
         if not check:
-            print(_("Error cleaning the party's players!"))
+            print(_("Error cleaning the party's players!"), file=sys.stderr)
             return
         self._execute_non_query(
             "DELETE FROM current_games WHERE group_id=?;", (party,)

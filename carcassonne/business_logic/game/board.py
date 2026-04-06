@@ -4,6 +4,7 @@ This module adds/removes tiles and updates the graph, tile metadata, and move
 history.
 """
 
+import sys
 import re
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
@@ -57,7 +58,7 @@ class Board:
             side=tiles_info.direction_dict[attach_direction],
         )
         if tile_pos is None:
-            print("Error in getting position")
+            print("Error in getting position", file=sys.stderr)
             return
         turn = max(graph.get_verticies().keys(), default=-1) + 1
         current_player_id = current_player.get_id()
@@ -182,7 +183,7 @@ class Board:
             side=tiles_info.direction_dict[attach_direction],
         )
         if tile_pos is None:
-            print("Error in getting position")
+            print("Error in getting position", file=sys.stderr)
             return
 
         tile_id = max(graph.get_verticies().keys(), default=-1)

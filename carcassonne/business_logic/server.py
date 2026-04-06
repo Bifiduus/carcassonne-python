@@ -1,3 +1,4 @@
+import sys
 import time
 import socket
 import select
@@ -68,7 +69,8 @@ class Server(IServerService):
             self.server.settimeout(1.0)
             print(_("Server started on port {port}").format(port=port))
         except Exception as e:
-            print(_("Error starting server: {error}").format(error=e))
+            print(_("Error starting server: {error}").format(
+                error=e), file=sys.stderr)
             return
         self.should_stop.set()
         self.server_thread = Thread(
@@ -213,7 +215,8 @@ class Server(IServerService):
                 except (OSError, socket.error) as e:
                     # Socket closed or broken (during shutdown)
                     if not self.should_stop.is_set():
-                        print(f"Socket error during recv: {e}")
+                        print(
+                            f"Socket error during recv: {e}", file=sys.stderr)
                     break
 
                 if not data or data.decode() == "":
@@ -257,7 +260,8 @@ class Server(IServerService):
                     except (OSError, socket.error, BrokenPipeError) as e:
                         # Socket broken during send
                         if not self.should_stop.is_set():
-                            print(f"Socket error during send: {e}")
+                            print(
+                                f"Socket error during send: {e}", file=sys.stderr)
                         break
                 else:
                     self.handle_client_registering(
@@ -269,7 +273,7 @@ class Server(IServerService):
                 not self.should_stop.is_set()
                 and "Bad file descriptor" not in str(e)
             ):
-                print(f"Error handling client: {e}")
+                print(f"Error handling client: {e}", file=sys.stderr)
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]
@@ -361,7 +365,7 @@ class Server(IServerService):
                     formatted_message = preface + f"{id}: " + message
                     client_socket.send(formatted_message.encode())
                 except Exception as e:
-                    print(f"Error sending to client: {e}")
+                    print(f"Error handling client: {e}", file=sys.stderr)
 
     def check_username_taken(self, username: str):
         answer: bool = self.repo.player_exists(username)
@@ -472,7 +476,7 @@ class Server(IServerService):
             for player_id in clients_list:
                 self.repo.change_status(str(player_id), "ingame")
         except Exception as e:
-            print(f"Error creating party in repository: {e}")
+            print(f"Error creating party in repository: {e}", file=sys.stderr)
         return "Your party has been created successfully !\n"
 
     def create_players_from_list(
@@ -515,9 +519,10 @@ class Server(IServerService):
                 if ok:
                     invited_client.sendall(message.encode())
         except KeyError:
-            print(f"Client socket not found for {invited_player_id}")
+            print(
+                f"Client socket not found for {invited_player_id}", file=sys.stderr)
         except Exception as e:
-            print(f"Error sending invitation: {e}")
+            print(f"Error sending invitation: {e}", file=sys.stderr)
 
     def server_stop(self):
         """
@@ -535,7 +540,7 @@ class Server(IServerService):
                 try:
                     self.server.close()
                 except Exception as e:
-                    print(f"Error closing server socket: {e}")
+                    print(f"Error closing server socket: {e}", file=sys.stderr)
                 self.server = None
 
             # 3. Notify and close all connected clients
@@ -550,12 +555,14 @@ class Server(IServerService):
                             client_socket, "Unknown")
                         self.repo.client_quit(username)
                     except Exception as e:
-                        print(f"Error sending shutdown message: {e}")
+                        print(
+                            f"Error sending shutdown message: {e}", file=sys.stderr)
                     finally:
                         try:
                             client_socket.close()
                         except Exception as e:
-                            print(f"Error closing client socket: {e}")
+                            print(
+                                f"Error closing client socket: {e}", file=sys.stderr)
                 self.connected_clients.clear()
 
             # 4. Clean up active games
@@ -573,7 +580,8 @@ class Server(IServerService):
                                 f"game_{party_name}_"
                                 f"{time.asctime(time.localtime())}_backup.txt")
                     except Exception as e:
-                        print(f"Error cleaning up game {game_id}: {e}")
+                        print(
+                            f"Error cleaning up game {game_id}: {e}", file=sys.stderr)
                 self.current_games_list.clear()
 
             # 5. Clear client tracking dictionaries
@@ -588,7 +596,8 @@ class Server(IServerService):
                     try:
                         t.join(timeout=2.0)
                     except Exception as e:
-                        print(f"Error joining client thread: {e}")
+                        print(
+                            f"Error joining client thread: {e}", file=sys.stderr)
                     if t.is_alive():
                         print("Warning: a client thread did"
                               " not finish in time")
@@ -598,7 +607,7 @@ class Server(IServerService):
                 try:
                     self.repo.close()
                 except Exception as e:
-                    print(f"Error closing repository: {e}")
+                    print(f"Error closing repository: {e}", file=sys.stderr)
 
             # 8. Wait for server thread to finish (with timeout)
             try:
@@ -607,7 +616,7 @@ class Server(IServerService):
                     print("Warning: Server thread did not"
                           " terminate within timeout")
             except Exception as e:
-                print(f"Error joining server thread: {e}")
+                print(f"Error joining server thread: {e}", file=sys.stderr)
 
             print("Server shutdown complete")
 
@@ -639,7 +648,8 @@ class Server(IServerService):
                 print(f"Client {username} socket not found")
                 return False
             except Exception as e:
-                print(f"Error sending to client {username}: {e}")
+                print(
+                    f"Error sending to client {username}: {e}", file=sys.stderr)
                 return False
 
     def number_current_games(self) -> int:
