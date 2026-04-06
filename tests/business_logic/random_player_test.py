@@ -12,7 +12,7 @@ class DummyVertex:
 
 
 class DummyGraph:
-    def get_verticies(self) -> dict[int, DummyVertex]:
+    def get_vertices(self) -> dict[int, DummyVertex]:
         return {0: DummyVertex({0})}
 
 

@@ -53,14 +53,14 @@ class Board:
         attach_direction = "".join(
             c for c in move_parts[counter - 1] if c.isalpha()
         )
-        tile_pos = graph.get_position(
+        tile_pos = graph.get_adjacent_position(
             vertex_id=integers_placement[0],
             side=tiles_info.direction_dict[attach_direction],
         )
         if tile_pos is None:
             print("Error in getting position", file=sys.stderr)
             return
-        turn = max(graph.get_verticies().keys(), default=-1) + 1
+        turn = max(graph.get_vertices().keys(), default=-1) + 1
         current_player_id = current_player.get_id()
         tile_id = turn
         # example of adding the tile as a vertex in the graph, you would need
@@ -178,7 +178,7 @@ class Board:
         attach_direction = "".join(
             c for c in move_parts[counter - 1] if c.isalpha()
         )
-        tile_pos = graph.get_position(
+        tile_pos = graph.get_adjacent_position(
             vertex_id=integers_placement[0],
             side=tiles_info.direction_dict[attach_direction],
         )
@@ -186,7 +186,7 @@ class Board:
             print("Error in getting position", file=sys.stderr)
             return
 
-        tile_id = max(graph.get_verticies().keys(), default=-1)
+        tile_id = max(graph.get_vertices().keys(), default=-1)
         # example of removing the tile as a vertex in the graph
         graph.remove_vertex(vertex_id=tile_id)
         graph.remove_meeple(tile_id, players)

@@ -135,7 +135,7 @@ class GameDataGui:
                 tile_code = f"{tile_code}/{parsed['center']}"
 
             # Calculate position
-            position = self.game.graph.get_position(
+            position = self.game.graph.get_adjacent_position(
                 vertex_id=parsed["target_id"],
                 side=self.game.game_data.tiles_info.direction_dict[
                     parsed["target_side"]

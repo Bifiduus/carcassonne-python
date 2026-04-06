@@ -51,7 +51,7 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
-    def get_verticies(self) -> Dict[int, Any]:
+    def get_vertices(self) -> Dict[int, Any]:
         pass
 
     @abstractmethod
@@ -59,21 +59,17 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
-    def get_vertice_data(self, vertex) -> dict[int, dict]:
+    def get_vertex_data(self, vertex) -> dict[int, dict]:
         pass
 
     @abstractmethod
-    def get_position(
+    def get_adjacent_position(
         self, vertex_id: int, side: int
     ) -> Optional[tuple[int, int]]:
         pass
 
     @abstractmethod
     def reset_graph(self):
-        pass
-
-    @abstractmethod
-    def get_vertex_id(self, vertex) -> int:
         pass
 
     @abstractmethod

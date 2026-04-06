@@ -101,7 +101,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         graph=SimpleNamespace(
             find_neighbor_at=lambda x, y: (x + 1, y + 1),
             get_vertices_data=lambda: {1: {"id": 1}},
-            get_vertice_data=Mock(),
+            get_vertex_data=Mock(),
             get_meeples=lambda: [SimpleNamespace(player_id=0, tile_id=1)],
         ),
     )
@@ -233,7 +233,7 @@ def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertic
             DummyMeeple(1, 7, "N"),
             DummyMeeple(1, 3, "C"),
         ],
-        get_verticies=lambda: {1: vertex},
+        get_vertices=lambda: {1: vertex},
     )
     game.game_data = SimpleNamespace(graph=graph)
 
@@ -251,7 +251,7 @@ def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertic
 
     empty_game = Game.__new__(Game)
     empty_game.game_data = SimpleNamespace(
-        graph=SimpleNamespace(get_verticies=lambda: {})
+        graph=SimpleNamespace(get_vertices=lambda: {})
     )
     assert empty_game.get_board() is None
     assert empty_game.get_printed_board() == "No vertices.\n"
@@ -293,7 +293,7 @@ def build_play_move_game(
         board=SimpleNamespace(
             add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0])
         ),
-        graph=SimpleNamespace(get_verticies=lambda: {}),
+        graph=SimpleNamespace(get_vertices=lambda: {}),
         tiles_info=object(),
         history=object(),
         players={current_player_id: player},

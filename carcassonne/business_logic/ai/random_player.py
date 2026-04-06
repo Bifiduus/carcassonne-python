@@ -28,7 +28,7 @@ class RandomPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = game.game_data.graph.get_verticies()
+        vertices = game.game_data.graph.get_vertices()
         can_place_meeple = (
             game.game_data.get_current_player().get_meeples() > 0
         )

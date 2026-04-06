@@ -243,7 +243,7 @@ class MCTSPlayer:
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
-        vertices = game.game_data.graph.get_verticies()
+        vertices = game.game_data.graph.get_vertices()
         can_place_meeple = game.get_current_player().get_meeples() > 0
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))

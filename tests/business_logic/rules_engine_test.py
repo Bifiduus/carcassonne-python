@@ -37,7 +37,7 @@ class DummyGraphForSides:
     def __init__(self, vertices) -> None:
         self.vertices = vertices
 
-    def get_position_by_pos(self, position, side):
+    def get_adjacent_position_from(self, position, side):
         x, y = position
         offsets = {
             0: (0, -1),
@@ -48,7 +48,7 @@ class DummyGraphForSides:
         dx, dy = offsets[side]
         return (x + dx, y + dy)
 
-    def get_verticies(self):
+    def get_vertices(self):
         return self.vertices
 
 
@@ -88,10 +88,10 @@ class DummyGraphForMeeple:
                 land_type: {component_name: [(1, ["N"])]}
             }
 
-    def get_position(self, vertex_id, side):
+    def get_adjacent_position(self, vertex_id, side):
         return self.tile_pos
 
-    def get_verticies(self):
+    def get_vertices(self):
         return dict(self.vertices)
 
     def add_vertex(self, vertex_id, name, middle, orientation, position) -> None:
@@ -125,10 +125,10 @@ class DummyGraphForLegal:
     def __init__(self, free: bool = True) -> None:
         self.vertices = {0: DummyVertexForLegal(free)}
 
-    def get_verticies(self):
+    def get_vertices(self):
         return self.vertices
 
-    def get_position(self, vertex_id, side):
+    def get_adjacent_position(self, vertex_id, side):
         return (0, -1)
 
 

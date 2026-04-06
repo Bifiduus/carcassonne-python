@@ -180,7 +180,7 @@ class Game(IGameService):
         ]
 
     def get_board(self) -> list[Any] | None:
-        vertices = list(self.game_data.graph.get_verticies().values())
+        vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
             print("No vertices.")
@@ -219,7 +219,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        self.game_data.graph.get_vertice_data(tile)
+        self.game_data.graph.get_vertex_data(tile)
 
         return None
 
@@ -247,7 +247,7 @@ class Game(IGameService):
             print()  # espace entre lignes de tuiles
 
     def get_printed_board(self) -> str:
-        vertices = list(self.game_data.graph.get_verticies().values())
+        vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
             return "No vertices.\n"
@@ -346,7 +346,7 @@ class Game(IGameService):
                 f"You: {self.get_current_player()}"
             )
             turn = (
-                max(self.game_data.graph.get_verticies().keys(), default=-1)
+                max(self.game_data.graph.get_vertices().keys(), default=-1)
                 + 1
             )
             print(f"turn:{turn}")
@@ -396,11 +396,11 @@ class Game(IGameService):
                 self.game_data.current_player_order_list + 1
             ) % self.get_number_of_players()
             self.blitz_manager._ensure_current_player_playable()
-            """vertices = self.graph.get_verticies()
+            """vertices = self.graph.get_vertices()
             for vertex in vertices.values():
                 print(vertex.get_neighbors())"""
             return True
-        """vertices = self.graph.get_verticies()
+        """vertices = self.graph.get_vertices()
         for vertex in vertices.values():
             print(vertex.get_neighbors())
         print('i failed the test')"""

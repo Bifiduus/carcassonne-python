@@ -370,6 +370,9 @@ class GraphLogic:
                 )
             # Redirect all meeples from the old component to the merged one
             # to maintain ownership consistency after merge.
+            for meeple in getattr(graph, "meeples", []):
+                if meeple.lands_components == other_set_name:
+                    meeple.lands_components = main_set_name
             del graph.lands_components[land_type][other_set_name]
 
     @staticmethod

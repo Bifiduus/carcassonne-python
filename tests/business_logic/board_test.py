@@ -69,8 +69,8 @@ def test_add_tile_to_board_places_meeple_on_available_component() -> None:
 def test_add_tile_to_board_returns_early_when_target_position_is_missing() -> None:
     board = Board()
     graph = SimpleNamespace(
-        get_position=lambda vertex_id, side: None,
-        get_verticies=lambda: {},
+        get_adjacent_position=lambda vertex_id, side: None,
+        get_vertices=lambda: {},
     )
     tiles_info = SimpleNamespace(direction_dict={"N": 0})
     history = History()
