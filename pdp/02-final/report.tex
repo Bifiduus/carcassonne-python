@@ -28,10 +28,19 @@
 
 \section{Présentation du jeu}
 
-\subsection{Contexte}
+\subsection{Historique}
 
 \textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par Klaus-Jürgen Wrede en 2000, conçu pour 2 à 6 joueurs.
 Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l’ensemble des éléments présents sur le plateau est visible de tous les joueurs.
+
+Le jeu a connu un succès commercial important donnant lieu à de nombreuses extensions et variantes au fil des années. Il est devenu un classique des jeux de société modernes, alliant stratégie, gestion de ressources et placement de tuiles. Sur le plan académique et technique, Carcassonne représente un terrain d’étude privilégié pour l’intelligence artificielle (IA) et les algorithmes de décision, en raison de sa nature stochastique, de son système de scoring complexe et de la diversité des stratégies possibles. Plusieurs travaux academiques et implementations
+logicielles ont etudie les problematiques liees a l’intelligence artificielle pour Carcassonne. L’article de Heyden
+et al.\cite{heyden2009implementing} propose une analyse detaillee de l’arbre de jeu et des techniques de recherche heuristique adaptees aux
+contraintes de ce jeu, tandis que d’autres études explorent des approches basées sur Monte Carlo ou Expectimax
+pour gérer l’incertitude liée à la pioche des tuiles. 
+
+
+\subsection{Contexte}
 
 \begin{wrapfigure}{l}{0.25\textwidth}
   \centering
@@ -46,15 +55,6 @@ Cette tuile est la même pour chaque partie et comporte une \textit{City} en hau
 Chaque joueur dispose de 7 pions de sa couleur pour marquer des points au cours de la partie.
 Le but du jeu est que les joueurs construisent progressivement le plateau, à tour de rôle, en posant des tuiles de manière cohérente et en plaçant stratégiquement leurs pions pour accumuler des points.
 Le vainqueur est le joueur qui totalise le plus de points à la fin de la partie.
-
-\subsection{Historique et état de l'art}
-Carcassonne a connu un succès commercial important depuis sa création, avec de nombreuses extensions et variantes publiées au fil des années.
-Il a également suscité un intérêt académique significatif, notamment dans les domaines de l’intelligence artificielle et de la théorie des jeux, en raison de sa complexité stratégique et de sa nature à la fois déterministe et stochastique.
-Ainsi, plusieurs travaux académiques et implémentations logicielles ont étudié les problématiques liées à l’intelligence
-artificielle pour Carcassonne. L’article de Heyden et al.\cite{heyden2009implementing} propose une analyse détaillée de l’arbre de jeu et des techniques de recherche
-heuristique adaptées aux contraintes de ce jeu, tandis que d’autres contributions explorent des approches
-Monte Carlo ou Expectimax pour traiter l’incertitude issue de la pioche.
-
 \subsection{Règles}
 
 Les règles de \textbf{Carcassonne} utilisées sont celles de la version 2012\cite{rulescarcassonne}.
@@ -577,6 +577,23 @@ La dernière fonction est disconnect, celle-ci prend en charge les déconnexions
 
 Il existe aussi la fonction register\_message\_visitor qui utilise l’idée du design pattern visitor afin de pouvoir capturer les messages envoyés par le serveur, pour le GUI.
 
+
+\subsubsection{Online\_communications}
+
+La classe OnlineCommunication se charge de retourner les réponses appropriées aux commandes mais aussi d’effectuer les opérations demandées si elles peuvent l’être.
+Ainsi les fonctions de la classe OnlineCommunication peuvent être séparées en deux, les commandes spécifiques au serveur et les commandes spécifiques au jeu.
+La commande “quit” va demander à la base de données de modifier ce qu’il faut pour que le client soit effectivement déconnecté et va renvoyer le message approprié.
+La commande “server status” va envoyer les informations pertinentes relatives au serveur.
+La commande “new …” quant à elle va envoyer des invitations aux joueurs disponibles de la liste des id envoyée. Si aucun joueur n’est proposé, la réponse sera appropriée.
+La plupart des commandes se basent sur l’état du serveur et/ou de la base de données.
+Toutes les commandes basées sur le jeu, n’effectuerons rien et renverront un message adapté si le joueur n’est pas dans une partie.
+La commande ping est une mention honorable qui renvoie simplement “pong”.
+
+\subsubsection{Base de données}
+
+La base de données est une partie centrale du serveur, presque toutes les opérations importantes doivent passer par celle-ci, afin d’obtenir des informations, d’en créer, d’en modifier ou rarement d’en détruire. Cette classe est présente afin que le serveur et la logique métier ne sachent pas comment est construite la base de données.
+Toutes les opérations sur la base de données sont basées sur deux types de transactions, les transactions “query” qui sont donc des transactions de sélection de données et les transactions “non query” qui sont des transactions de modifications des n-uplets ( valeurs ) de la base de données. Ces opérations sont protégées de toute injection de code sql par des utilisateurs malveillants.
+
 \section{Revue critique du projet}
 
 Nous avons fait face à plusieurs défis au cours de ce projet notamment en ce qui concerne la complexité du jeu et la mise en œuvre de l’intelligence artificielle.
@@ -606,23 +623,8 @@ La principale difficulté a toutefois résidé dans la mise en place du fichier 
 Cette partie a été simple à mettre en œuvre. Les besoins portaient principalement sur des options de lancement relativement faciles à implémenter.
 Il a néanmoins fallu intégrer différents modes de jeu comme le mode \textit{Blitz} ou \textit{Contest} ainsi que l'extension \textit{The River}. 
 Ces éléments ont été réalisés en fin de projet une fois les fonctionnalités de base implémentées ce qui a facilité leur intégration.
-Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leurs tests statistiques.
-Pour valider la fonctionnalité de mélange, nous avons utilisé deux niveaux de tests. 
+Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leurs tests statistiques \ref{subsubsec:melange}.
 
-
-Le premier est un ensemble de tests fonctionnels déterministes : pour un même paquet initial, un même algorithme et une même graine (seed), le résultat doit toujours être identique. 
-Nous vérifions également que le mélange conserve exactement le multiensemble des tuiles, c’est-à-dire qu’aucune tuile n’est perdue, dupliquée ou modifiée. 
-Dans le cas du paquet rivière, nous vérifions en plus que la dernière tuile spéciale reste fixée en fin de paquet. Ces tests garantissent la reproductibilité et l’intégrité des structures de données, mais ils ne suffisent pas à évaluer l’uniformité statistique.
-
-Pour comparer l’uniformité des algorithmes, nous avons choisi un paquet réduit de trois tuiles distinctes. 
-Ce choix est justifié par le fait que le paquet réel contient des doublons, ce qui rend l’analyse des permutations plus difficile, tandis qu’un paquet de trois éléments permet une étude exhaustive et exacte. 
-Avec Fisher-Yates, l’algorithme effectue successivement un choix parmi 3 possibilités puis un choix parmi 2 possibilités, soit $3 \times 2 = 6$ trajectoires, exactement le nombre de permutations possibles. 
-L’énumération complète montre que chacune des 6 permutations est obtenue une seule fois : la distribution est donc uniforme. 
-À l’inverse, l’algorithme naïf effectue 3 échanges avec à chaque fois 3 choix possibles, soit $3^3 = 27$ trajectoires. 
-L’énumération exhaustive donne alors des effectifs $(5,5,5,4,4,4)$ pour les 6 permutations, au lieu d’une répartition uniforme. 
-Cela montre que plusieurs suites d’échanges conduisent plus souvent à certaines permutations qu’à d’autres.
-Ces résultats confirment les propriétés théoriques des deux méthodes : Fisher\-Yates est uniforme lorsque les indices sont tirés uniformément, alors que l’algorithme naïf est structurellement biaisé. 
-Nous avons donc retenu Fisher\-Yates comme algorithme par défaut, tandis que l’algorithme naïf est conservé à des fins de comparaison expérimentale.
 
 
 \subsubsection{Gestion du jeu}
@@ -658,40 +660,60 @@ Elle inclut également la représentation du plateau de jeu, qui s’est révél
 
 La mise en place d'un graphe pour représenter le plateau de jeu a été la première étape du projet.
 Ce graphe nous a permis de gérer efficacement les différentes connectivités entre les tuiles notamment pour la gestion du score des champs en utilisant des composantes connexes.
-Toutefois, l'implémentation de ce graphe étant été faite au début du projet, il a été source de nombreux bugs et de difficultés dans la suite du projet.
-Nous pouvons notamment parler de la non existence de réelle classe \textit{Tile} où ce qui est stocké dans le graphe est en réalité appelé \textit{Vertex} ce qui a compliqué la gestion du code notamment lors de l'implémentation du GUI.
+Cependant, cette implémentation précoce a également été à l’origine de nombreuses difficultés et de bugs par la suite. En particulier, l’absence d’une véritable classe Tile, où les éléments du graphe sont en réalité modélisés comme des Vertex, a complexifié la gestion du code notamment lors de l’implémentation du GUI.
 
 
 \subsubsection{Graphical User Interface (GUI)}
 
-L'implémentation du GUI, avec l'intelligence artificielle,  a été la partie la plus longue du projet à implémenter. 
-En effet, le plus grand problème de cette partie a été d'attendre la mise en place des différentes fonctionnalités du projet pour pouvoir les implémenter sur le GUI.
-Cela a été plus difficile que le CLI car il a fallu mettre en place différents éléments graphiques tels que des menus, des boutons, des affichages de tuiles et de meeples.
+L'implémentation du GUI, en parallèle de l'intelligence artificielle, a été la partie la plus longue du projet à implémenter. 
+Le principal défi a été d'attendre la mise en place des différentes fonctionnalités du projet pour pouvoir les implémenter sur le GUI.
+Le GUI s’est révélé plus complexe à développer que le CLI, nécessitant la mise en place de divers éléments graphiques tels que menus, boutons, affichage des tuiles et des meeples.
 Une difficulté rencontrée par exemple a été de pouvoir poser une tuile sur le plateau de jeu.
 Le GUI utilise des coordonnées x et y pour représenter les positions sur le plateau de jeu alors que le module de logique métier utilise une tuile et une orientation pour représenter les positions sur le plateau de jeu.
 Il a alors fallu faire le lien entre ces deux représentations pour pouvoir poser une tuile sur le plateau de jeu à partir du GUI.
-Nous avons mis en place une fonction permettant de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
+Pour cela, nous avons mis en place une fonction permettant de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
 
 
-Malgré tous ces défis, il reste quelques améliorations possibles pour le GUI pour le rendre cohérent avec tous les besoins du projet.
+Malgré ces avancées, certaines améliorations restent possibles pour rendre le GUI pleinement cohérent avec l’ensemble des besoins du projet.
 
 \subsubsection{Joueur artificiel}
 
-La partie sur les joueurs artificiels a été la partie la plus dure du projet. En effet, comme abordé dans la section \ref{subsec:minimax}, Carcassonne est un jeu à la fois stochastique et à information parfaite
+La partie concernant les joueurs artificiels a été la plus complexe du projet. En effet, comme abordé dans la section \ref{subsec:minimax}, Carcassonne est un jeu à la fois stochastique et à information parfaite
 ce qui rend l’implémentation de Minimax inutilisable dans sa forme classique.
-Il a fallu ainsi implémenter une version adaptée de Minimax avec des noeuds chance pour prendre en compte la pioche des tuiles.
-Ceci correspond alors à l'algorithme Expectimax, qui est une extension de Minimax pour les jeux stochastiques.
+Il a fallu ainsi implémenter une version adaptée de Minimax avec des noeuds chance pour prendre en compte de la pioche des tuiles. 
+Cette approche correspond à l’algorithme Expectimax, une extension de Minimax pour les jeux stochastiques.
 Cependant, l’implémentation de cet algorithme s’est avérée très complexe et a été source de nombreux bugs, notamment en ce qui concerne la gestion des noeuds chance et la mise en place de fonctions d’évaluation heuristiques adaptées à ce jeu.
 
 
 \subsubsection{Jeu en réseau}
 
 
-Ce qui nous a pris le plus de temps dans cette partie a été de gérer le serveur côté GUI.
-Plus précisément, il a fallu faire en sorte que le GUI affiche les messages envoyé par le serveur. 
-Nous avons alors du mettre en place le design pattern Visitor pour faire en sorte que le GUI puisse afficher les messages du serveur sans avoir à faire de lien direct entre les deux composants.
+La partie la plus chronophage a été la gestion du serveur côté GUI. Plus précisément, il a fallu permettre au GUI d’afficher les messages envoyés par le serveur. 
+Pour cela, nous avons mis en place le design pattern Visitor, afin que le GUI puisse traiter et afficher ces messages sans établir de lien direct entre les deux composants.
 
 \subsection{Performance}
+
+\subsubsection{IA}
+
+\subsubsection{Algorithme de mélange des tuiles}
+\label{subsubsec:melange}
+
+Un point plus technique concerne les algorithmes de mélange des tuiles dont la validation a nécessité deux niveaux de tests. 
+Le premier repose sur des tests fonctionnels déterministes : pour un paquet initial donné, un même algorithme et une même graine doivent produire un résultat identique. 
+Nous vérifions également que le mélange conserve exactement le multiensemble des tuiles, sans perte, duplication ni altération. 
+Dans le cas du paquet « rivière », une contrainte supplémentaire impose que la tuile spéciale finale reste en dernière position. 
+Ces tests garantissent la reproductibilité et l’intégrité des structures de données mais ne permettent pas à eux seuls d’évaluer la qualité statistique du mélange
+
+Pour analyser l’uniformité des algorithmes, nous avons étudié un cas simplifié composé de trois tuiles distinctes.
+Ce choix est justifié par le fait que le paquet réel contient des doublons, ce qui rend l’analyse des permutations plus difficile, tandis qu’un paquet de trois éléments permet une étude exhaustive et exacte. 
+Avec Fisher-Yates, l’algorithme effectue successivement un choix parmi 3 possibilités puis un choix parmi 2 possibilités, soit $3 \times 2 = 6$ trajectoires, exactement le nombre de permutations possibles. 
+L’énumération complète montre que chacune des 6 permutations est obtenue une seule fois : la distribution est donc uniforme. 
+À l’inverse, l’algorithme naïf effectue 3 échanges avec à chaque fois 3 choix possibles, soit $3^3 = 27$ trajectoires. 
+L’énumération exhaustive donne alors des effectifs $(5,5,5,4,4,4)$ pour les 6 permutations, au lieu d’une répartition uniforme. 
+Cela montre que plusieurs suites d’échanges conduisent plus souvent à certaines permutations qu’à d’autres.
+Ces résultats confirment les propriétés théoriques des deux méthodes : Fisher\-Yates est uniforme lorsque les indices sont tirés uniformément, alors que l’algorithme naïf est structurellement biaisé. 
+Nous avons donc retenu Fisher\-Yates comme algorithme par défaut, tandis que l’algorithme naïf est conservé à des fins de comparaison expérimentale.
+
 
 \subsection{Limites et bugs}
 
@@ -704,21 +726,21 @@ Une fois le projet complété, nous avons identifié de nombreuses pistes d’am
 
 L'amérioration la plus évidente serait la mise en forme de notre code. En effet, notre code est relativement mal organisé et peu lisible ce qui rend la maintenance et l'évolution du projet plus difficile.
 Il aurait été ainsi intéressant de mettre en place un design pattern pour la gestion des commandes par exemple, ou bien de structurer notre code de manière plus claire et lisible.
-Cela a été du à un manque d'imagination de notre part pour prévoir une implémentation claire et lisible pour le futur. 
+Ce manque de prévoyance dans l’architecture initiale a conduit à des choix d’implémentation qui rendent certaines parties du projet difficiles à maintenir.
 Nous aurions du consacrer plus de temps à la réflexion sur l'implémentation de notre code avant de nous lancer dans le développement ce qui nous aurait permis d'avoir une meilleure vision d'ensemble du projet et ainsi éviter de faire des choix d'implémentation qui ont rendu notre code plus difficile à maintenir et à faire évoluer.
-Nous avons essayé de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement.
-Nous en avons fait les frais notamment lors de la restructuration des fichiers \textit{game.py} et \textit{gui.py} qui faisaient plus de 1000 lignes et qui étaient au départ relié à beaucoup trop de fonctionnalités différentes.
+Nous avons tenté de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement.
+Nous en avons fait les frais notamment lors de la restructuration des fichiers \textit{game.py} et \textit{gui.py} au cours du projet, qui faisaient plus de 1000 lignes et qui étaient au départ relié à beaucoup trop de fonctionnalités différentes.
 
 
 
 \subsection{Utilisation de l'IA}
 
-Tout au long du projet, nous avons eu recours à l'utilisation de l'intelligence artificielle pour de nombreuses tâches.
-Que ce soit pour la mise en place d'un code de base pour une partie du projet, améliorer la qualité du code ou bien affiner certaines fonctionnalités, l'IA a été un outil précieux pour nous aider à avancer plus rapidement et efficacement.
-Nous avons ainsi appris à utiliser différents modèles d'IA pour différentes tâches en fonction de leurs forces et de leurs faiblesses.
+Tout au long du projet, nous avons eu recours à l'utilisation de l'intelligence artificielle pour diverses tâches.
+Que ce soit pour la mise en place d'un code de base pour une partie du projet, améliorer la qualité du code ou bien affiner certaines fonctionnalités, l'IA a été un outil précieux pour avancer plus rapidement et efficacement.
+Nous avons ainsi appris à utiliser différents modèles d'IA en fonction de leurs forces et de leurs faiblesses.
 
-Nous avons beaucoup utilisé l'extension \textit{Copilot} de Visual Studio Code qui nous a permis d'obtenir des suggestions de code pertinentes et de gagner du temps dans les tâches de codage répétitives en raison de sa capacité à avoir accès au contexte du code.
-L'utilisation d'autres modèles d'IA tels que \textit{ChatGPT} ou \textit{Claude 4.6} a également été bénéfique pour la mise en place de certaines fonctionnalités plus complexes telles que l'affichage de la réponse du server dans le GUI.
+Nous avons largement utilisé l'extension \textit{Copilot} de Visual Studio Code qui nous a permis d'obtenir des suggestions de code pertinentes et de gagner du temps dans les tâches de codage répétitives grâce à sa capacité à avoir accès au contexte du code.
+L'utilisation d'autres modèles d'IA tels que \textit{ChatGPT} ou \textit{Claude 4.6} s'est également avérée précieuse pour la mise en place de certaines fonctionnalités plus complexes telles que l'affichage de la réponse du server dans le GUI.
 
 \section{Liste des besoins}
 
