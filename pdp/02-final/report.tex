@@ -28,7 +28,7 @@
 
 \section{Présentation du jeu}
 
-\subsection{Historique}
+\subsection{Existant}
 
 \textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par Klaus-Jürgen Wrede en 2000, conçu pour 2 à 6 joueurs.
 Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l’ensemble des éléments présents sur le plateau est visible de tous les joueurs.
@@ -548,51 +548,162 @@ Dans cette section, nous allons expliquer en détail les différentes étapes de
 
 \subsection{Première fonctionnalité : Joueur artificiel}
 
+Parmi les IA implémentées nous avons fait MCTS (Monte Carlo Tree search), les fichiers d’implémentations de mcts sont dans le module Business Logic, dans mcts\_player.py. Pour appliquer cet algorithme nous avons représentés les noeuds de l’arbre par la classe MCTSNode qui contient l’état actuel du jeu (state), son parent si il en a (parent), le coup joué depuis ce noeud (move), le joueur lié à ce noeud (player), le joueur ia mcts appelant ce noeud (mcts\_player), la liste de ses fils (children), la liste des coups non encore essayés depuis ce noeud (untried\_moves), le nombre de fois que le noeud a été visité (visits), et le score total du noeud (total\_reward).
+On a alors des getters pour chaque champ de cette classe et deux fonctions pour mettre à jour les visites et le score.
+
+La classe MCTSPlayer contient tout le déroulement de l’algorithme et va donc construire petit à petit l’arbre d’exploration à travers les MCTSNode. Il contient alors comme variables l’état de jeu actuel (game), le temps de commencement du tour de jeu de cette ia et le temps maximal autorisé ainsi que le temps final (start\_time et max\_time et end\_time) pour pouvoir arrêter l’algorithme plus tôt si la limite de temps devait être atteinte, la fonction de sélection d’enfant (eval\_fn), le modèle de sélection par machine learning (ml\_model), un booléen précisant si on veut utiliser ml comme fonction de sélection (\_ml\_model\_attempted), une liste pour stocker les scores au fur et à mesure des simulations et ainsi pouvoir les restaurer durant l’algo (\_sim\_state\_stack).
+
+Fonctionnement de l’algorithme, on répète les 5 mêmes étapes :
+Sélection : on part de la racine et tant qu’on est pas à un noeud valide on descend dans l’arbre en sélectionnant le prochain enfant grâce à la fonction de sélection
+Expansion : on choisit le prochain coup (qui nous amène donc à un nouveau enfant pour le noeud considéré)
+Simulation : on simule à partir de ce coup le reste de la partie de manière aléatoire.
+Récompense : on va chercher le score de la partie déroulée jusqu’au bout 
+Remontée : on remonte dans l’arbre en annulant un à un les coups joués jusqu’à revenir au noeud où on a commencé la simulation
+
+Et on remet toutes les informations de la partie à l’état initial pour ne pas la corrompre.
+Enfin quand on quitte l’algorithme on choisit le nœud fils de la racine qui a le meilleur score.
+
+Les fonctions play\_move\_for\_ai et undo\_for\_ai permettent de simuler des coups sans altérer définitivement l’état réel du jeu. Lorsqu’un coup est joué via play\_move\_for\_ai, l’état courant est d’abord sauvegardé (scores, meeples, composants du graphe, etc.), puis le coup est appliqué comme dans une vraie partie. Ces informations sont stockées dans une pile afin de pouvoir être restaurées plus tard. À l’inverse, undo\_for\_ai annule le dernier coup joué en utilisant l’historique et restaure précisément toutes les données sauvegardées. Cela garantit que chaque simulation est indépendante et que l’exploration de l’arbre ne corrompt jamais la partie réelle.
+
+La fonction get\_possible\_moves permet de parcourir l’ensemble des coups possibles à partir de l’état de jeu actuel et de la tuile en main, elle revient à placer la tuile à chaque emplacement disponible, avec chaque rotation, et avec chaque pose de meeple pour ensuite vérifier si le coup est légal grâce à la fonction check\_move de rules\_manager.py
+
+La sélection des nœuds dans l’arbre peut se faire via l’algorithme UCT (Upper Confidence Bound applied to Trees). Cette méthode repose sur un compromis entre exploitation et exploration grâce au facteur C. L’exploitation favorise les coups ayant déjà donné de bons résultats (reward élevé), tandis que l’exploration encourage la découverte de coups encore peu testés. La formule utilisée combine ces deux aspects en tenant compte du nombre de visites du nœud et de ses enfants. De plus, les nœuds jamais visités sont priorisés afin d’assurer une exploration minimale de toutes les possibilités.
+
+Une alternative à UCT est proposée avec une sélection basée sur le machine learning. Dans ce cas, un modèle Keras est chargé et utilisé pour évaluer les coups possibles. Pour chaque enfant d’un nœud, un vecteur de caractéristiques est construit, comprenant notamment le reward moyen, le nombre de visites, le score du joueur, ou encore la présence d’un meeple dans le coup. Le modèle prédit alors un score pour chaque coup, et celui ayant la meilleure évaluation est sélectionné. En cas d’indisponibilité du modèle, le système revient automatiquement à la méthode UCT.
+
+Le modèle de machine learning est construit à partir de données générées lors de simulations de parties. Pour chaque état exploré, des caractéristiques sont extraites et associées à un résultat, généralement le reward final ou une estimation de la qualité du coup. Ces données servent ensuite à entraîner un modèle de type réseau de neurones (via Keras), capable de prédire la pertinence d’un coup à partir de son contexte. Une fois entraîné, le modèle est sauvegardé dans un fichier et peut être rechargé lors de l’exécution pour guider la phase de sélection dans MCTS.
+
+Le modèle de machine learning utilisé pour guider la sélection dans MCTS est un modèle de régression entraîné à partir de données issues de parties simulées ou jouées. Ces données sont stockées sous forme de fichiers JSON ou JSON Lines, où chaque entrée contient un vecteur de caractéristiques (features) décrivant un état ou un coup, ainsi qu’une valeur cible (target) représentant la qualité de ce coup, généralement le reward obtenu en fin de simulation ou une estimation de probabilité de victoire.
+
+Le chargement des données est effectué par la fonction \_load\_samples, qui lit le fichier et extrait deux listes : une matrice de caractéristiques (chaque ligne correspondant à un coup) et un vecteur de cibles associées. Les données sont ensuite converties en tableaux numériques exploitables par le modèle (via NumPy), ce qui permet de les utiliser efficacement lors de l’entraînement.
+
+Le modèle lui-même est un réseau de neurones simple de type perceptron multicouche (MLP), construit avec Keras. Il est composé de plusieurs couches entièrement connectées : une couche d’entrée dont la taille correspond au nombre de caractéristiques, suivie de deux couches cachées avec des fonctions d’activation ReLU, puis d’une couche de sortie produisant une valeur réelle. Cette sortie correspond à l’évaluation prédite du coup. Le choix d’une activation linéaire en sortie est cohérent avec une tâche de régression.
+
+L’entraînement du modèle consiste à ajuster ses paramètres pour minimiser l’erreur entre les prédictions et les valeurs cibles. Pour cela, on utilise la fonction de perte MSE (Mean Squared Error), adaptée aux problèmes de régression, ainsi que l’optimiseur Adam, qui permet une convergence rapide et stable. Le modèle est entraîné sur plusieurs itérations (epochs), en traitant les données par lots (batchs), ce qui améliore les performances et la stabilité de l’apprentissage.
+
+Une fois l’entraînement terminé, le modèle est sauvegardé dans un fichier au format .keras. Ce fichier contient l’ensemble des poids et de l’architecture du réseau, ce qui permet de le recharger ultérieurement sans avoir à le réentraîner. Lors de l’exécution du MCTS, ce modèle est chargé dynamiquement et utilisé pour évaluer les coups possibles à partir de leurs caractéristiques.
+
+Ainsi, le lien avec l’implémentation MCTS est direct : les mêmes caractéristiques que celles utilisées pour entraîner le modèle sont reconstruites en temps réel pour chaque nœud exploré (\_extract\_ml\_features). Le modèle prédit alors un score pour chaque enfant, permettant de guider la sélection vers les coups les plus prometteurs. Ce mécanisme permet d’orienter l’exploration de l’arbre de manière plus informée que la simple approche statistique UCT, tout en restant compatible avec celle-ci en cas d’absence de modèle.
+
 \subsection{Seconde fonctionnalité : Jeu en réseau}
 
+La partie concernant les besoins du serveur est découpée en 2 sous-parties, le client qui sert à représenter la personne qui est au clavier, et le serveur qui représente le serveur personnel du pc. La partie serveur est quand à elle, découpée en 3 sous-parties:
+\begin{itemize}
+  \item [$\bullet$] online\_communications qui sert à représenter les possibles réponses du serveur aux différents clients
+  \item [$\bullet$] games\_repository qui représente la base de données et les opérations sur celles-ci
+  \item [$\bullet$] server qui représente le fonctionnement global du serveur (gestion des clients, des parties et de l’état interne du serveur )
+\end{itemize}
+
 \subsubsection{Serveur}
-La première fonction du serveur est server\_start, cette fonction démarre le serveur en TCP sur un port donné en argument, si aucun port n’est donné, le port 12345 sera utilisé par défaut. Suite à cela un thread pour le serveur est créé et démarré sur la fonction server\_running.
-La fonction server\_running est une fonction permettant d’accepter des connexions clients tant que le serveur tourne. De plus, un timer est mis en place pour envoyer périodiquement les informations nécessaires aux clients, pour qu’ils puissent se connecter. Cela est fait par UDP broadcast toutes les 10 secondes. Cette fonction prend aussi en charge les lancements et fin de parties ainsi que les time-out des invitations de chaque client. Finalement, chaque socket de client accepté est dirigé sur son propre thread vers la fonction handle\_client.
-Pour effectuer tout cela, plusieurs fonctions internes sont utilisées. La première est check\_all\_invitations\_timeout, celle-ci renvoie la liste des clients qui ont reçu une invitation mais pour lesquelles le délai est dépassé.
+La première fonction du serveur est server\_start. Cette fonction démarre le serveur en TCP sur un port donné en argument. Si aucun port n’est donné, le port 12345 sera utilisé par défaut. 
+Suite à cela, un thread pour le serveur est créé et démarré sur la fonction server\_running.
+
+La fonction server\_running est une fonction permettant d’accepter des connexions clients tant que le serveur tourne. 
+De plus, un timer est mis en place pour envoyer périodiquement les informations nécessaires aux clients pour qu’ils puissent se connecter. 
+Cela est fait par UDP broadcast toutes les 10 secondes. Cette fonction prend aussi en charge les lancements et fin de parties ainsi que les time-out des invitations de chaque client. 
+Finalement, chaque socket de client accepté est dirigé sur son propre thread vers la fonction handle\_client.
+
+Pour accomplir cette gestion, plusieurs fonctions internes sont utilisées. 
+La première est check\_all\_invitations\_timeout. Elle renvoie la liste des clients qui ont reçu une invitation mais pour lesquelles le délai est dépassé.
+
 launch\_availables\_games est la fonction qui permet de lancer toutes les parties qui peuvent l’être, c'est-à-dire les parties pour lesquelles les invitations ont toutes étaient résolues et le nombre de joueurs est correct.
+
 Conjointement à cette fonction, la fonction clean\_finished\_games se charge de nettoyer les parties terminées.
+
+
 La fonction check\_clients\_timeout se charge de vérifier si les clients qui ont effectué une déconnexion inopinée ont dépassé leur temps de time-out.
-Suite à cela, chaque socket de client est redirigé dans son propre thread vers la fonction handle\_client, celle-ci se charge de la communication entre le serveur et un client.
+
+Suite à cela, chaque socket de client est redirigé dans son propre thread vers la fonction handle\_client qui se charge de la communication entre le serveur et un client.
 Si le client souhaite quitter, un message est envoyé à tous les clients du serveur.
-La commande “quit” est la seule commande qui peut être effectuée sans être enregistré auprès du serveur. Si le client n’est pas encore enregistré, la fonction handle\_client\_registering se charge de l’enregistrer. Différents messages sont renvoyés au client selon le fait que l’enregistrement se passe bien ou pas. Dans le dernier cas deux messages principaux peuvent être envoyés, soit le nom d’utilisateur est déjà pris soit le client est sous un time-out pour déconnexion inopinée.
-Une fois que le client est enregistré auprès du serveur, celui-ci prend en charge les messages du client et envoie les réponses appropriées via la fonction process\_message qui utilise la classe online\_communications afin d’avoir les réponses. La gestion de nombreuses erreurs est présente dans cette fonction, de plus quoiqu’il arrive les structures de données du serveur seront mises à jour.
+La commande “quit” est la seule commande qui peut être effectuée sans être enregistréé auprès du serveur. 
+Si le client n’est pas encore enregistré, la fonction handle\_client\_registering se charge de l’enregistrer. 
+Différents messages sont envoyés au client en fonction de la réussite ou de l’échec de l’enregistrement.
+Dans le dernier cas, deux messages principaux peuvent être envoyés, soit le nom d’utilisateur est déjà pris soit le client est sous un time-out pour déconnexion inopinée.
+
+Une fois que le client est enregistré auprès du serveur, celui-ci prend en charge les messages du client et envoie les réponses appropriées via la fonction process\_message qui utilise la classe online\_communications afin d’avoir les réponses. 
+La gestion de nombreuses erreurs est présente dans cette fonction. De plus quoiqu’il arrive les structures de données du serveur seront mises à jour.
+
+La majeure partie des autres fonctions du serveur sont appelées par les commandes de la classe online\_communications.
+
+Les dernières fonctions notables du serveur sont les suivantes, send\_to\_group et send\_to\_client qui permettent d’envoyer des messages à un groupe de joueurs ou à un joueur, 
+des getters sur les différentes structures de données du serveur ainsi que la fonction server\_stop qui est appelée que le serveur soit arrêté normalement ou brutalement.
+ Cette fonction nettoie toutes les ressources proprement.
 
 
 \subsubsection{Client}
-Le fichier client.py correspond sert principalement à envoyer et recevoir des informations au serveur auquel on est connecté.
-La première fonction utilisée est create\_default\_online\_player, celle ci se charge de créer un compte pour un serveur donné, par défaut il s’agit de son propre serveur, toutefois si un problème d’authentification est rencontré ( pour un serveur externe ), cette fonction permet d'enregistrer un compte spécifique à un serveur donné, avec donc un nouvel username mais le même mot de passe.
-La deuxième fonction que l’on rencontre est list\_available\_servers. Il s’agit d’une fonction qui va écouter sur le port 12346 pour toute transmission UDP broadcast d’un serveur et en faire une liste, tout serveur n’ayant pas envoyé de messages pendant un certain temps est effacé de cette liste, par la fonction check\_servers\_last\_time\_sent qui regarde la date de la dernière diffusion de chacun des serveurs de la liste.
-Suite à cette fonction, join\_server sert à rejoindre un serveur présent dans la liste des serveurs disponible. Si aucun argument n’est donné à cette fonction, la fonction prendra les arguments nécessaires auprès du serveur personnel, si celui-ci est dans la liste des serveurs disponible, sinon aucune connexion n’est faite. Si une connexion est faite, un thread est créé pour gérer la communication avec le serveur, du côté client.
-La fonction interne \_receive\_loop se charge de lire les messages pendant que la connexion est établie, si elle reçoit un message du serveur concernant un shutdown, la boucle finit sinon les messages sont envoyés à la fonction handle\_server\_message.
-Cette fonction sert à envoyer les messages du serveur au GUI, si le GUI est disponible.
-Toutefois, cette fonction se charge aussi d’automatiser certains comportements du client, par exemple quand un client essaye de se connecter pour la première fois et que le serveur renvoie un message énonçant que son username est déjà pris, la fonction laisse le choix au client de changer son username. En CLI, cette fonction affiche les messages du serveur sous une forme plus agréable.
-Une autre fonction principale est send\_to\_server, cette fonction plutôt simple, envoie le message passé en paramètre au serveur, sous la forme “username: message”.
-La fonction connected\_to\_a\_server est une fonction servant la logique interne du client.
-La dernière fonction est disconnect, celle-ci prend en charge les déconnexions brutes et normales, elle se charge de nettoyer toutes les ressources de la session, qui ne sont pas des ressources de la base de données.
+Le fichier client.py sert principalement à envoyer et recevoir des informations au serveur auquel on est connecté.
 
-Il existe aussi la fonction register\_message\_visitor qui utilise l’idée du design pattern visitor afin de pouvoir capturer les messages envoyés par le serveur, pour le GUI.
+
+
+La première fonction utilisée est create\_default\_online\_player. Elle se charge de créer un compte pour un serveur donné. Par défaut, il s’agit du serveur local. 
+Toutefois, si un problème d’authentification survient sur un serveur externe, cette fonction permet de créer un compte spécifique pour ce serveur, en générant un nouvel nom d’utilisateur tout en conservant le même mot de passe.
+
+La deuxième fonction rencontrée est list\_available\_servers. Elle écoute sur le port 12346 pour détecter les transmissions UDP broadcast des serveurs et constitue à partir de celles-ci une liste de serveurs disponibles. 
+Tout serveur n’ayant pas envoyé de message depuis un certain temps est retiré de cette liste par la fonction check\_servers\_last\_time\_sent, qui vérifie la date de la dernière diffusion de chaque serveur.
+
+Suite à cette fonction, join\_server sert à rejoindre un serveur présent dans la liste des serveurs disponible. 
+Si aucun argument n’est donné à cette fonction, la fonction prendra les arguments nécessaires auprès du serveur personnel, si celui-ci est dans la liste des serveurs disponible, sinon aucune connexion n’est faite. 
+Si une connexion est faite, un thread est créé pour gérer la communication avec le serveur, du côté client.
+
+La fonction interne \_receive\_loop se charge de lire les messages pendant que la connexion est établie. 
+Si elle reçoit un message du serveur concernant un shutdown, la boucle finit sinon les messages sont envoyés à la fonction handle\_server\_message.
+Cette fonction sert à envoyer les messages du serveur au GUI, si le GUI est disponible.
+Toutefois, cette fonction se charge aussi d’automatiser certains comportements du client, par exemple quand un client essaye de se connecter pour la première fois et que le serveur renvoie un message énonçant que son username est déjà pris, la fonction laisse le choix au client de changer son username. 
+En CLI, cette fonction affiche les messages du serveur sous une forme plus propre.
+
+Une autre fonction principale est send\_to\_server. Cette fonction plutôt simple, envoie le message passé en paramètre au serveur, sous la forme :
+
+\begin{center}
+    \texttt{username: message}
+\end{center}
+
+La fonction connected\_to\_a\_server est une fonction servant la logique interne du client.
+
+La dernière fonction est disconnect. Elle prend en charge les déconnexions brutes et normales et se charge de nettoyer toutes les ressources de la session qui ne sont pas des ressources de la base de données.
+
+Il existe aussi la fonction register\_message\_visitor qui utilise l’idée du design pattern visitor afin de pouvoir capturer les messages envoyés par le serveur pour les transmettre au GUI.
 
 
 \subsubsection{Online\_communications}
 
 La classe OnlineCommunication se charge de retourner les réponses appropriées aux commandes mais aussi d’effectuer les opérations demandées si elles peuvent l’être.
+
 Ainsi les fonctions de la classe OnlineCommunication peuvent être séparées en deux, les commandes spécifiques au serveur et les commandes spécifiques au jeu.
+
 La commande “quit” va demander à la base de données de modifier ce qu’il faut pour que le client soit effectivement déconnecté et va renvoyer le message approprié.
+
 La commande “server status” va envoyer les informations pertinentes relatives au serveur.
 La commande “new …” quant à elle va envoyer des invitations aux joueurs disponibles de la liste des id envoyée. Si aucun joueur n’est proposé, la réponse sera appropriée.
+
 La plupart des commandes se basent sur l’état du serveur et/ou de la base de données.
 Toutes les commandes basées sur le jeu, n’effectuerons rien et renverront un message adapté si le joueur n’est pas dans une partie.
+
 La commande ping est une mention honorable qui renvoie simplement “pong”.
 
 \subsubsection{Base de données}
 
-La base de données est une partie centrale du serveur, presque toutes les opérations importantes doivent passer par celle-ci, afin d’obtenir des informations, d’en créer, d’en modifier ou rarement d’en détruire. Cette classe est présente afin que le serveur et la logique métier ne sachent pas comment est construite la base de données.
-Toutes les opérations sur la base de données sont basées sur deux types de transactions, les transactions “query” qui sont donc des transactions de sélection de données et les transactions “non query” qui sont des transactions de modifications des n-uplets ( valeurs ) de la base de données. Ces opérations sont protégées de toute injection de code sql par des utilisateurs malveillants.
+La base de données est une partie centrale du serveur, presque toutes les opérations importantes doivent passer par celle-ci, afin d’obtenir des informations, d’en créer, d’en modifier ou rarement d’en détruire. 
+Cette classe est présente afin que le serveur et la logique métier ne sachent pas comment est construite la base de données.
+
+Toutes les opérations sur la base de données sont basées sur deux types de transactions, les transactions "query" qui sont donc des transactions de sélection de données et les transactions "non query" qui sont des transactions de modifications des n-uplets ( valeurs ) de la base de données. Ces opérations sont protégées de toute injection de code sql par des utilisateurs malveillants.
+
+Afin de convenir aux besoins de Carcassonne, plusieurs tables ont été créées, la première et l’une des plus importantes, la table des joueurs. 
+Cette table contient un identifiant unique à chaque joueur, cet identifiant est géré par la base de données automatiquement. 
+Le nom d’utilisateur principal ainsi que le mot de passe sont présents. Le statut du joueur est présent afin de bien gérer les événements, le statut peut être l’un des quatre suivants, "idle", "away", "waitgame", "ingame", afin de représenter les différents états du joueur. 
+numéro de groupe du joueur est aussi présent et est initialement à null. Finalement, deux booléens sont présents pour respectivement  le fait d’être connecté et le fait d’être un client courtois. 
+Un client courtois est un client qui quitte le serveur convenablement.
+
+Afin de représenter simplement les groupes de joueurs dans chaque jeu, la table groups contient l’identifiant auto-généré par la base de données du groupe. 
+Le nombre de joueurs dans le groupe ainsi que l’identifiant de l’hôte du groupe sont présents dans la table groups.
+La table scoreboard est une table simple contenant l’identifiant d’un joueur, son nombre de victoires et son nombre de défaites. Afin de garder les parties en cours, la table current\_games contient l’identifiant auto-généré de la partie, le nom de la partie en cours et le groupe rattaché à la partie.
+
+L’une des tables les plus importantes pour la gestion des parties et la table pending\_invitations, cette table possède un identifiant auto-généré d’invitation, de plus à chaque identifiant unique est rattaché un identifiant de groupe, l’identifiant du joueur invité ainsi que le statut de l’invitation, qui peut être soit "waiting" soit "accepted". 
+Afin de gérer le temps maximum de réponse à une invitation, la date précise du moment où l’invitation a été envoyée est aussi présente. 
+
+La gestion des conflits entre les noms d’utilisateurs à travers différents serveur nécessite la création de la table usernames, cette table contient simplement l’adresse du serveur ainsi que le nom d’utilisateur associé à celui-ci, si un serveur n’est pas présent dans cette liste, soit le nom d’utilisateur principal est utilisé si il n’est pas déjà utilisé sur ce serveur soit la phase d’enregistrement ne s’est pas encore produite.
+Il s’agit de la seule table de la base de données qui contient des données seulement au propriétaire de l’ordinateur.
+
+Finalement, la table timeouts contient les identifiants des joueurs qui se sont déconnectés inopinément ainsi que la date précise où cela a été enregistré par le serveur.
 
 \section{Revue critique du projet}
 
