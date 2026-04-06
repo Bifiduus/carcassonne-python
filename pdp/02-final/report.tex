@@ -47,7 +47,13 @@ Chaque joueur dispose de 7 pions de sa couleur pour marquer des points au cours 
 Le but du jeu est que les joueurs construisent progressivement le plateau, à tour de rôle, en posant des tuiles de manière cohérente et en plaçant stratégiquement leurs pions pour accumuler des points.
 Le vainqueur est le joueur qui totalise le plus de points à la fin de la partie.
 
-
+\subsection{Historique et état de l'art}
+Carcassonne a connu un succès commercial important depuis sa création, avec de nombreuses extensions et variantes publiées au fil des années.
+Il a également suscité un intérêt académique significatif, notamment dans les domaines de l’intelligence artificielle et de la théorie des jeux, en raison de sa complexité stratégique et de sa nature à la fois déterministe et stochastique.
+Ainsi, plusieurs travaux académiques et implémentations logicielles ont étudié les problématiques liées à l’intelligence
+artificielle pour Carcassonne. L’article de Heyden et al.\cite{heyden2009implementing} propose une analyse détaillée de l’arbre de jeu et des techniques de recherche
+heuristique adaptées aux contraintes de ce jeu, tandis que d’autres contributions explorent des approches
+Monte Carlo ou Expectimax pour traiter l’incertitude issue de la pioche.
 
 \subsection{Règles}
 
@@ -161,13 +167,11 @@ Les choix offerts aux joueurs se multiplient progressivement en fonction de la c
 Contrairement à des jeux déterministes comme les échecs ou le shogi, \textbf{Carcassonne} introduit une composante stochastique via la pioche des tuiles, ce qui complexifie l’anticipation des coups futurs. 
 Néanmoins, il demeure un jeu à information parfaite dans la mesure où l’ensemble des éléments placés sur le plateau est visible par tous les joueurs à tout instant.
 
-La complexité combinatoire du jeu est particulièrement élevée en raison du nombre important de tuiles, de leurs différentes orientations possibles et des multiples placements légaux sur le plateau. 
-La taille de l’arbre de jeu est estimée à environ $10^{194}$\cite{heyden2009implementing}, ce qui rend toute exploration exhaustive irréaliste.
-Par conséquent, la résolution complète du jeu par des méthodes de recherche brute-force n’est pas envisageable.
+La complexité combinatoire du jeu est particulièrement élevée pour plusieurs raisons. D’abord, chaque tuile peut être orientée de quatre manières, et chaque position libre sur le plateau peut être un emplacement légitime lorsque les côtés adjacents correspondent. Ensuite, la taille effective de l’espace d’états dépend de l’ordre de tirage des 72 tuiles, du placement des meeples et de la résolution des structures incomplètes. Sur un plateau en croissance, le nombre de successeurs possibles à un instant donné peut rapidement dépasser plusieurs dizaines, ce qui conduit à un arbre de jeu de taille astronomique. La taille de l’arbre de jeu est estimée à environ $10^{194}$\cite{heyden2009implementing}, ce qui rend toute exploration exhaustive irréaliste.
 
-Dans ce contexte, l’utilisation d’algorithmes de recherche heuristique et d’approximation apparaît comme
-une solution nécessaire pour proposer des décisions pertinentes dans un temps de calcul raisonnable.
+Mathématiquement, ce type de complexité se situe entre la simple permutation des tuiles et un vaste graphe de configurations : il faut combiner 72 choix de tuiles avec 4 orientations possibles et un grand nombre de positions valides, d’où un nombre de branches extrêmement élevé. D’où la nécessité d’un compromis entre profondeur de recherche, précision des heuristiques et temps de calcul.
 
+Dans ce contexte, l’utilisation d’algorithmes de recherche heuristique et d’approximation apparaît comme une solution nécessaire pour proposer des décisions pertinentes dans un temps de calcul raisonnable.
 
 
 
@@ -183,20 +187,85 @@ Cette modélisation permet l’utilisation d’algorithmes de recherche tels que
 Plusieurs algorithmes jouent ainsi un rôle central dans la réalisation des besoins du projet, notamment :
 \begin{itemize}
   \item[-] \textbf{Minimax}\cite{minimax}, pour déterminer les coups optimaux en modélisant l’opposition entre les joueurs ;
-  \item[-] \textbf{Alpha-Beta}, qui permet de réduire le nombre d’états explorés en élaguant les branches non pertinentes de l’arbre de jeu ;
-  \item[-] \textbf{Iterative Deepening}, utilisé afin de borner le temps de calcul tout en améliorant progressivement la qualité des décisions ;
+  \item[-] \textbf{Alpha-Beta}\cite{alpha_beta}, qui permet de réduire le nombre d’états explorés en élaguant les branches non pertinentes de l’arbre de jeu ;
+  \item[-] \textbf{Iterative Deepening}\cite{iterative_deepening}, utilisé afin de borner le temps de calcul tout en améliorant progressivement la qualité des décisions ;
   \item[-] \textbf{des fonctions d’évaluation heuristiques}, servant à estimer la qualité d’un état de jeu ;
   \item[-] des approches basées sur \textit{Monte Carlo Tree Search}\cite{monte_carlo}, envisagées pour des stratégies alternatives ;
-  \item[-] des algorithmes de génération aléatoire, tels que le mélange de \textit{Fisher–Yates}, nécessaires à la gestion équitable de la pioche.
+  \item[-] des algorithmes de génération aléatoire, tels que le mélange de \textit{Fisher–Yates}\cite{fisher_yates}, nécessaires à la gestion équitable de la pioche.
 \end{itemize}
 
 La mise en œuvre efficace de ces algorithmes repose sur des structures de données adaptées permettant de représenter l’état du jeu et d’en faciliter la manipulation. 
-Le plateau de jeu, constitué de tuiles connectées par leurs côtés, peut être modélisé à l’aide de graphes, offrant une représentation naturelle des relations d’adjacence entre les tuiles. 
-Egalement, des piles peuvent être employées pour gérer certains mécanismes séquentiels, tels que la pioche des tuiles ou la sauvegarde temporaire d’états lors de l’exploration de l’arbre de jeu.
+Le plateau de jeu, constitué de tuiles connectées par leurs côtés, est modélisé en interne par un graphe de positions, offrant une représentation naturelle des relations d’adjacence entre les tuiles. 
+Les états de jeu sont stockés sous forme d’objets si bien que chaque tuile possède un identifiant, un jeu de côtés, une rotation et des informations sur les meeples attachés.
+
+La gestion de la pioche et du retour des pions utilise des structures séquentielles simples, comme des listes et des piles. Pour les calculs de score et la recherche de composantes connexes, des parcours en largeur (BFS) sur le graphe de tuiles sont employés, avec des ensembles de sommets visités pour éviter les redondances.
+
+\subsection{Structures de données}
+
+La représentation des données du jeu est un point clé du projet. En Python, le plateau est principalement géré par un dictionnaire de positions vers les tuiles, complété par une table d’adjacence pour les voisinages.
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+class Tile:
+    code: str
+
+    # Direction matrices indexed by orientation (0, 1, 2, 3)
+    direction_matrix = [
+        # 0 rotation
+        [["NW", "N", "NE"], ["W", "C", "E"], ["SW", "S", "SE"]],
+        # 1 rotation (90° clockwise)
+        [["SW", "W", "NW"], ["S", "C", "N"], ["SE", "E", "NE"]],
+        # 2 rotations (180° clockwise)
+        [["SE", "S", "SW"], ["E", "C", "W"], ["NE", "N", "NW"]],
+        # 3 rotations (270° clockwise)
+        [["NE", "E", "SE"], ["N", "C", "S"], ["NW", "W", "SW"]],
+    ]
+
+    def __init__(
+        self,
+        code: str,
+        connections: dict | None = None,
+        connect_to: dict | None = None,
+    ) -> None:
+        self.code = code
+        # tiles_lands is the terrain definitions for this tile
+        self.tiles_lands = connections if connections is not None else {}
+        self.connect_to = connect_to if connect_to is not None else {}
+  \end{minted}
+}
+
+Cette structure permet de calculer rapidement les composantes connexes nécessaires au calcul des champs, des routes et des cités.
+
+La pioche est mélangée avec l’algorithme \textit{Fisher–Yates}\cite{fisher_yates} afin d’obtenir une permutation uniforme :
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+import random
+
+  @staticmethod
+  def _shuffle_fisher_yates_in_place(
+      items: list[str], rng: random.Random
+  ) -> None:
+  for i in range(len(items) - 1, 0, -1):
+    j = rng.randrange(i + 1)
+    items[i], items[j] = items[j], items[i]
+
+  @staticmethod
+  def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
+    n = len(items)
+    for i in range(n):
+      j = rng.randrange(n)
+      items[i], items[j] = items[j], items[i]
+  
+  \end{minted}
+}
+
+Les états de partie sont ensuite définis par une classe `GameState` contenant le plateau, la pioche restante, les scores et le nombre de meeples disponibles par joueur.
 
 Dans la suite de cette section, nous nous concentrerons plus particulièrement sur les quatre premiers algorithmes présentés qui constituent le cœur du système de prise de décision implémenté dans le projet.
 
 \subsection{Algorithme Minimax}
+\label{subsec:minimax}
 
 L'algorithme Minimax a pour but de déterminer les coups les plus optimaux pour un joueur à un état donné du jeu face à l’adversaire qui minimise le score du joueur “max”.
 Ainsi, l’algorithme parcourt récursivement une partie de l’arbre des états du jeu, limitée par une profondeur maximale fixée afin de contenir la complexité de recherche.
@@ -246,12 +315,64 @@ Il finit alors la recherche à la racine de l’arbre, ayant désormais connaiss
 
 L'algorithme Minimax avec approfondissement itératif (Iterative Deepening) est une technique de parcours progressif des profondeurs sur l’arbre des états d’un jeu. 
 Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur “max” est enregistré en remplaçant le précédent, et sera alors renvoyé après épuisement du temps donné. 
-Cette technique a pour avantage de déterminer une solution optimale à une profondeur quelconque même sur une courte durée, tandis que l’exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après une durée indéterminée.
+Cette technique a pour avantage de déterminer une solution utile même sur une courte durée, tandis que l’exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après un temps bloquant.
+
+En pratique, la recherche commence à faible profondeur puis augmente progressivement jusqu’à atteindre le temps limite :
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction choix_coup(etat, temps_max):
+    profondeur = 1
+    meilleur_coup = null
+    debut = temps()
+    TANT_QUE temps() - debut < temps_max FAIRE
+        meilleur_coup = recherche_minimax(etat, profondeur)
+        profondeur += 1
+    FIN TANT_QUE
+    RETOURNER meilleur_coup
+FIN FONCTION
+  \end{minted}
+}
+
+Cette approche garantit qu’un coup plausible est toujours disponible à la fin du délai, même si la profondeur maximale n’a pas pu être atteinte.
 
 \subsection{Algorithme Alpha-Beta}
 
-Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l’arbre des états d’un jeu en élaguant les branches qui n’apportent aucun gain nouveau pour le joueur “max”. 
+Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l’arbre des états d’un jeu en élaguant les branches qui n’apportent aucun gain nouveau pour le joueur “max”.\cite{alpha_beta}
 En stockant la meilleure valeur courante pour le joueur maximal ($\alpha$) et celle pour le joueur “min” ($\beta$) lors du parcours, l’algorithme n’évalue plus certains nœuds non-significatifs (et leurs potentiels enfants) quand $\alpha \geq \beta$, en réduisant potentiellement son temps d'exécution selon l’arbre donné.
+
+Le principe est le suivant : dès qu’une branche devient trop mauvaise pour l’un des joueurs, elle ne peut plus influencer la décision finale et peut être abandonnée. Le gain en temps est particulièrement important lorsque les successeurs sont ordonnés de manière à évaluer d’abord les coups les plus prometteurs.
+
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction alpha_beta(etat, profondeur, alpha, beta, joueur_max):
+    SI profondeur = 0 OU estFeuille(etat) ALORS
+        RETOURNER evalueHeuristique(etat)
+    FIN SI
+    SI joueur_max ALORS
+        valeur = -infini
+        POUR TOUT successeur s de etat FAIRE
+            valeur = max(valeur, alpha_beta(s, profondeur - 1, alpha, beta, FAUX))
+            alpha = max(alpha, valeur)
+            SI alpha >= beta ALORS
+                BRISER
+            FIN SI
+        FIN POUR TOUT
+    SINON
+        valeur = +infini
+        POUR TOUT successeur s de etat FAIRE
+            valeur = min(valeur, alpha_beta(s, profondeur - 1, alpha, beta, VRAI))
+            beta = min(beta, valeur)
+            SI beta <= alpha ALORS
+                BRISER
+            FIN SI
+        FIN POUR TOUT
+    FIN SINON
+    RETOURNER valeur
+FIN FONCTION
+  \end{minted}
+}
+
+Cette version conserve la qualité de la décision de Minimax, tout en réduisant significativement le nombre de nœuds évalués lorsque le tri des coups est efficace.
 
 \subsection{Fonction d’évaluation heuristique}
 
@@ -283,9 +404,13 @@ Cette combinaison d’algorithmes et de structures de données constitue le cœu
 
 \section{Architecture}
 Dans cette section, nous présentons l’architecture logicielle retenue pour l’implémentation du jeu Carcassonne.
-Le projet adopte une architecture 3-tiers\cite{n_tier_architecture} visant à séparer clairement les responsabilités afin d’améliorer la maintenabilité, la testabilité et l’évolutivité du code.
-Cette architecture nous paraît pertinente compte tenu du support naturel de la programmation orientée objet en Python. De plus, le projet amène naturellement à une structuration de ce genre.
-Cette architecture est structurée autour de trois modules principaux : Présentation, Logique Métier et Données, organisés selon des dépendances unidirectionnelles.
+Le projet adopte une architecture n-tiers\cite{n_tier_architecture} visant à séparer clairement les responsabilités afin d’améliorer la maintenabilité, la testabilité et l’évolutivité du code.
+Le principe fondamental de cette architecture est de diviser le système en couches distinctes, chacune ayant des responsabilités spécifiques, et de limiter les dépendances au minimum grâce à des interfaces bien définies.
+
+Dans un modèle n-tiers classique, chaque couche n’utilise que les services exposés par la couche située en dessous d’elle et ne dépend pas des détails d’implémentation de cette couche. Cela permet, par exemple, de remplacer l’interface utilisateur (CLI ou GUI) sans toucher à la logique métier, ou de simuler la persistance en tests unitaires en fournissant un faux service de stockage.
+
+Ainsi, dans notre projet, nous avons choisi une architecture à trois tiers avec une séparation nette entre la présentation, la logique métier et les données.
+Cette architecture est pertinente dans notre cas car elle permet de faire évoluer le jeu sans mélanger les règles du jeu, l’affichage et la persistance des données. Elle est structurée autour de trois modules principaux : Présentation, Logique Métier et Données, organisés selon des dépendances unidirectionnelles.
 
 \subsection{Découpage en modules}
 
@@ -417,30 +542,176 @@ La logique métier délègue la persistance au module Données via ces interface
 
 \section{Explication approfondie}
 
+Notre projet de Carcassonne en Python a été bien différent de ce que nous avions initialement prévu, notamment en raison de la complexité du jeu et des défis techniques rencontrés.
+Dans cette section, nous allons expliquer en détail les différentes étapes de notre développement, les choix que nous avons faits, ainsi que les difficultés que nous avons rencontrées pour deux fonctionnalités principales.
+
+
 \subsection{IA}
 
 \subsection{Fichier de configuration}
 
 \section{Revue critique du projet}
 
+Nous avons fait face à plusieurs défis au cours de ce projet notamment en ce qui concerne la complexité du jeu et la mise en œuvre de l’intelligence artificielle.
+Dans un premier temps, nous allons discuter de la completion du cahier des charges du projet.
+Dans un second temps, nous allons discuter des performances de notre projet et des limites de notre implémentation.
+Cette section terminera par une discussion sur les améliorations possibles pour notre projet.
+
+
 \subsection{Cahier des charges}
+
+Dans cette section, nous allons discuter de la manière dont nous avons respecté le cahier des charges du projet en analysant chaque partie et en expliquant ce qui a été fait et ce qui n'a pas été fait.
+
+\subsubsection{Généralités}
+
+Cette première partie du projet a été globalement respectée. Nous avons pris le temps avant de rendre le projet de vérifier le bon fonctionnement des tests et de vérifier que les différents bibliothèques utilisées étaient en accord avec les besoins.
+Des tests ont été mis en place tout au long du projet pour vérifier le bon fonctionnement de notre code et pour nous assurer que les différentes fonctionnalités étaient correctement implémentées.
+Le projet a alors une couverture globale de ?? ce qui est supérieur à ce qui était demandé dans le cahier des charges.
+
+
+\subsubsection{Besoins généraux}
+
+Cette partie a été relativement simple à respecter.
+La plus grande difficulté de cette partie a été de mettre en place le fichier de configuration qui est en lien avec tous les composants du projet auquel nous avons ajouté des fonctionnalités supplémentaires au fur et à mesure du projet.
+
+\subsubsection{Options au lancement}
+
+Cette partie a été simple à réaliser. Les besoins de cette partie n'était principalement que des options de lancements qui sont relativement simples à implémenter.
+Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leur test statistique.
+
+\subsubsection{Gestion du jeu}
+
+La gestion des règles a été la grande première étape du projet mais également la première difficulté majeure. En effet, les règles de Carcassonne sont relativement complexes à implémenter.
+Entre la connectivité des tuiles, les différentes conditions de placement des pions, les différentes conditions de scoring, il a fallu faire preuve de rigueur pour implémenter correctement les règles du jeu.
+\begin{itemize}
+  \item [$\bullet$] Les règles de base ont été simples à implémenter.
+  \item [$\bullet$] La gestion du score a été un grand défi. En effet, il a faullu mettre en place de la connexivité notamment pour les champs qui peuvent se situer entre des routes et des cités. 
+  Cette partie nous a pris beaucoup de temps et a été source de nombreux bugs, nous ayant alors ralentis dans le déroulement du projet.
+\end{itemize}
+
+\subsubsection{Command Line Interface (CLI)}
+
+Le CLI a été relativement simple à implémenter, notamment grâce à l’utilisation de bibliothèques telles que \textit{readline} de Python qui facilite la saisie de commande et de l'historique.
+En effet, l'importation de cette bibliothèque permet, sans grand effort, de valider deux besoins de cette partie :
+\begin{itemize}
+  \item[-] Édition de la commande en cours
+  \item[-] Historique des commandes tapées
+\end{itemize}
+Il a alors uniquement été nécessaire de faire des fonctions pour l'auto-complétion des commandes et de leurs arguments pour répondre au besoin F19 de complétion des commandes.
+Nous pouvons néanmoins penser à certaines améliorations possibles telles que la mise en point d'un design pattern pour la gestion des commandes du besoin F15.
+Ce design pattern aurait ainsi permis de faciliter la mise en place des commandes pour le GUI.
+
+\subsubsection{Format de sauvegarde}
+
+Cette partie s'est réalisé au fur et à mesure que nous avancions dans le projet.
+Nous avons d'abord implémenté une sauvegarde basique de l'état du jeu puis nous avons ajouté des fonctionnalités supplémentaires telles que le format de l'historique et la conformité avec le fichier de configuration.
+Cette partie aborde également le format du plateau de jeu qui a été relativement simple à implémenter, celui-ci n'étant pas très complexe à représenter de manière textuelle.
+
+\subsubsection{Structures de données}
+
+La mise en place d'un graphe pour représenter le plateau de jeu a été la première étapde du projet.
+Ce graphe nous a permis de gérer efficacement les différentes connexivités entre les tuiles notamment pour la gestion du score des champs en utilisant des composantes connexes.
+Toutefois, l'implémentation de ce graphe étant été faite au début du projet, il a été source de nombreux bugs et de difficultés dans la suite du projet.
+Nous pouvons notamment parler de la non existence de réelle classe \textit{Tile} où ce qui est stocké dans le graphe est en réalité appelé \textit{Vertex} ce qui a compliqué la gestion du code notamment lors de l'implémentation du GUI.
+
+
+\subsubsection{Graphical User Interface (GUI)}
+
+L'implémentation du GUI, avec l'intelligence artificielle,  a été la partie la plus longue du projet à implémenter. 
+En effet, le plus grand problème de cette partie a été d'attendre la mise en place des différentes fonctionnalités du projet pour pouvoir les implémenter sur le GUI.
+Cela a été plus difficile que le CLI car il a fallu mettre en place différents éléments graphiques tels que des menus, des boutons, des affichages de tuiles et de meeples.
+Une difficulté rencontrée par exemple a été de pouvoir poser une tuile sur le plateau de jeu.
+Le GUI utilise des coordonnées x et y pour représenter les positions sur le plateau de jeu alors que le module de logique métier utilise une tuile et une orientation pour représenter les positions sur le plateau de jeu.
+Il a alors fallu faire le lien entre ces deux représentations pour pouvoir poser une tuile sur le plateau de jeu à partir du GUI.
+
+\begin{minted}[frame=single]{python}
+    def find_neighbor_at(
+        self, x: int, y: int
+    ) -> tuple[Optional[int], Optional[int]]:
+        """
+        Cherche une tuile voisine autour de (x, y).
+
+        Retourne un tuple (vertex_id, side_relative_to_new_tile)
+        side_relative_to_new_tile : côté de la nouvelle tuile où est collé
+        le voisin
+        """
+        # Mapping direction → offset
+        neighbors_offset = {
+            NORTH_DIR: (0, -1),
+            EAST_DIR: (1, 0),
+            SOUTH_DIR: (0, 1),
+            WEST_DIR: (-1, 0),
+        }
+
+        for side, (dx, dy) in neighbors_offset.items():
+            nx, ny = x + dx, y + dy
+            for vertex in self.vertices.values():
+                vx, vy = vertex.get_position()
+                if (vx, vy) == (nx, ny):
+                    # side représente le côté de la nouvelle tuile où ce voisin
+                    # est collé
+                    opposite_side = (side + 2) % 4
+                    return vertex.get_id(), opposite_side
+\end{minted}
+
+Cette fonction permet de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
+
+
+Malgré tous ces défis, il reste quelques améliorations possibles pour le GUI pour le rendre cohérent avec tous les besoins du projet.
+\subsubsection{Joueur artificiel}
+La partie sur les joueurs artificiels a été la partie la plus dure du projet. En effet, comme abordé dans la section \ref{subsec:minimax}, Carcassonne est un jeu à la fois stochastique et à information parfaite
+ce qui rend l’implémentation de Minimax inutilisable dans sa forme classique.
+Il a fallu ainsi implémenter une version adaptée de Minimax avec des noeuds chance pour prendre en compte la pioche des tuiles.
+Ceci correspond alors à l'algorithme Expectimax, qui est une extension de Minimax pour les jeux stochastiques.
+Cependant, l’implémentation de cet algorithme s’est avérée très complexe et a été source de nombreux bugs, notamment en ce qui concerne la gestion des noeuds chance et la mise en place de fonctions d’évaluation heuristiques adaptées à ce jeu.
+
+
+\subsubsection{Jeu en réseau}
+
+
+Ce qui nous a pris le plus de temps dans cette partie a été de gérer le serveur côté GUI.
+Plus précisément, il a fallu faire en sorte que le GUI affiche les messages envoyé par le serveur. 
+Nous avons alors du mettre en place le design pattern Visitor pour faire en sorte que le GUI puisse afficher les messages du serveur sans avoir à faire de lien direct entre les deux composants.
 
 \subsection{Performance}
 
 \subsection{Limites et bugs}
 
+Toutefois, malgré nos efforts pour implémenter correctement les différentes fonctionnalités du projet, nous avons rencontré de nombreux bugs et limitations au cours du développement.
+
+
 \subsection{Perspectives d’amélioration}
+
+Une fois le projet complété, nous avons identifié de nombreuses pistes d’amélioration que ce soit au niveau de l'implémentation de certaines fonctionnalités, de la mise en place de notre code ou bien l'extensivité de notre projet.
+
+L'amérioration la plus évidente serait la mise en forme de notre code. En effet, notre code est relativement mal organisé et peu lisible ce qui rend la maintenance et l'évolution du projet plus difficile.
+Il aurait été ainsi intéressant de mettre en place un design pattern pour la gestion des commandes par exemple, ou bien de structurer notre code de manière plus claire et lisible.
+Cela a été du à un manque d'imagination de notre part pour prévoir une implémentation claire et lisible pour le futur. 
+Nous aurions du consacrer plus de temps à la réflexion sur l'implémentation de notre code avant de nous lancer dans le développement ce qui nous aurait permis d'avoir une meilleure vision d'ensemble du projet et ainsi éviter de faire des choix d'implémentation qui ont rendu notre code plus difficile à maintenir et à faire évoluer.
+Nous avons essayé de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement. 
+Cela a été le cas de notre fichier \textit{game.py} qui était au départ relié à beaucoup trop de fonctionnalités différentes, ou bien au fichier \textit{gui.py} qui était lui aussi relié à beaucoup de fonctionnalités différentes concernant le GUI.
+
+
+
+\subsection{Utilisation de l'IA}
+
+Tout au long du projet, nous avons eu recours à l'utilisation de l'intelligence artificielle pour de nombreuses tâches.
+Que ce soit pour la mise en place d'un code de base pour une partie du projet, améliorer la qualité du code ou bien affiner certaines fonctionnalités, l'IA a été un outil précieux pour nous aider à avancer plus rapidement et efficacement.
+Nous avons ainsi appris à utiliser différents modèles d'IA pour différentes tâches en fonction de leurs forces et de leurs faiblesses.
+
+Nous avons beaucoup utilisé l'extension \textit{Copilot} de Visual Studio Code qui nous a permis d'obtenir des suggestions de code pertinentes et de gagner du temps dans les tâches de codage répétitives en raison de sa capacité à avoir accès au contexte du code.
+L'utilisation d'autres modèles d'IA tels que \textit{ChatGPT} ou \textit{Claude 4.6} a également été bénéfique pour la mise en place de certaines fonctionnalités plus complexes telles que l'affichage de la réponse du server dans le GUI.
 
 \section{Liste des besoins}
 
 \begin{longtable}{|c|l|c|}
 \hline
-\textbf{N°} & \textbf{Description du besoin} & \textbf{Statut} \\
+\textbf{Besoin} & \textbf{Description du besoin} & \textbf{Statut} \\
 \hline
 \endfirsthead
 
 \hline
-\textbf{N°} & \textbf{Description du besoin} & \textbf{Statut} \\
+\textbf{Besoin} & \textbf{Description du besoin} & \textbf{Statut} \\
 \hline
 \endhead
 
