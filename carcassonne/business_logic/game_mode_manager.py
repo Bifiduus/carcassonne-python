@@ -39,7 +39,9 @@ class GameModeManager:
 
     def run_contest(self) -> str:
         """Execute the contest flow and return the move to print."""
-        filename = str(self.game.get_game_configuration().get("contest_file", ""))
+        filename = str(
+            self.game.get_game_configuration().get("contest_file", "")
+        )
         return self.contest_manager.run(filename)
 
     def get_configured_blitz_minutes(self) -> int:

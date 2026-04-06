@@ -62,7 +62,9 @@ class SaveHandler:
                 parent.mkdir(parents=True, exist_ok=True)
             except OSError:
                 print(
-                    f"Error: Could not create directory {parent}", file=sys.stderr)
+                    f"Error: Could not create directory {parent}",
+                    file=sys.stderr,
+                )
                 return -1
         try:
             with open(path, "w") as file:
@@ -78,7 +80,10 @@ class SaveHandler:
                 number_of_ai_players = self.game.get_number_of_ai_players()
                 file.write(
                     "NumberOfPlayers: "
-                    + str(len(self.game.game_data.players) - number_of_ai_players)
+                    + str(
+                        len(self.game.game_data.players)
+                        - number_of_ai_players
+                    )
                     + ","
                     + str(number_of_ai_players)
                     + "\n"
@@ -319,7 +324,10 @@ class SaveHandler:
                     tile = self.game.game_data.extract_tile_code(move)
                     self.game.game_data.current_hand = tile
                     if tile != self.game.draw_tile():
-                        print("The move doesn't match the seed !", file=sys.stderr)
+                        print(
+                            "The move doesn't match the seed !",
+                            file=sys.stderr,
+                        )
                     # Assuming line is in the format "player_id:details"
                     self.game.play_move(move)
 
