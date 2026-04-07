@@ -5,6 +5,11 @@ draw, place, and restore tiles during gameplay.
 """
 
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.datas.tiles_constants import CARDINALS
+from carcassonne.datas.tiles_constants import DIRECTION_MAP
+from carcassonne.datas.tiles_constants import MEEPLE_PLACEMENT
+from carcassonne.datas.tiles_constants import MATCH_MATRIX
+from carcassonne.datas.tiles_constants import TILE_PARTS
 
 
 class Tile:
@@ -36,6 +41,16 @@ class Tile:
 
 class TilesInfo(ITilesInfo):
     def __init__(self) -> None:
+        self.tiles_parts_list = list(TILE_PARTS)
+
+        self.meeple_placement_list = list(MEEPLE_PLACEMENT)
+
+        self.direction_list = list(CARDINALS)
+
+        self.direction_dict = dict(DIRECTION_MAP)
+
+        self.matrix_coordinates = dict(MATCH_MATRIX)
+
         self.tiles_dict = {
             # Basic Tiles
             "FFFF": ["m"],
@@ -67,51 +82,6 @@ class TilesInfo(ITilesInfo):
             "CSRS": ["void"],
             "RSRS": ["void"],
             "RRSS": ["void"],
-        }
-
-        self.tiles_parts_list = [
-            "NW",
-            "N",
-            "NE",
-            "E",
-            "SE",
-            "S",
-            "SW",
-            "W",
-            "C",
-        ]
-        self.direction_list = ["N", "E", "S", "W"]
-
-        self.meeple_placement_list = [
-            "N",
-            "NE",
-            "E",
-            "SE",
-            "S",
-            "SW",
-            "W",
-            "NW",
-            "C",
-        ]
-
-        self.direction_dict = {"N": 0, "E": 1, "S": 2, "W": 3}
-
-        self.direction_matrix = [
-            ["NW", "N", "NE"],
-            ["W", "C", "E"],
-            ["SW", "S", "SE"],
-        ]
-
-        self.matrix_coordinates = {
-            "NW": (0, 0),
-            "N": (0, 1),
-            "NE": (0, 2),
-            "E": (1, 2),
-            "SE": (2, 2),
-            "S": (2, 1),
-            "SW": (2, 0),
-            "W": (1, 0),
-            "C": (1, 1),
         }
 
         self.tiles_count = {
@@ -245,21 +215,18 @@ class TilesInfo(ITilesInfo):
                 "F": [["SE", "NW", "C"], ["SW"]],
                 "R": [["S", "W"]],
             },
-            # For now Center is nothing because it isn't a land, it splits the
-            # roads
+            # Center is nothing because it isn't a land, it splits the roads
             "FRRR": {
                 "F": [["N", "NE", "NW"], ["SE"], ["SW"]],
                 "R": [["E"], ["S"], ["W"]],
             },
-            # For now Center is nothing because it isn't a land, it splits the
-            # roads
+            # Center is nothing because it isn't a land, it splits the roads
             "CRRR": {
                 "C": [["N"]],
                 "F": [["NE", "NW"], ["SE"], ["SW"]],
                 "R": [["E"], ["S"], ["W"]],
             },
-            # For now Center is nothing because it isn't a land, it splits the
-            # roads
+            # Center is nothing because it isn't a land, it splits the roads
             "RRRR": {
                 "F": [["NE"], ["NW"], ["SE"], ["SW"]],
                 "R": [["N"], ["E"], ["S"], ["W"]],
@@ -381,28 +348,6 @@ class TilesInfo(ITilesInfo):
                     self.connects_to[tile_code],
                 )
                 seen_base_codes.add(base_code)
-
-    def rotate_matrix_90(self, matrix: list[list[str]]) -> list[list[str]]:
-        """
-        Rotates a matrix 90 degrees clockwise.
-
-        Args:
-            matrix: A 2D list to rotate
-
-        Returns:
-            A new matrix rotated 90 degrees clockwise
-        """
-        n = len(matrix)
-        m = len(matrix[0]) if matrix else 0
-
-        # Create new matrix with swapped dimensions
-        rotated = [["" for _ in range(n)] for _ in range(m)]
-
-        for i in range(n):
-            for j in range(m):
-                rotated[j][n - 1 - i] = matrix[i][j]
-
-        return rotated
 
     def is_tile_left(self, tile_code: str) -> bool:
         """

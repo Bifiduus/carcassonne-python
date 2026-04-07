@@ -1,24 +1,9 @@
 import logging
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
+from carcassonne.datas.tiles_constants import DIRECTION_MAP
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.player import Player
-
-# Integer IDs for cardinal directions,
-# used as keys in graph.vertices.neighbors.
-NORTH_DIR = 0
-EAST_DIR = 1
-SOUTH_DIR = 2
-WEST_DIR = 3
-
-# Convert tile definition direction strings ("N", "E", "S", "W")
-# to neighbor dictionary keys.
-DIRECTION_MAP = {
-    "N": NORTH_DIR,  # 0
-    "E": EAST_DIR,  # 1
-    "S": SOUTH_DIR,  # 2
-    "W": WEST_DIR,  # 3
-}
 
 logger = logging.getLogger(__name__)
 

@@ -3,14 +3,6 @@ import pytest
 from carcassonne.datas.tiles_info import TilesInfo
 
 
-def test_rotate_matrix_90_handles_rectangular_matrices() -> None:
-    tiles_info = TilesInfo()
-
-    rotated = tiles_info.rotate_matrix_90([["a", "b", "c"], ["d", "e", "f"]])
-
-    assert rotated == [["d", "a"], ["e", "b"], ["f", "c"]]
-
-
 def test_tile_inventory_methods_update_counts_and_validate_unknown_tiles() -> None:
     tiles_info = TilesInfo()
     initial_count = tiles_info.tiles_count["CFFF"]

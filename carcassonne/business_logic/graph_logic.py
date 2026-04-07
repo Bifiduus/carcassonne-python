@@ -7,18 +7,12 @@ interacting with `IGraphData`.
 from typing import Dict, List, Optional, Tuple
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.datas.tiles_constants import CARDINALS
+from carcassonne.datas.tiles_constants import DIRECTION_MAP
+from carcassonne.datas.tiles_constants import MATCH_MATRIX
+from carcassonne.datas.tiles_constants import OPPOSITE_CARDINAL
 
 from carcassonne.datas.tiles_info import Tile, TilesInfo
-
-NORTHWEST_MATRIX = (0, 0)
-NORTH_MATRIX = (0, 1)
-NORTHEAST_MATRIX = (0, 2)
-WEST_MATRIX = (1, 0)
-CENTER_MATRIX = (1, 1)
-EAST_MATRIX = (1, 2)
-SOUTHWEST_MATRIX = (2, 0)
-SOUTH_MATRIX = (2, 1)
-SOUTHEAST_MATRIX = (2, 2)
 
 DirectionGroup = List[str]
 GroupKey = Tuple[str, ...]
@@ -32,32 +26,23 @@ GroupLandTypeMap = Dict[GroupKey, str]
 
 class GraphLogic:
 
-    corners = ["NW", "NE", "SW", "SE"]
-    match_corners = {"NW": [0, 3], "NE": [0, 1], "SW": [2, 3], "SE": [2, 1]}
+    cardinals = list(CARDINALS)
 
-    match_cardinals = {"N": 0, "E": 1, "S": 2, "W": 3}
+    opposite_cardinal = OPPOSITE_CARDINAL
+
+    match_cardinals = DIRECTION_MAP
+
+    match_matrix = MATCH_MATRIX
+
+    corners = ["NW", "NE", "SW", "SE"]
+
+    match_corners = {"NW": [0, 3], "NE": [0, 1], "SW": [2, 3], "SE": [2, 1]}
 
     opposite_corners = {
         "NW": ["SW", "NE"],
         "NE": ["SE", "NW"],
         "SW": ["NW", "SE"],
         "SE": ["NE", "SW"],
-    }
-
-    opposite_cardinal = {"N": "S", "E": "W", "S": "N", "W": "E"}
-
-    cardinals = ["N", "E", "S", "W"]
-
-    match_matrix = {
-        "NW": NORTHWEST_MATRIX,
-        "N": NORTH_MATRIX,
-        "NE": NORTHEAST_MATRIX,
-        "W": WEST_MATRIX,
-        "C": CENTER_MATRIX,
-        "E": EAST_MATRIX,
-        "SW": SOUTHWEST_MATRIX,
-        "S": SOUTH_MATRIX,
-        "SE": SOUTHEAST_MATRIX,
     }
 
     def add_lands_components(

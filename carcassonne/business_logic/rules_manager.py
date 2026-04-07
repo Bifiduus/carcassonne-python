@@ -10,39 +10,16 @@ from carcassonne.business_logic.game.river_manager import RiverManager
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
+from carcassonne.datas.tiles_constants import MATCH_MATRIX
+from carcassonne.datas.tiles_constants import OPPOSITE_SIDE_MATRIX
 from carcassonne.datas.tiles_info import Tile
-
-NORTHWEST_MATRIX = (0, 0)
-NORTH_MATRIX = (0, 1)
-NORTHEAST_MATRIX = (0, 2)
-WEST_MATRIX = (1, 0)
-CENTER_MATRIX = (1, 1)
-EAST_MATRIX = (1, 2)
-SOUTHWEST_MATRIX = (2, 0)
-SOUTH_MATRIX = (2, 1)
-SOUTHEAST_MATRIX = (2, 2)
 
 
 class RulesManager:
 
-    opposite_side_matrix = {
-        0: SOUTH_MATRIX,
-        1: WEST_MATRIX,
-        2: NORTH_MATRIX,
-        3: EAST_MATRIX,
-    }
+    opposite_side_matrix = OPPOSITE_SIDE_MATRIX
 
-    match_matrix = {
-        "NW": NORTHWEST_MATRIX,
-        "N": NORTH_MATRIX,
-        "NE": NORTHEAST_MATRIX,
-        "W": WEST_MATRIX,
-        "C": CENTER_MATRIX,
-        "E": EAST_MATRIX,
-        "SW": SOUTHWEST_MATRIX,
-        "S": SOUTH_MATRIX,
-        "SE": SOUTHEAST_MATRIX,
-    }
+    match_matrix = MATCH_MATRIX
 
     def __init__(self, tiles_info: ITilesInfo):
         """Initialize RulesManager.

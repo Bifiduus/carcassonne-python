@@ -9,18 +9,14 @@ from typing import Dict, Optional, List
 
 from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.player import Player
+from carcassonne.datas.tiles_constants import EAST_DIR
+from carcassonne.datas.tiles_constants import NORTH_DIR
+from carcassonne.datas.tiles_constants import ORIENTATIONS
+from carcassonne.datas.tiles_constants import SOUTH_DIR
+from carcassonne.datas.tiles_constants import WEST_DIR
 from carcassonne.datas.meeple_data import Meeple
 from carcassonne.datas.tiles_info import TilesInfo
 from carcassonne.datas.tiles_info import Tile
-
-NORTH_DIR = 0
-EAST_DIR = 1
-SOUTH_DIR = 2
-WEST_DIR = 3
-
-ORIENTATIONS = 4
-
-OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 LAND_TYPES = ("C", "R", "F", "M", "S")
 
