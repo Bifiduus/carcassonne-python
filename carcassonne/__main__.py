@@ -255,7 +255,13 @@ def main() -> int:
 
     game_data: IGraphData = GraphData()
     nb_players = args.players if args.players and 1 < args.players <= 5 else 2
-    game: IGameService = Game(game_data, nb_players, config_overrides)
+    game: IGameService = Game(
+        game_data,
+        nb_players,
+        config_overrides,
+        shuffle_algo=args.shuffle,
+        default_seed=args.seed,
+    )
     game_repo: IGamesRepository = GameRepository()
     daemon: bool = bool(args.daemon)
     server_service: IServerService = Server(game_repo, daemon=daemon)

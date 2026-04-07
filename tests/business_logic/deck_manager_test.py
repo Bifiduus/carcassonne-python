@@ -195,3 +195,27 @@ def test_shuffle_deck_generates_seed_when_missing(monkeypatch) -> None:
     assert deck.shuffle_fisher_yates_calls == [9876]
     assert deck.shuffle_naive_calls == []
     assert game_data.seed == 9876
+
+
+def test_shuffle_deck_seeds_runtime_rng_with_resolved_seed(monkeypatch) -> None:
+    deck = DummyDeck()
+    game_data = DummyGameData(
+        deck,
+        shuffle_algo="fisher-yates",
+        default_seed=1234,
+    )
+    manager = DeckManager(
+        game_data,
+        DummyBlitzManager(),
+        DummyRiverManager(active=False),
+    )
+    seeded_values: list[int] = []
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.deck_manager.random.seed",
+        lambda value: seeded_values.append(value),
+    )
+
+    manager.shuffle_deck()
+
+    assert seeded_values == [1234]

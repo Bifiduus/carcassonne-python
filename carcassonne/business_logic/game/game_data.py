@@ -99,10 +99,14 @@ class GameData:
             self.players[i+1] = players[i]
             self.players_order.append(players[i].get_id())
 
-    def shuffle_players_order(self) -> None:
+    def shuffle_players_order(self, seed: int | None = None) -> None:
         """Shuffle the players order."""
         others = [player for player in self.players_order]
-        r.shuffle(others)
+        if seed is None:
+            r.shuffle(others)
+        else:
+            rng = r.Random(seed)
+            rng.shuffle(others)
         self.players_order = others
 
     def get_current_player(self) -> Player:

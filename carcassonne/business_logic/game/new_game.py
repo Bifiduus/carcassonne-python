@@ -45,8 +45,10 @@ class NewGame:
         self.game_data.rules_manager = RulesManager(self.game_data.tiles_info)
         self.game_data.players.clear()
         self.game_data.add_online_players(players)
-        self.deck_manager.shuffle_deck()
-        self.game_data.shuffle_players_order()
+        resolved_seed = self.deck_manager.resolve_seed()
+        self.game_data.players_order = list(self.game_data.players.keys())
+        self.game_data.shuffle_players_order(resolved_seed)
+        self.deck_manager.shuffle_deck(seed=resolved_seed)
         self.game_data.current_player_order_list = 0
         return "Starting the game."
 
@@ -70,13 +72,15 @@ class NewGame:
         self.game_data.current_hand = None
         self.game_data.tiles_info = TilesInfo()
         self.game_data.rules_manager = RulesManager(self.game_data.tiles_info)
+        resolved_seed = self.deck_manager.resolve_seed(seed)
         if players_order is not None:
             self.game_data.players_order = players_order
         else:
-            self.game_data.shuffle_players_order()
+            self.game_data.players_order = list(self.game_data.players.keys())
+            self.game_data.shuffle_players_order(resolved_seed)
         for player in self.game_data.players.values():
             player.reset()
-        self.deck_manager.shuffle_deck(None, seed)
+        self.deck_manager.shuffle_deck(None, resolved_seed)
         self.game_data.current_player_order_list = 0
         self.game_data._end_game_scored = False
         self.blitz_manager._initialize_blitz_state()

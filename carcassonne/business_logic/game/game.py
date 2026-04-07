@@ -29,9 +29,18 @@ OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 class Game(IGameService):
 
     def __init__(
-        self, graphData: IGraphData, nb_players: int, config_overrides=None
+        self,
+        graphData: IGraphData,
+        nb_players: int,
+        config_overrides=None,
+        shuffle_algo: str | None = None,
+        default_seed: int | None = None,
     ) -> None:
         self.game_data = GameData(graphData, nb_players, config_overrides)
+        if shuffle_algo is not None:
+            self.game_data.shuffle_algo = shuffle_algo
+        if default_seed is not None:
+            self.game_data.default_seed = default_seed
         self.save_handler = SaveHandler(self)
         self.score_manager = ScoreManager()
         self.blitz_manager = BlitzManager(self.game_data)

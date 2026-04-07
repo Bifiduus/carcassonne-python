@@ -67,6 +67,27 @@ def test_add_online_players_replaces_existing_players_and_assigns_colors(monkeyp
     assert data.players_order == [1, 2]
 
 
+def test_shuffle_players_order_is_deterministic_with_seed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.GameConfiguration",
+        DummyGameConfiguration,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.r.shuffle",
+        lambda players: None,
+    )
+
+    data_a = GameData(DummyGraph(), 3)
+    data_b = GameData(DummyGraph(), 3)
+    data_a.players_order = [0, 1, 2]
+    data_b.players_order = [0, 1, 2]
+
+    data_a.shuffle_players_order(123)
+    data_b.shuffle_players_order(123)
+
+    assert data_a.players_order == data_b.players_order
+
+
 def test_reset_reinitializes_runtime_state_and_uses_river_start(monkeypatch) -> None:
     monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.GameConfiguration",
