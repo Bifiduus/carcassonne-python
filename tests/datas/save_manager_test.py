@@ -33,9 +33,18 @@ class DummyGame:
             "ai_mode": "random",
             "file_keybinds": {"save": "s", "quit": "q"},
         }
-        self.game_data = type(
+        game_data_type = type(
             "GameData",
             (),
+            {
+                "extract_tile_code": staticmethod(
+                    lambda move: move.split("/", 1)[0]
+                ),
+            },
+        )
+        self.game_data = type(
+            "DummyGameData",
+            (game_data_type,),
             {
                 "players": {
                     0: DummyPlayer(0, 12),
@@ -102,7 +111,8 @@ def test_save_handler_serialize_and_invalid_filenames(capsys) -> None:
     assert handler.load_game_from_file("") == -1
     assert handler.load_game_from_file("missing-file") == -1
 
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert "Error: Invalid filename." in output
     assert "Error: Could not open file missing-file.txt" in output
 
@@ -117,8 +127,8 @@ def test_save_game_to_file_writes_settings_state_and_history(tmp_path: Path) -> 
     content = (tmp_path / "saved_game.txt").read_text()
 
     assert "[Settings]" in content
-    assert "verbose: True" in content
-    assert "file_keybinds: [save: s, quit: q]" in content
+    assert "verbose=True" in content
+    assert "file_keybinds=[save: s, quit: q]" in content
     assert "[GameState]" in content
     assert "NumberOfPlayers: 2,1" in content
     assert "PlayersOrder: [2 , 0 , 1 ]" in content
@@ -136,11 +146,11 @@ def test_load_game_from_file_parses_sections_and_replays_moves(tmp_path: Path) -
         "\n".join(
             [
                 "[Settings]",
-                "verbose: true",
-                "time: 25",
-                "ai_mode: minimax",
-                "file_keybinds: [save: s, quit: q]",
-                "contest_file: contest.txt # inline comment",
+                "verbose=true",
+                "time=25",
+                "ai_mode=minimax",
+                "file_keybinds=[save: s, quit: q]",
+                "contest_file=contest.txt # inline comment",
                 "",
                 "[GameState]",
                 "NumberOfPlayers: 2,1",
@@ -169,7 +179,7 @@ def test_load_game_from_file_parses_sections_and_replays_moves(tmp_path: Path) -
     assert game.game_data.players[2].score.score == 13
     assert game.game_data.seed == 1234
     assert game.shuffle_calls == [("fisher-yates", 1234)]
-    assert game.played_moves == ["CFFF/0N0;", "FFFF/m/1E0;"]
+    assert game.played_moves == ["CFFF/0N0", "FFFF/m/1E0"]
 
 
 def test_load_game_from_file_warns_on_invalid_sections_and_seed_mismatch(
@@ -195,7 +205,8 @@ def test_load_game_from_file_warns_on_invalid_sections_and_seed_mismatch(
 
     assert handler.load_game_from_file(str(save_file)) == 0
 
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert "Warning: [Settings] section not found before [GameState]." in output
     assert "Warning: Number of players should be between 2 and 5." in output
     assert "Warning: Players order not specified." in output

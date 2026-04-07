@@ -103,7 +103,10 @@ def test_join_server_covers_missing_server_success_and_connection_error(
     client, repo, server_service = build_client()
 
     assert client.join_server("10.0.0.1") is False
-    assert "there is no server with that IP address" in capsys.readouterr().out
+    assert (
+        "there is no server with that IP address"
+        in capsys.readouterr().err
+    )
 
     client.available_servers = {"10.0.0.1": (4242, 0.0)}
     fake_socket = FakeTCPSocket()
@@ -127,7 +130,7 @@ def test_join_server_covers_missing_server_success_and_connection_error(
 
     assert client.join_server("10.0.0.1") is False
     assert client.client is None
-    assert "Unable to connect to 10.0.0.1:4242" in capsys.readouterr().out
+    assert "Unable to connect to 10.0.0.1:4242" in capsys.readouterr().err
 
 
 def test_join_server_defaults_to_current_server_name_and_uses_server_specific_username(
@@ -197,7 +200,7 @@ def test_receive_loop_processes_messages_and_handles_shutdown(monkeypatch, capsy
     error_socket = ReceiveSocket([OSError("broken")])
     client.client = error_socket
     client._receive_loop("srv")
-    assert "Socket error: broken" in capsys.readouterr().out
+    assert "Socket error: broken" in capsys.readouterr().err
 
 
 def test_receive_loop_handles_timeouts_state_changes_and_close_errors(
@@ -236,7 +239,8 @@ def test_receive_loop_handles_timeouts_state_changes_and_close_errors(
     client.handle_server_message = handle_message
     client._receive_loop("srv")
 
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert "Error closing client socket: close fail" in output
     assert receive_socket.closed is True
     assert client.client is None
@@ -344,7 +348,7 @@ def test_list_available_servers_and_timeout_cleanup_cover_valid_and_invalid_mess
         lambda *args, **kwargs: bad_socket,
     )
     assert client.list_available_servers() == {}
-    assert "Error binding socket: bind failed" in capsys.readouterr().out
+    assert "Error binding socket: bind failed" in capsys.readouterr().err
 
 
 def test_list_available_servers_handles_invalid_format_and_receive_errors(
@@ -391,7 +395,7 @@ def test_list_available_servers_handles_invalid_format_and_receive_errors(
     )
 
     assert client.list_available_servers(timeout=0.1) == {}
-    assert "Error receiving message: recv fail" in capsys.readouterr().out
+    assert "Error receiving message: recv fail" in capsys.readouterr().err
 
 
 def test_create_player_ping_connection_send_disconnect_and_visitor_registration(
@@ -401,23 +405,19 @@ def test_create_player_ping_connection_send_disconnect_and_visitor_registration(
     assert client.create_default_online_player(" Bob ", "pw", "srv") == "created"
     assert client.client_player == "Bob"
 
-    client.client = None
-    client.send_to_server = Mock()
-    assert client.ping() == "Error: no client socket found."
-
     client, repo, server_service = build_client()
     fake_socket = FakeTCPSocket()
     client.client = fake_socket
     client.has_joined_server = True
     client.connected_server = "srv"
     repo.has_no_special_username.return_value = True
+    monkeypatch.setattr(
+        "carcassonne.business_logic.client.time.time",
+        lambda: 123.4,
+    )
     assert client.send_to_server("ping") is True
-    assert fake_socket.sent[-1] == b"alice: ping"
+    assert fake_socket.sent[-1] == b"alice: ping 123.4"
     assert client.connected_to_a_server() is True
-
-    fake_socket.recv = lambda size: b"pong\n"
-    response = client.ping()
-    assert response.startswith("pong\nTime=")
 
     client.client = None
     assert client.connected_to_a_server() is False
@@ -451,13 +451,6 @@ def test_ping_send_to_server_and_disconnect_cover_remaining_branches(
     monkeypatch, capsys
 ) -> None:
     client, repo, _ = build_client()
-    fake_socket = FakeTCPSocket()
-    fake_socket.recv = lambda size: b"nope"
-    client.client = fake_socket
-    client.has_joined_server = True
-    client.connected_server = "srv"
-    assert client.ping() == "No server response"
-
     repo.has_no_special_username.return_value = False
     repo.get_online_player.side_effect = lambda server: {"srv": "alice-srv"}[
         server
@@ -469,7 +462,7 @@ def test_ping_send_to_server_and_disconnect_cover_remaining_branches(
     client.connected_server = "srv"
     assert client.send_to_server("quit") is False
     assert client.has_joined_server is False
-    assert "Failed to send: weird" in capsys.readouterr().out
+    assert "Failed to send: weird" in capsys.readouterr().err
 
     client, _, _ = build_client()
     broken_socket = FakeTCPSocket()

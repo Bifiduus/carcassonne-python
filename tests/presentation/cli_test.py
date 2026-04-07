@@ -278,19 +278,19 @@ def test_tick_once_and_on_game_over_cover_timeout_ai_and_final_scores(capsys) ->
     cli._tick_once()
 
     assert game.play_ai_turn.called
-    assert game.get_board.called
+    assert game.get_printed_board.called
     output = capsys.readouterr().out
     assert "Timeout!" in output
 
     cli.running = True
-    game.get_board.reset_mock()
+    game.get_printed_board.reset_mock()
     cli._on_game_over()
     output = capsys.readouterr().out
     assert "=== Game finished! Final scores ===" in output
     assert "1. Alice: 12 points" in output
     assert "2. Bob: 8 points" in output
     assert cli.running is False
-    game.get_board.assert_called()
+    game.get_printed_board.assert_called()
 
 
 def test_run_executes_main_loop_and_writes_history() -> None:

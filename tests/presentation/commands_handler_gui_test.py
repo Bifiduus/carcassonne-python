@@ -1,6 +1,10 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
+
+pytest.importorskip("gi")
+
 from carcassonne.presentation.gui import commands_handler_gui
 
 

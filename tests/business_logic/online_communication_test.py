@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from carcassonne.business_logic.online_communication import OnlineCommunication
 
@@ -100,6 +100,7 @@ def build_online_context(
         send_invitation=Mock(),
         check_profile_player=Mock(return_value="profile"),
         send_to_group=Mock(),
+        send_to_group_except=Mock(),
     )
 
     return OnlineCommunication(server), server, repo, game
@@ -108,7 +109,11 @@ def build_online_context(
 def test_online_communication_basic_commands_and_invitations() -> None:
     communication, server, repo, _ = build_online_context()
 
-    assert communication.command_ping() == "pong\n"
+    with patch(
+        "carcassonne.business_logic.online_communication.time",
+        return_value=15.0,
+    ):
+        assert communication.command_ping("ping 10.0") == "pong\nTime is 5.0ms"
     assert communication.command_quit("Alice") == "Bye Alice!\n"
     assert "Port: 4242" in communication.command_server_status()
     assert communication.command_new("new", "1") == "You cannot create an empty party !"
@@ -172,7 +177,11 @@ def test_online_communication_gameplay_commands_cover_play_board_set_config_and_
     game.end_game = lambda: False
     game.play_move.return_value = True
     assert communication.command_play("play CFFF/0N0", "1").startswith("Move played.\nBOARD\n")
-    server.send_to_group.assert_called_with(7, "Board game:\nBOARD\n")
+    server.send_to_group_except.assert_called_with(
+        7,
+        "OPPONENT_MOVE played move. Board:\nBOARD\n",
+        "Alice",
+    )
 
     game.play_move.return_value = False
     assert communication.command_play("play CFFF/0N0", "1").startswith("Move not played.\nBOARD\n")
@@ -185,7 +194,7 @@ def test_online_communication_gameplay_commands_cover_play_board_set_config_and_
 
 
 def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_load() -> None:
-    communication, _, repo, game = build_online_context(hand=None)
+    communication, server, repo, game = build_online_context(hand=None)
 
     repo.get_party_id.return_value = -1
     assert communication.command_score("1") == "You are not in a game."
@@ -225,8 +234,18 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
     assert communication.command_hint("1") == "CFFF/0N0"
     assert communication.command_redo("1") == "Last moves redone."
     game.redo.assert_called_once_with()
+    server.send_to_group_except.assert_called_with(
+        7,
+        "OPPONENT_MOVE redone moves. Board:\nBOARD\n",
+        "Alice",
+    )
     assert communication.command_undo("1") == "Last moves undone."
     game.undo.assert_called_once_with()
+    server.send_to_group_except.assert_called_with(
+        7,
+        "OPPONENT_MOVE undone moves. Board:\nBOARD\n",
+        "Alice",
+    )
 
     game.game_data.current_hand = None
     game.draw_tile.return_value = None
@@ -237,6 +256,11 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
     game.game_data.current_hand = None
     game.draw_tile.return_value = "CFFF"
     assert communication.command_draw("1") == "Tile drawn: CFFF"
+    server.send_to_group_except.assert_called_with(
+        7,
+        "OPPONENT_MOVE drew a tile.\n",
+        "Alice",
+    )
 
     assert "Deck shuffled. Algorithm: fisher-yates. Seed: 321" == communication.command_shuffle("1")
     assert communication.command_save("1", "save game1") == "Game saved to game1."

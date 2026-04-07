@@ -345,6 +345,8 @@ class GameRepository(IGamesRepository):
             "SELECT group_id FROM groups WHERE host_player=?;",
             (host_id,)
         )
+        if not rows:
+            return -1
         return rows[0]["group_id"]
 
     def party_is_launched(self, host_id: int) -> bool:
@@ -575,7 +577,8 @@ class GameRepository(IGamesRepository):
 
     def client_quit(self, client_username: str):
         client_id = self.get_id_from_username(client_username)
-        if self.get_group(client_id) != -1:
+        group_id = self.get_party_id(str(client_id))
+        if group_id not in (-1, None):
             self.remove_client_from_party(client_username)
 
         self._execute_non_query(
@@ -586,8 +589,8 @@ class GameRepository(IGamesRepository):
 
     def remove_client_from_party(self, client_username: str):
         client_id = self.get_id_from_username(client_username)
-        group_id = self.get_group(client_id)
-        if group_id == -1:
+        group_id = self.get_party_id(str(client_id))
+        if group_id in (-1, None):
             return
         host_id = self.get_host_from_party(group_id)
         if host_id == client_id:

@@ -125,7 +125,8 @@ def test_server_start_and_basic_helpers(monkeypatch, capsys) -> None:
         lambda *args, **kwargs: FakeSocket(bind_error=OSError("boom")),
     )
     bad_server.server_start("9999")
-    assert "Error starting server: boom" in capsys.readouterr().out
+    output = capsys.readouterr()
+    assert "Error starting server: boom" in (output.out + output.err)
 
 
 def test_server_repository_player_and_profile_helpers(monkeypatch) -> None:
@@ -257,7 +258,8 @@ def test_server_process_message_and_send_helpers(monkeypatch, capsys) -> None:
     repo.get_id_from_username.side_effect = lambda username: {"Alice": 1, "Bob": 2}[username]
     server.send_to_clients("hello\n")
     assert socket_ok.sent[0] == b"Server -> Client1: hello\n"
-    assert "Error sending to client: boom" in capsys.readouterr().out
+    output = capsys.readouterr()
+    assert "Error handling client: boom" in (output.out + output.err)
 
     server.repo.get_players_from_group.return_value = ["Alice", "Bob"]
     server.send_to_client = Mock(side_effect=[True, False])
@@ -311,7 +313,8 @@ def test_server_registration_invitations_party_management_and_cleanup(
     server.send_invitation("2", "1")
     assert invited_socket.sent
     server.send_invitation("3", "1")
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert (
         "Error sending invitation" in output
         or "Client socket not found for 3" in output
@@ -341,6 +344,10 @@ def test_server_registration_invitations_party_management_and_cleanup(
 
     ended_game = Mock()
     ended_game.end_game.return_value = True
+    ended_game.game_data.players = {
+        1: SimpleNamespace(score=SimpleNamespace(score=10)),
+        2: SimpleNamespace(score=SimpleNamespace(score=4)),
+    }
     server.current_games_list = {99: ("Party", ended_game)}
     repo.get_group_from_game.return_value = 99
     repo.check_party_is_alive.return_value = True
@@ -540,7 +547,8 @@ def test_handle_client_marks_improper_clients_on_processing_errors(
 
     server.handle_client(client_socket)
 
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert "Error handling client: boom" in output
     repo.set_unproper_client.assert_called_once_with("Alice")
     repo.set_timeout_for_player.assert_called_once_with(
@@ -577,7 +585,8 @@ def test_server_stop_logs_errors_and_thread_warnings(monkeypatch, capsys) -> Non
 
     server.server_stop()
 
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
     assert "Error closing server socket: close fail" in output
     assert "Error sending shutdown message: send fail" in output
     assert "Error closing client socket: client close fail" in output
@@ -613,7 +622,10 @@ def test_server_starting_game_and_invitation_cover_additional_error_paths(
     message = server.create_new_party([1, 2], "1")
 
     assert message == "Your party has been created successfully !\n"
-    assert "Error creating party in repository: db fail" in capsys.readouterr().out
+    output = capsys.readouterr()
+    assert "Error creating party in repository: db fail" in (
+        output.out + output.err
+    )
 
     server.get_connected_players = Mock(
         return_value=[
