@@ -74,7 +74,7 @@ def test_configuration_loads_existing_values_and_keybinds(monkeypatch, tmp_path)
     assert config.get_setting_value("ai_minimax_depth") == 4
     assert config.get_setting_value("ai_minimax_scoring") == "short_term"
     assert config.get_setting_value("ai_mcts_selection") == "ML"
-    assert config.get_setting_value("contest_file") == "contest.txt"
+    assert config.get_setting_value("contest_file") == ""
     assert config.get_setting_value("file_keybinds") == {"app.new": "x"}
     assert config.get_setting_value("game_keybinds") == {"app.undo": "z"}
 
@@ -132,4 +132,4 @@ def test_configuration_save_show_and_getters_use_current_settings(monkeypatch, t
     assert parser.getboolean("defaults", "river") is True
     assert parser.getint("defaults", "num_ai_players") == 3
     assert parser.get("defaults", "ai_mode") == "iterative"
-    assert parser.get("defaults", "contest_file") == "position.txt"
+    assert not parser.has_option("defaults", "contest_file")

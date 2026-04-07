@@ -59,7 +59,6 @@ class GameConfiguration:
             "ai_minimax_depth": 83,
             "ai_minimax_scoring": "baseline",
             "ai_mcts_selection": "UCT",
-            "contest_file": "",
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),
@@ -117,12 +116,8 @@ class GameConfiguration:
                 settings["ai_mcts_selection"] = config.get(
                     "defaults", "ai_mcts_selection"
                 )
-            # optional contest file
-            if config.has_option("defaults", "contest_file"):
-                settings["contest_file"] = config.get(
-                    "defaults", "contest_file"
-                )
-
+            # `contest_file` is intentionally runtime-only so a stale path
+            # cannot silently reactivate contest mode on the next launch.
             if "keybinds" in config:
                 if config.has_option("keybinds", "file_keybinds"):
                     settings["file_keybinds"] = json.loads(
@@ -155,7 +150,6 @@ class GameConfiguration:
                 self.settings["ai_minimax_scoring"]
             ),
             "ai_mcts_selection": str(self.settings["ai_mcts_selection"]),
-            "contest_file": str(self.settings.get("contest_file", "")),
         }
         config["keybinds"] = {
             "file_keybinds": json.dumps(self.settings["file_keybinds"]),

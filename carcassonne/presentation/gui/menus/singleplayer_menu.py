@@ -128,6 +128,11 @@ class SingleplayerMenu(Gtk.Box):
         self.gui.game_data.game.set_game_configuration("time", time_str)
         self.gui.game_data.game.save_config()
 
+    def _clear_contest_selection(self):
+        self.selected_file = None
+        self.file_button.set_label(_("Choose contest file"))
+        self.gui.game_data.game.set_game_configuration("contest_file", "")
+
     def on_mode_toggle(self, button):
         """Apply mode configuration when it changes"""
         # Update UI visibility
@@ -142,11 +147,10 @@ class SingleplayerMenu(Gtk.Box):
             self.contest_cb.set_active(False)
             self.time_box.set_visible(True)
             self.file_button.set_visible(False)
-            self.selected_file = None
+            self._clear_contest_selection()
 
             # Apply blitz mode
             self.gui.game_data.game.set_game_configuration("blitz", True)
-            self.gui.game_data.game.set_game_configuration("contest_file", "")
 
         elif button is self.contest_cb and button.get_active():
             self.blitz_cb.set_active(False)
@@ -160,7 +164,7 @@ class SingleplayerMenu(Gtk.Box):
         else:
             self.file_button.set_visible(False)
             self.time_box.set_visible(False)
-            self.selected_file = None
+            self._clear_contest_selection()
 
             # Clear both modes
             self.gui.game_data.game.set_game_configuration("blitz", False)
