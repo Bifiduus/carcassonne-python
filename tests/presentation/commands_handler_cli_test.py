@@ -40,10 +40,15 @@ def build_local_context():
         end_game=Mock(return_value=False),
         play_ai_turn=Mock(),
         get_current_player=Mock(return_value=player),
+        get_players_order=Mock(return_value=[1, 2]),
         game_data=SimpleNamespace(
             current_hand=None,
             shuffle_algo="fisher-yates",
             history=history,
+            players={
+                1: SimpleNamespace(get_score_int=lambda: 12),
+                2: SimpleNamespace(get_score_int=lambda: 8),
+            },
         ),
     )
     cli = SimpleNamespace(game=game, running=True)
@@ -119,7 +124,7 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     assert "Tile drawn: CFFF" in output
     assert "No tile in hand." in output
     assert "Tile in hand: FRFR" in output
-    assert "Player scores:" in output
+    assert "Scores:" in output
     assert "Move history:" in output
     assert "Current game configuration:" in output
     assert "Parameter 'ai_mode' set to 'minimax'." in output
@@ -188,10 +193,19 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
             self.is_undo_history_empty = Mock(return_value=False)
             self.clear_undo_history = Mock()
             self.end_game = Mock(return_value=False)
-            self.game_data = SimpleNamespace(history=SimpleNamespace(past_moves=[], future_moves=[]))
+            self.game_data = SimpleNamespace(
+                history=SimpleNamespace(past_moves=[], future_moves=[]),
+                players={
+                    1: SimpleNamespace(get_score_int=lambda: 5),
+                    2: SimpleNamespace(get_score_int=lambda: 3),
+                },
+            )
 
         def get_current_player(self):
             return self.current_player
+
+        def get_players_order(self):
+            return [1, 2]
 
         def play_ai_turn(self, _game):
             self.current_player = DummyPlayer(1, is_ai=False)
