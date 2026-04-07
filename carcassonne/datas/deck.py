@@ -166,11 +166,6 @@ class Deck:
             self._shuffle_fisher_yates_in_place(river_prefix, rng)
             self.river_tiles[:-1] = river_prefix
 
-        if len(self.river_tiles) > 1:
-            river_prefix = self.river_tiles[:-1]
-            self._shuffle_fisher_yates_in_place(river_prefix, rng)
-            self.river_tiles[:-1] = river_prefix
-
     def shuffle_naive(self, seed: int) -> None:
         """
         Shuffle the deck with a deterministic naive swap strategy.
@@ -180,11 +175,6 @@ class Deck:
         """
         rng = random.Random(seed)
         self._shuffle_naive_in_place(self.tiles, rng)
-
-        if len(self.river_tiles) > 1:
-            river_prefix = self.river_tiles[:-1]
-            self._shuffle_naive_in_place(river_prefix, rng)
-            self.river_tiles[:-1] = river_prefix
 
         if len(self.river_tiles) > 1:
             river_prefix = self.river_tiles[:-1]
