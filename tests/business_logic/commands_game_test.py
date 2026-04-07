@@ -88,19 +88,25 @@ def test_provide_hint_returns_empty_when_no_tile_is_drawn() -> None:
     assert deck_manager.draw_calls == 1
 
 
-def test_provide_hint_random_mode_uses_random_player(monkeypatch) -> None:
+def test_provide_hint_always_uses_iterative_with_5_second_limit(monkeypatch) -> None:
+    """Hints always use iterative deepening AI with 5-second time limit."""
     created = {}
 
-    class FakeRandomPlayer:
-        def random_move(self, hand, game):
-            created["args"] = (hand, game)
-            return "CFFF/0N0"
+    class FakeIterativePlayer:
+        def __init__(self, game, start_time, ai_time, depth, eval_name) -> None:
+            created["init"] = (game, start_time, ai_time, depth, eval_name)
+
+        def search(self, game, **kwargs):
+            created["search"] = (game, kwargs)
+            return 5.0, "CFFF/0N0/N"
 
     monkeypatch.setattr(
-        "carcassonne.business_logic.ai_model.RandomPlayer",
-        FakeRandomPlayer,
+        "carcassonne.business_logic.ai_model.IterativeDeepeningPlayer",
+        FakeIterativePlayer,
     )
-    data = DummyGameData({"ai_mode": "random"})
+    monkeypatch.setattr("time.time", lambda: 10.0)
+    data = DummyGameData(
+        {"ai_minimax_depth": 2, "ai_minimax_scoring": "baseline"})
     game = object()
     command = CommandsGame(
         DummyBlitzManager(),
@@ -111,64 +117,28 @@ def test_provide_hint_random_mode_uses_random_player(monkeypatch) -> None:
 
     move = command.provide_hint()
 
-    assert move == "CFFF/0N0"
-    assert created["args"] == ("CFFF", game)
+    assert move == "CFFF/0N0/N"
+    # Should use 5.0 seconds regardless of config
+    assert created["init"] == (game, 10.0, 5.0, 2, "baseline")
 
 
-def test_provide_hint_expectimax_requires_game_and_passes_search_parameters(
-    monkeypatch,
-) -> None:
-    data = DummyGameData(
-        {
-            "ai_mode": "expectimax",
-            "ai_time": 7.5,
-            "ai_minimax_depth": 3,
-            "ai_minimax_scoring": "short",
-        }
-    )
+def test_provide_hint_requires_game(monkeypatch) -> None:
+    """Hints require a game object."""
+    data = DummyGameData({"ai_minimax_depth": 2})
     command = CommandsGame(
         DummyBlitzManager(),
         DummyDeckManager(data, "CFFF"),
         data,
         game=None,
     )
-    assert command.provide_hint() == ""
-
-    created = {}
-
-    class FakeExpectimaxPlayer:
-        def __init__(self, game, start_time, ai_time, depth, eval_name) -> None:
-            created["init"] = (game, start_time, ai_time, depth, eval_name)
-            self.depth_max = depth
-
-        def search(self, game, **kwargs):
-            created["search"] = (game, kwargs)
-            return 12.0, "FFFF/m/0N0"
-
-    monkeypatch.setattr(
-        "carcassonne.business_logic.ai_model.ExpectimaxPlayer",
-        FakeExpectimaxPlayer,
-    )
-    monkeypatch.setattr("time.time", lambda: 42.0)
-    game = object()
-    command = CommandsGame(
-        DummyBlitzManager(),
-        DummyDeckManager(data, "FFFF/m"),
-        data,
-        game=game,
-    )
 
     move = command.provide_hint()
 
-    assert move == "FFFF/m/0N0"
-    assert created["init"] == (game, 42.0, 7.5, 3, "short")
-    assert created["search"][0] is game
-    assert created["search"][1]["depth"] == 3
-    assert created["search"][1]["player_to_max"] == 0
-    assert created["search"][1]["next_player"] == 0
+    assert move == ""
 
 
-def test_provide_hint_iterative_mode_uses_iterative_player(monkeypatch) -> None:
+def test_provide_hint_uses_configuration_for_depth_and_eval_name(monkeypatch) -> None:
+    """Hints use configuration for depth and evaluation name but fixed 5-second limit."""
     created = {}
 
     class FakeIterativePlayer:
@@ -186,10 +156,8 @@ def test_provide_hint_iterative_mode_uses_iterative_player(monkeypatch) -> None:
     monkeypatch.setattr("time.time", lambda: 21.0)
     data = DummyGameData(
         {
-            "ai_mode": "iterative",
-            "ai_time": 4.0,
-            "ai_minimax_depth": 2,
-            "ai_minimax_scoring": "baseline",
+            "ai_minimax_depth": 3,
+            "ai_minimax_scoring": "short",
         }
     )
     game = object()
@@ -203,7 +171,8 @@ def test_provide_hint_iterative_mode_uses_iterative_player(monkeypatch) -> None:
     move = command.provide_hint()
 
     assert move == "CFFF/0N0/N"
-    assert created["init"] == (game, 21.0, 4.0, 2, "baseline")
+    # Always uses 5.0 second time limit for hints
+    assert created["init"] == (game, 21.0, 5.0, 3, "short")
     assert created["search"][0] is game
     assert created["search"][1]["player_to_max"] == 0
 
