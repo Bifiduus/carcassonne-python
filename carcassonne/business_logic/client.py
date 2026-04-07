@@ -216,9 +216,9 @@ class Client(IClientService):
                 )
                 self.temporary_username = ""
 
-        # Notify any GUI visitor about incoming server message
-        if self.message_visitor is not None:
-            self.message_visitor.visit_server_message(message, server)
+            # Notify any GUI visitor about incoming server message
+            if self.message_visitor is not None:
+                self.message_visitor.visit_server_message(message_content, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
