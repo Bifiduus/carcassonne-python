@@ -154,6 +154,9 @@ class Game(IGameService):
     def get_current_player(self) -> Player:
         return self.game_data.get_current_player()
 
+    def get_all_players(self) -> list[Player]:
+        return list(self.game_data.players.values())
+
     def save_game_to_file(self, filename: str) -> int:
         return self.save_handler.save_game_to_file(filename)
 

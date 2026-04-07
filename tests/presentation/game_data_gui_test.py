@@ -1,4 +1,5 @@
 from carcassonne.presentation.gui.game_data_gui import GameDataGui
+from carcassonne.presentation.gui.tiles_view import TilesView
 import pytest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch, MagicMock
@@ -116,6 +117,40 @@ def test_new_game_starts_new_game_and_resets_state() -> None:
     assert gui_data.current_orientation == 0
     # nb_tiles is NOT reset by reset() method, it's managed separately
     # This is by design - it counts tiles drawn in the game
+
+
+def test_play_move_gui_sets_error_and_shows_dialog_when_move_fails() -> None:
+    game = Mock()
+    game.play_move.return_value = False
+    game.is_undo_history_empty.return_value = True
+    game.get_current_player.return_value = SimpleNamespace(
+        get_id=Mock(return_value=0),
+        is_ai_player=Mock(return_value=False),
+        get_meeples=Mock(return_value=0),
+    )
+    game.game_data = SimpleNamespace(
+        current_hand="CFFF",
+        players_order=[0],
+        current_player_order_list=0,
+        extract_tile_code=Mock(return_value="CFFF"),
+    )
+
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.current_tile = TilesView("CFFF", tile_id=1)
+    gui_data.current_tile.move = "CFFF/0N0/N"
+    gui_data.gui = SimpleNamespace(
+        error_message=Mock(),
+        show_end_game_screen=Mock(),
+    )
+    game.end_game.return_value = False
+
+    gui_data.play_move_gui()
+
+    assert gui_data.get_error() is not None
+    assert "meeple" in gui_data.get_error().lower()
+    gui_data.gui.error_message.show_error.assert_called_once_with(
+        gui_data.get_error()
+    )
 
 
 def test_undo_calls_game_undo_and_refreshes_views() -> None:

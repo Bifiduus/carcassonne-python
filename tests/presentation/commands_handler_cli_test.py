@@ -43,7 +43,8 @@ def build_local_context():
         provide_hint=Mock(return_value="CFFF/12N2/SW"),
         undo=Mock(),
         redo=Mock(),
-        get_game_configuration=Mock(return_value={"blitz": True, "ai_mode": "random"}),
+        get_game_configuration=Mock(
+            return_value={"blitz": True, "ai_mode": "random"}),
         get_all_players_remaining_time_seconds=Mock(return_value=[(1, 65.0)]),
         get_player_remaining_time_seconds=Mock(return_value=42.0),
         get_history=Mock(return_value=["0:CFFF/0N0;", "1:FFFF/m/1E0;"]),
@@ -56,14 +57,16 @@ def build_local_context():
         play_ai_turn=Mock(),
         get_current_player=Mock(return_value=player),
         get_players_order=Mock(return_value=[1, 2]),
-        get_players_order=Mock(return_value=[1, 2]),
+        river_manager=SimpleNamespace(reset=Mock(), initialize_river=Mock()),
         game_data=SimpleNamespace(
             current_hand=None,
             shuffle_algo="fisher-yates",
             history=history,
+            game_configuration=SimpleNamespace(
+                get_setting_value=lambda key: False),
             players={
-                1: SimpleNamespace(get_score_int=lambda: 12),
-                2: SimpleNamespace(get_score_int=lambda: 8),
+                1: SimpleNamespace(get_score_int=lambda: 12, get_username=lambda: "Alice"),
+                2: SimpleNamespace(get_score_int=lambda: 8, get_username=lambda: "Bob"),
             },
         ),
     )
@@ -192,14 +195,16 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
     game.game_data.history = before_history
     game.undo.side_effect = lambda: None
     handlers.undo(cli, 1, client)
-    game.undo.side_effect = lambda: (before_history.past_moves.pop(), before_history.future_moves.append(9))
+    game.undo.side_effect = lambda: (
+        before_history.past_moves.pop(), before_history.future_moves.append(9))
     handlers.undo(cli, 2, client)
 
     redo_history = SimpleNamespace(past_moves=[1], future_moves=[2])
     game.game_data.history = redo_history
     game.redo.side_effect = lambda: None
     handlers.redo(cli, 1, client)
-    game.redo.side_effect = lambda: (redo_history.future_moves.pop(), redo_history.past_moves.append(3))
+    game.redo.side_effect = lambda: (
+        redo_history.future_moves.pop(), redo_history.past_moves.append(3))
     handlers.redo(cli, 2, client)
 
     game.get_game_configuration.return_value = {"blitz": False}

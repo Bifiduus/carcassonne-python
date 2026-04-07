@@ -65,6 +65,7 @@ class GameData:
     def start_load_game(self):
         self.history.clear_history()
         self.graph.reset_graph()
+        self.initialize_starting_tile_based_on_config()
 
         self.game_repository = GameRepository()
         self.board = Board()

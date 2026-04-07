@@ -200,6 +200,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         skip_current_player=Mock(return_value=True),
         ensure_current_player_playable=Mock(return_value=True),
     )
+    game.river_manager = SimpleNamespace(reset=Mock(), initialize_river=Mock())
 
     assert game._configured_blitz_minutes() == 15
     assert game._is_blitz_enabled() is True
@@ -359,7 +360,8 @@ def build_play_move_game(
             check_move=lambda *args, **kwargs: rules_ok
         ),
         board=SimpleNamespace(
-            add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0]),
+            add_tile_to_board=lambda *args, **kwargs: added_moves.append(
+                args[0]),
             consume_last_tile_added_log_info=lambda: None,
             consume_last_meeple_log_info=lambda: None,
             consume_last_scoring_log_events=lambda: [],

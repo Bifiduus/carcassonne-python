@@ -27,10 +27,10 @@ def on_load(gui) -> None:
         try:
             file = dialog.open_finish(result)
             filename = file.get_path()
-            river_before = gui.game_data.game.game_data.game_configuration.get_setting_value(
+            river_before = gui.game_data.game_configuration().get_setting_value(
                 "river")
             if gui.game_data.game.load_game_from_file(filename) == 0:
-                river_after = gui.game_data.game.game_data.game_configuration.get_setting_value(
+                river_after = gui.game_data.game_configuration().get_setting_value(
                     "river")
                 # Re-initialize river_manager with the loaded config
                 gui.game_data.game.river_manager.reset()

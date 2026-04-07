@@ -1,6 +1,7 @@
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
 from carcassonne.datas.serializer import parse_move
+from carcassonne.i18n import gettext as _
 from gi.repository import GLib
 
 
@@ -16,6 +17,34 @@ class GameDataGui:
         self.gui = None
         self.is_dragging = False
         self.hint_tile = None  # hint tile data for transparent display
+        self.error = None
+
+    @staticmethod
+    def _get_component_display_name(component_name: str) -> str:
+        """Convert internal component names to user-friendly display names."""
+        if component_name.startswith("F"):
+            return _("field {name}").format(name=component_name)
+        elif component_name.startswith("C"):
+            return _("city {name}").format(name=component_name)
+        elif component_name.startswith("R"):
+            return _("road {name}").format(name=component_name)
+        elif component_name.startswith("M"):
+            return _("monastery {name}").format(name=component_name)
+        else:
+            return component_name
+
+    def __init__(self, game, client_service, server_service):
+        self.game = game
+        self.client = client_service
+        self.server = server_service
+        self.nb_tiles = 0  # used to give each drawn tile a unique id
+        self.current_tile: TilesView | None = None
+        self.current_orientation = 0
+        self.board_view = None  # set later by Gui
+        self.gui = None
+        self.is_dragging = False
+        self.hint_tile = None  # hint tile data for transparent display
+        self.error = None
 
     def game_configuration(self):
         return self.game.get_game_configuration()
@@ -60,15 +89,21 @@ class GameDataGui:
         final_move = self.current_tile.playable_tile()
         result = self.game.play_move(final_move)
 
-        if not self.game.is_undo_history_empty():
-            self.game.clear_undo_history()
-        if result:
+        if not result:
+            self.error = self._build_error_message(final_move)
+            if self.gui is not None and hasattr(self.gui, "error_message"):
+                self.gui.error_message.show_error(self.error)
+        else:
+            self.error = None
             while (
                 self.game.get_current_player().is_ai_player()
                 and not self.game.end_game()
             ):
                 self.game.play_ai_turn(self.game)
                 self._refresh_after_ai_turn()
+
+        if not self.game.is_undo_history_empty():
+            self.game.clear_undo_history()
 
         self.reset()
 
@@ -96,6 +131,160 @@ class GameDataGui:
 
     def set_board_view(self, board):
         self.board_view = board
+
+    def get_error(self):
+        return self.error
+
+    def _build_error_message(self, move: str) -> str:
+        if not move:
+            return _(
+                "No tile has been selected. Please select a tile and try again."
+            )
+
+        if self.game.game_data.current_hand is None:
+            return _(
+                "You must draw a tile before you can play it."
+            )
+
+        try:
+            parsed_move = parse_move(move)
+        except ValueError:
+            return _(
+                "Invalid move format. Use the format <tile>/<position><rotation> or <tile>/<center>/<position><rotation>."
+            )
+
+        current_player = self.game.get_current_player()
+        if (
+            self.game.game_data.players_order[
+                self.game.game_data.current_player_order_list
+            ]
+            != current_player.get_id()
+        ):
+            return _(
+                "It is not your turn. Wait for the next player to play."
+            )
+
+        if parsed_move.get("meeple") and current_player.get_meeples() <= 0:
+            return _(
+                "You cannot place a meeple: you have no more left."
+            )
+
+        tile_code = self.game.game_data.extract_tile_code(move)
+        if tile_code is not None and tile_code != self.game.game_data.current_hand:
+            return _(
+                "You must play the tile in hand {current_tile} and not {played_tile}."
+            ).format(
+                current_tile=self.game.game_data.current_hand,
+                played_tile=tile_code,
+            )
+
+        if (
+            hasattr(self.game.game_data, "rules_manager")
+            and hasattr(self.game.game_data.rules_manager, "explain_invalid_move")
+        ):
+            invalid_reason = self.game.game_data.rules_manager.explain_invalid_move(
+                move,
+                self.game.game_data.graph,
+                self.game.river_manager,
+                current_player_id=current_player.get_id(),
+            )
+            translated_reason = self._translate_invalid_move_reason(
+                invalid_reason)
+            if translated_reason is not None:
+                return translated_reason
+
+        return _(
+            "This move is not valid according to the placement rules. Check the rotation, meeple and adjacency of terrains."
+        )
+
+    def _translate_invalid_move_reason(self, reason: str) -> str | None:
+        exact_translations = {
+            "move must be a string": _(
+                "The move must be a string."
+            ),
+            "move format is invalid": _(
+                "Invalid move format. Use the format <tile>/<position><rotation> or <tile>/<center>/<position><rotation>."
+            ),
+            "tile code is invalid": _(
+                "The tile code is invalid."
+            ),
+            "tile center variant is invalid": _(
+                "The tile center variant is invalid."
+            ),
+            "tile center variant is missing": _(
+                "The tile center variant is missing."
+            ),
+            "move placement is missing": _(
+                "The placement position is missing."
+            ),
+            "placement format is invalid": _(
+                "The placement format is invalid."
+            ),
+            "target tile id does not exist": _(
+                "The target tile does not exist."
+            ),
+            "target side is invalid": _(
+                "The target side is invalid."
+            ),
+            "tile rotation is invalid": _(
+                "The tile rotation is invalid."
+            ),
+            "meeple position is invalid": _(
+                "The chosen meeple position is invalid."
+            ),
+            "target side is already occupied": _(
+                "The target side is already occupied."
+            ),
+            "tile sides do not match neighboring tiles": _(
+                "The tile sides do not match neighboring tiles."
+            ),
+            "river placement rules are violated": _(
+                "River placement rules are violated."
+            ),
+            "target tile position is invalid": _(
+                "The target tile position is invalid."
+            ),
+            "target tile could not be simulated": _(
+                "Tile placement simulation failed."
+            ),
+            "meeples cannot be placed on river segments": _(
+                "A meeple cannot be placed on a river segment."
+            ),
+            "selected meeple position does not belong to a valid component": _(
+                "The chosen meeple position does not belong to a valid component."
+            ),
+            "selected meeple position does not map to a component": _(
+                "The chosen meeple position does not correspond to any component."
+            ),
+            "meeple placement is invalid": _(
+                "Meeple placement is invalid."
+            ),
+            "move is invalid": _(
+                "This move is not valid according to the rules."
+            ),
+        }
+
+        if reason in exact_translations:
+            return exact_translations[reason]
+
+        if reason.startswith("tile ") and reason.endswith(" is not available"):
+            tile_identifier = reason[len("tile "): -len(" is not available")]
+            return _(
+                "The tile {tile} is not available."
+            ).format(tile=tile_identifier)
+
+        if reason.startswith("component ") and reason.endswith(
+            " already contains a meeple"
+        ):
+            component_name = reason[len("component "): -len(
+                " already contains a meeple"
+            )]
+            display_name = self._get_component_display_name(component_name)
+            return _(
+                "A meeple is already present on {component}."
+            ).format(component=display_name)
+
+        return None
 
     def rotate_current_tile(self):
         if self.current_tile is None:

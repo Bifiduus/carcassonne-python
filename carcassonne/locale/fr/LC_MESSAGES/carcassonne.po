@@ -856,3 +856,102 @@ msgstr "Conseil : jouez le coup {move}"
 
 msgid "No hint available."
 msgstr "Aucun conseil disponible."
+
+msgid "No tile has been selected. Please select a tile and try again."
+msgstr "Aucune tuile n'a été sélectionnée. Veuillez sélectionner une tuile et essayer à nouveau."
+
+msgid "You must draw a tile before you can play it."
+msgstr "Vous devez piocher une tuile avant de pouvoir la jouer."
+
+msgid "Invalid move format. Use the format <tile>/<position><rotation> or <tile>/<center>/<position><rotation>."
+msgstr "Format de mouvement invalide. Utilisez le format <tuile>/<position><rotation> ou <tuile>/<centre>/<position><rotation>."
+
+msgid "It is not your turn. Wait for the next player to play."
+msgstr "Ce n'est pas votre tour. Attendez que le joueur suivant ait joué."
+
+msgid "You cannot place a meeple: you have no more left."
+msgstr "Vous ne pouvez pas placer de meeple : vous n'en avez plus."
+
+msgid "You must play the tile in hand {current_tile} and not {played_tile}."
+msgstr "Vous devez jouer la tuile en main {current_tile} et non {played_tile}."
+
+msgid "This move is not valid according to the placement rules. Check the rotation, meeple and adjacency of terrains."
+msgstr "Ce coup n'est pas valide selon les règles de placement. Vérifiez la rotation, le meeple et l'adjacence des terrains."
+
+msgid "The move must be a string."
+msgstr "Le coup doit être une chaîne de caractères."
+
+msgid "The tile code is invalid."
+msgstr "Le code de tuile n'est pas valide."
+
+msgid "The tile center variant is invalid."
+msgstr "La variante de centre de la tuile n'est pas valide."
+
+msgid "The tile center variant is missing."
+msgstr "La variante de centre de la tuile est manquante."
+
+msgid "The placement position is missing."
+msgstr "La position de placement est manquante."
+
+msgid "The placement format is invalid."
+msgstr "Le format de placement est invalide."
+
+msgid "The target tile does not exist."
+msgstr "La tuile ciblée n'existe pas."
+
+msgid "The target side is invalid."
+msgstr "Le côté ciblé n'est pas valide."
+
+msgid "The tile rotation is invalid."
+msgstr "La rotation de la tuile est invalide."
+
+msgid "The chosen meeple position is invalid."
+msgstr "La position de meeple choisie n'est pas valide."
+
+msgid "The target side is already occupied."
+msgstr "Le côté ciblé est déjà occupé."
+
+msgid "The tile sides do not match neighboring tiles."
+msgstr "Les côtés de la tuile ne correspondent pas aux tuiles voisines."
+
+msgid "River placement rules are violated."
+msgstr "Les règles de placement de la rivière sont violées."
+
+msgid "The target tile position is invalid."
+msgstr "La position de la tuile ciblée est invalide."
+
+msgid "Tile placement simulation failed."
+msgstr "La simulation du placement de la tuile a échoué."
+
+msgid "A meeple cannot be placed on a river segment."
+msgstr "Un meeple ne peut pas être placé sur un segment de rivière."
+
+msgid "The chosen meeple position does not belong to a valid component."
+msgstr "La position de meeple choisie ne fait pas partie d'un composant valide."
+
+msgid "The chosen meeple position does not correspond to any component."
+msgstr "La position de meeple choisie ne correspond à aucun composant."
+
+msgid "Meeple placement is invalid."
+msgstr "Le placement du meeple n'est pas valide."
+
+msgid "This move is not valid according to the rules."
+msgstr "Ce coup n'est pas valide selon les règles."
+
+msgid "The tile {tile} is not available."
+msgstr "La tuile {tile} n'est pas disponible."
+
+msgid "A meeple is already present on {component}."
+msgstr "Un meeple est déjà présent sur {component}."
+
+msgid "field {name}"
+msgstr "champ {name}"
+
+msgid "city {name}"
+msgstr "ville {name}"
+
+msgid "road {name}"
+msgstr "route {name}"
+
+msgid "monastery {name}"
+msgstr "monastère {name}"

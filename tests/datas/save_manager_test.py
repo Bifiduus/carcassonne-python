@@ -35,9 +35,15 @@ class DummyGameData:
         self.players_order = [2, 0, 1]
         self.seed = 4242
         self.current_hand = None
+        self.game_configuration = type('GameConfiguration', (), {
+            'get_setting_value': lambda self, key: False
+        })()
 
     def extract_tile_code(self, move):
         return move.split("/")[0]
+
+    def initialize_starting_tile_based_on_config(self):
+        pass
 
 
 class DummyGame:
@@ -55,6 +61,9 @@ class DummyGame:
         self.shuffle_calls: list[tuple[str, int]] = []
         self.played_moves: list[str] = []
         self.draw_mismatch = False
+        self.river_manager = type('RiverManager', (), {
+            'initialize_river': lambda: None
+        })()
 
     def get_game_configuration(self):
         return dict(self.config)
