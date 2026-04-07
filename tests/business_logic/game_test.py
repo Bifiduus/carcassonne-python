@@ -53,6 +53,9 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
     def fake_play_move(move):
         played_moves.append(move)
         game.game_data.current_hand = None
+        game.game_data.current_player_order_list = (
+            game.game_data.current_player_order_list + 1
+        ) % len(game.game_data.players)
         return True
 
     monkeypatch.setattr(

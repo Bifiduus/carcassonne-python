@@ -77,4 +77,8 @@ class RandomPlayer:
     def random_move(self, tile, game: "Game") -> str:
         """Select a random move from the list of possible moves."""
         possible_moves = self.get_possible_moves(tile, game)
-        return r.choice(possible_moves) if possible_moves else ""
+        print(
+            f"[DEBUG RandomPlayer] Possible moves for tile {tile}: {possible_moves}")
+        selected_move = r.choice(possible_moves) if possible_moves else ""
+        print(f"[DEBUG RandomPlayer] Selected move: {selected_move}")
+        return selected_move

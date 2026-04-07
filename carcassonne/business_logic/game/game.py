@@ -504,6 +504,17 @@ class Game(IGameService):
             print(f"AI Player {ai_player.get_username()} has no legal move.")
             print(self.game_data.current_hand)
             return
+
+        # Validate that the move has the proper format (TILE/POSITION or TILE/POSITION/MEEPLE)
+        if "/" not in str(move):
+            print(
+                f"AI move '{move}' is malformed (missing position). Skipping this turn.")
+            # Force change to next player to avoid infinite loop
+            self.game_data.current_player_order_list = (
+                self.game_data.current_player_order_list + 1
+            ) % self.get_number_of_players()
+            return
+
         if eval_score is None:
             print(f"AI Player {ai_player.get_username()} chooses move: {move}")
         else:
@@ -533,8 +544,12 @@ class Game(IGameService):
             if not fallback_played:
                 print(
                     f"AI Player {ai_player.get_username()} produced an "
-                    "invalid move."
+                    f"invalid move: {move}"
                 )
+                # Force change to next player to avoid infinite loop
+                self.game_data.current_player_order_list = (
+                    self.game_data.current_player_order_list + 1
+                ) % self.get_number_of_players()
                 return
 
     def start_new_game(
