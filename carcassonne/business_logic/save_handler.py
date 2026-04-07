@@ -17,6 +17,7 @@ class SaveHandler:
     integer_settings = [
         "time",
         "num_ai",
+        "num_ai_players",
         "ai_time",
         "ai_minimax_depth",
     ]
@@ -136,6 +137,13 @@ class SaveHandler:
                 keybinds_dict[action.strip()] = key.strip()
         self.game.set_game_configuration(section, keybinds_dict)
 
+    def split_setting_line(self, line: str) -> tuple[str, str]:
+        if "=" in line:
+            return line.split("=", 1)
+        if ":" in line:
+            return line.split(":", 1)
+        raise ValueError(f"Invalid setting line: {line}")
+
     def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
             print("Error: Invalid filename.", file=sys.stderr)
@@ -193,7 +201,7 @@ class SaveHandler:
             if commentary:
                 continue
 
-            if line == "[Settings]":
+            if line.lower() == "[settings]":
                 sections_parsed += 1
                 settings_section = True
                 game_state_section = False
@@ -230,8 +238,11 @@ class SaveHandler:
                 # Parse settings and configure the game accordingly.
                 # This is a placeholder for demonstration purposes.
                 # Configuration of the game, shuffle algorithm and seed.
-
-                setting, value = line.split("=", 1)
+                try:
+                    setting, value = self.split_setting_line(line)
+                except ValueError:
+                    print(f"Warning: Invalid setting line '{line}'.")
+                    continue
                 if setting.strip() in self.keybinds_settings:
                     self.handle_keybinds_load(value, setting.strip())
                 elif setting.strip() in self.boolean_settings:
