@@ -30,6 +30,7 @@ def test_configuration_creates_default_file_when_missing(monkeypatch, tmp_path) 
     config = GameConfiguration()
 
     assert config_path.exists()
+    assert "verbose=false" in config_path.read_text()
     assert config.get_setting_value("time") == DEFAULT_SETTINGS["time"]
     assert config.get_setting()["file_keybinds"] == DEFAULT_SETTINGS["file_keybinds"]
 
@@ -126,6 +127,10 @@ def test_configuration_save_show_and_getters_use_current_settings(monkeypatch, t
 
     parser = configparser.ConfigParser()
     parser.read(config_path)
+    saved_text = config_path.read_text()
+    assert "verbose=true" in saved_text
+    assert "verbose = true" not in saved_text
+    assert "num_ai_players=3" in saved_text
     assert parser.getboolean("defaults", "verbose") is True
     assert parser.getboolean("defaults", "blitz") is True
     assert parser.getint("defaults", "time") == 15

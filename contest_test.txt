@@ -1,7 +1,7 @@
-[Settings]
-verbose=False
-blitz=False
-contest=False
+[settings]
+verbose=false
+blitz=false
+contest=false
 time=30
 ai_time=5
 ai_mode=random

@@ -46,6 +46,10 @@ class GameConfiguration:
             self.settings["time"] = self.settings["timeout"]
         self.settings.pop("timeout", None)
 
+    def _write_config(self, config: configparser.ConfigParser):
+        with open(CONFIG_PATH, "w") as f:
+            config.write(f, space_around_delimiters=False)
+
     def create_default_config(self):
         config = configparser.ConfigParser()
         config["defaults"] = {
@@ -65,8 +69,7 @@ class GameConfiguration:
             "game_keybinds": json.dumps(DEFAULT_SETTINGS["game_keybinds"]),
         }
 
-        with open(CONFIG_PATH, "w") as f:
-            config.write(f)
+        self._write_config(config)
 
     def load_config(self):
         config = configparser.ConfigParser()
@@ -156,8 +159,7 @@ class GameConfiguration:
             "game_keybinds": json.dumps(self.settings["game_keybinds"]),
         }
 
-        with open(CONFIG_PATH, "w") as f:
-            config.write(f)
+        self._write_config(config)
 
     def show_config(self):
         print("Configuration actuelle du jeu:")

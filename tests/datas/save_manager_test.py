@@ -177,6 +177,42 @@ def test_load_game_from_file_parses_sections_and_replays_moves(tmp_path: Path) -
     assert game.played_moves == ["CFFF/0N0", "FFFF/m/1E0"]
 
 
+def test_load_game_from_file_accepts_legacy_colon_settings(tmp_path: Path) -> None:
+    game = DummyGame()
+    handler = SaveHandler(game)
+    save_file = tmp_path / "legacy_settings.txt"
+    save_file.write_text(
+        "\n".join(
+            [
+                "[settings]",
+                "verbose: True",
+                "time: 25",
+                "ai_mode: minimax",
+                "file_keybinds: [save: s, quit: q]",
+                "contest_file: contest.txt",
+                "",
+                "[GameState]",
+                "NumberOfPlayers: 2,1",
+                "PlayersOrder: [2, 1, 0]",
+                "GameScore: [0: 5, 1: 8, 2: 13]",
+                "Seed: 1234",
+                "",
+                "[History]",
+                "0:CFFF/0N0; 1:FFFF/m/1E0;",
+            ]
+        )
+    )
+
+    assert handler.load_game_from_file(str(save_file)) == 0
+
+    assert ("verbose", True) in game.set_config_calls
+    assert ("time", 25) in game.set_config_calls
+    assert ("ai_mode", "minimax") in game.set_config_calls
+    assert ("contest_file", "contest.txt") in game.set_config_calls
+    assert ("file_keybinds", {"save": "s", "quit": "q"}
+            ) in game.set_config_calls
+
+
 def test_load_game_from_file_warns_on_invalid_sections_and_seed_mismatch(
     tmp_path: Path, capsys
 ) -> None:
