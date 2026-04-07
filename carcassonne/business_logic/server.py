@@ -241,7 +241,6 @@ class Server(IServerService):
                     answer = self.handle_communication.command_quit(client)
                     self.send_to_clients(answer)
                     break
-
                 if self.client_is_registered(client_socket):
                     # Process data
                     response = self.process_message(str(client_index), message)
@@ -379,8 +378,8 @@ class Server(IServerService):
         """
         answer = ""
         if self.server is not None:
-            if message == "ping":
-                answer = self.handle_communication.command_ping()
+            if message.startswith("ping"):
+                answer = self.handle_communication.command_ping(message)
             elif message == "Bad client disconnection":
                 answer = self.handle_communication.command_quit(
                     client_id)

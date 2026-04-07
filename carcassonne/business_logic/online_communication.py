@@ -1,4 +1,5 @@
 from __future__ import annotations
+from time import time
 import sys
 from typing import TYPE_CHECKING
 
@@ -14,8 +15,9 @@ class OnlineCommunication:
     def __init__(self, server: Server):
         self.server = server
 
-    def command_ping(self) -> str:
-        return "pong\n"
+    def command_ping(self, message: str) -> str:
+        previous_time = float(message.removeprefix("ping "))
+        return f"pong\nTime is {time()-previous_time}ms"
 
     def command_quit(self, client_username: str) -> str:
         self.server.repo.client_quit(client_username)
