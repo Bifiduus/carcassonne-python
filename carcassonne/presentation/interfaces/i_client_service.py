@@ -16,10 +16,6 @@ class IClientService(ABC):
         pass
 
     @abstractmethod
-    def ping(self) -> str:
-        pass
-
-    @abstractmethod
     def connected_to_a_server(self) -> bool:
         pass
 

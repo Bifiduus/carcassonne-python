@@ -370,7 +370,7 @@ def join(
 
 
 def ping(self, client_service: IClientService):
-    print(client_service.ping())
+    client_service.send_to_server("ping")
 
 
 def server_status(self, client_service: IClientService):
