@@ -50,6 +50,11 @@ def shutdown_all(signum, frame, server_service: IServerService,
             client_service.disconnect()
     except Exception as e:
         print(_("Error shutting down client: {error}").format(error=e))
+    try:
+        if server_service is not None:
+            server_service.server_stop()
+    except Exception as e:
+        print(_("Error shutting down server: {error}").format(error=e))
 
 
 def main() -> int:
