@@ -5,19 +5,34 @@ from carcassonne.presentation.cli import commands_handler_cli as handlers
 
 
 class DummyPlayer:
-    def __init__(self, player_id: int, is_ai: bool = False) -> None:
+    def __init__(
+        self,
+        player_id: int,
+        username: str | None = None,
+        score: int = 0,
+        is_ai: bool = False,
+    ) -> None:
         self.player_id = player_id
+        self.username = username or f"Player {player_id}"
+        self.score = score
         self.ai = is_ai
 
     def get_id(self) -> int:
         return self.player_id
+
+    def get_username(self) -> str:
+        return self.username
+
+    def get_score_int(self) -> int:
+        return self.score
 
     def is_ai_player(self) -> bool:
         return self.ai
 
 
 def build_local_context():
-    player = DummyPlayer(1, is_ai=False)
+    player = DummyPlayer(1, username="Alice", score=12, is_ai=False)
+    opponent = DummyPlayer(2, username="Bob", score=8, is_ai=False)
     history = SimpleNamespace(past_moves=[1], future_moves=[2])
     game = SimpleNamespace(
         start_new_game=Mock(),
@@ -40,10 +55,12 @@ def build_local_context():
         end_game=Mock(return_value=False),
         play_ai_turn=Mock(),
         get_current_player=Mock(return_value=player),
+        get_players_order=Mock(return_value=[1, 2]),
         game_data=SimpleNamespace(
             current_hand=None,
             shuffle_algo="fisher-yates",
             history=history,
+            players={1: player, 2: opponent},
         ),
     )
     cli = SimpleNamespace(game=game, running=True)
@@ -110,6 +127,7 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     output = capsys.readouterr().out
     assert "New game started." in output
     assert "Available commands:" in output
+    assert "help [CMD]" in output
     assert "Game loaded from save1." in output
     assert "Failed to load the game from save2." in output
     assert "Game saved to save3." in output
@@ -120,6 +138,8 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     assert "No tile in hand." in output
     assert "Tile in hand: FRFR" in output
     assert "Player scores:" in output
+    assert "Alice: 12 points" in output
+    assert "Bob: 8 points" in output
     assert "Move history:" in output
     assert "Current game configuration:" in output
     assert "Parameter 'ai_mode' set to 'minimax'." in output
@@ -142,6 +162,17 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     client.join_server.assert_any_call()
     client.join_server.assert_any_call("127.0.0.1", 4242)
     client.join_server.assert_any_call("127.0.0.1")
+
+
+def test_help_with_specific_command_displays_only_requested_help(capsys) -> None:
+    cli, _, _, _ = build_local_context()
+
+    handlers.help(cli, "show score")
+
+    output = capsys.readouterr().out
+    assert "show score" in output
+    assert "Display the players' scores" in output
+    assert "Available commands:" not in output
 
 
 def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch, capsys) -> None:

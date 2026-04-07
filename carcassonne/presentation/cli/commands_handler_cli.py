@@ -22,64 +22,87 @@ def new_game(self, args, client_service: IClientService) -> None:
     print(_("New game started."))
 
 
-def help(self) -> None:
-    print(_("Available commands:"))
-    print(_("  new <args>         - Start a new game"))
-    print(_("  help               - Display this help message"))
-    print(_("  quit               - Quit the game"))
-    print(_("  load <file>        - Load a game from a file"))
-    print(_("  save <file>        - Save the game to a file"))
-    print(_("  shuffle            - Shuffle the deck"))
-    print(_("  draw               - Draw a tile"))
-    print(_("  hint               - Show a hint for the current tile"))
-    print(
-        _("  undo [N]           - Undo the last move or the last N moves")
-    )
-    print(
-        _(
+def _command_help_lines() -> dict[str, str]:
+    return {
+        "new": _("  new <args>         - Start a new game"),
+        "help": _("  help [CMD]         - Display help for all commands or CMD"),
+        "quit": _("  quit               - Quit the game"),
+        "load": _("  load <file>        - Load a game from a file"),
+        "save": _("  save <file>        - Save the game to a file"),
+        "shuffle": _("  shuffle            - Shuffle the deck"),
+        "draw": _("  draw               - Draw a tile"),
+        "hint": _("  hint               - Show a hint for the current tile"),
+        "undo": _(
+            "  undo [N]           - Undo the last move or the last N moves"
+        ),
+        "redo": _(
             "  redo [N]           - Redo the last undone move or the last "
             "N undone moves"
-        )
-    )
-    print(_("  show hand          - Display the current player's hand"))
-    print(
-        _(
+        ),
+        "show hand": _(
+            "  show hand          - Display the current player's hand"
+        ),
+        "show time": _(
             "  show time [ID]     - Display the remaining time of all "
             "players or of player ID"
-        )
-    )
-    print(_("  show score         - Display the players' scores"))
-    print(_("  show history       - Display the move history"))
-    print(_("  show configuration - Display the current game configuration"))
-    print(_("  set (PARAM=VALUE)  - Set a configuration parameter"))
-    print(_("  play <move>        - Play the specified move"))
-    print(_("  server start [PORT] - Start the server on port [PORT]"))
-    print(_("  server list        - Display the list of available servers"))
-    print(_("  server stop        - Stop the server"))
-    print(
-        _(
+        ),
+        "show score": _(
+            "  show score         - Display the players' scores"
+        ),
+        "show history": _(
+            "  show history       - Display the move history"
+        ),
+        "show configuration": _(
+            "  show configuration - Display the current game configuration"
+        ),
+        "set": _("  set (PARAM=VALUE)  - Set a configuration parameter"),
+        "play": _("  play <move>        - Play the specified move"),
+        "server start": _(
+            "  server start [PORT] - Start the server on port [PORT]"
+        ),
+        "server list": _(
+            "  server list        - Display the list of available servers"
+        ),
+        "server stop": _("  server stop        - Stop the server"),
+        "join": _(
             "  join [IP[:PORT]]   - Connect the client to the given server "
             "or to its own server"
-        )
-    )
-    print(_("  quit               - Quit the server"))
-    print(_("  ping               - Display the server ping"))
-    print(_("  server status      - Display the server status"))
-    print(
-        _(
+        ),
+        "ping": _("  ping               - Display the server ping"),
+        "server status": _(
+            "  server status      - Display the server status"
+        ),
+        "players": _(
             "  players [PLAYER_ID] - Display connected players or "
             "information about player [PLAYER_ID]"
+        ),
+        "scoreboard": _(
+            "  scoreboard         - Display the server scoreboard"
+        ),
+        "accept": _("  accept             - Accept the received invitation"),
+        "decline": _("  decline            - Decline the received invitation"),
+        "cancel": _("  cancel             - Cancel the sent invitation"),
+        "away": _('  away               - Change the status to "away"'),
+        "back": _('  back               - Change the status to "idle"'),
+    }
+
+
+def help(self, command_name: str | None = None) -> None:
+    command_help = _command_help_lines()
+    if command_name is None:
+        print(_("Available commands:"))
+        for line in command_help.values():
+            print(line)
+        return
+
+    normalized_command = " ".join(command_name.split())
+    help_line = command_help.get(normalized_command)
+    if help_line is None:
+        print(
+            _("Unknown command. Type 'help' to see the list of commands.")
         )
-    )
-    print(_("  scoreboard         - Display the server scoreboard"))
-    print(
-        _("  new PLAYER_ID ..   - Start a game with the proposed players")
-    )
-    print(_("  accept             - Accept the received invitation"))
-    print(_("  decline            - Decline the received invitation"))
-    print(_("  cancel             - Cancel the sent invitation"))
-    print(_('  away               - Change the status to "away"'))
-    print(_('  back               - Change the status to "idle"'))
+        return
+    print(help_line)
 
 
 def quit(
@@ -273,10 +296,26 @@ def show_time(self, player_id_raw: str | None = None) -> None:
 
 
 def show_score(self, client_service: IClientService) -> None:
-    # scores = self.game.getPlayerScores()
+    if client_service.connected_to_a_server():
+        client_service.send_to_server("show score")
+        return
+
     print(_("Player scores:"))
-    # for player, score in scores.items():
-    #    print(f"  {player}: {score}")
+    players = getattr(self.game.game_data, "players", {})
+    players_order = self.game.get_players_order()
+    if not players_order:
+        players_order = list(players.keys())
+
+    for player_id in players_order:
+        player = players.get(player_id)
+        if player is None:
+            continue
+        print(
+            _("  {player}: {score} points").format(
+                player=player.get_username(),
+                score=player.get_score_int(),
+            )
+        )
 
 
 def show_history(self, game, client_service: IClientService) -> None:

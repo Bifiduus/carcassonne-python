@@ -222,7 +222,7 @@ def test_cli_handle_command_dispatches_to_handlers_and_reports_unknown(capsys) -
         cli.handle_command("mystery")
 
     new_game.assert_called_once()
-    help_cmd.assert_called_once()
+    help_cmd.assert_called_once_with(cli, None)
     quit_cmd.assert_called_once_with(cli, server, client)
     load_cmd.assert_called_once()
     save_cmd.assert_called_once()
@@ -254,6 +254,18 @@ def test_cli_handle_command_dispatches_to_handlers_and_reports_unknown(capsys) -
     away.assert_called_once()
     assert add_history.call_count == 33
     assert "Unknown command. Type 'help' to see the list of commands." in capsys.readouterr().out
+
+
+def test_cli_handle_command_supports_help_with_command_name() -> None:
+    cli, _, _, _ = build_cli()
+
+    with (
+        patch.object(cli_module.readline, "add_history"),
+        patch.object(cli_module.commands_handler_cli, "help") as help_cmd,
+    ):
+        cli.handle_command("help undo")
+
+    help_cmd.assert_called_once_with(cli, "undo")
 
 
 def test_cli_rejects_turn_bound_commands_when_local_player_cannot_act(capsys) -> None:

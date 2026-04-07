@@ -234,8 +234,9 @@ class GameCLI:
             commands_handler_cli.new_game(self, args, self.client)
             self.local_player_id = self.game.get_current_player().get_id()
             self._tick_last_message = ""
-        elif command == "help":
-            commands_handler_cli.help(self)
+        elif command == "help" or command.startswith("help "):
+            help_command = command[4:].strip() or None
+            commands_handler_cli.help(self, help_command)
         elif command == "quit":
             commands_handler_cli.quit(self, self.server, self.client)
         elif command.startswith("load "):
