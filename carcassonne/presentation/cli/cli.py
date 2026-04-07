@@ -101,8 +101,9 @@ class GameCLI:
         return self.game.get_current_player().get_id() == self.local_player_id
 
     def run(self):
-        print(_("Welcome to Carcassonne"))
-        print(_("Type 'help' to see the list of commands.") + "\n")
+        with self._game_lock:
+            if not self.game.end_game():
+                self._render_board()
 
         self._start_input_loop()
         last_tick = time.monotonic()
@@ -191,6 +192,7 @@ class GameCLI:
             and self.game.get_current_player().is_ai_player()
         ):
             self.game.play_ai_turn(self.game)
+            commands_handler_cli._print_scores(self.game)
             self._render_board()
 
     def _on_game_over(self) -> None:

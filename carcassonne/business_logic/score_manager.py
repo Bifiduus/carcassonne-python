@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,6 +19,8 @@ DIRECTION_MAP = {
     "S": SOUTH_DIR,  # 2
     "W": WEST_DIR,  # 3
 }
+
+logger = logging.getLogger(__name__)
 
 
 class ScoreManager:
@@ -74,6 +77,8 @@ class ScoreManager:
         players: Dict[int, "Player"],
         current_player_id: int = 0,
         scored_components: set = None,
+        emit_logs: bool = True,
+        log_events: Optional[list[tuple[str, object]]] = None,
     ) -> None:
         """Score components completed by the latest placement.
 
@@ -109,10 +114,54 @@ class ScoreManager:
                         terrain, name, graph
                     )
                 ):
-                    score_fn[terrain](component, name, graph, players)
-                    ScoreManager._return_component_meeples_to_players(
-                        name, graph, players
+                    if log_events is not None:
+                        log_events.append(
+                            (
+                                "component_completed",
+                                {
+                                    "name": name,
+                                    "terrain": terrain,
+                                },
+                            )
+                        )
+                    if emit_logs:
+                        logger.info(
+                            "Component %s (%s) completed and scored",
+                            name, terrain,
+                        )
+                    score_fn[terrain](
+                        component,
+                        name,
+                        graph,
+                        players,
                     )
+                    returned_meeples = (
+                        ScoreManager._return_component_meeples_to_players(
+                            name, graph, players
+                        )
+                    )
+                    if returned_meeples is None:
+                        returned_meeples = {}
+                    for player_id, meeple_count in returned_meeples.items():
+                        if log_events is not None:
+                            log_events.append(
+                                (
+                                    "meeple_returned",
+                                    {
+                                        "player_id": player_id,
+                                        "count": meeple_count,
+                                        "component": name,
+                                    },
+                                )
+                            )
+                        if emit_logs:
+                            logger.info(
+                                "Player %d gets back %d meeple(s)"
+                                " from component %s",
+                                player_id,
+                                meeple_count,
+                                name,
+                            )
                     scored_components.add(key)
 
     @staticmethod
@@ -342,9 +391,12 @@ class ScoreManager:
             return
 
         max_count = max(meeple_count.values())
-        for player_id, count in meeple_count.items():
-            if count == max_count and player_id in players:
-                players[player_id].get_score().add_score(total_points)
+        winners = [
+            pid for pid, cnt in meeple_count.items()
+            if cnt == max_count and pid in players
+        ]
+        for player_id in winners:
+            players[player_id].get_score().add_score(total_points)
 
     @staticmethod
     def count_meeples_on_component(
@@ -391,7 +443,7 @@ class ScoreManager:
     @staticmethod
     def _return_component_meeples_to_players(
         component_name: str, graph, players: Dict[int, "Player"]
-    ) -> None:
+    ) -> Dict[int, int]:
         """Return all meeples placed on a component to their owners.
 
         This helper is used when a component is completed and has just been
@@ -404,18 +456,24 @@ class ScoreManager:
             players: Mapping from player id to Player instance.
 
         Returns:
-            None. Mutates `graph.meeples` and player meeple counts in place.
+            Mapping of `player_id -> meeples returned`.
+            Also mutates `graph.meeples` and player meeple counts in place.
         """
         remaining_meeples = []
+        returned_counts: Dict[int, int] = {}
         for meeple in graph.meeples:
             if meeple.lands_components == component_name:
                 owner = players.get(meeple.player_id)
                 if owner is not None:
                     owner.add_meeple()
+                    returned_counts[meeple.player_id] = (
+                        returned_counts.get(meeple.player_id, 0) + 1
+                    )
             else:
                 remaining_meeples.append(meeple)
 
         graph.meeples = remaining_meeples
+        return returned_counts
 
     @staticmethod
     def _score_road_complete(
@@ -437,7 +495,10 @@ class ScoreManager:
         """
         tile_ids = {tid for tid, _ in component}
         ScoreManager._award_majority_score(
-            component_name, len(tile_ids), graph, players
+            component_name,
+            len(tile_ids),
+            graph,
+            players,
         )
 
     @staticmethod
@@ -462,7 +523,10 @@ class ScoreManager:
         banners = ScoreManager.count_banners_on_tiles(tile_ids, graph)
         total_points = len(tile_ids) * 2 + banners * 2
         ScoreManager._award_majority_score(
-            component_name, total_points, graph, players
+            component_name,
+            total_points,
+            graph,
+            players,
         )
 
     @staticmethod

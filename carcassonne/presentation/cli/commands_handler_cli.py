@@ -349,6 +349,19 @@ def _print_board(game) -> None:
     print(printed, end="")
 
 
+def _print_scores(game) -> None:
+    print(_("Scores:"))
+    players_order = game.get_players_order()
+    for player_id in players_order:
+        player = game.game_data.players[player_id]
+        print(
+            _("- Player {player_id}: {score} pts").format(
+                player_id=player_id,
+                score=player.get_score_int(),
+            )
+        )
+
+
 def set_parameter(self, param, value, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"set {param}={value}")
@@ -367,20 +380,25 @@ def play(self, move, game, client_service: IClientService) -> None:
         client_service.send_to_server(f"play {move}")
         return
     result = game.play_move(move)
-    _print_board(game)
-    if result and not game.is_undo_history_empty():
+    if not result:
+        print(f"{move} failed")
+        _print_board(game)
+        return
+    if not game.is_undo_history_empty():
         game.clear_undo_history()
-    if result:
-        while game.get_current_player().is_ai_player():
-            if game.end_game():
-                break
-            previous_player_id = game.get_current_player().get_id()
-            game.play_ai_turn(game)
-            _print_board(game)
-            if game.end_game():
-                break
-            if game.get_current_player().get_id() == previous_player_id:
-                break
+    _print_scores(game)
+    _print_board(game)
+    while game.get_current_player().is_ai_player():
+        if game.end_game():
+            break
+        previous_player_id = game.get_current_player().get_id()
+        game.play_ai_turn(game)
+        _print_scores(game)
+        _print_board(game)
+        if game.end_game():
+            break
+        if game.get_current_player().get_id() == previous_player_id:
+            break
 
 
 def show_board(self, game, client_service: IClientService) -> None:

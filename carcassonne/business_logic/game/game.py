@@ -4,6 +4,7 @@ This module implements `IGameService`, handling history, undo/redo,
 rule checks, and persistence interactions.
 """
 
+import logging
 import time
 from typing import Any, List
 
@@ -23,7 +24,14 @@ from carcassonne.datas.serializer import parse_move
 from carcassonne.presentation.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game_mode_manager import GameModeManager
 
+logger = logging.getLogger(__name__)
+
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
+ASCII_TILE_EDGE_WIDTH = 3
+ASCII_TILE_CENTER_WIDTH = 7
+ASCII_TILE_WIDTH = (
+    ASCII_TILE_EDGE_WIDTH * 2 + ASCII_TILE_CENTER_WIDTH
+)
 
 
 class Game(IGameService):
@@ -66,7 +74,8 @@ class Game(IGameService):
             self,
         )
         self.river = None
-        if self.game_mode_manager.get_mode() != "contest":
+        _gui_mode = (config_overrides or {}).get("gui", False)
+        if self.game_mode_manager.get_mode() != "contest" and not _gui_mode:
             self.start_new_game()
 
     def _configured_blitz_minutes(self) -> int:
@@ -176,19 +185,18 @@ class Game(IGameService):
                 middle += f"{meeple.player_id}"
 
         n, e, s, w = self.rotate_dirs(dirs, rotation)
-        m = "{:^3}".format(vertex.get_id())
         if middle != "":
-            m = "{:^5}".format(
-                "[" + str(vertex.get_id()) + "/" + middle + "]"
-            )
+            m = f"[{vertex.get_id()}/{middle}]"
         else:
-            m = "{:^5}".format("[" + str(vertex.get_id()) + "]")
-        space = 3 * " "
+            m = f"[{vertex.get_id()}]"
+        space = ASCII_TILE_EDGE_WIDTH * " "
 
         return [
-            space + "{:^5}".format(n) + space,
-            "{:^3}".format(w) + "{:^5}".format(m) + "{:^3}".format(e),
-            space + "{:^5}".format(s) + space,
+            space + f"{n:^{ASCII_TILE_CENTER_WIDTH}}" + space,
+            f"{w:^{ASCII_TILE_EDGE_WIDTH}}"
+            f"{m:^{ASCII_TILE_CENTER_WIDTH}}"
+            f"{e:^{ASCII_TILE_EDGE_WIDTH}}",
+            space + f"{s:^{ASCII_TILE_CENTER_WIDTH}}" + space,
         ]
 
     def get_board(self) -> list[Any] | None:
@@ -244,7 +252,7 @@ class Game(IGameService):
 
     def print_board(self, board: list[list]) -> None:
         TILE_HEIGHT = 3
-        EMPTY_TILE = [" " * 9] * TILE_HEIGHT
+        EMPTY_TILE = [" " * ASCII_TILE_WIDTH] * TILE_HEIGHT
 
         for row in board:  # chaque ligne de tuiles
             for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
@@ -282,7 +290,7 @@ class Game(IGameService):
             board[ny][nx] = self.generate_tile_ascii(v)
 
         TILE_HEIGHT = 3
-        EMPTY_TILE = [" " * 9] * TILE_HEIGHT
+        EMPTY_TILE = [" " * ASCII_TILE_WIDTH] * TILE_HEIGHT
         lines: list[str] = []
 
         for row in board:  # chaque ligne de tuiles
@@ -307,7 +315,9 @@ class Game(IGameService):
     def get_adjacent_position(
         self, vertex_id: int, side: int
     ) -> tuple[int, int] | None:
-        return self.game_data.graph.get_adjacent_position(vertex_id=vertex_id, side=side)
+        return self.game_data.graph.get_adjacent_position(
+            vertex_id=vertex_id, side=side
+        )
 
     def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
@@ -327,6 +337,84 @@ class Game(IGameService):
     def extract_tile_code(self, move):
         self.game_data.extract_tile_code(move)
 
+    def _connected_components_snapshot(
+        self,
+    ) -> dict[str, dict[str, list[tuple[int, list[str]]]]]:
+        """Build a stable snapshot of terrain connected components.
+
+        Returns:
+            A dictionary grouped by terrain type, then by component name.
+            Each component contains sorted `(tile_id, direction_group)` pairs.
+        """
+        if not hasattr(self.game_data.graph, "lands_components"):
+            return {}
+
+        snapshot: dict[str, dict[str, list[tuple[int, list[str]]]]] = {}
+        for terrain_type in sorted(self.game_data.graph.lands_components):
+            components = self.game_data.graph.lands_components[terrain_type]
+            snapshot[terrain_type] = {}
+            for component_name in sorted(components):
+                entries = components[component_name]
+                normalized_entries = sorted(
+                    (
+                        tile_id,
+                        sorted(direction_group),
+                    )
+                    for tile_id, direction_group in entries
+                )
+                snapshot[terrain_type][component_name] = normalized_entries
+        return snapshot
+
+    def _meeples_components_snapshot(self) -> list[dict[str, Any]]:
+        """Return a stable view of meeples and their associated component."""
+        if not hasattr(self.game_data.graph, "get_meeples"):
+            return []
+
+        snapshot: list[dict[str, Any]] = []
+        for meeple in self.game_data.graph.get_meeples():
+            position_label = meeple.get_position_label()
+            snapshot.append(
+                {
+                    "player_id": getattr(meeple, "player_id", "?"),
+                    "tile_id": getattr(meeple, "tile_id", "?"),
+                    "position": position_label,
+                    "component": getattr(meeple, "lands_components", "?"),
+                }
+            )
+
+        snapshot.sort(
+            key=lambda item: (
+                item["player_id"],
+                item["tile_id"],
+                str(item["position"]),
+                str(item["component"]),
+            )
+        )
+        return snapshot
+
+    def _log_rejected_move(self, move: str, reason: str) -> bool:
+        gui_mode = False
+        try:
+            gui_mode = bool(self.get_game_configuration().get("gui"))
+        except Exception:
+            gui_mode = False
+        if gui_mode:
+            print(f"{move} failed.", flush=True)
+        logger.info("Move %s rejected: %s", move, reason)
+        return False
+
+    @staticmethod
+    def _score_value(player) -> int:
+        if hasattr(player, "get_score_int"):
+            return int(player.get_score_int())
+        if hasattr(player, "get_score"):
+            raw_score = player.get_score()
+            if hasattr(raw_score, "score"):
+                return int(raw_score.score)
+            if isinstance(raw_score, (int, float)):
+                return int(raw_score)
+        return 0
+
     def play_move(self, move: str) -> bool:
         """
         Tries to place a tile according to the computed move :
@@ -339,9 +427,11 @@ class Game(IGameService):
 
         timed_out_now = self.tick_blitz()
         if timed_out_now:
-            return False
+            return self._log_rejected_move(move, "blitz timer expired")
         if not self.blitz_manager._ensure_current_player_playable():
-            return False
+            return self._log_rejected_move(
+                move, "current player cannot act"
+            )
         if (
             self.game_data.players_order[
                 self.game_data.current_player_order_list
@@ -364,26 +454,34 @@ class Game(IGameService):
             )
             print(f"turn:{turn}")
             print(self.game_data.players_order)
-            return False
+            return self._log_rejected_move(
+                move, "it is not this player's turn"
+            )
         if self.game_data.current_hand is None:
             print("Vous devez piocher une tuile avant de jouer.")
-            return False
+            return self._log_rejected_move(
+                move, "no tile is currently in hand"
+            )
 
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
             print(
                 f"Vous devez jouer la tuile en main:"
                 f" {self.game_data.current_hand}")
-            return False
+            return self._log_rejected_move(
+                move,
+                f"tile in hand is {self.game_data.current_hand},"
+                f" not {tile_code}"
+            )
 
         try:
             parsed_move = parse_move(move)
         except ValueError:
-            return False
+            return self._log_rejected_move(move, "move format is invalid")
         current_player_meeples = self.get_current_player().get_meeples()
         if parsed_move.get("meeple") and current_player_meeples <= 0:
             print("No meeple remaining")
-            return False
+            return self._log_rejected_move(move, "no meeple remaining")
 
         ok = self.game_data.rules_manager.check_move(
             move,
@@ -391,33 +489,106 @@ class Game(IGameService):
             self.river_manager,
             current_player_id=self.get_current_player().get_id(),
         )
-        if ok:
-            current_player = self.get_current_player()
-            self.game_data.board.add_tile_to_board(
-                move,
-                self.game_data.graph,
-                self.game_data.tiles_info,
-                self.game_data.history,
-                self.game_data.players,
-                self.game_data.players_order,
-                current_player,
+        if not ok:
+            explain_reason = "move validation failed"
+            if hasattr(self.game_data.rules_manager, "explain_invalid_move"):
+                explain_reason = (
+                    self.game_data.rules_manager.explain_invalid_move(
+                        move,
+                        self.game_data.graph,
+                        self.river_manager,
+                        current_player_id=self.get_current_player().get_id(),
+                    )
+                )
+            return self._log_rejected_move(move, explain_reason)
+
+        current_player = self.get_current_player()
+
+        previous_scores = {
+            player_id: self._score_value(player)
+            for player_id, player in self.game_data.players.items()
+        }
+        self.game_data.board.add_tile_to_board(
+            move,
+            self.game_data.graph,
+            self.game_data.tiles_info,
+            self.game_data.history,
+            self.game_data.players,
+            self.game_data.players_order,
+            current_player,
+        )
+        print(move + " placed successfully.", flush=True)
+        turn = max(
+            self.game_data.graph.get_vertices().keys(), default=-1
+        )
+        tile_code = self.game_data.current_hand or "?"
+        logger.info(
+            "Turn %d: Player %s places tile %s",
+            turn,
+            current_player.get_id(),
+            tile_code,
+        )
+        tile_added_log = (
+            self.game_data.board.consume_last_tile_added_log_info()
+        )
+        if tile_added_log is not None:
+            logger.debug(
+                "Tile %d (%s) added at position %s",
+                tile_added_log[0],
+                tile_added_log[1],
+                tile_added_log[2],
             )
-            print(move + " placed successfully.")
-            self.river_manager.update_river_turn(move.split("/"))
-            self.game_data.current_hand = None
-            self.game_data.current_player_order_list = (
-                self.game_data.current_player_order_list + 1
-            ) % self.get_number_of_players()
-            self.blitz_manager._ensure_current_player_playable()
-            """vertices = self.graph.get_vertices()
-            for vertex in vertices.values():
-                print(vertex.get_neighbors())"""
-            return True
-        """vertices = self.graph.get_vertices()
-        for vertex in vertices.values():
-            print(vertex.get_neighbors())
-        print('i failed the test')"""
-        return False
+        scoring_events = self.game_data.board.consume_last_scoring_log_events()
+        meeple_log = self.game_data.board.consume_last_meeple_log_info()
+        if meeple_log is not None:
+            logger.info(
+                "Player %d places meeple at %s on component %s",
+                meeple_log[0],
+                meeple_log[1],
+                meeple_log[2],
+            )
+        for event_type, payload in scoring_events:
+            if event_type == "component_completed":
+                logger.info(
+                    "Component %s (%s) completed and scored",
+                    payload["name"],
+                    payload["terrain"],
+                )
+            elif event_type == "meeple_returned":
+                logger.info(
+                    "Player %d gets back %d meeple(s) from component %s",
+                    payload["player_id"],
+                    payload["count"],
+                    payload["component"],
+                )
+        for player_id in self.game_data.players_order:
+            player = self.game_data.players[player_id]
+            old_score = previous_scores.get(player_id, 0)
+            new_score = self._score_value(player)
+            if new_score != old_score:
+                logger.info(
+                    "Player %d score updated: %d -> %d (%+d)",
+                    player_id,
+                    old_score,
+                    new_score,
+                    new_score - old_score,
+                )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Connected terrain components: %s",
+                self._connected_components_snapshot(),
+            )
+            logger.debug(
+                "Meeples and associated components: %s",
+                self._meeples_components_snapshot(),
+            )
+        self.river_manager.update_river_turn(move.split("/"))
+        self.game_data.current_hand = None
+        self.game_data.current_player_order_list = (
+            self.game_data.current_player_order_list + 1
+        ) % self.get_number_of_players()
+        self.blitz_manager._ensure_current_player_playable()
+        return True
 
     def play_ai_turn(self, game=None) -> None:
         from carcassonne.business_logic.ai_model import RandomPlayer

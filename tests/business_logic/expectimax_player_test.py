@@ -107,6 +107,15 @@ class DummyBoard:
         graph.lands_components = {"after": [2]}
         graph.next_set_id = 9
 
+    def consume_last_tile_added_log_info(self):
+        return None
+
+    def consume_last_meeple_log_info(self):
+        return None
+
+    def consume_last_scoring_log_events(self):
+        return []
+
     def remove_tile_from_board(
         self,
         move_str: str,

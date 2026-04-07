@@ -41,6 +41,15 @@ class DummyBoard:
     ) -> None:
         self.played_moves.append(move)
 
+    def consume_last_tile_added_log_info(self):
+        return None
+
+    def consume_last_meeple_log_info(self):
+        return None
+
+    def consume_last_scoring_log_events(self):
+        return []
+
 
 class DummyDeckManager:
     def __init__(self) -> None:
@@ -134,3 +143,25 @@ def test_rebuild_reconstructs_deck_consumption_for_replayed_moves() -> None:
     assert game_data.board.played_moves == ["FSFS/0N0", "CFFF/0N0"]
     assert game_data.deck.len() == initial_base_count - 1
     assert game_data.deck.len_river() == initial_river_count - 1
+
+
+def test_restore_hand_realigns_ai_tiles_in_replay_order() -> None:
+    game_data = DummyGameData()
+    blitz_manager = DummyBlitzManager()
+    deck_manager = DummyDeckManager()
+    manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
+
+    # Simulate future stack shape after undo:
+    # [latest_ai, first_ai_to_replay, human]
+    # The first AI to replay must be drawn first.
+    game_data.deck.tiles = ["X", "A", "B", "Y"]
+    future_moves = [
+        MoveRecord("B/0N0", player_id=1, is_ai=True),
+        MoveRecord("A/0N0", player_id=1, is_ai=True),
+        MoveRecord("CFFF/0N0", player_id=0, is_ai=False),
+    ]
+
+    manager._restore_hand_and_realign_deck(future_moves)
+
+    assert game_data.current_hand == "CFFF"
+    assert game_data.deck.tiles[-1] == "A"

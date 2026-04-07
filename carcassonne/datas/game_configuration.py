@@ -6,6 +6,7 @@ CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".carcassonnerc")
 
 DEFAULT_SETTINGS = {
     "verbose": False,
+    "debug": False,
     "blitz": False,
     "contest": False,
     "time": 30,
@@ -54,6 +55,7 @@ class GameConfiguration:
         config = configparser.ConfigParser()
         config["defaults"] = {
             "verbose": "false",
+            "debug": "false",
             "blitz": "false",
             "time": "30",
             "river": "false",
@@ -89,6 +91,8 @@ class GameConfiguration:
 
             if config.has_option("defaults", "verbose"):
                 settings["verbose"] = config.getboolean("defaults", "verbose")
+            if config.has_option("defaults", "debug"):
+                settings["debug"] = config.getboolean("defaults", "debug")
             if config.has_option("defaults", "blitz"):
                 settings["blitz"] = config.getboolean("defaults", "blitz")
             if config.has_option("defaults", "river"):
@@ -142,6 +146,7 @@ class GameConfiguration:
         config = configparser.ConfigParser()
         config["defaults"] = {
             "verbose": str(self.settings["verbose"]).lower(),
+            "debug": str(self.settings.get("debug", False)).lower(),
             "blitz": str(self.settings["blitz"]).lower(),
             "time": str(self.settings["time"]),
             "river": str(self.settings.get("river")).lower(),

@@ -19,6 +19,7 @@ from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.graph_data import GraphData
 from carcassonne.i18n import configure_i18n, gettext as _
+from carcassonne.logger import setup_logging
 from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
@@ -216,6 +217,7 @@ def main() -> int:
     )
 
     args: argparse.Namespace = parser.parse_args()
+    setup_logging(verbose=args.verbose, debug=args.debug)
     if args.version:
         print(_("Carcassonne: version {version}").format(version=__version__))
         return 0
@@ -229,6 +231,8 @@ def main() -> int:
     config_overrides["contest"] = bool(args.contest)
     if args.verbose:
         config_overrides["verbose"] = True
+    if args.debug:
+        config_overrides["debug"] = True
     if args.blitz:
         config_overrides["time"] = args.time if args.time is not None else 30
     if args.file:
@@ -252,6 +256,24 @@ def main() -> int:
     if args.river:
         print(_("River mode enabled."))
         config_overrides["river"] = True
+
+    if args.debug:
+        print(_("Debug mode enabled."), file=sys.stderr, flush=True)
+    if args.file and not args.contest:
+        print(
+            _("Loading game from file: {filename}").format(
+                filename=args.file
+            ),
+            flush=True,
+        )
+    if args.gui:
+        config_overrides["gui"] = True
+        print(_("GUI mode enabled."), flush=True)
+    if args.verbose:
+        print(_("Verbose mode enabled."), flush=True)
+    if not args.gui and not args.contest:
+        print(_("Welcome to Carcassonne"))
+        print(_("Type 'help' to see the list of commands.") + "\n")
 
     game_data: IGraphData = GraphData()
     nb_players = args.players if args.players and 1 < args.players <= 5 else 2
@@ -290,8 +312,6 @@ def main() -> int:
     game.game_data.default_seed = args.seed
     if args.version:
         print(_("Carcassonne: version {version}").format(version=__version__))
-    if args.debug:
-        print(_("Debug mode enabled."), file=sys.stderr)
     if args.contest:
         try:
             move = game.game_mode_manager.run_contest()
@@ -303,16 +323,7 @@ def main() -> int:
             return 1
         print(move)
         return 0
-    if args.file:
-        print(
-            _("Loading game from file: {filename}").format(
-                filename=args.file
-            )
-        )
-    if args.verbose:
-        print(_("Verbose mode enabled."))
     if args.gui:
-        print(_("GUI mode enabled."))
         from carcassonne.presentation.gui.create_gui import CreateGui
 
         CreateGui(game, client_service, server_service)
