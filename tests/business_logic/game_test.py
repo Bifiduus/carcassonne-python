@@ -100,6 +100,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         extract_tile_code=Mock(return_value="CFFF"),
         graph=SimpleNamespace(
             find_neighbor_at=lambda x, y: (x + 1, y + 1),
+            get_adjacent_position=lambda vertex_id, side: (vertex_id + 1, side + 1),
             get_vertices_data=lambda: {1: {"id": 1}},
             get_vertex_data=Mock(),
             get_meeples=lambda: [SimpleNamespace(player_id=0, tile_id=1)],
@@ -175,6 +176,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.undo()
     game.redo()
     assert game.provide_hint() == "hint"
+    assert game.get_adjacent_position(2, 3) == (3, 4)
     assert game.get_all_players_remaining_time_seconds() == [(4, 12.0)]
     assert game.get_current_player_remaining_time_seconds() == 9.0
     assert game.get_player_remaining_time_seconds(9) == 9.0

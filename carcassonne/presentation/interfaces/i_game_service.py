@@ -89,6 +89,12 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def get_adjacent_position(
+        self, vertex_id: int, side: int
+    ) -> tuple[int, int] | None:
+        pass
+
+    @abstractmethod
     def get_meeples_data(self) -> list[dict]:
         pass
 

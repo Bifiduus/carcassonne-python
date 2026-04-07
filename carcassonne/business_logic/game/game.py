@@ -294,6 +294,11 @@ class Game(IGameService):
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
 
+    def get_adjacent_position(
+        self, vertex_id: int, side: int
+    ) -> tuple[int, int] | None:
+        return self.game_data.graph.get_adjacent_position(vertex_id=vertex_id, side=side)
+
     # new method qui:
     # recréer players avec données de repo
     # (dans attributs de fonction), nb de players
