@@ -66,6 +66,24 @@ def test_add_tile_to_board_places_meeple_on_available_component() -> None:
     assert history.past_moves[-1].move_str == "CFFF/0N0/N"
 
 
+def test_add_tile_to_board_normalizes_meeple_position_for_rotated_tiles() -> None:
+    board, graph, tiles_info, history, players = build_board_runtime()
+
+    board.add_tile_to_board(
+        "CFFF/0N2/N",
+        graph,
+        tiles_info,
+        history,
+        players,
+        [0, 1],
+        players[0],
+    )
+
+    assert len(graph.meeples) == 1
+    assert graph.meeples[0].get_position_label() == "S"
+    assert history.past_moves[-1].move_str == "CFFF/0N2/N"
+
+
 def test_add_tile_to_board_returns_early_when_target_position_is_missing() -> None:
     board = Board()
     graph = SimpleNamespace(

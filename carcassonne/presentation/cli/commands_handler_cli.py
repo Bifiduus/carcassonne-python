@@ -299,6 +299,13 @@ def show_configuration(self, game, client_service: IClientService) -> None:
             print(f"  {key}: {value}")
 
 
+def _print_board(game) -> None:
+    printed = game.get_printed_board()
+    if not printed.endswith("\n"):
+        printed += "\n"
+    print(printed, end="")
+
+
 def set_parameter(self, param, value, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"set {param}={value}")
@@ -317,7 +324,7 @@ def play(self, move, game, client_service: IClientService) -> None:
         client_service.send_to_server(f"play {move}")
         return
     result = game.play_move(move)
-    game.get_board()
+    _print_board(game)
     if result and not game.is_undo_history_empty():
         game.clear_undo_history()
     if result:
@@ -326,7 +333,7 @@ def play(self, move, game, client_service: IClientService) -> None:
                 break
             previous_player_id = game.get_current_player().get_id()
             game.play_ai_turn(game)
-            game.get_board()
+            _print_board(game)
             if game.end_game():
                 break
             if game.get_current_player().get_id() == previous_player_id:
@@ -337,7 +344,7 @@ def show_board(self, game, client_service: IClientService) -> None:
     if client_service.connected_to_a_server():
         client_service.send_to_server("board")
     else:
-        game.get_board()
+        _print_board(game)
 
 
 def show_server_list(self, client_service: IClientService):

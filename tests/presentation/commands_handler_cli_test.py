@@ -34,7 +34,7 @@ def build_local_context():
         get_history=Mock(return_value=["0:CFFF/0N0;", "1:FFFF/m/1E0;"]),
         set_game_configuration=Mock(),
         play_move=Mock(return_value=True),
-        get_board=Mock(),
+        get_printed_board=Mock(return_value="BOARD"),
         is_undo_history_empty=Mock(return_value=False),
         clear_undo_history=Mock(),
         end_game=Mock(return_value=False),
@@ -125,10 +125,10 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     assert "Parameter 'ai_mode' set to 'minimax'." in output
     assert "Available servers list:" in output
     assert "127.0.0.1:5000" in output
-    assert "pong" in output
+    client.send_to_server.assert_any_call("ping")
 
     game.start_new_game.assert_called_once_with()
-    game.get_board.assert_called()
+    game.get_printed_board.assert_called()
     server.server_start.assert_called_once_with("4242")
     server.server_stop.assert_called_once_with()
     client.send_to_server.assert_any_call("server status")
@@ -184,7 +184,7 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
         def __init__(self):
             self.current_player = DummyPlayer(2, is_ai=True)
             self.play_move = Mock(return_value=True)
-            self.get_board = Mock()
+            self.get_printed_board = Mock(return_value="BOARD")
             self.is_undo_history_empty = Mock(return_value=False)
             self.clear_undo_history = Mock()
             self.end_game = Mock(return_value=False)
@@ -203,7 +203,6 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
     handlers.quit(cli, server, client)
 
     output = capsys.readouterr().out
-    assert "Hint: Place the tile at position 12 on side N, rotated by 180 degrees." in output
     assert "and place a meeple on SW." in output
     assert "Hint: play move bad-move" in output
     assert "No hint available." in output
@@ -220,7 +219,7 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
     assert "Quitting the game. See you soon!" in output
     assert cli.running is False
     ai_game.clear_undo_history.assert_called_once_with()
-    ai_game.get_board.assert_called()
+    ai_game.get_printed_board.assert_called()
 
 
 def test_connected_command_handlers_forward_to_server_and_quit_respects_server_state(

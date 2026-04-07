@@ -167,6 +167,12 @@ class GameCLI:
                     break
                 self.handle_command(command)
 
+    def _render_board(self) -> None:
+        board = self.game.get_printed_board()
+        if not board.endswith("\n"):
+            board += "\n"
+        print(board, end="")
+
     def _tick_once(self) -> None:
         self.game.tick_blitz()
         timeout_message = str(self.game.get_timeout_message() or "")
@@ -185,7 +191,7 @@ class GameCLI:
             and self.game.get_current_player().is_ai_player()
         ):
             self.game.play_ai_turn(self.game)
-            self.game.get_board()
+            self._render_board()
 
     def _on_game_over(self) -> None:
         """Display final scores and stop the game loop."""
@@ -193,7 +199,7 @@ class GameCLI:
             return
         self.running = False
         self._stop_event.set()
-        self.game.get_board()
+        self._render_board()
         print("\n" + _("=== Game finished! Final scores ==="))
         players_order = self.game.get_players_order()
         results = []

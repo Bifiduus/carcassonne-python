@@ -242,12 +242,14 @@ def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertic
     assert len(ascii_tile) == 3
     assert "[1/3]" in ascii_tile[1]
 
-    printed = []
     game.generate_tile_ascii = lambda v: ["top", "mid", "bot"]
-    game.print_board = lambda board: printed.append(board)
     assert game.get_board() == [vertex]
-    assert printed and printed[0][0][0] == ["top", "mid", "bot"]
     assert "top" in game.get_printed_board()
+
+    first_render = game.get_printed_board()
+    second_render = game.get_printed_board()
+    assert first_render == second_render
+    assert vertex.middle == ""
 
     empty_game = Game.__new__(Game)
     empty_game.game_data = SimpleNamespace(

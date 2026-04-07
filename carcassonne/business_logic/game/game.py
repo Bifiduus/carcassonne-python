@@ -151,23 +151,25 @@ class Game(IGameService):
             vertex.get_id()
         )  # 0 à 3
         meeples = self.game_data.graph.get_meeples()
+        middle = vertex.get_middle()
         for meeple in meeples:
-            if meeple.tile_id == vertex.get_id():
-                pos_label = meeple.get_position_label()
-                if pos_label in ["N", "E", "S", "W"]:
-                    idx = ["N", "E", "S", "W"].index(pos_label)
-                    dirs[idx] += f"{meeple.player_id}"
-                elif pos_label in ["NW", "NE", "SE", "SW"]:
-                    idx = ["NW", "NE", "SE", "SW"].index(pos_label)
-                    dirs[idx - 1] += f"/{meeple.player_id}"
-                else:
-                    vertex.middle += f"{meeple.player_id}"
+            if meeple.tile_id != vertex.get_id():
+                continue
+            pos_label = meeple.get_position_label()
+            if pos_label in ["N", "E", "S", "W"]:
+                idx = ["N", "E", "S", "W"].index(pos_label)
+                dirs[idx] += f"{meeple.player_id}"
+            elif pos_label in ["NW", "NE", "SE", "SW"]:
+                idx = ["NW", "NE", "SE", "SW"].index(pos_label)
+                dirs[idx - 1] += f"/{meeple.player_id}"
+            else:
+                middle += f"{meeple.player_id}"
 
         n, e, s, w = self.rotate_dirs(dirs, rotation)
         m = "{:^3}".format(vertex.get_id())
-        if vertex.get_middle() != "":
+        if middle != "":
             m = "{:^5}".format(
-                "[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]"
+                "[" + str(vertex.get_id()) + "/" + middle + "]"
             )
         else:
             m = "{:^5}".format("[" + str(vertex.get_id()) + "]")
@@ -204,7 +206,6 @@ class Game(IGameService):
             ny = y - min_y
             board[ny][nx] = self.generate_tile_ascii(v)
 
-        self.print_board(board)
         return vertices
 
     def get_board_data(self) -> list[dict]:

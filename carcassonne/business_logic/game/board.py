@@ -27,11 +27,32 @@ SOUTHEAST_MATRIX = (2, 2)
 
 
 class Board:
+    MEEPLE_ROTATION_MAP = {
+        "N": "E",
+        "E": "S",
+        "S": "W",
+        "W": "N",
+        "NE": "SE",
+        "SE": "SW",
+        "SW": "NW",
+        "NW": "NE",
+        "C": "C",
+    }
+
     def __init__(self):
         """Initialize Board with tracking for already-scored components."""
         self.scored_components = (
             set()
         )  # Track components that have already scored
+
+    @staticmethod
+    def _normalize_meeple_position(position: str, rotation: int) -> str:
+        """Convert a rotated meeple position into the tile's base orientation."""
+        rotation = rotation % 4
+        steps = (-rotation) % 4
+        for _ in range(steps):
+            position = Board.MEEPLE_ROTATION_MAP[position]
+        return position
 
     def add_tile_to_board(
         self,
@@ -111,12 +132,18 @@ class Board:
                             and meeple.player_id != current_player_id
                             for meeple in graph.get_meeples()
                         ):
+                            meeple_position = move_parts[counter]
+                            if integer_placement_1 != 0:
+                                meeple_position = self._normalize_meeple_position(
+                                    meeple_position, integer_placement_1
+                                )
+
                             meeple = Meeple(
                                 player_id=current_player_id,
                                 tile_id=tile_id,
                                 position=(
                                     tiles_info.meeple_placement_list.index(
-                                        move_parts[counter]
+                                        meeple_position
                                     )
                                 ),
                                 lands_components=set_name_to_place,
