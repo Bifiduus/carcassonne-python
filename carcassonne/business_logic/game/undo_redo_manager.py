@@ -262,9 +262,10 @@ class UndoRedoManager:
             future_moves[-1].move_str
         )
         # Align the deck for the AI moves that originally followed.
-        # future_moves[:-1] are those AI moves; iterate in reverse so that
-        # the first AI draw ends up on top after the loop completes.
-        for record in reversed(future_moves[:-1]):
+        # future_moves[:-1] are the AI moves to be replayed next.
+        # Iterate in stored stack order so the earliest replayed AI move ends
+        # up at draw-top (end for normal deck, front for river deck).
+        for record in future_moves[:-1]:
             tile = self._tile_code_from_move(record.move_str)
             if self._is_river_tile(tile):
                 lst = self.game_data.deck.river_tiles

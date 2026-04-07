@@ -251,7 +251,7 @@ class ExpectimaxPlayer:
                 if not res:
                     print("SEARCH MIN DIDNT WORK")
                     game.get_board()
-                    print(move)
+                    print(f"{move} failed.")
                     continue
                 eval_score = self.star25(
                     game,

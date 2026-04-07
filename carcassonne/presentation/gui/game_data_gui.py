@@ -58,7 +58,6 @@ class GameDataGui:
             return
 
         final_move = self.current_tile.playable_tile()
-        print(final_move)
         result = self.game.play_move(final_move)
 
         if not self.game.is_undo_history_empty():

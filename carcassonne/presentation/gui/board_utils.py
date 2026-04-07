@@ -44,6 +44,42 @@ MEEPLE_POS_CARDINAL = {
     "W": (1, 0),
 }
 
+POSITION_INDEX_TO_LABEL = {
+    7: "NW",
+    0: "N",
+    1: "NE",
+    6: "W",
+    8: "C",
+    2: "E",
+    5: "SW",
+    4: "S",
+    3: "SE",
+}
+
+POSITION_LABEL_TO_GRID = {
+    "NW": (0, 0),
+    "N": (0, 1),
+    "NE": (0, 2),
+    "W": (1, 0),
+    "C": (1, 1),
+    "E": (1, 2),
+    "SW": (2, 0),
+    "S": (2, 1),
+    "SE": (2, 2),
+}
+
+MEEPLE_ROTATION_MAP = {
+    "N": "E",
+    "E": "S",
+    "S": "W",
+    "W": "N",
+    "NE": "SE",
+    "SE": "SW",
+    "SW": "NW",
+    "NW": "NE",
+    "C": "C",
+}
+
 
 def normalize_name(name: str) -> str:
     """Return the key used in texture cache for a given tile identifier."""
@@ -149,22 +185,22 @@ def draw_preview_grid(cr, x, y, size) -> None:
     cr.line_to(x + size, y + 2 * cell)
 
 
-def draw_meeples(cr, x, y, size, meeples, tile_id, players) -> None:
+def _rotate_meeple_label(position_label: str, orientation: int) -> str:
+    rotated_label = position_label
+    for _ in range(orientation % 4):
+        rotated_label = MEEPLE_ROTATION_MAP[rotated_label]
+    return rotated_label
+
+
+def draw_meeples(
+    cr, x, y, size, meeples, tile_id, players, orientation
+) -> None:
     for m in meeples:
         if m["tile_id"] != tile_id:
             continue
-        position_map = {
-            7: (0, 0),
-            0: (0, 1),
-            1: (0, 2),
-            6: (1, 0),
-            8: (1, 1),
-            2: (1, 2),
-            5: (2, 0),
-            4: (2, 1),
-            3: (2, 2),
-        }
-        row, col = position_map.get(m["position"], (1, 1))
+        position_label = POSITION_INDEX_TO_LABEL.get(m["position"], "C")
+        rotated_label = _rotate_meeple_label(position_label, orientation)
+        row, col = POSITION_LABEL_TO_GRID.get(rotated_label, (1, 1))
         cell = size / 3
         cx = x + col * cell
         cy = y + row * cell

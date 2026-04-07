@@ -295,7 +295,10 @@ def build_play_move_game(
             check_move=lambda *args, **kwargs: rules_ok
         ),
         board=SimpleNamespace(
-            add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0])
+            add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0]),
+            consume_last_tile_added_log_info=lambda: None,
+            consume_last_meeple_log_info=lambda: None,
+            consume_last_scoring_log_events=lambda: [],
         ),
         graph=SimpleNamespace(get_vertices=lambda: {}),
         tiles_info=object(),

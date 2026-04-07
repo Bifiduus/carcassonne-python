@@ -255,6 +255,7 @@ class BoardView(Gtk.DrawingArea):
                 self.game_data.game.get_meeples_data(),
                 tile_data["id"],
                 self.game_data.game.game_data.players,
+                tile_data["orientation"],
             )
         # Draw preview meeple if this is the previewed tile and meeple_pos is
         # set

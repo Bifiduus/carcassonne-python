@@ -208,6 +208,84 @@ class RulesManager:
         graph_copy.remove_vertex(new_tile_id)
         return True
 
+    def explain_meeple_placement_failure(
+        self,
+        move_parts: list[str],
+        counter: int,
+        graph: IGraphData,
+        current_player_id: int | None = None,
+    ) -> str:
+        """Return a human-readable reason for an invalid meeple placement."""
+        tile_code = move_parts[0]
+        side_placement = move_parts[counter]
+        placement_info = move_parts[counter - 1]
+        placement_numbers, target_side = self._extract_placement_data(
+            placement_info
+        )
+        tile_pos = graph.get_adjacent_position(
+            vertex_id=placement_numbers[0],
+            side=self.tiles_info.direction_dict[target_side],
+        )
+        if tile_pos is None:
+            return "target tile position is invalid"
+
+        graph_copy = copy.deepcopy(graph)
+        new_tile_id = max(graph_copy.get_vertices().keys(), default=-1) + 1
+        graph_copy.add_vertex(
+            vertex_id=new_tile_id,
+            name=tile_code,
+            middle=move_parts[1] if counter == 3 else "",
+            orientation=placement_numbers[1],
+            position=tile_pos,
+        )
+        graph_logic = self._get_graph_logic()
+        graph_logic.add_lands_components(
+            tile_id=new_tile_id,
+            graph=graph_copy,
+            tiles_info=self.tiles_info,
+        )
+        vertex = graph_copy.get_vertex(new_tile_id)
+        if vertex is None:
+            return "target tile could not be simulated"
+
+        side_x, side_y = self.match_matrix[side_placement]
+        land_type = vertex.get_matrix()[side_x][side_y]
+        if land_type == "S":
+            graph_copy.remove_vertex(new_tile_id)
+            return "meeples cannot be placed on river segments"
+        if not land_type or land_type not in graph_copy.lands_components:
+            graph_copy.remove_vertex(new_tile_id)
+            return (
+                "selected meeple position does not belong"
+                " to a valid component"
+            )
+
+        land_pos = Tile.direction_matrix[placement_numbers[1]][side_x][side_y]
+        component_set_name = self._find_component_set_name(
+            graph_copy,
+            land_type,
+            new_tile_id,
+            land_pos,
+        )
+        if component_set_name is None:
+            graph_copy.remove_vertex(new_tile_id)
+            return "selected meeple position does not map to a component"
+
+        for meeple in graph_copy.get_meeples():
+            if meeple.lands_components == component_set_name:
+                if (
+                    current_player_id is not None
+                    and meeple.player_id == current_player_id
+                ):
+                    continue
+                graph_copy.remove_vertex(new_tile_id)
+                return (
+                    f"component {component_set_name} already contains a meeple"
+                )
+
+        graph_copy.remove_vertex(new_tile_id)
+        return "meeple placement is invalid"
+
     def are_equal_sides(
         self,
         tile1: list[str],
@@ -438,3 +516,109 @@ class RulesManager:
             return False
 
         return True
+
+    def explain_invalid_move(
+        self,
+        move: str,
+        graph: IGraphData,
+        river_manager: RiverManager,
+        current_player_id: int | None = None,
+    ) -> str:
+        """Return a human-readable reason explaining why a move is invalid."""
+        if not isinstance(move, str):
+            return "move must be a string"
+
+        move_parts = move.split("/")
+        part_index = 0
+        if not 2 <= len(move_parts) <= 4:
+            return "move format is invalid"
+        if move_parts[part_index] not in self.tiles_info.tiles_dict:
+            return "tile code is invalid"
+
+        part_index += 1
+        if len(move_parts[part_index]) == 1:
+            if (
+                move_parts[part_index]
+                not in self.tiles_info.tiles_dict[move_parts[part_index - 1]]
+            ):
+                return "tile center variant is invalid"
+            tile_identifier = (
+                move_parts[part_index - 1] + "/" + move_parts[part_index]
+            )
+            part_index += 1
+        else:
+            if (
+                "void"
+                not in self.tiles_info.tiles_dict[move_parts[part_index - 1]]
+            ):
+                return "tile center variant is missing"
+            tile_identifier = move_parts[part_index - 1]
+
+        if len(move_parts) <= part_index:
+            return "move placement is missing"
+
+        placement_numbers, target_side = self._extract_placement_data(
+            move_parts[part_index]
+        )
+        if len(placement_numbers) != 2:
+            return "placement format is invalid"
+        max_id = max(graph.get_vertices().keys(), default=-1) + 1
+        if placement_numbers[0] >= max_id:
+            return "target tile id does not exist"
+        if (
+            len(target_side) != 1
+            or target_side not in self.tiles_info.direction_list
+        ):
+            return "target side is invalid"
+        if not (0 <= placement_numbers[1] <= 3):
+            return "tile rotation is invalid"
+
+        if len(move_parts) - 1 == part_index + 1:
+            if (
+                move_parts[part_index + 1]
+                not in self.tiles_info.meeple_placement_list
+            ):
+                return "meeple position is invalid"
+
+        if not self.tiles_info.is_tile_left(tile_identifier):
+            return f"tile {tile_identifier} is not available"
+
+        target_vertex = graph.get_vertices().get(placement_numbers[0])
+        if target_vertex is None:
+            return "target tile id does not exist"
+        if not target_vertex.is_neighbor_free(
+            self.tiles_info.direction_dict[target_side]
+        ):
+            return "target side is already occupied"
+
+        tile_pos = graph.get_adjacent_position(
+            placement_numbers[0],
+            self.tiles_info.direction_dict[target_side],
+        )
+        if not self.are_equal_sides(
+            move_parts[0],
+            tile_pos,
+            placement_numbers[1],
+            graph,
+            river_manager,
+        ):
+            return "tile sides do not match neighboring tiles"
+
+        if not river_manager.check_river_turn(move_parts):
+            return "river placement rules are violated"
+
+        meeple_present = len(move_parts) - 1 == part_index + 1
+        if meeple_present and not self.can_place_meeple_on_tile_side(
+            move_parts,
+            part_index + 1,
+            graph,
+            current_player_id,
+        ):
+            return self.explain_meeple_placement_failure(
+                move_parts,
+                part_index + 1,
+                graph,
+                current_player_id,
+            )
+
+        return "move is invalid"

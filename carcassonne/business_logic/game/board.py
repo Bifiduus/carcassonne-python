@@ -44,10 +44,32 @@ class Board:
         self.scored_components = (
             set()
         )  # Track components that have already scored
+        self._last_tile_added_log_info = None
+        self._last_meeple_log_info = None
+        self._last_scoring_log_events = []
+
+    def consume_last_tile_added_log_info(self):
+        """Return and clear the latest tile-added debug payload."""
+        payload = self._last_tile_added_log_info
+        self._last_tile_added_log_info = None
+        return payload
+
+    def consume_last_meeple_log_info(self):
+        """Return and clear the latest meeple placement log payload."""
+        payload = self._last_meeple_log_info
+        self._last_meeple_log_info = None
+        return payload
+
+    def consume_last_scoring_log_events(self):
+        """Return and clear scoring log payloads for the latest move."""
+        payload = list(self._last_scoring_log_events)
+        self._last_scoring_log_events = []
+        return payload
 
     @staticmethod
     def _normalize_meeple_position(position: str, rotation: int) -> str:
-        """Convert a rotated meeple position into the tile's base orientation."""
+        """Convert a rotated meeple position into the tile's base
+        orientation."""
         rotation = rotation % 4
         steps = (-rotation) % 4
         for _ in range(steps):
@@ -65,6 +87,9 @@ class Board:
         current_player: Player,
         record_history: bool = True,
     ) -> None:
+        self._last_tile_added_log_info = None
+        self._last_meeple_log_info = None
+        self._last_scoring_log_events = []
         move_parts = move.split("/")
         # jouer le move dans les structures
         counter = 3 if len(move_parts[1]) == 1 else 2
@@ -93,6 +118,7 @@ class Board:
             orientation=integers_placement[1],
             position=tile_pos,
         )
+        self._last_tile_added_log_info = (tile_id, move_parts[0], tile_pos)
 
         graph_logic = GraphLogic()
         # example of updating lands components after adding a tile
@@ -134,8 +160,11 @@ class Board:
                         ):
                             meeple_position = move_parts[counter]
                             if integer_placement_1 != 0:
-                                meeple_position = self._normalize_meeple_position(
-                                    meeple_position, integer_placement_1
+                                meeple_position = (
+                                    self._normalize_meeple_position(
+                                        meeple_position,
+                                        integer_placement_1,
+                                    )
                                 )
 
                             meeple = Meeple(
@@ -150,11 +179,21 @@ class Board:
                             )
                             graph.add_meeple(meeple)
                             players[current_player_id].remove_meeple()
+                            self._last_meeple_log_info = (
+                                current_player_id,
+                                meeple_position,
+                                set_name_to_place,
+                            )
 
         # Score completed components at end of turn
         # Map player_id (0-based) to Player object
         ScoreManager.score_end_of_turn(
-            graph, players, current_player_id, self.scored_components
+            graph,
+            players,
+            current_player_id,
+            self.scored_components,
+            emit_logs=False,
+            log_events=self._last_scoring_log_events,
         )
 
         # affiche les scores actuels dans la console
