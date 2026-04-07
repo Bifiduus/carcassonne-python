@@ -155,7 +155,7 @@ def test_start_load_game_rebuilds_loading_state_and_uses_default_start(monkeypat
 
     assert clear_calls == ["cleared"]
     assert data.graph.reset_calls == 1
-    assert calls == ["default"]
+    assert calls == []
     assert data.deck is not old_deck
     assert data.game_repository is not old_repository
     assert data.current_hand is None

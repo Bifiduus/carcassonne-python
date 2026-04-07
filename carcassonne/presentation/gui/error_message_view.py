@@ -15,5 +15,5 @@ class ErrorMessageView:
         dialog = Gtk.AlertDialog()
         dialog.set_message(_("Error"))
         dialog.set_detail(message)
-        dialog.set_modal(True)
+        dialog.set_modal(False)
         dialog.show(self.gui.window.window)

@@ -28,7 +28,7 @@ def test_show_error_creates_alert_dialog() -> None:
         # Verify dialog was created and configured
         mock_dialog.set_message.assert_called_once()
         mock_dialog.set_detail.assert_called_once_with("Test error message")
-        mock_dialog.set_modal.assert_called_once_with(True)
+        mock_dialog.set_modal.assert_called_once_with(False)
         mock_dialog.show.assert_called_once_with(gui.window.window)
 
 

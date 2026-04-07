@@ -28,7 +28,7 @@ def test_show_info_creates_dialog() -> None:
 
         # Verify dialog setup
         mock_dialog.set_title.assert_called_once()
-        mock_dialog.set_modal.assert_called_once_with(True)
+        mock_dialog.set_modal.assert_called_once_with(False)
         mock_dialog.set_transient_for.assert_called_once_with(
             gui.window.window)
 

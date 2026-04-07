@@ -27,11 +27,9 @@ def on_load(gui) -> None:
         try:
             file = dialog.open_finish(result)
             filename = file.get_path()
-            river_before = gui.game_data.game_configuration().get_setting_value(
-                "river")
+            river_before = gui.game_data.game_configuration().get("river", False)
             if gui.game_data.game.load_game_from_file(filename) == 0:
-                river_after = gui.game_data.game_configuration().get_setting_value(
-                    "river")
+                river_after = gui.game_data.game_configuration().get("river", False)
                 # Re-initialize river_manager with the loaded config
                 gui.game_data.game.river_manager.reset()
                 if river_after:
@@ -58,15 +56,31 @@ def on_load(gui) -> None:
                     else:
                         gui.info_message.show_info(
                             _("River mode has been disabled for this game."))
-            else:
-                gui.error_message.show_error(
-                    _("Failed to load game from {filename}. Check the console for details.").format(
+                # Success message
+                gui.info_message.show_info(
+                    _("Game successfully loaded from {filename}.").format(
                         filename=filename
                     )
                 )
-        except Exception:
-            # Cancelled or failed; ignore.
-            pass
+            else:
+                gui.error_message.show_error(
+                    _("Failed to load the game from {filename}. "
+                      "Please check the file format and try again.").format(
+                        filename=filename
+                    )
+                )
+        except Exception as e:
+            # Check if this is a user cancellation (not an actual error)
+            error_msg = str(e).lower()
+            if "cancel" in error_msg or "operation was cancelled" in error_msg:
+                # User cancelled the dialog; silently ignore
+                return
+            # Only show error for actual errors, not cancellations
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("An error occurred while loading the game: {error}. "
+                      "Please try again.").format(error=str(e))
+                )
 
     dialog.open(gui.window.window, None, on_file_selected)
 
@@ -81,17 +95,31 @@ def on_save(gui) -> None:
             file = dialog.save_finish(result)
             filename = file.get_path()
             if gui.game_data.game.save_game_to_file(filename) == 0:
-                print(_("Game saved to {filename}").format(filename=filename))
-            else:
-                print(
-                    _("Failed to save game to {filename}").format(
+                gui.info_message.show_info(
+                    _("Game successfully saved to {filename}.").format(
                         filename=filename
-                    ),
-                    file=sys.stderr,
+                    )
                 )
-        except Exception:
-            # Cancelled or failed; ignore.
-            pass
+            else:
+                if hasattr(gui, "error_message"):
+                    gui.error_message.show_error(
+                        _("Failed to save the game to {filename}. "
+                          "Please check the file path and try again.").format(
+                            filename=filename
+                        )
+                    )
+        except Exception as e:
+            # Check if this is a user cancellation (not an actual error)
+            error_msg = str(e).lower()
+            if "cancel" in error_msg or "operation was cancelled" in error_msg:
+                # User cancelled the dialog; silently ignore
+                return
+            # Only show error for actual errors, not cancellations
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("An error occurred while saving the game: {error}. "
+                      "Please try again.").format(error=str(e))
+                )
 
     dialog.save(gui.window.window, None, on_file_selected)
 
@@ -147,6 +175,17 @@ def on_pause() -> None:
 
 
 def on_hint(gui):
+    """Provide a hint for the current position."""
+    # Check preconditions in presentation layer
+    if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+        if gui.game_data.game.game_data.current_hand is None:
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("You must draw a tile before requesting a hint. "
+                      "Please draw a tile first and then try again.")
+                )
+            return
+
     gui.game_data.provide_hint()
 
 
@@ -166,11 +205,38 @@ def on_new_gui(gui):
 
 def on_undo_gui(gui):
     """Undo last move and refresh the board view."""
+    # Check preconditions in presentation layer
+    if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+        if gui.game_data.game.is_undo_history_empty():
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _(
+                        "There are no moves to undo. "
+                        "You need to play at least one move before you can undo.")
+                )
+            return
     gui.game_data.undo()
 
 
 def on_redo_gui(gui):
     """Redo last undone move and refresh the board view."""
+    # Check preconditions in presentation layer
+    if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+        if not hasattr(gui.game_data.game, "undo_redo_manager"):
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("There are no moves to redo. "
+                      "You need to undo a move before you can redo.")
+                )
+            return
+
+        if not gui.game_data.game.undo_redo_manager.game_data.history.future_moves:
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("There are no moves to redo. "
+                      "You need to undo a move before you can redo.")
+                )
+            return
     gui.game_data.redo()
 
 
@@ -178,7 +244,26 @@ def on_draw_gui(gui):
     """Draw a tile from the deck and update preview."""
     tile = gui.game_data.draw_tile()
     if tile is None:
+        # Provide specific error message based on context
+        error_msg = None
+        if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+            if gui.game_data.game.game_data.current_hand is not None:
+                error_msg = _(
+                    "You already have a tile in hand. "
+                    "You must play it or undo your move before drawing a new tile.")
+            elif gui.game_data.game.game_data.deck.is_empty():
+                error_msg = _(
+                    "The deck is empty. "
+                    "All tiles have been drawn. No more tiles are available to draw.")
+
+        if error_msg is None:
+            error_msg = _(
+                "The tile could not be drawn. "
+                "Please check if it is your turn and try again.")
+
         gui.tile_preview.set_filename("")
+        if hasattr(gui, "error_message"):
+            gui.error_message.show_error(error_msg)
         if hasattr(gui, "players_view"):
             gui.players_view.refresh()
         return
@@ -189,6 +274,16 @@ def on_draw_gui(gui):
 
 def on_rotate_gui(gui):
     """Rotate the current tile and refresh preview."""
+    # Check preconditions in presentation layer
+    if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+        if gui.game_data.game.game_data.current_hand is None:
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("You must draw a tile before rotating. "
+                      "Please draw a tile first and then try again.")
+                )
+            return
+
     gui.game_data.rotate_current_tile()
     gui.tile_preview.update_rotation()
     gui.update_preview_rotation()
@@ -196,6 +291,24 @@ def on_rotate_gui(gui):
 
 def on_end_turn_gui(gui):
     """Play the pending move and let GameDataGui handle the reset."""
+    # Check preconditions in presentation layer
+    if hasattr(gui.game_data, 'current_tile') and gui.game_data.current_tile is None:
+        if hasattr(gui, "error_message"):
+            gui.error_message.show_error(
+                _("No tile has been placed on the board. "
+                  "Please select a tile placement location and try again.")
+            )
+        return
+
+    if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
+        if gui.game_data.game.game_data.current_hand is None:
+            if hasattr(gui, "error_message"):
+                gui.error_message.show_error(
+                    _("You must draw a tile before playing a move. "
+                      "Please draw a tile first and then try again.")
+                )
+            return
+
     gui.game_data.play_move_gui()
     # after turn changes, update players list (highlight current player)
     if hasattr(gui, "players_view"):

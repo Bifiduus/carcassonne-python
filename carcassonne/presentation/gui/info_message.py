@@ -13,7 +13,7 @@ class InfoMessage:
     def show_info(self, message: str):
         dialog = Gtk.Dialog()
         dialog.set_title(_("Information"))
-        dialog.set_modal(True)
+        dialog.set_modal(False)
         dialog.set_transient_for(self.gui.window.window)
 
         # Create a text view for long text
