@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 from carcassonne.business_logic.game import Game
+from carcassonne.business_logic.player import Player
 from carcassonne.datas.graph_data import GraphData
 
 
@@ -23,8 +24,6 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
             "num_ai_players": 1,
         },
     )
-    game.game_data.current_player_order_list = 1
-    game.game_data.current_hand = "CRRF"
 
     played_moves = []
 
@@ -68,6 +67,12 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
         "_ensure_current_player_playable",
         lambda: True,
     )
+
+    game.game_data.current_player_order_list = 1
+    game.game_data.players = {
+        0: Player(0, "Player 0", "green"), 1: Player(1, "Player 1", "red", True)}
+    game.game_data.current_hand = "CRRF"
+    game.game_data.players_order = [0, 1]
 
     game.play_ai_turn(game)
 
@@ -155,7 +160,8 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         extract_tile_code=Mock(return_value="CFFF"),
         graph=SimpleNamespace(
             find_neighbor_at=lambda x, y: (x + 1, y + 1),
-            get_adjacent_position=lambda vertex_id, side: (vertex_id + 1, side + 1),
+            get_adjacent_position=lambda vertex_id, side: (
+                vertex_id + 1, side + 1),
             get_vertices_data=lambda: {1: {"id": 1}},
             get_vertex_data=Mock(),
             get_meeples=lambda: [SimpleNamespace(player_id=0, tile_id=1)],
@@ -350,7 +356,8 @@ def build_play_move_game(
             check_move=lambda *args, **kwargs: rules_ok
         ),
         board=SimpleNamespace(
-            add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0])
+            add_tile_to_board=lambda *args, **kwargs: added_moves.append(
+                args[0])
         ),
         graph=SimpleNamespace(get_vertices=lambda: {}),
         tiles_info=object(),
@@ -411,12 +418,14 @@ def test_play_ai_turn_rejects_missing_game_and_falls_back_when_meeples_are_gone(
 
     game.tick_blitz = lambda: False
     game.end_game = lambda: False
-    game.play_move = lambda move: played_moves.append(move) or move == "CFFF/0N0"
+    game.play_move = lambda move: played_moves.append(
+        move) or move == "CFFF/0N0"
     game.blitz_manager = SimpleNamespace(
         _ensure_current_player_playable=lambda: True
     )
     game.deck_manager = SimpleNamespace(
-        draw_tile=lambda silent=True: setattr(game.game_data, "current_hand", "CFFF")
+        draw_tile=lambda silent=True: setattr(
+            game.game_data, "current_hand", "CFFF")
     )
     game.game_data = SimpleNamespace(
         current_hand=None,

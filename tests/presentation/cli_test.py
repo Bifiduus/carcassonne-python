@@ -348,7 +348,8 @@ def test_input_loop_handles_ai_bootstrap_game_over_and_input_errors(capsys) -> N
     cli, game, _, _ = build_cli()
     ai_player = DummyPlayer(2, is_ai=True)
     human_player = DummyPlayer(1, is_ai=False)
-    game.get_current_player.side_effect = [ai_player, human_player, human_player]
+    game.get_current_player.side_effect = [
+        ai_player, human_player, human_player]
     game.end_game.return_value = True
     cli._on_game_over = Mock()
 

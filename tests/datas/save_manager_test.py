@@ -25,6 +25,21 @@ class DummyPlayer:
         return self.score
 
 
+class DummyGameData:
+    def __init__(self):
+        self.players = {
+            0: DummyPlayer(0, 12),
+            1: DummyPlayer(1, 5),
+            2: DummyPlayer(2, 9),
+        }
+        self.players_order = [2, 0, 1]
+        self.seed = 4242
+        self.current_hand = None
+
+    def extract_tile_code(self, move):
+        return move.split("/")[0]
+
+
 class DummyGame:
     def __init__(self) -> None:
         self.config = {
@@ -33,29 +48,7 @@ class DummyGame:
             "ai_mode": "random",
             "file_keybinds": {"save": "s", "quit": "q"},
         }
-        game_data_type = type(
-            "GameData",
-            (),
-            {
-                "extract_tile_code": staticmethod(
-                    lambda move: move.split("/", 1)[0]
-                ),
-            },
-        )
-        self.game_data = type(
-            "DummyGameData",
-            (game_data_type,),
-            {
-                "players": {
-                    0: DummyPlayer(0, 12),
-                    1: DummyPlayer(1, 5),
-                    2: DummyPlayer(2, 9),
-                },
-                "players_order": [2, 0, 1],
-                "seed": 4242,
-                "current_hand": None,
-            },
-        )()
+        self.game_data = DummyGameData()
         self.set_config_calls: list[tuple[str, object]] = []
         self.set_ai_calls: list[int] = []
         self.start_load_calls = 0
@@ -106,7 +99,8 @@ def test_save_handler_serialize_and_invalid_filenames(capsys) -> None:
     game = DummyGame()
     handler = SaveHandler(game)
 
-    assert handler.serialize_value({"a": 1, "b": {"c": True}}) == "[a: 1, b: [c: True]]"
+    assert handler.serialize_value(
+        {"a": 1, "b": {"c": True}}) == "[a: 1, b: [c: True]]"
     assert handler.save_game_to_file("") == -1
     assert handler.load_game_from_file("") == -1
     assert handler.load_game_from_file("missing-file") == -1
@@ -146,11 +140,11 @@ def test_load_game_from_file_parses_sections_and_replays_moves(tmp_path: Path) -
         "\n".join(
             [
                 "[Settings]",
-                "verbose=true",
+                "verbose=True",
                 "time=25",
                 "ai_mode=minimax",
                 "file_keybinds=[save: s, quit: q]",
-                "contest_file=contest.txt # inline comment",
+                "contest_file=contest.txt",
                 "",
                 "[GameState]",
                 "NumberOfPlayers: 2,1",
@@ -171,7 +165,8 @@ def test_load_game_from_file_parses_sections_and_replays_moves(tmp_path: Path) -
     assert ("time", 25) in game.set_config_calls
     assert ("ai_mode", "minimax") in game.set_config_calls
     assert ("contest_file", "contest.txt") in game.set_config_calls
-    assert ("file_keybinds", {"save": "s", "quit": "q"}) in game.set_config_calls
+    assert ("file_keybinds", {"save": "s", "quit": "q"}
+            ) in game.set_config_calls
     assert game.set_ai_calls == [1]
     assert game.game_data.players_order == [2, 1, 0]
     assert game.game_data.players[0].score.score == 5

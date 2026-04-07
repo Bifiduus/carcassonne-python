@@ -1,10 +1,9 @@
+from carcassonne.presentation.gui.game_data_gui import GameDataGui
 import pytest
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, MagicMock
 
 pytest.importorskip("gi")
-
-from carcassonne.presentation.gui.game_data_gui import GameDataGui
 
 
 class DummyTilesInfo:
@@ -16,6 +15,17 @@ class DummyGame:
         self.provide_hint = Mock(return_value=hint_move)
         self.get_adjacent_position = Mock(return_value=adjacent_position)
         self.game_data = SimpleNamespace(tiles_info=DummyTilesInfo())
+
+
+def make_game_data_gui(game=None, client_service=None, server_service=None):
+    """Factory for creating GameDataGui instances with mocks."""
+    if game is None:
+        game = DummyGame("CFFF/0N0")
+    if client_service is None:
+        client_service = Mock()
+    if server_service is None:
+        server_service = Mock()
+    return GameDataGui(game, client_service, server_service)
 
 
 def test_provide_hint_sets_hint_tile_and_requests_redraw() -> None:
@@ -52,3 +62,119 @@ def test_provide_hint_returns_empty_without_hint_tile() -> None:
     game.get_adjacent_position.assert_not_called()
     assert gui_data.hint_tile is None
     gui_data.board_view.queue_draw.assert_not_called()
+
+
+def test_game_data_gui_initialization() -> None:
+    game = Mock()
+    client = Mock()
+    server = Mock()
+
+    gui_data = GameDataGui(game, client, server)
+
+    assert gui_data.game is game
+    assert gui_data.client is client
+    assert gui_data.server is server
+    assert gui_data.nb_tiles == 0
+    assert gui_data.current_tile is None
+    assert gui_data.current_orientation == 0
+    assert gui_data.board_view is None
+    assert gui_data.gui is None
+    assert gui_data.is_dragging is False
+    assert gui_data.hint_tile is None
+
+
+def test_game_configuration_returns_game_configuration() -> None:
+    game = Mock()
+    game.get_game_configuration.return_value = {"players_count": 2}
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    config = gui_data.game_configuration()
+
+    assert config == {"players_count": 2}
+    game.get_game_configuration.assert_called_once()
+
+
+def test_new_game_starts_new_game_and_resets_state() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    # Set initial state with some data
+    gui_data.hint_tile = {"dummy": "data"}
+    gui_data.nb_tiles = 5
+    initial_current_tile = Mock()
+    gui_data.current_tile = initial_current_tile
+    gui_data.current_orientation = 2
+
+    # Call new_game which should call reset()
+    gui_data.new_game([1, 2, 3], 12345)
+
+    # Verify game.start_new_game was called
+    game.start_new_game.assert_called_once_with([1, 2, 3], 12345)
+    # Verify reset() was called (state reset to initial values)
+    # reset() resets: current_tile, current_orientation, hint_tile
+    assert gui_data.hint_tile is None
+    assert gui_data.current_tile is None
+    assert gui_data.current_orientation == 0
+    # nb_tiles is NOT reset by reset() method, it's managed separately
+    # This is by design - it counts tiles drawn in the game
+
+
+def test_undo_calls_game_undo_and_refreshes_views() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = Mock()
+    gui_data.gui = Mock()
+    gui_data.gui.players_view = Mock()
+
+    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_undo"):
+        gui_data.undo()
+
+    gui_data.board_view.refresh.assert_called_once()
+    gui_data.gui.players_view.refresh.assert_called_once()
+
+
+def test_undo_without_board_view() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = None
+    gui_data.gui = None
+
+    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_undo"):
+        gui_data.undo()  # Should not raise
+
+
+def test_redo_calls_game_redo_and_refreshes_views() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = Mock()
+    gui_data.gui = Mock()
+    gui_data.gui.players_view = Mock()
+
+    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_redo"):
+        gui_data.redo()
+
+    gui_data.board_view.refresh.assert_called_once()
+    gui_data.gui.players_view.refresh.assert_called_once()
+
+
+def test_redo_without_board_view() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = None
+    gui_data.gui = None
+
+    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_redo"):
+        gui_data.redo()  # Should not raise
+
+
+def test_provide_hint_with_different_vertices_and_sides() -> None:
+    game = DummyGame("CDFF/5E1", adjacent_position=(3, 4))
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = Mock()
+
+    hint_move = gui_data.provide_hint()
+
+    assert hint_move == "CDFF/5E1"
+    assert gui_data.hint_tile["x"] == 3
+    assert gui_data.hint_tile["y"] == 4
+    assert gui_data.hint_tile["name"] == "CDFF"
+    assert gui_data.hint_tile["orientation"] == 1
