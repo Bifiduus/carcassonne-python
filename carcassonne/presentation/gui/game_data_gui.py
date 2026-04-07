@@ -73,6 +73,9 @@ class GameDataGui:
 
         self.reset()
 
+        if self.game.end_game() and self.gui is not None:
+            self.gui.show_end_game_screen()
+
     def _refresh_after_ai_turn(self):
         """Force a visual refresh between two consecutive AI turns."""
         if self.board_view:

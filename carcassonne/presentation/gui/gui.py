@@ -225,6 +225,10 @@ class GameGUI(Gtk.Application):
         self.set_accels_for_action("app.end_turn", ["space"])
 
         window.stack.add_named(overlay, "game")
+
+        self.end_game_view = self._create_end_game_view()
+        window.stack.add_named(self.end_game_view, "end_game")
+
         window.stack.set_visible_child_name("menu")
 
         # make the window visible on screen
@@ -256,6 +260,82 @@ class GameGUI(Gtk.Application):
     def on_preview_released(self, gesture, n_press, x, y):
         self.game_data.is_dragging = False
         self.game_data.refresh()
+
+    def _create_end_game_view(self):
+        end_game_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=16,
+        )
+        end_game_box.set_margin_top(40)
+        end_game_box.set_margin_start(40)
+        end_game_box.set_margin_end(40)
+        end_game_box.set_margin_bottom(40)
+        end_game_box.set_halign(Gtk.Align.CENTER)
+        end_game_box.set_valign(Gtk.Align.CENTER)
+
+        title = Gtk.Label()
+        title.set_use_markup(True)
+        title.set_markup(
+            f"<span size='xx-large'><b>{_('Game Over')}</b></span>"
+        )
+        title.set_justify(Gtk.Justification.CENTER)
+        end_game_box.append(title)
+
+        subtitle = Gtk.Label(label=_('Final scores'))
+        subtitle.set_justify(Gtk.Justification.CENTER)
+        subtitle.set_wrap(True)
+        end_game_box.append(subtitle)
+
+        self._end_game_scores_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=8,
+        )
+        self._end_game_scores_box.set_hexpand(True)
+        self._end_game_scores_box.set_valign(Gtk.Align.CENTER)
+        end_game_box.append(self._end_game_scores_box)
+
+        back_button = Gtk.Button(label=_('Back to menu'))
+        back_button.add_css_class('red-buttons')
+        back_button.connect(
+            'clicked',
+            lambda b: self.window.stack.set_visible_child_name('menu'),
+        )
+        end_game_box.append(back_button)
+
+        return end_game_box
+
+    def _populate_end_game_scores(self) -> None:
+        if not hasattr(self, '_end_game_scores_box'):
+            return
+
+        # clear old rows
+        child = self._end_game_scores_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            self._end_game_scores_box.remove(child)
+            child = next_child
+
+        if not self.game_data or not getattr(self.game_data, 'game', None):
+            return
+
+        players = sorted(
+            self.game_data.game.game_data.players.values(),
+            key=lambda p: -p.get_score_int(),
+        )
+
+        for rank, player in enumerate(players, start=1):
+            player_label = Gtk.Label()
+            player_label.set_use_markup(True)
+            player_label.set_markup(
+                f"<span size='large'>{rank}. {player.get_username()}: "
+                f"{player.get_score_int()} {_('points')}</span>"
+            )
+            player_label.set_justify(Gtk.Justification.CENTER)
+            self._end_game_scores_box.append(player_label)
+
+    def show_end_game_screen(self) -> None:
+        self._populate_end_game_scores()
+        self.window.stack.set_visible_child_name('end_game')
 
     def start_singleplayer(self, button):
         # self.game.start_new_game(mode="single")
