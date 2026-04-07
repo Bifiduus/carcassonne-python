@@ -95,6 +95,7 @@ class Game(IGameService):
 
     def start_load_game(self):
         self.game_data.start_load_game()
+        self.river_manager.reset()
 
     def get_history(self) -> List[str]:
         """Return the current play history."""

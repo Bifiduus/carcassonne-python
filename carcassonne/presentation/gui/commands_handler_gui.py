@@ -27,7 +27,18 @@ def on_load(gui) -> None:
         try:
             file = dialog.open_finish(result)
             filename = file.get_path()
+            river_before = gui.game_data.game.game_data.game_configuration.get_setting_value(
+                "river")
             if gui.game_data.game.load_game_from_file(filename) == 0:
+                river_after = gui.game_data.game.game_data.game_configuration.get_setting_value(
+                    "river")
+                # Re-initialize river_manager with the loaded config
+                gui.game_data.game.river_manager.reset()
+                if river_after:
+                    gui.game_data.game.river_manager.initialize_river()
+                # Debug print
+                print(
+                    f"DEBUG: Loaded game with {len(gui.game_data.game.get_board_data())} tiles")
                 # Refresh GUI state after loading
                 gui.game_data.reset()
                 if hasattr(gui, "players_view"):
@@ -36,12 +47,22 @@ def on_load(gui) -> None:
                     gui.board_view.refresh()
                 gui.tile_preview.set_filename("")
                 gui.window.stack.set_visible_child_name("game")
+                # Final refresh of the board after switching to game view
+                if hasattr(gui, "board_view"):
+                    gui.board_view.refresh()
+                # Notify if river mode changed
+                if river_before != river_after:
+                    if river_after:
+                        gui.info_message.show_info(
+                            _("River mode has been enabled for this game."))
+                    else:
+                        gui.info_message.show_info(
+                            _("River mode has been disabled for this game."))
             else:
-                print(
-                    _("Failed to load game from {filename}").format(
+                gui.error_message.show_error(
+                    _("Failed to load game from {filename}. Check the console for details.").format(
                         filename=filename
-                    ),
-                    file=sys.stderr,
+                    )
                 )
         except Exception:
             # Cancelled or failed; ignore.

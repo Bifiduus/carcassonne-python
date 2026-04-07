@@ -111,6 +111,10 @@ def load(self, filename, client_service: IClientService) -> None:
         client_service.send_to_server(f"load {filename}")
     else:
         if self.game.load_game_from_file(filename) == 0:
+            # Re-initialize river_manager with the loaded config
+            self.game.river_manager.reset()
+            if self.game.game_data.game_configuration.get_setting_value("river"):
+                self.game.river_manager.initialize_river()
             print(_("Game loaded from {filename}.").format(filename=filename))
         else:
             print(

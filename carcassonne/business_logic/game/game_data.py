@@ -65,11 +65,7 @@ class GameData:
     def start_load_game(self):
         self.history.clear_history()
         self.graph.reset_graph()
-        # ensure starting tile present after reset
-        if self.game_configuration.get_setting_value("river"):
-            initialize_starting_tile_river(self.graph)
-        else:
-            initialize_starting_tile(self.graph)
+
         self.game_repository = GameRepository()
         self.board = Board()
         self.deck = Deck()
@@ -78,6 +74,13 @@ class GameData:
         self.rules_manager = RulesManager(self.tiles_info)
         self.current_player_order_list = 0
         self._end_game_scored = False
+
+    def initialize_starting_tile_based_on_config(self):
+        """Initialize the starting tile based on current game configuration."""
+        if self.game_configuration.get_setting_value("river"):
+            initialize_starting_tile_river(self.graph)
+        else:
+            initialize_starting_tile(self.graph)
 
     def add_players(self, nb_players: int) -> None:
         """Add AI players to the game."""

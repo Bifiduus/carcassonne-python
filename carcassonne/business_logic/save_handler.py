@@ -306,9 +306,12 @@ class SaveHandler:
                         print("Warning: No seed.")
                         continue
                     self.game.game_data.seed = int(line)
+                    self.game.game_data.initialize_starting_tile_based_on_config()
                     self.game.shuffle_deck(
                         "fisher-yates", self.game.game_data.seed
                     )
+                    if self.game.game_data.game_configuration.get_setting_value("river"):
+                        self.game.river_manager.initialize_river()
 
             elif history_section:
                 if not game_score:
@@ -329,7 +332,8 @@ class SaveHandler:
                             file=sys.stderr,
                         )
                     # Assuming line is in the format "player_id:details"
-                    self.game.play_move(move)
+                    if not self.game.play_move(move):
+                        print(f"Failed to play move: {move}", file=sys.stderr)
 
         if sections_parsed < 3:
             print("Warning: Not all sections were found in the file.")
