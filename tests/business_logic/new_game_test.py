@@ -62,8 +62,16 @@ class DummyRiverManager:
 
 
 class DummyDeckManager:
-    def __init__(self) -> None:
+    def __init__(self, resolved_seed: int = 4242) -> None:
+        self.resolved_seed = resolved_seed
+        self.resolve_calls = []
         self.shuffle_calls = []
+
+    def resolve_seed(self, seed=None) -> int:
+        self.resolve_calls.append(seed)
+        if seed is None:
+            return self.resolved_seed
+        return seed
 
     def shuffle_deck(self, algo=None, seed=None) -> None:
         self.shuffle_calls.append((algo, seed))
@@ -97,7 +105,8 @@ class DummyGameData:
         self.players_order = [0, 1]
         self.current_player_order_list = 0
         self._end_game_scored = True
-        self.shuffle_calls = 0
+        self.shuffle_calls = []
+        self.shuffle_inputs = []
         self.online_players_received = None
 
     def get_maximum_number_of_players(self) -> int:
@@ -108,8 +117,9 @@ class DummyGameData:
         self.players = {player.get_id(): player for player in players}
         self.players_order = [player.get_id() for player in players]
 
-    def shuffle_players_order(self) -> None:
-        self.shuffle_calls += 1
+    def shuffle_players_order(self, seed=None) -> None:
+        self.shuffle_calls.append(seed)
+        self.shuffle_inputs.append(list(self.players_order))
         self.players_order = list(reversed(self.players_order))
 
     def get_current_player(self):
@@ -198,8 +208,9 @@ def test_start_online_game_resets_runtime_state_and_uses_default_start(monkeypat
     assert calls["tiles"] == ["tiles"]
     assert len(calls["rules"]) == 1
     assert game_data.online_players_received == players
-    assert deck_manager.shuffle_calls == [(None, None)]
-    assert game_data.shuffle_calls == 1
+    assert deck_manager.resolve_calls == [None]
+    assert deck_manager.shuffle_calls == [(None, 4242)]
+    assert game_data.shuffle_calls == [4242]
     assert game_data.current_player_order_list == 0
 
 
@@ -232,6 +243,7 @@ def test_start_new_game_reinitializes_state_for_river_games(monkeypatch) -> None
     assert calls["tiles"] == ["tiles"]
     assert len(calls["rules"]) == 1
     assert game_data.players_order == [0, 1]
+    assert deck_manager.resolve_calls == [123]
     assert deck_manager.shuffle_calls == [(None, 123)]
     assert game_data.current_player_order_list == 0
     assert game_data._end_game_scored is False
@@ -247,16 +259,21 @@ def test_start_new_game_shuffles_players_when_order_not_provided(monkeypatch) ->
     )
     game_data = DummyGameData(river=False)
     game_data.players[1].is_ai = False
+    game_data.players_order = [1, 0]
+    deck_manager = DummyDeckManager(resolved_seed=123)
     new_game = NewGame(
         DummyRiverManager(),
-        DummyDeckManager(),
+        deck_manager,
         DummyBlitzManager(),
         game_data,
     )
 
     new_game.start_new_game()
 
-    assert game_data.shuffle_calls == 1
+    assert deck_manager.resolve_calls == [None]
+    assert deck_manager.shuffle_calls == [(None, 123)]
+    assert game_data.shuffle_calls == [123]
+    assert game_data.shuffle_inputs == [[0, 1]]
     assert game_data.players_order == [1, 0]
 
 

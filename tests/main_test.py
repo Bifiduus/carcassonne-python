@@ -168,7 +168,7 @@ class MainBootstrapTestCase(unittest.TestCase):
             patch.object(main_module, "GameRepository", return_value=Mock()),
             patch.object(main_module, "Server", return_value=server),
             patch.object(main_module, "Client", return_value=client),
-            patch.object(main_module, "Game", return_value=game),
+            patch.object(main_module, "Game", return_value=game) as game_class,
             patch.object(main_module, "GameCLI", return_value=game_cli),
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -181,6 +181,8 @@ class MainBootstrapTestCase(unittest.TestCase):
         client.list_available_servers.assert_called_once_with()
         client.join_server.assert_called_once_with("4242")
         game_cli.run.assert_called_once_with()
+        self.assertEqual(game_class.call_args.kwargs["shuffle_algo"], "naive")
+        self.assertEqual(game_class.call_args.kwargs["default_seed"], 123)
         self.assertEqual(game.game_data.shuffle_algo, "naive")
         self.assertEqual(game.game_data.default_seed, 123)
         self.assertIn("River mode enabled.", stdout.getvalue())

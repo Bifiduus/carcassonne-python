@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +13,25 @@ def repo(tmp_path, monkeypatch):
     repository = GameRepository()
     yield repository
     repository.close()
+
+
+def test_default_database_path_is_stable_user_storage() -> None:
+    assert GameRepository.db_path == str(
+        Path.home() / ".carcassonne" / "carcassonne.db"
+    )
+
+
+def test_repository_creates_missing_parent_directory(tmp_path, monkeypatch) -> None:
+    db_path = tmp_path / "nested" / "db" / "carcassonne-test.db"
+    monkeypatch.setattr(GameRepository, "db_path", str(db_path))
+
+    repository = GameRepository()
+
+    try:
+        assert db_path.parent.is_dir()
+        assert db_path.is_file()
+    finally:
+        repository.close()
 
 
 def test_account_creation_registration_and_profile_queries(repo) -> None:

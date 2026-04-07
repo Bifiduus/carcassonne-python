@@ -75,6 +75,61 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
     assert game.game_data.current_hand is None
 
 
+def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
+    monkeypatch,
+):
+    class DummyGameConfiguration:
+        def __init__(self, overrides=None) -> None:
+            self.settings = {
+                "river": False,
+                "contest": False,
+                "contest_file": "",
+                "ai_mode": "random",
+            }
+            if overrides:
+                self.settings.update(overrides)
+
+        def get_setting_value(self, key):
+            return self.settings.get(key)
+
+        def get_setting(self):
+            return self.settings.copy()
+
+    observed = {}
+
+    def fake_start_new_game(self, players_order=None, seed=None):
+        observed["default_seed"] = self.game_data.default_seed
+        observed["shuffle_algo"] = self.game_data.shuffle_algo
+        observed["seed_arg"] = seed
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.GameConfiguration",
+        DummyGameConfiguration,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.r.shuffle",
+        lambda players: None,
+    )
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.new_game.NewGame.start_new_game",
+        fake_start_new_game,
+    )
+
+    Game(
+        GraphData(),
+        2,
+        {"contest": False, "contest_file": "", "ai_mode": "random"},
+        shuffle_algo="naive",
+        default_seed=123,
+    )
+
+    assert observed == {
+        "default_seed": 123,
+        "shuffle_algo": "naive",
+        "seed_arg": None,
+    }
+
+
 def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game = Game.__new__(Game)
     current_player = SimpleNamespace(get_id=lambda: 4)

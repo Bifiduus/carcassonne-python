@@ -1,3 +1,5 @@
+import random
+
 from carcassonne.datas.seed import Seed
 
 
@@ -34,15 +36,25 @@ class DeckManager:
         self.game_data.current_hand = tile
         return tile
 
+    def resolve_seed(self, seed: int | None = None) -> int:
+        """Resolve the seed used for deterministic game operations."""
+        if seed is not None:
+            return seed
+        if self.game_data.default_seed is not None:
+            return self.game_data.default_seed
+        return Seed().seed
+
+    @staticmethod
+    def seed_runtime_rng(seed: int) -> None:
+        """Seed the process-wide RNG used by player order and random AIs."""
+        random.seed(seed)
+
     def shuffle_deck(self, algo=None, seed=None) -> int:
         """Shuffle the deck using the specified algorithm and seed."""
         if algo is None:
             algo = self.game_data.shuffle_algo
-        if seed is None:
-            if self.game_data.default_seed is not None:
-                seed = self.game_data.default_seed
-            else:
-                seed = Seed().seed
+        seed = self.resolve_seed(seed)
+        self.seed_runtime_rng(seed)
         if algo == "naive":
             self.game_data.deck.shuffle_naive(seed)
         else:

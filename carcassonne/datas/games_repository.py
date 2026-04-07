@@ -2,6 +2,7 @@ import sys
 import sqlite3
 import threading
 from dataclasses import dataclass
+from pathlib import Path
 import time
 from typing import Any
 
@@ -19,7 +20,7 @@ class GameRepository(IGamesRepository):
     logic do not need to know about the underlying database.
     """
 
-    db_path: str = "carcassonne/datas/carcassonne.db"
+    db_path: str = str(Path.home() / ".carcassonne" / "carcassonne.db")
 
     def __init__(self):
         self.closed = False
@@ -28,6 +29,9 @@ class GameRepository(IGamesRepository):
 
     def __post_init__(self):
         # open sqlite connection once, allow multithreaded access via lock
+        db_path = Path(self.db_path).expanduser()
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db_path = str(db_path)
         self.db = sqlite3.connect(self.db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.lock = threading.Lock()
