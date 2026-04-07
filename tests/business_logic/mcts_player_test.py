@@ -55,7 +55,7 @@ class DummyGraph:
         self.next_set_id = 2
         self.set_meeples_calls: list[dict] = []
 
-    def get_verticies(self) -> dict[int, DummyVertex]:
+    def get_vertices(self) -> dict[int, DummyVertex]:
         return self._vertices
 
     def get_meeples(self) -> dict:

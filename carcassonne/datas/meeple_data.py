@@ -1,9 +1,10 @@
 """Meeple model representing a player token placed on the board."""
 
 from dataclasses import dataclass
+from typing import Final
 
 # Position labels for the 9 positions on a tile (3x3 grid)
-POSITION_LABELS: dict[int, str] = {
+POSITION_LABELS: Final[dict[int, str]] = {
     7: "NW",
     0: "N",
     1: "NE",
@@ -14,42 +15,60 @@ POSITION_LABELS: dict[int, str] = {
     4: "S",
     3: "SE",
 }
+MIN_POSITION: Final[int] = 0
+MAX_POSITION: Final[int] = 8
 
 
 @dataclass
 class Meeple:
     """Represents a meeple (player token) placed on the board."""
 
-    player_id: int  # Name of the player who owns this meeple
-    tile_id: int  # ID of the tile where the meeple is placed
-    position: int  # Position on the tile (0-8)
+    player_id: int
+    tile_id: int
+    position: int
+
     # Name of the lands component (e.g., 'C1', 'F2', 'R1')
     lands_components: str
 
-    def __init__(
-        self,
-        player_id: int,
-        tile_id: int,
-        position: int,
-        lands_components: str,
-    ) -> None:
-        self.player_id = player_id
-        self.tile_id = tile_id
-        self.position = position
-        self.lands_components = lands_components
-
     def __post_init__(self) -> None:
-        """Validate position is within valid range."""
-        if not 0 <= self.position <= 8:
+        """Validates that the meeple position stays within the allowed
+        range for a 3x3 tile."""
+        if self.player_id < 0:
             raise ValueError(
-                f"Position must be between 0 and 8, got {self.position}"
+                f"player_id must be >= 0, got {self.player_id}"
+            )
+
+        if self.tile_id < 0:
+            raise ValueError(f"tile_id must be >= 0, got {self.tile_id}")
+
+        if not MIN_POSITION <= self.position <= MAX_POSITION:
+            raise ValueError(
+                f"Position must be between {MIN_POSITION} and "
+                f"{MAX_POSITION}, got {self.position}"
             )
 
     def get_position_label(self) -> str:
-        """Get the label for this position (N, NE, E, SE, S, SW, W, NW, C)."""
+        """Converts the numeric position index into a readable cardinal
+        label (N, NE, E, SE, S, SW, W, NW, C).
+
+        Args:
+            None.
+
+        Returns:
+            str: The label corresponding to the current position.
+        """
         return POSITION_LABELS.get(self.position, "UNKNOWN")
 
     def __repr__(self) -> str:
+        """Builds a compact textual representation of the meeple,
+        useful for debugging and logs.
+
+        Args:
+            None.
+
+        Returns:
+            str: A string representing the current meeple state.
+        """
         pos_label: str = self.get_position_label()
         return (
             "Meeple("

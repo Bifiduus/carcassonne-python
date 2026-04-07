@@ -73,6 +73,9 @@ class GameDataGui:
 
         self.reset()
 
+        if self.game.end_game() and self.gui is not None:
+            self.gui.show_end_game_screen()
+
     def _refresh_after_ai_turn(self):
         """Force a visual refresh between two consecutive AI turns."""
         if self.board_view:
@@ -135,7 +138,7 @@ class GameDataGui:
                 tile_code = f"{tile_code}/{parsed['center']}"
 
             # Calculate position
-            position = self.game.graph.get_position(
+            position = self.game.get_adjacent_position(
                 vertex_id=parsed["target_id"],
                 side=self.game.game_data.tiles_info.direction_dict[
                     parsed["target_side"]

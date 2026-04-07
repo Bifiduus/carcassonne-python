@@ -50,15 +50,15 @@ def test_graph_data_adds_neighbors_positions_and_views() -> None:
     assert graph.get_turn_number() == 2
     assert graph.get_neighbors(0)[EAST_DIR] == 1
     assert graph.get_neighbors(1)[WEST_DIR] == 0
-    assert graph.get_position(0, EAST_DIR) == (1, 0)
-    assert graph.get_position_by_pos((0, 0), EAST_DIR) == (1, 0)
+    assert graph.get_adjacent_position(0, EAST_DIR) == (1, 0)
+    assert graph.get_adjacent_position_from((0, 0), EAST_DIR) == (1, 0)
     assert graph.get_vertex_orientation(1) == 0
 
     vertices_data = graph.get_vertices_data()
     assert vertices_data[0]["name"] == "CRFR"
     assert vertices_data[1]["x"] == 1
 
-    vertex_data = graph.get_vertice_data(graph.get_vertex(1))
+    vertex_data = graph.get_vertex_data(graph.get_vertex(1))
     assert vertex_data[1]["name"] == "CFFF"
 
     assert graph.find_neighbor_at(0, 1) == (0, 2)
@@ -100,7 +100,7 @@ def test_graph_data_reset_and_error_paths() -> None:
     graph.reset_graph()
 
     assert graph.get_turn_number() == 0
-    assert graph.get_verticies() == {}
+    assert graph.get_vertices() == {}
     assert graph.get_meeples() == []
     assert set(graph.lands_components) == {"C", "R", "F", "M", "S"}
     assert graph.get_neighbors(42) == {}
@@ -108,9 +108,9 @@ def test_graph_data_reset_and_error_paths() -> None:
     initialize_starting_tile(graph)
 
     with pytest.raises(ValueError):
-        graph.get_position(0, 99)
+        graph.get_adjacent_position(0, 99)
     with pytest.raises(ValueError):
-        graph.get_position_by_pos((0, 0), 99)
+        graph.get_adjacent_position_from((0, 0), 99)
     with pytest.raises(ValueError):
         graph.get_vertex_orientation(99)
     with pytest.raises(ValueError):

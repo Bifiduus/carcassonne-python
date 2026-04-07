@@ -208,9 +208,10 @@ class Client(IClientService):
                 )
                 self.temporary_username = ""
 
-        # Notify any GUI visitor about incoming server message
-        if self.message_visitor is not None:
-            self.message_visitor.visit_server_message(message, server)
+            # Notify any GUI visitor about incoming server message
+            if self.message_visitor is not None:
+                self.message_visitor.visit_server_message(
+                    message_content, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         """
@@ -296,23 +297,6 @@ class Client(IClientService):
             username, password, server
         )
 
-    def ping(self) -> str:
-        """
-        Send a ping or check server status.
-        Placeholder implementation.
-        """
-        start = time.time()
-        self.send_to_server("ping")
-        if self.client is None:
-            return _("Error: no client socket found.")
-        data = self.client.recv(1500)
-        message = data.decode()
-        if message.find("pong\n") != -1:
-            end = time.time()
-            return f"pong\nTime={end - start}ms"
-
-        return _("No server response")
-
     def connected_to_a_server(self) -> bool:
         with self.state_lock:
             return bool(self.client and self.has_joined_server)
@@ -342,6 +326,8 @@ class Client(IClientService):
             if text == "quit":
                 with self.state_lock:
                     self.has_joined_server = False
+            if text == "ping":
+                text += f" {time.time()}"
             text = f"{username}: " + text
             self.client.sendall(text.encode())
             return True

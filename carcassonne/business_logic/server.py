@@ -256,7 +256,6 @@ class Server(IServerService):
                     answer = self.handle_communication.command_quit(client)
                     self.send_to_clients(answer)
                     break
-
                 if self.client_is_registered(client_socket):
                     # Process data
                     response = self.process_message(str(client_index), message)
@@ -276,7 +275,9 @@ class Server(IServerService):
                         # Socket broken during send
                         if not self.should_stop.is_set():
                             print(
-                                f"Socket error during send: {e}", file=sys.stderr)
+                                f"Socket error during send: {e}",
+                                file=sys.stderr,
+                            )
                         break
                 else:
                     self.handle_client_registering(
@@ -392,8 +393,8 @@ class Server(IServerService):
         """
         answer = ""
         if self.server is not None:
-            if message == "ping":
-                answer = self.handle_communication.command_ping()
+            if message.startswith("ping"):
+                answer = self.handle_communication.command_ping(message)
             elif message == "Bad client disconnection":
                 answer = self.handle_communication.command_quit(
                     client_id)
@@ -535,7 +536,9 @@ class Server(IServerService):
                     invited_client.sendall(message.encode())
         except KeyError:
             print(
-                f"Client socket not found for {invited_player_id}", file=sys.stderr)
+                f"Client socket not found for {invited_player_id}",
+                file=sys.stderr,
+            )
         except Exception as e:
             print(f"Error sending invitation: {e}", file=sys.stderr)
 
@@ -571,13 +574,17 @@ class Server(IServerService):
                         self.repo.client_quit(username)
                     except Exception as e:
                         print(
-                            f"Error sending shutdown message: {e}", file=sys.stderr)
+                            f"Error sending shutdown message: {e}",
+                            file=sys.stderr,
+                        )
                     finally:
                         try:
                             client_socket.close()
                         except Exception as e:
                             print(
-                                f"Error closing client socket: {e}", file=sys.stderr)
+                                f"Error closing client socket: {e}",
+                                file=sys.stderr,
+                            )
                 self.connected_clients.clear()
 
             # 4. Clean up active games
@@ -599,7 +606,9 @@ class Server(IServerService):
                                 f"{time.asctime(time.localtime())}_backup.txt")
                     except Exception as e:
                         print(
-                            f"Error cleaning up game {game_id}: {e}", file=sys.stderr)
+                            f"Error cleaning up game {game_id}: {e}",
+                            file=sys.stderr,
+                        )
                 self.current_games_list.clear()
 
             # 5. Clear client tracking dictionaries
@@ -615,7 +624,9 @@ class Server(IServerService):
                         t.join(timeout=2.0)
                     except Exception as e:
                         print(
-                            f"Error joining client thread: {e}", file=sys.stderr)
+                            f"Error joining client thread: {e}",
+                            file=sys.stderr,
+                        )
                     if t.is_alive():
                         print("Warning: a client thread did"
                               " not finish in time")
@@ -651,6 +662,16 @@ class Server(IServerService):
             ok = self.send_to_client(player, message)
         return ok
 
+    def send_to_group_except(self, group_id: int, message: str,
+                            except_player_id: str) -> bool:
+        """Send message to all players in group except one player."""
+        players: list[str] = self.repo.get_players_from_group(group_id)
+        ok = True
+        for player in players:
+            if player != except_player_id:
+                ok = self.send_to_client(player, message)
+        return ok
+
     def send_to_client(self, username: str, message: str) -> bool:
         with self.clients_lock:
             try:
@@ -667,7 +688,9 @@ class Server(IServerService):
                 return False
             except Exception as e:
                 print(
-                    f"Error sending to client {username}: {e}", file=sys.stderr)
+                    f"Error sending to client {username}: {e}",
+                    file=sys.stderr,
+                )
                 return False
 
     def number_current_games(self) -> int:

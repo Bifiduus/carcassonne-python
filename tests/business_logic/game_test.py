@@ -100,8 +100,9 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         extract_tile_code=Mock(return_value="CFFF"),
         graph=SimpleNamespace(
             find_neighbor_at=lambda x, y: (x + 1, y + 1),
+            get_adjacent_position=lambda vertex_id, side: (vertex_id + 1, side + 1),
             get_vertices_data=lambda: {1: {"id": 1}},
-            get_vertice_data=Mock(),
+            get_vertex_data=Mock(),
             get_meeples=lambda: [SimpleNamespace(player_id=0, tile_id=1)],
         ),
     )
@@ -175,6 +176,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.undo()
     game.redo()
     assert game.provide_hint() == "hint"
+    assert game.get_adjacent_position(2, 3) == (3, 4)
     assert game.get_all_players_remaining_time_seconds() == [(4, 12.0)]
     assert game.get_current_player_remaining_time_seconds() == 9.0
     assert game.get_player_remaining_time_seconds(9) == 9.0
@@ -233,7 +235,7 @@ def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertic
             DummyMeeple(1, 7, "N"),
             DummyMeeple(1, 3, "C"),
         ],
-        get_verticies=lambda: {1: vertex},
+        get_vertices=lambda: {1: vertex},
     )
     game.game_data = SimpleNamespace(graph=graph)
 
@@ -242,16 +244,18 @@ def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertic
     assert len(ascii_tile) == 3
     assert "[1/3]" in ascii_tile[1]
 
-    printed = []
     game.generate_tile_ascii = lambda v: ["top", "mid", "bot"]
-    game.print_board = lambda board: printed.append(board)
     assert game.get_board() == [vertex]
-    assert printed and printed[0][0][0] == ["top", "mid", "bot"]
     assert "top" in game.get_printed_board()
+
+    first_render = game.get_printed_board()
+    second_render = game.get_printed_board()
+    assert first_render == second_render
+    assert vertex.middle == ""
 
     empty_game = Game.__new__(Game)
     empty_game.game_data = SimpleNamespace(
-        graph=SimpleNamespace(get_verticies=lambda: {})
+        graph=SimpleNamespace(get_vertices=lambda: {})
     )
     assert empty_game.get_board() is None
     assert empty_game.get_printed_board() == "No vertices.\n"
@@ -293,7 +297,7 @@ def build_play_move_game(
         board=SimpleNamespace(
             add_tile_to_board=lambda *args, **kwargs: added_moves.append(args[0])
         ),
-        graph=SimpleNamespace(get_verticies=lambda: {}),
+        graph=SimpleNamespace(get_vertices=lambda: {}),
         tiles_info=object(),
         history=object(),
         players={current_player_id: player},

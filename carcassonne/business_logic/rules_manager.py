@@ -149,7 +149,7 @@ class RulesManager:
             placement_info
         )
         # Early read-only check: get tile position without copying graph.
-        tile_pos = graph.get_position(
+        tile_pos = graph.get_adjacent_position(
             vertex_id=placement_numbers[0],
             side=self.tiles_info.direction_dict[target_side],
         )
@@ -158,7 +158,7 @@ class RulesManager:
         # Use an isolated copy so rule checks do not mutate the live game
         # state (land components, vertices, meeples, etc.).
         graph_copy = copy.deepcopy(graph)
-        turn = max(graph_copy.get_verticies().keys(), default=-1) + 1
+        turn = max(graph_copy.get_vertices().keys(), default=-1) + 1
         new_tile_id = turn
         graph_copy.add_vertex(
             vertex_id=turn,
@@ -239,11 +239,13 @@ class RulesManager:
         # More efficient than scanning all vertices for each of 4 directions.
         vertices_by_position = {
             vertex.get_position(): vertex
-            for vertex in graph.get_verticies().values()
+            for vertex in graph.get_vertices().values()
         }
 
         for direction_index in range(4):
-            next_pos = graph.get_position_by_pos(tile1pos, direction_index)
+            next_pos = graph.get_adjacent_position_from(
+                tile1pos, direction_index
+            )
             neighbor_vertex = vertices_by_position.get(next_pos)
             if neighbor_vertex is None:
                 continue
@@ -303,12 +305,12 @@ class RulesManager:
             move_parts[part_index]
         )
 
-        if not graph.get_verticies()[placement_numbers[0]].is_neighbor_free(
+        if not graph.get_vertices()[placement_numbers[0]].is_neighbor_free(
             self.tiles_info.direction_dict[target_side]
         ):
             return False
 
-        tile_pos = graph.get_position(
+        tile_pos = graph.get_adjacent_position(
             placement_numbers[0],
             self.tiles_info.direction_dict[target_side],
         )
@@ -387,7 +389,7 @@ class RulesManager:
             return False
         if (
             placement_numbers[0]
-            >= max(graph.get_verticies().keys(), default=-1) + 1
+            >= max(graph.get_vertices().keys(), default=-1) + 1
         ):
             return False
         if len(target_side) != 1:

@@ -151,23 +151,25 @@ class Game(IGameService):
             vertex.get_id()
         )  # 0 à 3
         meeples = self.game_data.graph.get_meeples()
+        middle = vertex.get_middle()
         for meeple in meeples:
-            if meeple.tile_id == vertex.get_id():
-                pos_label = meeple.get_position_label()
-                if pos_label in ["N", "E", "S", "W"]:
-                    idx = ["N", "E", "S", "W"].index(pos_label)
-                    dirs[idx] += f"{meeple.player_id}"
-                elif pos_label in ["NW", "NE", "SE", "SW"]:
-                    idx = ["NW", "NE", "SE", "SW"].index(pos_label)
-                    dirs[idx - 1] += f"/{meeple.player_id}"
-                else:
-                    vertex.middle += f"{meeple.player_id}"
+            if meeple.tile_id != vertex.get_id():
+                continue
+            pos_label = meeple.get_position_label()
+            if pos_label in ["N", "E", "S", "W"]:
+                idx = ["N", "E", "S", "W"].index(pos_label)
+                dirs[idx] += f"{meeple.player_id}"
+            elif pos_label in ["NW", "NE", "SE", "SW"]:
+                idx = ["NW", "NE", "SE", "SW"].index(pos_label)
+                dirs[idx - 1] += f"/{meeple.player_id}"
+            else:
+                middle += f"{meeple.player_id}"
 
         n, e, s, w = self.rotate_dirs(dirs, rotation)
         m = "{:^3}".format(vertex.get_id())
-        if vertex.get_middle() != "":
+        if middle != "":
             m = "{:^5}".format(
-                "[" + str(vertex.get_id()) + "/" + vertex.get_middle() + "]"
+                "[" + str(vertex.get_id()) + "/" + middle + "]"
             )
         else:
             m = "{:^5}".format("[" + str(vertex.get_id()) + "]")
@@ -180,7 +182,7 @@ class Game(IGameService):
         ]
 
     def get_board(self) -> list[Any] | None:
-        vertices = list(self.game_data.graph.get_verticies().values())
+        vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
             print("No vertices.")
@@ -204,7 +206,6 @@ class Game(IGameService):
             ny = y - min_y
             board[ny][nx] = self.generate_tile_ascii(v)
 
-        self.print_board(board)
         return vertices
 
     def get_board_data(self) -> list[dict]:
@@ -219,7 +220,7 @@ class Game(IGameService):
         """
         Retourne une liste exploitable directement par la GUI.
         """
-        self.game_data.graph.get_vertice_data(tile)
+        self.game_data.graph.get_vertex_data(tile)
 
         return None
 
@@ -247,7 +248,7 @@ class Game(IGameService):
             print()  # espace entre lignes de tuiles
 
     def get_printed_board(self) -> str:
-        vertices = list(self.game_data.graph.get_verticies().values())
+        vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
             return "No vertices.\n"
@@ -292,6 +293,11 @@ class Game(IGameService):
         self, x: int, y: int
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
+
+    def get_adjacent_position(
+        self, vertex_id: int, side: int
+    ) -> tuple[int, int] | None:
+        return self.game_data.graph.get_adjacent_position(vertex_id=vertex_id, side=side)
 
     def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
@@ -343,7 +349,7 @@ class Game(IGameService):
                 f"You: {self.get_current_player()}"
             )
             turn = (
-                max(self.game_data.graph.get_verticies().keys(), default=-1)
+                max(self.game_data.graph.get_vertices().keys(), default=-1)
                 + 1
             )
             print(f"turn:{turn}")
@@ -393,11 +399,11 @@ class Game(IGameService):
                 self.game_data.current_player_order_list + 1
             ) % self.get_number_of_players()
             self.blitz_manager._ensure_current_player_playable()
-            """vertices = self.graph.get_verticies()
+            """vertices = self.graph.get_vertices()
             for vertex in vertices.values():
                 print(vertex.get_neighbors())"""
             return True
-        """vertices = self.graph.get_verticies()
+        """vertices = self.graph.get_vertices()
         for vertex in vertices.values():
             print(vertex.get_neighbors())
         print('i failed the test')"""
