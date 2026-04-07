@@ -126,17 +126,8 @@ class GameRepository(IGamesRepository):
         )
         self._execute_non_query(usernames_table)
 
-        usernames_table = (
-            "CREATE TABLE IF NOT EXISTS usernames(server "
-            "varchar(30) CONSTRAINT server PRIMARY KEY,"
-        )
-        usernames_table += (
-            "username varchar(30) CONSTRAINT usernames_table" " NOT NULL);"
-        )
-        self._execute_non_query(usernames_table)
-
         timeout_table = "CREATE TABLE IF NOT EXISTS timeouts(player_id int" \
-            " CONSTRAINT player_id_scoreboard REFERENCES" \
+            " CONSTRAINT player_id_timeouts REFERENCES" \
             " players(player_id), timeout_end float CONSTRAINT" \
             " timeout_end NOT NULL);"
         self._execute_non_query(timeout_table)
@@ -168,6 +159,21 @@ class GameRepository(IGamesRepository):
     def is_accounted_for(self):
         rows = self._execute_query("SELECT 1 FROM players;")
         return len(rows) >= 1
+
+    def set_game_end_score(self, game_id: int, winner: int):
+        self._execute_non_query(
+            "UPDATE scoreboard SET victories=victories+1 WHERE player_id=?;",
+            (winner,),
+        )
+        current_group = self.get_group_from_game(game_id)
+        losers = self.get_players_from_group(current_group)
+        winner_username = self.get_username(str(winner))
+        losers.remove(winner_username)
+        for loser in losers:
+            self._execute_non_query(
+                "UPDATE scoreboard SET defeats=defeats+1 WHERE player_id=?;",
+                (loser,),
+            )
 
     def create_default_online_player(
         self, username: str, password: str, server: str
@@ -437,7 +443,6 @@ class GameRepository(IGamesRepository):
         )
         return rows[0]["game_id"]
 
-    # possible to change return type to tuple(int, message)
     def check_all_invitations_resolved(self, client_id: str):
         rows = self._execute_query(
             "SELECT invited_player, username, invitation_status FROM"
@@ -565,11 +570,37 @@ class GameRepository(IGamesRepository):
         )
 
     def client_quit(self, client_username: str):
+        client_id = self.get_id_from_username(client_username)
+        if self.get_group(client_id) != -1:
+            self.remove_client_from_party(client_username)
+
         self._execute_non_query(
             "UPDATE players SET connected=?, group_id=?,"
             " status=? WHERE username=?;",
             (False, None, "idle", client_username),
         )
+
+    def remove_client_from_party(self, client_username: str):
+        client_id = self.get_id_from_username(client_username)
+        group_id = self.get_group(client_id)
+        if group_id == -1:
+            return
+        host_id = self.get_host_from_party(group_id)
+        if host_id == client_id:
+            self.clean_party(group_id)
+        else:
+            self._execute_non_query(
+                "UPDATE players SET group_id=?, status=? WHERE player_id=?;",
+                (None, "idle", client_id),
+            )
+            rows = self._execute_query(
+                "SELECT number_of_players FROM groups WHERE group_id=?;",
+                (group_id,),
+            )
+            self._execute_non_query(
+                "UPDATE groups SET number_of_players=?-1 WHERE group_id=?;",
+                (rows[0][0], group_id),
+            )
 
     def set_unproper_client(self, client_username: str):
         self._execute_non_query(
@@ -599,6 +630,11 @@ class GameRepository(IGamesRepository):
         if len(rows) > 0:
             return True
         return False
+
+    def clean_game(self, game_id: int):
+        self._execute_non_query(
+            "DELETE FROM current_games WHERE game_id=?;", (game_id,)
+        )
 
     def get_group_from_game(self, game_id: int) -> int:
         rows = self._execute_query(

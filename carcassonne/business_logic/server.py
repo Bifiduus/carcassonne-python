@@ -154,8 +154,7 @@ class Server(IServerService):
 
     def launch_availables_games(self):
         # For all parties, check if game can be launched
-        # If so launch it, and handle_party() ( like handle_client but
-        #  for a game )
+        # If so launch it
         for party in self.repo.get_parties():
             check = self.party_can_be_launched(party)
             # Check if players are ok for party to be launched
@@ -182,13 +181,29 @@ class Server(IServerService):
     def clean_finished_games(self):
         with self.clients_lock:
             games = self.current_games_list.copy()
-            for game in games:
-                check = self.game_is_finished(game)
-                party = self.repo.get_group_from_game(game)
+            for game_id in games:
+                check = self.game_is_finished(game_id)
+                if check:
+                    game = self.current_games_list[game_id][1]
+                    winner = self.get_winner(game.game_data.players)
+                    self.repo.set_game_end_score(game_id, winner)
+                party = self.repo.get_group_from_game(game_id)
                 check_2 = not self.repo.check_party_is_alive(party)
                 if (check or check_2):
-                    self.repo.clean_party(game)
-                    del self.current_games_list[game]
+                    group_id = self.repo.get_group_from_game(game_id)
+                    self.repo.clean_party(group_id)
+                    self.repo.clean_game(game_id)
+                    del self.current_games_list[game_id]
+
+    def get_winner(self, players: dict[int, Player]) -> int:
+        max_score: int = -1
+        winner_id: int = -1
+        for player_id, player in players.items():
+            score: int = player.score.score
+            if score > max_score:
+                max_score = score
+                winner_id = player_id
+        return winner_id
 
     def game_is_finished(self, party: int) -> bool:
         check = self.current_games_list[party][1].end_game()
@@ -572,6 +587,9 @@ class Server(IServerService):
                     try:
                         # Save game state or perform cleanup
                         print(f"Cleaning up game: {party_name}")
+                        self.repo.clean_game(game_id)
+                        group_id = self.repo.get_group_from_game(game_id)
+                        self.repo.clean_party(group_id)
                         game = self.current_games_list.pop(game_id, None)
                         if game:
                             # Perform any necessary cleanup

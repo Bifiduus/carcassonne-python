@@ -90,6 +90,14 @@ class IGamesRepository(ABC):
         pass
 
     @abstractmethod
+    def clean_game(self, game_id: int):
+        pass
+
+    @abstractmethod
+    def set_game_end_score(self, game_id: int, winner: int):
+        pass
+
+    @abstractmethod
     def check_all_remaining_timeouts(self, timeout: float) -> list[int]:
         pass
 

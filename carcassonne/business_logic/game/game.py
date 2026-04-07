@@ -293,9 +293,6 @@ class Game(IGameService):
     ) -> tuple[int | None, int | None]:
         return self.game_data.graph.find_neighbor_at(x, y)
 
-    # new method qui:
-    # recréer players avec données de repo
-    # (dans attributs de fonction), nb de players
     def start_online_game(self, players: list[Player]):
         return self.new_game.start_online_game(players)
 

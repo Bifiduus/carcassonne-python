@@ -18,9 +18,6 @@ from carcassonne.presentation.interfaces.i_client_service import (
 
 
 class Client(IClientService):
-
-    # circulaire entre client et server, client avant server
-
     SERVER_TIMEOUT = 30
 
     def __init__(self, repo: IGamesRepository, server_service: Server):
@@ -54,7 +51,6 @@ class Client(IClientService):
         else:
             self.client_player = self.repo.get_online_player(self.server_name)
 
-    # Client side
     def join_server(
         self,
         ip: str | None = None,
@@ -74,7 +70,8 @@ class Client(IClientService):
             ip = self.server_service.server_name
         with self.servers_lock:
             if ip not in self.available_servers:
-                print(_("Error: there is no server with that IP address."), file=sys.stderr)
+                print(_("Error: there is no server with that IP address."),
+                      file=sys.stderr)
                 return False
             server_port = self.available_servers[ip][0]
 
@@ -153,7 +150,8 @@ class Client(IClientService):
                 except socket.timeout:
                     continue  # Check for shutdown_event and loop again
                 except OSError as e:
-                    print(_("Socket error: {error}").format(error=e), file=sys.stderr)
+                    print(_("Socket error: {error}").format(
+                        error=e), file=sys.stderr)
                     continue
         except Exception as e:
             print(
@@ -225,7 +223,8 @@ class Client(IClientService):
             s.bind(("", 12346))
             s.settimeout(timeout)  # Set socket timeout
         except Exception as e:
-            print(_("Error binding socket: {error}").format(error=e), file=sys.stderr)
+            print(_("Error binding socket: {error}").format(
+                error=e), file=sys.stderr)
             return {}
 
         start_time = time.time()
@@ -261,7 +260,8 @@ class Client(IClientService):
             except socket.timeout:
                 break
             except Exception as e:
-                print(_("Error receiving message: {error}").format(error=e), file=sys.stderr)
+                print(_("Error receiving message: {error}").format(
+                    error=e), file=sys.stderr)
                 break
 
         s.close()
@@ -311,7 +311,7 @@ class Client(IClientService):
             end = time.time()
             return f"pong\nTime={end - start}ms"
 
-        return _("No server response")  # Or implement actual ping logic
+        return _("No server response")
 
     def connected_to_a_server(self) -> bool:
         with self.state_lock:
@@ -351,7 +351,8 @@ class Client(IClientService):
                 print(f"Failed to send: {e}", file=sys.stderr)
             return False
         except Exception as e:
-            print(_("Failed to send: {error}").format(error=e), file=sys.stderr)
+            print(_("Failed to send: {error}").format(
+                error=e), file=sys.stderr)
             return False
 
     def disconnect(self):
