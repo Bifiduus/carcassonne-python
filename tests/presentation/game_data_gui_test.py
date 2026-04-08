@@ -15,6 +15,9 @@ class DummyGame:
     def __init__(self, hint_move, adjacent_position=(1, 2)) -> None:
         self.provide_hint = Mock(return_value=hint_move)
         self.get_adjacent_position = Mock(return_value=adjacent_position)
+        self.get_board_data = Mock(
+            return_value=[{"id": 0, "x": 0, "y": 0}]
+        )
         self.game_data = SimpleNamespace(tiles_info=DummyTilesInfo())
 
         # Parse hint_move to create appropriate parse_move response
@@ -55,7 +58,7 @@ def make_game_data_gui(game=None, client_service=None, server_service=None):
     return GameDataGui(game, client_service, server_service)
 
 
-def test_provide_hint_sets_hint_tile_and_requests_redraw() -> None:
+def test_provide_hint_sets_hint_empty_positions_and_requests_redraw() -> None:
     game = DummyGame("CFFF/0N0")
     gui_data = GameDataGui(game, client_service=Mock(), server_service=Mock())
     gui_data.board_view = SimpleNamespace(queue_draw=Mock())
@@ -64,16 +67,10 @@ def test_provide_hint_sets_hint_tile_and_requests_redraw() -> None:
 
     assert hint_move == "CFFF/0N0"
     game.provide_hint.assert_called_once()
-    game.get_adjacent_position.assert_called_once_with(vertex_id=0, side=0)
-    assert gui_data.hint_tile == {
-        "id": -1,
-        "x": 1,
-        "y": 2,
-        "name": "CFFF",
-        "middle": None,
-        "orientation": 0,
-        "meeple": "",
-    }
+    assert game.get_adjacent_position.call_count == 4
+    assert gui_data.hint_empty_positions == [(1, 2)]
+    assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
     gui_data.board_view.queue_draw.assert_called_once()
 
 
@@ -87,7 +84,10 @@ def test_provide_hint_returns_empty_without_hint_tile() -> None:
     assert hint_move == ""
     assert game.provide_hint.called
     game.get_adjacent_position.assert_not_called()
+    game.get_board_data.assert_not_called()
     assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_empty_positions == []
     gui_data.board_view.queue_draw.assert_not_called()
 
 
@@ -108,6 +108,8 @@ def test_game_data_gui_initialization() -> None:
     assert gui_data.gui is None
     assert gui_data.is_dragging is False
     assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_empty_positions == []
 
 
 def test_game_configuration_returns_game_configuration() -> None:
@@ -137,6 +139,8 @@ def test_new_game_starts_new_game_and_resets_state() -> None:
     gui_data = GameDataGui(game, Mock(), Mock())
     # Set initial state with some data
     gui_data.hint_tile = {"dummy": "data"}
+    gui_data.hint_neighbor_id = 5
+    gui_data.hint_empty_positions = [(1, 0)]
     gui_data.nb_tiles = 5
     initial_current_tile = Mock()
     gui_data.current_tile = initial_current_tile
@@ -148,8 +152,10 @@ def test_new_game_starts_new_game_and_resets_state() -> None:
     # Verify game.start_new_game was called
     game.start_new_game.assert_called_once_with([1, 2, 3], 12345)
     # Verify reset() was called (state reset to initial values)
-    # reset() resets: current_tile, current_orientation, hint_tile
+    # reset() clears all hint visual state
     assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_empty_positions == []
     assert gui_data.current_tile is None
     assert gui_data.current_orientation == 0
     # nb_tiles is NOT reset by reset() method, it's managed separately
@@ -246,7 +252,6 @@ def test_provide_hint_with_different_vertices_and_sides() -> None:
     hint_move = gui_data.provide_hint()
 
     assert hint_move == "CDFF/5E1"
-    assert gui_data.hint_tile["x"] == 3
-    assert gui_data.hint_tile["y"] == 4
-    assert gui_data.hint_tile["name"] == "CDFF"
-    assert gui_data.hint_tile["orientation"] == 1
+    assert gui_data.hint_empty_positions == [(3, 4)]
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_tile is None

@@ -178,6 +178,17 @@ class BoardView(Gtk.DrawingArea):
                     )
             self.draw_tile(cr, x, y, size, t, border_color)
 
+        for hx, hy in self.game_data.hint_empty_positions:
+            x = offset_x + (hx - min_x) * size
+            y = offset_y + (hy - min_y) * size
+            cr.set_source_rgba(1, 0.8, 0, 0.25)
+            cr.rectangle(x, y, size, size)
+            cr.fill()
+            cr.set_source_rgb(1, 0.8, 0)
+            cr.set_line_width(2)
+            cr.rectangle(x + 3, y + 3, size - 6, size - 6)
+            cr.stroke()
+
         if self.game_data.is_dragging and self.ghost_x is not None:
             self.draw_ghost_tile(cr)
 

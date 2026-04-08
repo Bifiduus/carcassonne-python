@@ -198,17 +198,8 @@ def hint(self, client_service) -> None:
         try:
             parsed = parse_move(move)
             description = _(
-                "Place the tile at position {target_id} on side "
-                "{target_side}, rotated by {degrees} degrees."
-            ).format(
-                target_id=parsed["target_id"],
-                target_side=parsed["target_side"],
-                degrees=parsed["rotation"] * 90,
-            )
-            if parsed['meeple']:
-                description += _(" and place a meeple on {meeple}.").format(
-                    meeple=parsed["meeple"]
-                )
+                "A good move is near tile {tile_id}."
+            ).format(tile_id=parsed["target_id"])
             print(_("Hint: {description}").format(description=description))
         except Exception:
             print(_("Hint: play move {move}").format(move=move))

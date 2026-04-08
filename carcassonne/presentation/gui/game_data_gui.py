@@ -18,6 +18,8 @@ class GameDataGui:
         self.gui = None
         self.is_dragging = False
         self.hint_tile = None  # hint tile data for transparent display
+        self.hint_neighbor_id = None  # vertex id of the hint neighbor tile
+        self.hint_empty_positions = []  # empty slots around hinted neighbor
         self.error = None
         self.highlight_contest_move = (
             False  # highlight last move in contest mode
@@ -181,6 +183,8 @@ class GameDataGui:
         self.current_tile = None
         self.current_orientation = 0
         self.hint_tile = None  # clear hint when resetting
+        self.hint_neighbor_id = None
+        self.hint_empty_positions = []
         if self.board_view:
             self.board_view.refresh()
 
@@ -388,30 +392,25 @@ class GameDataGui:
 
     def provide_hint(self):
         hint_move = self.game.provide_hint()
+        self.hint_neighbor_id = None
+        self.hint_empty_positions = []
         if hint_move:
-            # Parse the hint move to get tile and placement info
+            # Parse the hint move and mark empty adjacent slots around target.
             parsed = self.game.parse_move(hint_move)
-            tile_code = parsed["tile_sides"]
-            if parsed.get("center"):
-                tile_code = f"{tile_code}/{parsed['center']}"
-
-            # Calculate position
-            position = self.game.get_adjacent_position(
-                vertex_id=parsed["target_id"],
-                side=self.game.game_data.tiles_info.direction_dict[
-                    parsed["target_side"]
-                ],
-            )
-            if position:
-                self.hint_tile = {
-                    "id": -1,  # special id for hint
-                    "x": position[0],
-                    "y": position[1],
-                    "name": parsed["tile_sides"],
-                    "middle": parsed.get("center", ""),
-                    "orientation": parsed["rotation"],
-                    "meeple": parsed.get("meeple"),  # add meeple position
-                }
-                if self.board_view:
-                    self.board_view.queue_draw()
+            neighbor_id = parsed["target_id"]
+            board_data = self.game.get_board_data() or []
+            occupied_positions = {(t["x"], t["y"]) for t in board_data}
+            for side in range(4):
+                position = self.game.get_adjacent_position(
+                    vertex_id=neighbor_id,
+                    side=side,
+                )
+                if (
+                    position
+                    and position not in occupied_positions
+                    and position not in self.hint_empty_positions
+                ):
+                    self.hint_empty_positions.append(position)
+            if self.board_view:
+                self.board_view.queue_draw()
         return hint_move

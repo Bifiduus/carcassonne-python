@@ -252,7 +252,7 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
     handlers.quit(cli, server, client)
 
     output = capsys.readouterr().out
-    assert "and place a meeple on SW." in output
+    assert "near tile" in output
     assert "Hint: play move bad-move" in output
     assert "No hint available." in output
     assert "No move to undo." in output
