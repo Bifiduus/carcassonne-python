@@ -6,6 +6,7 @@ import pytest
 from carcassonne.business_logic.game import Game
 from carcassonne.business_logic.player import Player
 from carcassonne.datas.graph_data import GraphData
+from carcassonne.datas.datas_factory import DatasFactory
 
 
 def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
@@ -23,6 +24,7 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
             "ai_minimax_depth": 2,
             "num_ai_players": 1,
         },
+        datas_factory=DatasFactory(),
     )
 
     played_moves = []
@@ -103,6 +105,15 @@ def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
         def get_setting(self):
             return self.settings.copy()
 
+    class DummyDatasFactory:
+        def create(self, class_name: str, *args, **kwargs):
+            if class_name == "GameConfiguration":
+                return DummyGameConfiguration(*args, **kwargs)
+            return DatasFactory().create(class_name, *args, **kwargs)
+
+        def available_classes(self):
+            return DatasFactory().available_classes()
+
     observed = {}
 
     def fake_start_new_game(self, players_order=None, seed=None):
@@ -110,10 +121,6 @@ def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
         observed["shuffle_algo"] = self.game_data.shuffle_algo
         observed["seed_arg"] = seed
 
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
     monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
@@ -129,6 +136,7 @@ def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
         {"contest": False, "contest_file": "", "ai_mode": "random"},
         shuffle_algo="naive",
         default_seed=123,
+        datas_factory=DummyDatasFactory(),
     )
 
     assert observed == {

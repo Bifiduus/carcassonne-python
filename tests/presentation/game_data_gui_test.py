@@ -17,6 +17,32 @@ class DummyGame:
         self.get_adjacent_position = Mock(return_value=adjacent_position)
         self.game_data = SimpleNamespace(tiles_info=DummyTilesInfo())
 
+        # Parse hint_move to create appropriate parse_move response
+        if hint_move:
+            parts = hint_move.split("/")
+            tile_sides = parts[0] if parts else "CFFF"
+            extra_info = parts[1] if len(parts) > 1 else "0N0"
+            # Parse extra_info: first char(s) is target_id, next is target_side, last is rotation
+            # Format: [target_id][target_side][rotation]
+            # e.g., "5E1" -> target_id=5, target_side=E, rotation=1
+            target_id = int(extra_info[0]) if extra_info[0].isdigit() else 0
+            target_side = extra_info[1] if len(extra_info) > 1 else "N"
+            rotation = int(extra_info[-1]) if extra_info[-1].isdigit() else 0
+        else:
+            tile_sides = "CFFF"
+            target_id = 0
+            target_side = "N"
+            rotation = 0
+
+        self.parse_move = Mock(return_value={
+            "tile_sides": tile_sides,
+            "rotation": rotation,
+            "target_id": target_id,
+            "target_side": target_side,
+            "center": None,
+            "meeple": ""
+        })
+
 
 def make_game_data_gui(game=None, client_service=None, server_service=None):
     """Factory for creating GameDataGui instances with mocks."""

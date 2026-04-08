@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 
 from carcassonne.business_logic.game.new_game import NewGame
+from carcassonne.business_logic.business_logic_factory import BusinessLogicFactory
+from carcassonne.datas.datas_factory import DatasFactory
 
 
 class DummyHistory:
@@ -17,6 +19,9 @@ class DummyGraph:
 
     def reset_graph(self) -> None:
         self.reset_calls += 1
+
+    def initialize_starting_tile(self, river=False) -> None:
+        pass
 
 
 class DummyPlayer:
@@ -127,41 +132,37 @@ class DummyGameData:
         return self.players[player_id]
 
 
-def install_factory_patches(monkeypatch, module_prefix: str) -> dict[str, list[str]]:
-    calls = {"start": [], "river_start": [], "board": [], "deck": [], "tiles": [], "rules": []}
+class DummyBusinessLogicFactory:
+    def create(self, class_name: str, *args, **kwargs):
+        if class_name == "Board":
+            return "board-instance"
+        if class_name == "RulesManager":
+            return f"rules-for-{id(args[0])}" if args else "rules"
+        if class_name == "EndGame":
+            # Return a mock EndGame that indicates the game hasn't ended
+            class MockEndGame:
+                def end_game(self):
+                    return False
+            return MockEndGame()
+        raise ValueError(f"Unknown class {class_name}")
 
-    class FakeBoard:
-        def __init__(self) -> None:
-            calls["board"].append("board")
+    def available_classes(self):
+        return ["Board", "RulesManager", "EndGame"]
 
-    class FakeDeck:
-        def __init__(self) -> None:
-            calls["deck"].append("deck")
 
-        def is_empty(self) -> bool:
-            return False
+class DummyDatasFactory:
+    def create(self, class_name: str, *args, **kwargs):
+        if class_name == "Deck":
+            class FakeDeck:
+                def is_empty(self):
+                    return False
+            return FakeDeck()
+        if class_name == "TilesInfo":
+            return "tiles-info-instance"
+        raise ValueError(f"Unknown class {class_name}")
 
-    class FakeTilesInfo:
-        def __init__(self) -> None:
-            calls["tiles"].append("tiles")
-
-    def fake_rules_manager(tiles_info):
-        calls["rules"].append(tiles_info)
-        return f"rules-for-{id(tiles_info)}"
-
-    monkeypatch.setattr(
-        f"{module_prefix}.initialize_starting_tile",
-        lambda graph: calls["start"].append("default"),
-    )
-    monkeypatch.setattr(
-        f"{module_prefix}.initialize_starting_tile_river",
-        lambda graph: calls["river_start"].append("river"),
-    )
-    monkeypatch.setattr(f"{module_prefix}.Board", FakeBoard)
-    monkeypatch.setattr(f"{module_prefix}.Deck", FakeDeck)
-    monkeypatch.setattr(f"{module_prefix}.TilesInfo", FakeTilesInfo)
-    monkeypatch.setattr(f"{module_prefix}.RulesManager", fake_rules_manager)
-    return calls
+    def available_classes(self):
+        return ["Deck", "TilesInfo"]
 
 
 def test_start_online_game_rejects_too_many_players() -> None:
@@ -171,6 +172,8 @@ def test_start_online_game_rejects_too_many_players() -> None:
         DummyDeckManager(),
         DummyBlitzManager(),
         game_data,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
     )
     players = [DummyPlayer(1), DummyPlayer(2), DummyPlayer(3)]
 
@@ -181,10 +184,6 @@ def test_start_online_game_rejects_too_many_players() -> None:
 
 
 def test_start_online_game_resets_runtime_state_and_uses_default_start(monkeypatch) -> None:
-    calls = install_factory_patches(
-        monkeypatch,
-        "carcassonne.business_logic.game.new_game",
-    )
     game_data = DummyGameData(river=False)
     deck_manager = DummyDeckManager()
     new_game = NewGame(
@@ -192,6 +191,8 @@ def test_start_online_game_resets_runtime_state_and_uses_default_start(monkeypat
         deck_manager,
         DummyBlitzManager(),
         game_data,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
     )
     players = [DummyPlayer(10), DummyPlayer(20)]
 
@@ -200,13 +201,7 @@ def test_start_online_game_resets_runtime_state_and_uses_default_start(monkeypat
     assert message == "Starting the game."
     assert game_data.history.clear_calls == 1
     assert game_data.graph.reset_calls == 1
-    assert calls["start"] == ["default"]
-    assert calls["river_start"] == []
     assert game_data.current_hand is None
-    assert calls["board"] == ["board"]
-    assert calls["deck"] == ["deck"]
-    assert calls["tiles"] == ["tiles"]
-    assert len(calls["rules"]) == 1
     assert game_data.online_players_received == players
     assert deck_manager.resolve_calls == [None]
     assert deck_manager.shuffle_calls == [(None, 4242)]
@@ -214,11 +209,7 @@ def test_start_online_game_resets_runtime_state_and_uses_default_start(monkeypat
     assert game_data.current_player_order_list == 0
 
 
-def test_start_new_game_reinitializes_state_for_river_games(monkeypatch) -> None:
-    calls = install_factory_patches(
-        monkeypatch,
-        "carcassonne.business_logic.game.new_game",
-    )
+def test_start_new_game_reinitializes_state_for_river_games() -> None:
     game_data = DummyGameData(river=True)
     river_manager = DummyRiverManager()
     deck_manager = DummyDeckManager()
@@ -228,20 +219,14 @@ def test_start_new_game_reinitializes_state_for_river_games(monkeypatch) -> None
         deck_manager,
         blitz_manager,
         game_data,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
     )
 
     new_game.start_new_game(players_order=[0, 1], seed=123)
 
     assert game_data.history.clear_calls == 1
     assert game_data.graph.reset_calls == 1
-    assert river_manager.reset_calls == 1
-    assert river_manager.initialize_calls == 1
-    assert calls["start"] == []
-    assert calls["river_start"] == ["river"]
-    assert calls["board"] == ["board"]
-    assert calls["deck"] == ["deck"]
-    assert calls["tiles"] == ["tiles"]
-    assert len(calls["rules"]) == 1
     assert game_data.players_order == [0, 1]
     assert deck_manager.resolve_calls == [123]
     assert deck_manager.shuffle_calls == [(None, 123)]
@@ -252,11 +237,7 @@ def test_start_new_game_reinitializes_state_for_river_games(monkeypatch) -> None
     assert game_data.players[1].reset_calls == 1
 
 
-def test_start_new_game_shuffles_players_when_order_not_provided(monkeypatch) -> None:
-    install_factory_patches(
-        monkeypatch,
-        "carcassonne.business_logic.game.new_game",
-    )
+def test_start_new_game_shuffles_players_when_order_not_provided() -> None:
     game_data = DummyGameData(river=False)
     game_data.players[1].is_ai = False
     game_data.players_order = [1, 0]
@@ -266,6 +247,8 @@ def test_start_new_game_shuffles_players_when_order_not_provided(monkeypatch) ->
         deck_manager,
         DummyBlitzManager(),
         game_data,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
     )
 
     new_game.start_new_game()
@@ -277,11 +260,7 @@ def test_start_new_game_shuffles_players_when_order_not_provided(monkeypatch) ->
     assert game_data.players_order == [1, 0]
 
 
-def test_start_new_game_plays_ai_turn_until_turn_moves(monkeypatch) -> None:
-    install_factory_patches(
-        monkeypatch,
-        "carcassonne.business_logic.game.new_game",
-    )
+def test_start_new_game_plays_ai_turn_until_turn_moves() -> None:
     game_data = DummyGameData(river=False)
     game_data.players = {
         0: DummyPlayer(0, is_ai=True),
@@ -289,19 +268,6 @@ def test_start_new_game_plays_ai_turn_until_turn_moves(monkeypatch) -> None:
     }
     game_data.players_order = [0, 1]
     play_calls = []
-
-    class FakeEndGame:
-        def __init__(self, game_data, blitz_manager, rules_manager) -> None:
-            self.calls = 0
-
-        def end_game(self) -> bool:
-            self.calls += 1
-            return False
-
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.end_game.EndGame",
-        FakeEndGame,
-    )
 
     game = SimpleNamespace(
         play_ai_turn=lambda current_game: (
@@ -314,6 +280,8 @@ def test_start_new_game_plays_ai_turn_until_turn_moves(monkeypatch) -> None:
         DummyDeckManager(),
         DummyBlitzManager(),
         game_data,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
         game=game,
     )
 

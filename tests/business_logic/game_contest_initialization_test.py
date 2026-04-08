@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from carcassonne.business_logic.game import Game
 from carcassonne.datas.graph_data import GraphData
+from carcassonne.datas.datas_factory import DatasFactory
 
 
 class GameContestInitializationTestCase(unittest.TestCase):
@@ -18,6 +19,7 @@ class GameContestInitializationTestCase(unittest.TestCase):
                     "contest": True,
                     "contest_file": "contest_state.txt",
                 },
+                datas_factory=DatasFactory(),
             )
 
         start_new_game.assert_not_called()
@@ -35,7 +37,7 @@ class GameContestInitializationTestCase(unittest.TestCase):
                 str(config_path),
             ):
                 with patch.object(Game, "start_new_game") as start_new_game:
-                    Game(GraphData(), 2)
+                    Game(GraphData(), 2, datas_factory=DatasFactory())
 
         start_new_game.assert_called_once_with()
 

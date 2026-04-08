@@ -5,6 +5,16 @@ from carcassonne.datas.meeple_data import Meeple
 from carcassonne.datas.tiles_info import Tile
 
 
+class DummyTilesInfo:
+    """Mock TilesInfo for testing."""
+
+    def __init__(self, tiles_dict=None):
+        self.tiles = tiles_dict or {}
+
+    def get_tile_definition(self, tile_code: str):
+        return self.tiles.get(tile_code)
+
+
 class DummyVertex:
     def __init__(
         self, name: str, orientation: int = 0, neighbors=None
@@ -171,8 +181,8 @@ def test_handle_cardinal_corner_and_special_corner_connections_link_existing_set
         vertices={2: DummyVertex("NEI")},
     )
     cardinal_tile = Tile("CUR", {"C": [["N"]]})
-    cardinal_info = SimpleNamespace(
-        tiles={"NEI": Tile("NEI", {"C": [["S"]]})}
+    cardinal_info = DummyTilesInfo(
+        {"NEI": Tile("NEI", {"C": [["S"]]})}
     )
     linked, counts, _ = logic._initialize_group_tracking(cardinal_tile)
     lands_index = GraphLogic._build_lands_set_index(cardinal_graph)
@@ -205,8 +215,8 @@ def test_handle_cardinal_corner_and_special_corner_connections_link_existing_set
         vertices={2: DummyVertex("NEI")},
     )
     corner_tile = Tile("CUR", {"F": [["NW"]]})
-    corner_info = SimpleNamespace(
-        tiles={"NEI": Tile("NEI", {"F": [["SW"]]})}
+    corner_info = DummyTilesInfo(
+        {"NEI": Tile("NEI", {"F": [["SW"]]})}
     )
     linked, counts, _ = logic._initialize_group_tracking(corner_tile)
     lands_index = GraphLogic._build_lands_set_index(corner_graph)
@@ -240,8 +250,8 @@ def test_handle_cardinal_corner_and_special_corner_connections_link_existing_set
         vertices={2: DummyVertex("NEI")},
     )
     special_tile = Tile("CUR", {"C": [["NW"]]}, {"NW": ["C", "F"]})
-    special_info = SimpleNamespace(
-        tiles={"NEI": Tile("NEI", {"C": [["SW"]]})}
+    special_info = DummyTilesInfo(
+        {"NEI": Tile("NEI", {"C": [["SW"]]})}
     )
     linked, counts, _ = logic._initialize_group_tracking(special_tile)
     lands_index = GraphLogic._build_lands_set_index(special_graph)
@@ -271,8 +281,8 @@ def test_add_lands_components_creates_unlinked_groups_and_handles_missing_data(
 ) -> None:
     logic = GraphLogic()
     graph = DummyGraph()
-    tiles_info = SimpleNamespace(
-        tiles={
+    tiles_info = DummyTilesInfo(
+        {
             "CUR": Tile(
                 "CUR",
                 {

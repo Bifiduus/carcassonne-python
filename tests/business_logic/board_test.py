@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from carcassonne.business_logic.game.board import Board
 from carcassonne.business_logic.player import Player
+from carcassonne.datas.datas_factory import DatasFactory
 from carcassonne.datas.graph_data import GraphData
 from carcassonne.datas.history import History
 from carcassonne.datas.starting_tile import initialize_starting_tile
@@ -9,10 +10,11 @@ from carcassonne.datas.tiles_info import TilesInfo
 
 
 def build_board_runtime():
+    datas_factory = DatasFactory()
     graph = GraphData()
     initialize_starting_tile(graph)
     return (
-        Board(),
+        Board(datas_factory),
         graph,
         TilesInfo(),
         History(),
@@ -85,7 +87,8 @@ def test_add_tile_to_board_normalizes_meeple_position_for_rotated_tiles() -> Non
 
 
 def test_add_tile_to_board_returns_early_when_target_position_is_missing() -> None:
-    board = Board()
+    datas_factory = DatasFactory()
+    board = Board(datas_factory)
     graph = SimpleNamespace(
         get_adjacent_position=lambda vertex_id, side: None,
         get_vertices=lambda: {},

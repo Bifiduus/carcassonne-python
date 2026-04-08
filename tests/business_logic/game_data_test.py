@@ -1,13 +1,20 @@
 from carcassonne.business_logic.game.game_data import GameData
+from carcassonne.business_logic.business_logic_factory import BusinessLogicFactory
+from carcassonne.datas.datas_factory import DatasFactory
 from carcassonne.business_logic.player import Player
 
 
 class DummyGraph:
     def __init__(self) -> None:
         self.reset_calls = 0
+        self.initialize_calls = []
 
     def reset_graph(self) -> None:
         self.reset_calls += 1
+
+    def initialize_starting_tile(self, river=False) -> None:
+        """Track calls to initialize_starting_tile with river parameter."""
+        self.initialize_calls.append("river" if river else "default")
 
 
 class DummyGameConfiguration:
@@ -23,17 +30,54 @@ class DummyGameConfiguration:
         return self.settings.copy()
 
 
+class DummyDatasFactory:
+    def __init__(self, use_real_factory=False):
+        self.use_real_factory = use_real_factory
+        self._real_factory = DatasFactory() if use_real_factory else None
+
+    def create(self, class_name: str, *args, **kwargs):
+        if class_name == "GameConfiguration":
+            return DummyGameConfiguration(*args, **kwargs)
+        # For classes needed by GameData, use real factory
+        if class_name in ["GameRepository", "TilesInfo", "Deck", "History"] or self.use_real_factory:
+            if not self._real_factory:
+                self._real_factory = DatasFactory()
+            return self._real_factory.create(class_name, *args, **kwargs)
+        raise ValueError(f"Unknown class {class_name}")
+
+    def available_classes(self):
+        return ["GameConfiguration", "GameRepository", "TilesInfo", "Deck", "History"]
+
+
+class DummyBusinessLogicFactory:
+    def create(self, class_name: str, *args, **kwargs):
+        if class_name == "Player":
+            from carcassonne.business_logic.player import Player
+            return Player(*args, **kwargs)
+        if class_name == "Board":
+            from carcassonne.business_logic.game.board import Board
+            return Board(*args, **kwargs)
+        if class_name == "RulesManager":
+            from carcassonne.business_logic.rules_manager import RulesManager
+            return RulesManager(*args, **kwargs)
+        raise ValueError(f"Unknown class {class_name}")
+
+    def available_classes(self):
+        return ["Player", "Board", "RulesManager"]
+
+
 def test_init_adds_requested_ai_players_and_shuffles_order(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
     monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: players.reverse(),
     )
 
-    data = GameData(DummyGraph(), 3)
+    data = GameData(
+        DummyGraph(),
+        3,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+    )
 
     assert data.get_number_of_players() == 3
     assert data.get_maximum_number_of_players() == 5
@@ -46,14 +90,15 @@ def test_init_adds_requested_ai_players_and_shuffles_order(monkeypatch) -> None:
 
 def test_add_online_players_replaces_existing_players_and_assigns_colors(monkeypatch) -> None:
     monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
-    monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
     )
-    data = GameData(DummyGraph(), 2)
+    data = GameData(
+        DummyGraph(),
+        2,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+    )
     online_players = [
         Player(1, "Alice", "green"),
         Player(2, "Bob", "green"),
@@ -69,16 +114,22 @@ def test_add_online_players_replaces_existing_players_and_assigns_colors(monkeyp
 
 def test_shuffle_players_order_is_deterministic_with_seed(monkeypatch) -> None:
     monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
-    monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
     )
 
-    data_a = GameData(DummyGraph(), 3)
-    data_b = GameData(DummyGraph(), 3)
+    data_a = GameData(
+        DummyGraph(),
+        3,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+    )
+    data_b = GameData(
+        DummyGraph(),
+        3,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+    )
     data_a.players_order = [0, 1, 2]
     data_b.players_order = [0, 1, 2]
 
@@ -90,23 +141,18 @@ def test_shuffle_players_order_is_deterministic_with_seed(monkeypatch) -> None:
 
 def test_reset_reinitializes_runtime_state_and_uses_river_start(monkeypatch) -> None:
     monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
-    monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
     )
-    calls: list[str] = []
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.initialize_starting_tile",
-        lambda graph: calls.append("default"),
+
+    graph = DummyGraph()
+    data = GameData(
+        graph,
+        2,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+        {"river": True},
     )
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.initialize_starting_tile_river",
-        lambda graph: calls.append("river"),
-    )
-    data = GameData(DummyGraph(), 2, {"river": True})
     old_board = data.board
     old_tiles_info = data.tiles_info
     old_history = data.history
@@ -116,7 +162,7 @@ def test_reset_reinitializes_runtime_state_and_uses_river_start(monkeypatch) -> 
     data.reset()
 
     assert data.graph.reset_calls == 1
-    assert calls == ["river"]
+    assert data.graph.initialize_calls == ["river"]
     assert data.board is not old_board
     assert data.tiles_info is not old_tiles_info
     assert data.history is not old_history
@@ -126,23 +172,18 @@ def test_reset_reinitializes_runtime_state_and_uses_river_start(monkeypatch) -> 
 
 def test_start_load_game_rebuilds_loading_state_and_uses_default_start(monkeypatch) -> None:
     monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
-    monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
     )
-    calls: list[str] = []
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.initialize_starting_tile",
-        lambda graph: calls.append("default"),
+
+    graph = DummyGraph()
+    data = GameData(
+        graph,
+        2,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+        {"river": False},
     )
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.initialize_starting_tile_river",
-        lambda graph: calls.append("river"),
-    )
-    data = GameData(DummyGraph(), 2, {"river": False})
     clear_calls: list[str] = []
     data.history.clear_history = lambda: clear_calls.append("cleared")
     old_deck = data.deck
@@ -155,7 +196,7 @@ def test_start_load_game_rebuilds_loading_state_and_uses_default_start(monkeypat
 
     assert clear_calls == ["cleared"]
     assert data.graph.reset_calls == 1
-    assert calls == []
+    assert data.graph.initialize_calls == []
     assert data.deck is not old_deck
     assert data.game_repository is not old_repository
     assert data.current_hand is None
@@ -165,14 +206,15 @@ def test_start_load_game_rebuilds_loading_state_and_uses_default_start(monkeypat
 
 def test_extract_tile_code_and_is_river_over_cover_valid_and_invalid_moves(monkeypatch) -> None:
     monkeypatch.setattr(
-        "carcassonne.business_logic.game.game_data.GameConfiguration",
-        DummyGameConfiguration,
-    )
-    monkeypatch.setattr(
         "carcassonne.business_logic.game.game_data.r.shuffle",
         lambda players: None,
     )
-    data = GameData(DummyGraph(), 2)
+    data = GameData(
+        DummyGraph(),
+        2,
+        DummyBusinessLogicFactory(),
+        DummyDatasFactory(),
+    )
 
     assert data.extract_tile_code("CFFF/0N0") == "CFFF"
     assert data.extract_tile_code("FFFF/m/0N0") == "FFFF/m"

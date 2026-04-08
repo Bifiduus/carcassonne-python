@@ -1,6 +1,7 @@
 from carcassonne.business_logic.game.undo_redo_manager import UndoRedoManager
 from carcassonne.datas.deck import Deck
 from carcassonne.datas.history import History, MoveRecord
+from carcassonne.datas.datas_factory import DatasFactory
 
 
 class DummyScore:
@@ -100,7 +101,9 @@ def test_undo_then_redo_preserves_history_stacks() -> None:
     game_data = DummyGameData()
     blitz_manager = DummyBlitzManager()
     deck_manager = DummyDeckManager()
-    manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
+    manager = UndoRedoManager(
+        blitz_manager, deck_manager, game_data, DatasFactory()
+    )
 
     game_data.history.push_past(
         MoveRecord("CFFF/0N0", player_id=0, is_ai=False)
@@ -126,7 +129,9 @@ def test_rebuild_reconstructs_deck_consumption_for_replayed_moves() -> None:
     game_data = DummyGameData()
     blitz_manager = DummyBlitzManager()
     deck_manager = DummyDeckManager()
-    manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
+    manager = UndoRedoManager(
+        blitz_manager, deck_manager, game_data, DatasFactory()
+    )
 
     game_data.history.push_past(
         MoveRecord("FSFS/0N0", player_id=0, is_ai=False)
@@ -149,7 +154,9 @@ def test_restore_hand_realigns_ai_tiles_in_replay_order() -> None:
     game_data = DummyGameData()
     blitz_manager = DummyBlitzManager()
     deck_manager = DummyDeckManager()
-    manager = UndoRedoManager(blitz_manager, deck_manager, game_data)
+    manager = UndoRedoManager(
+        blitz_manager, deck_manager, game_data, DatasFactory()
+    )
 
     # Simulate future stack shape after undo:
     # [latest_ai, first_ai_to_replay, human]

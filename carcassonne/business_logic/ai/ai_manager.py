@@ -8,6 +8,7 @@ from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.rules_manager import RulesManager
 from carcassonne.business_logic.ai.expectimax_player import ExpectimaxPlayer
+from carcassonne.i18n import gettext as _
 
 
 class AIModelManager:
@@ -47,7 +48,7 @@ class AIModelManager:
         """
         self.player.nodes_explored = 0
 
-        _, best_move = self.player.expectimax(
+        score, best_move = self.player.expectimax(
             graph=graph,
             tiles_info=tiles_info,
             rules_manager=rules_manager,

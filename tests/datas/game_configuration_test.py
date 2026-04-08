@@ -32,7 +32,8 @@ def test_configuration_creates_default_file_when_missing(monkeypatch, tmp_path) 
     assert config_path.exists()
     assert "verbose=false" in config_path.read_text()
     assert config.get_setting_value("time") == DEFAULT_SETTINGS["time"]
-    assert config.get_setting()["file_keybinds"] == DEFAULT_SETTINGS["file_keybinds"]
+    assert config.get_setting(
+    )["file_keybinds"] == DEFAULT_SETTINGS["file_keybinds"]
 
 
 def test_configuration_loads_existing_values_and_keybinds(monkeypatch, tmp_path) -> None:
@@ -123,7 +124,8 @@ def test_configuration_save_show_and_getters_use_current_settings(monkeypatch, t
     config.show_config()
 
     assert config.get_setting_value("time") == 15
-    assert "Configuration actuelle du jeu" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert ("Configuration actuelle du jeu" in output or "Current game configuration:" in output)
 
     parser = configparser.ConfigParser()
     parser.read(config_path)

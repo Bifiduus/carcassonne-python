@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 
 from carcassonne.business_logic.server import Server
+from carcassonne.datas.datas_factory import DatasFactory
 
 
 class FakeSocket:
@@ -89,7 +90,7 @@ def make_server(monkeypatch, repo=None):
         "carcassonne.business_logic.server.socket.gethostname", lambda: "host")
     monkeypatch.setattr(
         "carcassonne.business_logic.server.socket.gethostbyname", lambda host: "127.0.0.1")
-    return Server(repo=repo or Mock())
+    return Server(repo=repo or Mock(), datas_factory=DatasFactory())
 
 
 def test_server_start_and_basic_helpers(monkeypatch, capsys) -> None:
@@ -330,10 +331,25 @@ def test_server_registration_invitations_party_management_and_cleanup(
     )
 
     fake_party_game = Mock()
-    monkeypatch.setattr(
-        "carcassonne.business_logic.server.GraphData", Mock(return_value="graph"))
-    monkeypatch.setattr("carcassonne.business_logic.server.Game",
-                        Mock(return_value=fake_party_game))
+    # Store the original factories before mocking
+    original_datas_create = server.datas_factory.create
+    original_bl_create = server.business_logic_factory.create
+
+    def mock_datas_factory_create(class_name, *args, **kwargs):
+        if class_name == "GraphData":
+            return Mock()  # Return a mock GraphData
+        # Delegate to real factory for other classes
+        return original_datas_create(class_name, *args, **kwargs)
+
+    def mock_bl_factory_create(class_name, *args, **kwargs):
+        if class_name == "Game":
+            return fake_party_game  # Return the mock game
+        # Delegate to real factory for other classes
+        return original_bl_create(class_name, *args, **kwargs)
+
+    server.datas_factory.create = Mock(side_effect=mock_datas_factory_create)
+    server.business_logic_factory.create = Mock(
+        side_effect=mock_bl_factory_create)
     repo.get_game_id.return_value = 99
     message = server.create_new_party([1, 2], "1", "Party X")
     assert message == "Your party has been created successfully !\n"
@@ -611,7 +627,7 @@ def test_server_stop_logs_errors_and_thread_warnings(monkeypatch, capsys) -> Non
     assert "Error cleaning up game 99: backup fail" in output
     assert "Warning: a client thread did not finish in time" in output
     assert "Error closing repository: repo fail" in output
-    assert "Warning: Server thread did not terminate within timeout" in output
+    assert "Warning: server thread did not terminate within timeout" in output
 
 
 def test_server_starting_game_and_invitation_cover_additional_error_paths(
@@ -626,17 +642,27 @@ def test_server_starting_game_and_invitation_cover_additional_error_paths(
 
     server.send_invitation("2", "1")
     captured = capsys.readouterr()
-    assert "Client Bob not connected" in (captured.out + captured.err)
+    assert "Client Bob is not connected" in (captured.out + captured.err)
 
     fake_party_game = Mock()
-    monkeypatch.setattr(
-        "carcassonne.business_logic.server.GraphData",
-        Mock(return_value="graph"),
-    )
-    monkeypatch.setattr(
-        "carcassonne.business_logic.server.Game",
-        Mock(return_value=fake_party_game),
-    )
+
+    # Store original factories for delegation
+    original_datas_create = server.datas_factory.create
+    original_bl_create = server.business_logic_factory.create
+
+    def mock_datas_factory_create(class_name, *args, **kwargs):
+        if class_name == "GraphData":
+            return Mock()
+        return original_datas_create(class_name, *args, **kwargs)
+
+    def mock_bl_factory_create(class_name, *args, **kwargs):
+        if class_name == "Game":
+            return fake_party_game
+        return original_bl_create(class_name, *args, **kwargs)
+
+    server.datas_factory.create = Mock(side_effect=mock_datas_factory_create)
+    server.business_logic_factory.create = Mock(
+        side_effect=mock_bl_factory_create)
     repo.create_game.side_effect = RuntimeError("db fail")
     message = server.create_new_party([1, 2], "1")
 

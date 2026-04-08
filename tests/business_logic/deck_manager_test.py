@@ -1,4 +1,15 @@
 from carcassonne.business_logic.game.deck_manager import DeckManager
+from carcassonne.datas.seed import Seed
+
+
+class DummyDatasFactory:
+    def create(self, class_name: str, *args, **kwargs):
+        if class_name == "Seed":
+            return Seed(*args, **kwargs)
+        raise ValueError(f"Unknown class {class_name}")
+
+    def available_classes(self):
+        return ["Seed"]
 
 
 class DummyDeck:
@@ -74,6 +85,7 @@ def test_draw_tile_returns_none_when_blitz_times_out() -> None:
         game_data,
         DummyBlitzManager(timed_out_now=True),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile() is None
@@ -88,6 +100,7 @@ def test_draw_tile_returns_none_when_current_player_cannot_play() -> None:
         game_data,
         DummyBlitzManager(current_player_playable=False),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile() is None
@@ -101,6 +114,7 @@ def test_draw_tile_reuses_current_hand_without_drawing() -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile() == "CRRF"
@@ -114,6 +128,7 @@ def test_draw_tile_uses_river_deck_when_river_is_active() -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=True),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile(silent=True) == "FSFS"
@@ -129,6 +144,7 @@ def test_draw_tile_falls_back_to_base_deck_when_river_is_over() -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=True),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile() == "CCFF"
@@ -144,6 +160,7 @@ def test_draw_tile_keeps_hand_empty_when_source_deck_is_empty() -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
 
     assert manager.draw_tile() is None
@@ -161,6 +178,7 @@ def test_shuffle_deck_uses_configured_default_seed_for_naive_shuffle() -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
 
     seed = manager.shuffle_deck()
@@ -171,15 +189,17 @@ def test_shuffle_deck_uses_configured_default_seed_for_naive_shuffle() -> None:
     assert game_data.seed == 1234
 
 
-def test_shuffle_deck_generates_seed_when_missing(monkeypatch) -> None:
-    class FakeSeed:
-        def __init__(self) -> None:
-            self.seed = 9876
+def test_shuffle_deck_generates_seed_when_missing() -> None:
+    class FakeDatasFactory:
+        def create(self, class_name: str, *args, **kwargs):
+            if class_name == "Seed":
+                obj = Seed(*args, **kwargs)
+                obj.seed = 9876
+                return obj
+            raise ValueError(f"Unknown class {class_name}")
 
-    monkeypatch.setattr(
-        "carcassonne.business_logic.game.deck_manager.Seed",
-        FakeSeed,
-    )
+        def available_classes(self):
+            return ["Seed"]
 
     deck = DummyDeck()
     game_data = DummyGameData(deck, shuffle_algo="fisher-yates")
@@ -187,6 +207,7 @@ def test_shuffle_deck_generates_seed_when_missing(monkeypatch) -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=False),
+        FakeDatasFactory(),
     )
 
     seed = manager.shuffle_deck()
@@ -208,6 +229,7 @@ def test_shuffle_deck_seeds_runtime_rng_with_resolved_seed(monkeypatch) -> None:
         game_data,
         DummyBlitzManager(),
         DummyRiverManager(active=False),
+        DummyDatasFactory(),
     )
     seeded_values: list[int] = []
 

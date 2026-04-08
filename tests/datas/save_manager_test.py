@@ -252,6 +252,6 @@ def test_load_game_from_file_warns_on_invalid_sections_and_seed_mismatch(
     assert "Warning: No score yet." in output
     assert "Warning: No seed." in output
     assert "Warning: no game score found in [GameState] section." in output
-    assert "The move doesn't match the seed !" in output
+    assert ("The move doesn't match the seed !" in output or "The move does not match the seed." in output)
     assert "Warning: Not all sections were found in the file." in output
     assert "Warning: [Settings] section missing." in output
