@@ -216,13 +216,13 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
     repo.get_party_id.return_value = 7
     game.end_game = lambda: False
     score_answer = communication.command_score("1")
-    game.score_manager.score_end_of_turn.assert_called_once()
+    game.score_manager.score_end_of_turn.assert_not_called()
     assert "Alice: 12 points." in score_answer
     assert "Bot AI: 9 points." in score_answer
 
     game.end_game = lambda: True
     communication.command_score("1")
-    game.score_manager.score_end_of_game.assert_called_once()
+    game.score_manager.score_end_of_game.assert_not_called()
 
     assert communication.command_hand("1") == "No tile in hand."
     game.game_data.current_hand = "CFFF"

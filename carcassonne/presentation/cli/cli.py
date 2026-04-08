@@ -203,6 +203,20 @@ class GameCLI:
         self._stop_event.set()
         self._render_board()
         print("\n" + _("=== Game finished! Final scores ==="))
+        winner = self.game.get_winner()
+        if winner is None:
+            winners = self.game.get_winners()
+            if winners:
+                names = ", ".join(
+                    player.get_username() for player in winners
+                )
+                print(_("Draw: {players}").format(players=names))
+        else:
+            print(
+                _("Winner: {player}").format(
+                    player=winner.get_username(),
+                )
+            )
         players_order = self.game.get_players_order()
         results = []
         for pid in players_order:

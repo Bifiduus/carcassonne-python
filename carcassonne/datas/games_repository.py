@@ -165,6 +165,8 @@ class GameRepository(IGamesRepository):
         return len(rows) >= 1
 
     def set_game_end_score(self, game_id: int, winner: int):
+        if winner < 0:
+            return
         self._execute_non_query(
             "UPDATE scoreboard SET victories=victories+1 WHERE player_id=?;",
             (winner,),
@@ -174,9 +176,12 @@ class GameRepository(IGamesRepository):
         winner_username = self.get_username(str(winner))
         losers.remove(winner_username)
         for loser in losers:
+            loser_id = self.get_id_from_username(loser)
+            if loser_id < 0:
+                continue
             self._execute_non_query(
                 "UPDATE scoreboard SET defeats=defeats+1 WHERE player_id=?;",
-                (loser,),
+                (loser_id,),
             )
 
     def create_default_online_player(

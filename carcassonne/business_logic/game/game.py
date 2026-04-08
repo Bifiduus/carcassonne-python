@@ -810,6 +810,15 @@ class Game(IGameService):
     def end_game(self) -> bool:
         return self.end_game_manager.end_game()
 
+    def get_winners(self) -> list[Player]:
+        return self.end_game_manager.get_winners()
+
+    def get_winner(self) -> Player | None:
+        return self.end_game_manager.get_winner()
+
+    def is_draw(self) -> bool:
+        return self.end_game_manager.is_draw()
+
     def undo(self) -> None:
         self.undo_redo_manager.undo()
 

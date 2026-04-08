@@ -248,12 +248,7 @@ class OnlineCommunication:
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
-        if game.end_game():
-            game.score_manager.score_end_of_game(
-                game.game_data.graph, game.game_data.players)
-        else:
-            game.score_manager.score_end_of_turn(
-                game.game_data.graph, game.game_data.players)
+        game.end_game()
         answer = _("Score:")
         for player in game.game_data.players.values():
             player_label = player.get_username()

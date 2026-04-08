@@ -203,7 +203,8 @@ class Server(IServerService):
                 if check:
                     game = self.current_games_list[game_id][1]
                     winner = self.get_winner(game.game_data.players)
-                    self.repo.set_game_end_score(game_id, winner)
+                    if winner != -1:
+                        self.repo.set_game_end_score(game_id, winner)
                 party = self.repo.get_group_from_game(game_id)
                 check_2 = not self.repo.check_party_is_alive(party)
                 if (check or check_2):
@@ -213,14 +214,16 @@ class Server(IServerService):
                     del self.current_games_list[game_id]
 
     def get_winner(self, players: dict[int, Player]) -> int:
-        max_score: int = -1
-        winner_id: int = -1
-        for player_id, player in players.items():
-            score: int = player.score.score
-            if score > max_score:
-                max_score = score
-                winner_id = player_id
-        return winner_id
+        if not players:
+            return -1
+        max_score = max(Game._score_value(player) for player in players.values())
+        winners = [
+            player_id for player_id, player in players.items()
+            if Game._score_value(player) == max_score
+        ]
+        if len(winners) != 1:
+            return -1
+        return winners[0]
 
     def game_is_finished(self, party: int) -> bool:
         check = self.current_games_list[party][1].end_game()
