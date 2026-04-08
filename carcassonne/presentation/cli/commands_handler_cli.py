@@ -116,19 +116,16 @@ def quit(
     if server_service.is_server_running():
         print(_("You should close your server first."))
         return
-    else:
-        saved: int | None = -1
-        while saved == -1:
-            confirm: str = input(_("Save the game before quitting? [y/N] "))
-            if confirm != "y":
-                print(_("Quit command aborted."))
-                self.running = False
-                saved = 0
-            else:
-                filename: str = input(_("Save file name: "))
-                saved: None = save(self, filename, client_service)
-        print(_("Quitting the game. See you soon!"))
-        self.running = False
+    if self.game.has_unsaved_changes():
+        while True:
+            confirm = input(_("Save the game before quitting? [y/N] ")).strip()
+            if confirm not in ("y", "Y"):
+                break
+            filename = input(_("Save file name: "))
+            if save(self, filename, client_service) == 0:
+                break
+    print(_("Quitting the game. See you soon!"))
+    self.running = False
 
 
 def load(self, filename, client_service: IClientService) -> None:
@@ -153,12 +150,18 @@ def load(self, filename, client_service: IClientService) -> None:
             )
 
 
-def save(self, filename, client_service: IClientService) -> None:
+def save(self, filename, client_service: IClientService) -> int | None:
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"save {filename}")
+        return None
+    result = self.game.save_game_to_file(filename)
+    if result == 0:
+        print(_("Game saved to {filename}.").format(filename=filename))
     else:
-        if self.game.save_game_to_file(filename) == 0:
-            print(_("Game saved to {filename}.").format(filename=filename))
+        print(_("Failed to save the game to {filename}.").format(
+            filename=filename
+        ))
+    return result
 
 
 def shuffle(self, client_service: IClientService) -> None:
