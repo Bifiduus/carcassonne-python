@@ -86,7 +86,7 @@ class Client(IClientService):
                 self.connected_server = ip
         except Exception as e:
             print(
-                ("Unable to connect to {ip}:{port} -> {error}").format(
+                _("Unable to connect to {ip}:{port} -> {error}").format(
                     ip=ip,
                     port=port,
                     error=e,
@@ -334,7 +334,10 @@ class Client(IClientService):
         except (BrokenPipeError, ConnectionResetError, OSError) as e:
             # Socket is broken, likely during shutdown
             if "quit" not in str(text).lower():
-                print(f"Failed to send: {e}", file=sys.stderr)
+                print(
+                    _("Failed to send: {error}").format(error=e),
+                    file=sys.stderr,
+                )
             return False
         except Exception as e:
             print(_("Failed to send: {error}").format(

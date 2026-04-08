@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
+from carcassonne.i18n import gettext as _
 from carcassonne.datas.tiles_constants import DIRECTION_MAP
 
 if TYPE_CHECKING:
@@ -111,7 +112,7 @@ class ScoreManager:
                         )
                     if emit_logs:
                         logger.info(
-                            "Component %s (%s) completed and scored",
+                            _("Component %s (%s) completed and scored"),
                             name, terrain,
                         )
                     score_fn[terrain](
@@ -141,8 +142,10 @@ class ScoreManager:
                             )
                         if emit_logs:
                             logger.info(
-                                "Player %d gets back %d meeple(s)"
-                                " from component %s",
+                                _(
+                                    "Player %d gets back %d meeple(s)"
+                                    " from component %s"
+                                ),
                                 player_id,
                                 meeple_count,
                                 name,

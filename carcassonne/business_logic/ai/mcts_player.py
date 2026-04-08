@@ -12,6 +12,7 @@ from typing import List, TYPE_CHECKING
 
 from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.datas.serializer import build_str
+from carcassonne.i18n import gettext as _
 from carcassonne.business_logic.ai._utils import (
     _discard_unplayable_tile,
     _restore_drawn_tile_after_undo,
@@ -566,7 +567,9 @@ class MCTSPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             hand = game.game_data.current_hand
-            print(f"You must play the tile in hand: {hand}")
+            print(_("You must play the tile in hand: {hand}").format(
+                hand=hand
+            ))
             return False
 
         ok = game.game_data.rules_manager.check_move(

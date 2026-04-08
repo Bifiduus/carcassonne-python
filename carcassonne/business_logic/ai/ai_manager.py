@@ -9,6 +9,7 @@ from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.rules_manager import RulesManager
 from carcassonne.datas.history import MoveRecord
 from carcassonne.business_logic.ai.expectimax_player import ExpectimaxPlayer
+from carcassonne.i18n import gettext as _
 
 
 class AIModelManager:
@@ -60,7 +61,11 @@ class AIModelManager:
             opponent_score=opponent_score,
         )
 
-        print(f"AI explored {self.player.nodes_explored} nodes")
+        print(
+            _("AI explored {count} nodes").format(
+                count=self.player.nodes_explored
+            )
+        )
 
         return best_move
 
