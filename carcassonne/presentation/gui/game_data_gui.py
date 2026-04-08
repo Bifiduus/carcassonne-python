@@ -9,6 +9,8 @@ class GameDataGui:
         self.game = game
         self.client = client_service
         self.server = server_service
+        # Store the last seed entered in the GUI (None = random)
+        self.seed = None
         self.nb_tiles = 0  # used to give each drawn tile a unique id
         self.current_tile: TilesView | None = None
         self.current_orientation = 0
@@ -47,10 +49,16 @@ class GameDataGui:
 
     def new_game(self, players_order, seed):
         """Helper that starts a new game and resets GUI state.
-        ``players_order`` and ``seed`` are simply forwarded to the underlying
-        game service (``Game.start_new_game``) so callers such as
-        :class:`OptionsView` can influence how the match is initialised.
+        ``players_order`` and ``seed`` are forwarded to the underlying
+        game service (``Game.start_new_game``). If ``seed`` is ``None``, the
+        GUI-stored seed (if any) is used instead. The effective seed is
+        stored on the GUI object for later reference.
         """
+        # If caller didn't provide a seed, use the GUI-stored seed
+        effective_seed = seed if seed is not None else getattr(
+            self, "seed", None)
+        # remember the chosen seed for future reference
+        self.seed = effective_seed
         # Adjust the number of AI players based on current configuration
         # This respects the 3-tier architecture:
         # - Presentation reads config and calls business logic
@@ -64,7 +72,7 @@ class GameDataGui:
         # doesn't accept any of the extra keywords, so call the service
         # directly.  ``Game.start_new_game`` is idempotent with respect to
         # shuffling, so we don't need to double‑shuffle here.
-        self.game.start_new_game(players_order, seed)
+        self.game.start_new_game(players_order, effective_seed)
         self.reset()
 
     def run_contest_gui(self, contest_file: str) -> tuple[bool, str]:

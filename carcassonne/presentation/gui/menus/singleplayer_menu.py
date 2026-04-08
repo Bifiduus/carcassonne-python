@@ -121,6 +121,12 @@ class SingleplayerMenu(Gtk.Box):
                 self.seed_value = int(seed_str)
             except ValueError:
                 pass
+        # Also store the seed on the GameDataGui so new_game can load it
+        try:
+            self.gui.game_data.seed = self.seed_value
+        except Exception:
+            # GUI/game_data may not be available yet; ignore silently
+            pass
 
     def on_time_changed(self, entry):
         """Apply time configuration when it changes"""
