@@ -236,9 +236,16 @@ Les états de partie sont ensuite définis par une classe `GameState` contenant 
 
 \subsection{Mélange des tuiles}
 
-La gestion de la pioche repose sur deux algorithmes de mélange. L'algorithme principal retenu est \textit{Fisher–Yates}\cite{fisher_yates}, car il produit une permutation uniforme des tuiles lorsqu'il est associé à un générateur pseudo-aléatoire uniforme. En parallèle, nous conservons également un algorithme naïf, utilisé comme point de comparaison expérimental afin d'illustrer les biais possibles d'un mauvais mélange.
+La gestion de la pioche repose sur deux algorithmes de mélange, tous 
+deux implémentés \textit{in place} sur la liste représentant la pioche.
 
-Les deux implémentations sont réalisées \textit{in place} sur la liste représentant la pioche :
+L'algorithme principal retenu est \textit{Fisher-Yates}\cite{fisher_yates}, 
+qui garantit une permutation uniforme des tuiles lorsqu'il est associé 
+à un générateur pseudo-aléatoire uniforme. Un algorithme naïf est 
+également conservé à des fins de comparaison expérimentale, afin 
+d'illustrer les biais qu'un mauvais mélange peut introduire. Les 
+propriétés statistiques de ces deux algorithmes sont analysées plus 
+en détail en section \ref{subsubsec:melange}.
 
 {\normalsize
   \begin{minted}[frame=single]{python}
@@ -261,9 +268,10 @@ def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
   \end{minted}
 }
 
-Dans la pratique, \textit{Fisher–Yates} est utilisé par défaut pour garantir une pioche équitable, tandis que l'algorithme naïf est conservé à des fins de test et de comparaison.
+Dans la suite de cette section, nous nous concentrerons sur les 
+algorithmes de prise de décision, qui constituent le cœur du système 
+d'intelligence artificielle implémenté dans le projet.
 
-Dans la suite de cette section, nous nous concentrerons plus particulièrement sur les quatre premiers algorithmes présentés qui constituent le cœur du système de prise de décision implémenté dans le projet.
 
 \subsection{Algorithme Minimax}
 \label{subsec:minimax}
@@ -583,32 +591,54 @@ Le modèle adopté est un réseau de neurones de type perceptron multicouche (ML
 Une fois entraîné, le modèle est sauvegardé au format \texttt{.keras}, incluant l'architecture et les poids du réseau. Il peut ainsi être rechargé ultérieurement sans nécessiter de nouvel entraînement. Lors de l'exécution de MCTS, ce modèle est chargé dynamiquement et utilisé pour évaluer les coups à partir de leurs caractéristiques. L'intégration avec MCTS est directe : les mêmes caractéristiques que celles utilisées lors de l'entraînement sont reconstruites en temps réel pour chaque nœud exploré (via \texttt{\_extract\_ml\_features}). Le modèle prédit alors un score pour chaque enfant, permettant d'orienter la sélection vers les coups les plus prometteurs. Cette approche offre une exploration plus informée que la méthode purement statistique UCT, tout en restant compatible avec celle-ci en cas d'absence de modèle.
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
-Afin de permettre à plusieurs joueurs de s'affronter à distance, nous avons implémenté une fonctionnalité de jeu en réseau.
-Cette partie du projet est structurée autour d'une architecture client-serveur, où le serveur gère l'état global du jeu et les interactions entre les clients, tandis que les clients représentent les joueurs individuels.
-L'intégration dans le projet du jeu en réseau est un besoin essentiel pour permettre une expérience de jeu complète et similaire au jeu de société dont le projet est une adaptation numérique.
-Il était donc nécessaire, d'avoir un jeu fonctionnel, c'est à dire le jeu en lui-même et les players, ainsi que le CLI afin de pouvoir tester rapidement la fonctionnalité de jeu en réseau.
-La partie concernant les besoins du serveur est découpée en deux sous-parties : le client, qui représente la personne au clavier, et le serveur, qui représente le serveur local de la machine. La partie serveur est quant à elle découpée en trois sous-parties :
-\begin{itemize}
-  \item [$\bullet$] \texttt{online\_communications} dans le module Business Logic, qui représente les possibles réponses du serveur aux différents clients ;
-  \item [$\bullet$] \texttt{games\_repository} dans le module Datas, qui représente la base de données et les opérations sur celle-ci ;
-  \item [$\bullet$] \texttt{server} dans le module Business Logic, qui représente le fonctionnement global du serveur (gestion des clients, des parties et de l'état interne du serveur).
-\end{itemize}
-Le client est quant à lui représenté par le fichier \texttt{client.py} dans le module Business Logic, qui gère la communication avec le serveur et les interactions avec l'utilisateur.
+Afin de permettre à plusieurs joueurs de s'affronter à distance, nous 
+avons implémenté une fonctionnalité de jeu en réseau. Cette partie 
+repose sur une architecture client-serveur : le serveur gère l'état 
+global des parties et les interactions entre les clients, tandis que 
+chaque client représente un joueur individuel. Cette fonctionnalité 
+constitue un besoin essentiel pour offrir une expérience de jeu 
+complète, fidèle à l'esprit du jeu de société dont ce projet est une 
+adaptation numérique. Sa mise en place a nécessité que le jeu de base, 
+les joueurs et le CLI soient préalablement fonctionnels, afin de 
+pouvoir tester rapidement les échanges entre client et serveur.
 
-Afin de mieux comprendre le fonctionnement global du jeu en réseau, il est important de visualiser les différentes interactions entre les composants du serveur et du client.
-Le schéma ci-dessous (figure \ref{fig:network_diagram}) illustre ces interactions, mettant en évidence les flux de données et la communication entre chaque composants.
+L'implémentation est organisée autour de quatre composants principaux, 
+répartis dans les modules du projet :
+\begin{itemize}
+  \item [$\bullet$] \texttt{online\_communications} (module Business 
+  Logic) : gère les réponses du serveur aux commandes des clients ;
+  \item [$\bullet$] \texttt{games\_repository} (module Datas) : 
+  représente la base de données et les opérations associées ;
+  \item [$\bullet$] \texttt{server} (module Business Logic) : assure 
+  le fonctionnement global du serveur, incluant la gestion des clients, 
+  des parties et de l'état interne ;
+  \item [$\bullet$] \texttt{client.py} (module Business Logic) : gère 
+  la communication avec le serveur et les interactions avec l'utilisateur.
+\end{itemize}
+
+Le schéma ci-dessous (figure \ref{fig:network_diagram}) illustre les 
+interactions entre ces composants, en mettant en évidence les flux de 
+données et les canaux de communication.
 \begin{figure}[H]
     \centering
     \frame{\includegraphics[width=1\textwidth]{images/diagramme_du_réseau.png}}
     \centering
     \caption{Schéma représentatif de l'architecture du jeu en réseau}\label{fig:network_diagram}
 \end{figure}
+
+Les parties suivantes détaillent le fonctionnement de chaque composant 
+et le rôle de leurs principales fonctions dans la gestion du jeu en réseau.
+
 \subsubsection{Serveur}
 La première fonction du serveur est \texttt{server\_start}. Cette fonction démarre le serveur en TCP sur un port donné en argument. Si aucun port n'est donné, le port 12345 sera utilisé par défaut. Suite à cela, un thread pour le serveur est créé et démarré sur la fonction \texttt{server\_running}.
 
 La fonction \texttt{server\_running} permet d'accepter des connexions clients tant que le serveur tourne. De plus, un timer est mis en place pour envoyer périodiquement les informations nécessaires aux clients afin qu'ils puissent se connecter. Cela est fait par UDP broadcast toutes les 10 secondes. Cette fonction prend aussi en charge les lancements et fins de parties ainsi que les time-out des invitations de chaque client. Finalement, chaque socket de client accepté est dirigé sur son propre thread vers la fonction \texttt{handle\_client}.
 
-Pour accomplir cette gestion, plusieurs fonctions internes sont utilisées. La première est \texttt{check\_all\_invitations\_timeout}, qui renvoie la liste des clients ayant reçu une invitation dont le délai de réponse est dépassé. La fonction \texttt{launch\_availables\_games} permet quant à elle de lancer toutes les parties pouvant l'être, c'est-à-dire les parties pour lesquelles les invitations ont toutes été résolues et le nombre de joueurs est correct. Conjointement, la fonction \texttt{clean\_finished\_games} se charge de nettoyer les parties terminées, tandis que \texttt{check\_clients\_timeout} vérifie si les clients ayant effectué une déconnexion inopinée ont dépassé leur délai de time-out.
+Pour accomplir cette gestion, plusieurs fonctions internes sont utilisées :
+
+La première est \texttt{check\_all\_invitations\_timeout}, qui renvoie la liste des clients ayant reçu une invitation dont le délai de réponse est dépassé. La fonction \texttt{launch\_availables\_games} permet de lancer toutes les parties pouvant l'être, c'est-à-dire les parties pour lesquelles les invitations ont toutes été résolues et le nombre de joueurs est correct. 
+
+Conjointement, la fonction \texttt{clean\_finished\_games} se charge de nettoyer les parties terminées, tandis que \texttt{check\_clients\_timeout} vérifie si les clients ayant effectué une déconnexion inopinée ont dépassé leur délai de time-out.
 
 Chaque socket de client est ensuite redirigé dans son propre thread vers la fonction \texttt{handle\_client}, qui se charge de la communication entre le serveur et un client. Si le client souhaite quitter, un message est envoyé à tous les clients du serveur. La commande \texttt{quit} est la seule commande qui peut être effectuée sans être enregistré auprès du serveur. Si le client n'est pas encore enregistré, la fonction \texttt{handle\_client\_registering} se charge de l'enregistrer, et différents messages sont envoyés en fonction de la réussite ou de l'échec de l'enregistrement. Dans le cas d'un échec, deux messages principaux peuvent être envoyés : soit le nom d'utilisateur est déjà pris, soit le client est sous un time-out pour déconnexion inopinée.
 
@@ -665,9 +695,15 @@ En effet, la partie GUI a été développée en fin de projet et nous n'avons pa
 Cependant, l'implémentation en GUI du besoin F38 est complète.
 \section{Revue critique du projet}
 
-Nous avons fait face à plusieurs défis au cours de ce projet notamment en ce qui concerne la complexité du jeu et la mise en œuvre de l'intelligence artificielle.
-Dans un premier temps, nous allons discuter de la complétion du cahier des charges du projet. Ensuite, nous analyserons les performances obtenues ainsi que les limites de notre implémentation. Enfin, nous terminerons par une discussion sur les pistes d'amélioration possibles pour notre projet.
 
+
+Ce projet nous a confrontés à plusieurs défis majeurs, notamment la 
+complexité des règles de Carcassonne et la mise en œuvre des 
+intelligences artificielles. Cette section propose une analyse critique 
+de notre travail, organisée en cinq parties : le respect du cahier 
+des charges, les performances obtenues, les limites et bugs rencontrés, 
+les pistes d'amélioration envisageables, et enfin l'usage des outils 
+d'intelligence artificielle au cours du développement.
 
 \subsection{Cahier des charges}
 
@@ -689,8 +725,7 @@ du cahier des charges.
 
 \subsubsection{Besoins généraux}
 
-Cette partie a été relativement simple à respecter.
-La principale difficulté a toutefois résidé dans la mise en place du 
+La principale difficulté de cette partie a résidé dans la mise en place du 
 fichier de configuration du besoin F2 en lien avec l'ensemble des fonctionnalités 
 supplémentaires ajoutées au fil du projet.
 Un problème subsiste cependant : le cahier des charges stipule que le 
@@ -760,15 +795,27 @@ GUI, où l'absence de cette structure s'est fait ressentir.
 
 Cette partie a été développée progressivement au fil de l'avancement du projet. 
 Nous avons d'abord mis en place une sauvegarde basique de l'état du jeu, avant d'y ajouter des fonctionnalités complémentaires, telles que la gestion du format de l'historique et la conformité avec le fichier de configuration.
-Elle inclut également la représentation du plateau de jeu, qui s'est révélée relativement simple à implémenter, celui-ci étant peu complexe à exprimer sous forme textuelle.
+La 
+représentation textuelle du plateau de jeu a quant à elle été 
+relativement simple à implémenter, la structure du plateau se prêtant 
+naturellement à une expression sous forme textuelle.
 
 
 \subsubsection{Structures de données}
 
-La mise en place d'un graphe pour représenter le plateau de jeu a été la première étape du projet.
-Ce graphe nous a permis de gérer efficacement les différentes connectivités entre les tuiles notamment pour la gestion du score des champs en utilisant des composantes connexes.
-Cependant, cette implémentation précoce a également été à l'origine de nombreuses difficultés et de bugs par la suite. En particulier, l'absence d'une véritable classe Tile, où les éléments du graphe sont en réalité modélisés comme des Vertex, a complexifié la gestion du code notamment lors de l'implémentation du GUI.
+La mise en place d'un graphe pour représenter le plateau de jeu a 
+constitué la première étape du projet. Cette structure nous a permis 
+de gérer efficacement les connectivités entre les tuiles, notamment 
+pour le calcul du score des champs via des composantes connexes.
 
+Cependant, certains choix effectués lors de cette implémentation 
+précoce ont été source de difficultés par la suite. En particulier, 
+l'absence d'une véritable classe \texttt{Tile}, les éléments du 
+graphe étant modélisés comme des \texttt{Vertex}, a progressivement 
+complexifié la gestion du code à mesure que le projet évoluait, et 
+s'est révélée particulièrement contraignante lors de l'implémentation 
+du GUI, où la distinction entre tuile et sommet de graphe aurait 
+apporté une clarté appréciable.
 
 \subsubsection{Graphical User Interface (GUI)}
 
@@ -871,8 +918,8 @@ et 80\% de taux de victoire lorsqu'elles sont évaluées contre des IA
 aléatoires. Ces performances ont été mesurées sous différentes 
 contraintes de temps de calcul :
 \begin{itemize}
-    \item 1 seconde : environ 25 itérations par tour (UCT) contre 15 (ML)
-    \item 5 secondes : environ 112 itérations (UCT) contre 68 (ML)
+    \item[-] 1 seconde : environ 25 itérations par tour (UCT) contre 15 (ML)
+    \item[-] 5 secondes : environ 112 itérations (UCT) contre 68 (ML)
 \end{itemize}
 
 Ce contraste met en évidence un point important : une IA performante en 
@@ -1019,26 +1066,35 @@ certaines fonctionnalités. Cela nous a permis d'avancer plus rapidement
 et efficacement, tout en développant un regard critique sur les forces 
 et les limites de chaque outil.
 
-Nous avons largement utilisé l'extension \textit{GitHub Copilot} de 
-Visual Studio Code, qui s'est révélée particulièrement efficace pour 
-les tâches répétitives et bien délimitées, comme la génération de 
-fonctions utilitaires ou la complétion de blocs de code dont la 
-structure était déjà claire. En revanche, ses suggestions se sont 
-montrées moins pertinentes pour des problèmes nécessitant une 
-compréhension globale de l'architecture du projet, produisant parfois 
-du code fonctionnel en apparence mais incohérent avec le reste du 
-système.
+Nous avons largement utilisé \textit{GitHub Copilot Chat} dans Visual 
+Studio Code, en mode \textit{chat} et \textit{inline}. Cet outil s'est 
+révélé particulièrement efficace pour les tâches répétitives et bien 
+délimitées, comme la génération de fonctions utilitaires ou la complétion 
+de blocs de code dont la structure était déjà claire. En revanche, ses 
+suggestions pouvaient s'avérer lentes à apparaître et souvent inadaptées 
+lorsque le contexte fourni était insuffisant ou que la tâche demandée 
+dépassait la simple complétion locale.
 
 Pour des problématiques plus complexes, nous avons eu recours à 
-\textit{ChatGPT} et \textit{Claude}, notamment pour l'implémentation 
-de fonctionnalités telles que la mise en place du design pattern Visitor 
-pour l'affichage des réponses du serveur dans le GUI. Ces modèles se 
-sont révélés utiles pour structurer une approche sur des problèmes 
-architecturaux ou pour expliquer des concepts. Toutefois, nous avons 
-constaté leurs limites lorsque le contexte du projet devenait trop 
-volumineux : les suggestions proposées étaient alors déconnectées des 
-choix d'implémentation existants et nécessitaient un travail 
-d'adaptation important, voire introduisaient de nouveaux bugs.
+\textit{ChatGPT} (version gratuite, modèle GPT-4o mini) et à 
+\textit{Claude Sonnet 4.6} via claude.ai, notamment pour la mise en 
+place du design pattern Visitor pour l'affichage des réponses du serveur 
+dans le GUI. Ces modèles se sont révélés utiles pour structurer une 
+approche face à des problèmes architecturaux ou pour clarifier des 
+concepts. Toutefois, nous avons constaté leurs limites lorsque le 
+contexte du projet devenait trop volumineux : les suggestions proposées 
+étaient alors déconnectées des choix d'implémentation existants, 
+nécessitaient un travail d'adaptation important, voire introduisaient 
+de nouveaux bugs.
+
+En fin de projet, nous avons également expérimenté le \textit{vibe 
+coding}, une pratique consistant à décrire un comportement souhaité en 
+langage naturel et à laisser l'IA générer le code correspondant. Cette 
+approche a été utilisée principalement pour peaufiner certaines 
+fonctionnalités et corriger des bugs mineurs. Elle s'est avérée efficace 
+pour des tâches bien circonscrites, mais a montré ses limites dès lors 
+que les modifications impliquaient plusieurs composantes interdépendantes, 
+l'IA peinant alors à respecter les contraintes de l'architecture existante.
 
 Enfin, l'IA a également contribué à l'amélioration de ce rapport, en 
 nous aidant à structurer nos idées, à formuler nos analyses de manière 
