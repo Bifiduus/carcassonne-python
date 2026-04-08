@@ -578,14 +578,26 @@ Le modèle adopté est un réseau de neurones de type perceptron multicouche (ML
 Une fois entraîné, le modèle est sauvegardé au format \texttt{.keras}, incluant l'architecture et les poids du réseau. Il peut ainsi être rechargé ultérieurement sans nécessiter de nouvel entraînement. Lors de l'exécution de MCTS, ce modèle est chargé dynamiquement et utilisé pour évaluer les coups à partir de leurs caractéristiques. L'intégration avec MCTS est directe : les mêmes caractéristiques que celles utilisées lors de l'entraînement sont reconstruites en temps réel pour chaque nœud exploré (via \texttt{\_extract\_ml\_features}). Le modèle prédit alors un score pour chaque enfant, permettant d'orienter la sélection vers les coups les plus prometteurs. Cette approche offre une exploration plus informée que la méthode purement statistique UCT, tout en restant compatible avec celle-ci en cas d'absence de modèle.
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
-
+Afin de permettre à plusieurs joueurs de s'affronter à distance, nous avons implémenté une fonctionnalité de jeu en réseau.
+Cette partie du projet est structurée autour d'une architecture client-serveur, où le serveur gère l'état global du jeu et les interactions entre les clients, tandis que les clients représentent les joueurs individuels.
+L'intégration dans le projet du jeu en réseau est un besoin essentiel pour permettre une expérience de jeu complète et similaire au jeu de société dont le projet est une adaptation numérique.
+Il était donc nécessaire, d'avoir un jeu fonctionnel, c'est à dire le jeu en lui-même et les players, ainsi que le CLI afin de pouvoir tester rapidement la fonctionnalité de jeu en réseau.
 La partie concernant les besoins du serveur est découpée en deux sous-parties : le client, qui représente la personne au clavier, et le serveur, qui représente le serveur local de la machine. La partie serveur est quant à elle découpée en trois sous-parties :
 \begin{itemize}
-  \item [$\bullet$] \texttt{online\_communications}, qui représente les possibles réponses du serveur aux différents clients ;
-  \item [$\bullet$] \texttt{games\_repository}, qui représente la base de données et les opérations sur celle-ci ;
-  \item [$\bullet$] \texttt{server}, qui représente le fonctionnement global du serveur (gestion des clients, des parties et de l'état interne du serveur).
+  \item [$\bullet$] \texttt{online\_communications} dans le module Business Logic, qui représente les possibles réponses du serveur aux différents clients ;
+  \item [$\bullet$] \texttt{games\_repository} dans le module Datas, qui représente la base de données et les opérations sur celle-ci ;
+  \item [$\bullet$] \texttt{server} dans le module Business Logic, qui représente le fonctionnement global du serveur (gestion des clients, des parties et de l'état interne du serveur).
 \end{itemize}
+Le client est quant à lui représenté par le fichier \texttt{client.py} dans le module Business Logic, qui gère la communication avec le serveur et les interactions avec l'utilisateur.
 
+Afin de mieux comprendre le fonctionnement global du jeu en réseau, il est important de visualiser les différentes interactions entre les composants du serveur et du client.
+Le schéma ci-dessous (figure \ref{fig:network_diagram}) illustre ces interactions, mettant en évidence les flux de données et la communication entre chaque composants.
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=1\textwidth]{images/diagramme_du_réseau.png}}
+    \centering
+    \caption{Schéma représentatif de l'architecture du jeu en réseau}\label{fig:network_diagram}
+\end{figure}
 \subsubsection{Serveur}
 La première fonction du serveur est \texttt{server\_start}. Cette fonction démarre le serveur en TCP sur un port donné en argument. Si aucun port n'est donné, le port 12345 sera utilisé par défaut. Suite à cela, un thread pour le serveur est créé et démarré sur la fonction \texttt{server\_running}.
 
@@ -642,6 +654,10 @@ L'une des tables les plus importantes pour la gestion des parties est la table \
 
 Pour gérer les conflits de noms d'utilisateurs entre différents serveurs, la table \texttt{usernames} a été créée. Elle contient l'adresse du serveur et le nom d'utilisateur associé. Si un serveur n'est pas présent dans cette table, le nom d'utilisateur principal est utilisé à condition qu'il ne soit pas déjà pris sur ce serveur, ou la phase d'enregistrement n'a pas encore eu lieu. Cette table est la seule à contenir des données propres au propriétaire de l'ordinateur. Enfin, la table \texttt{timeouts} enregistre les identifiants des joueurs qui se sont déconnectés de manière inattendue ainsi que la date à laquelle cette déconnexion a été constatée par le serveur.
 
+
+Le jeu en réseau est basé sur les besoins F38 à F40, tous les besoins ont étaient effectués en CLI, mais pas en GUI.
+En effet, la partie GUI a été développée en fin de projet et nous n'avons pas eu le temps de l'intégrer complétement avec les fonctionnalités de jeu en réseau. 
+Cependant, l'implémentation en GUI du besoin F38 est complète.
 \section{Revue critique du projet}
 
 Nous avons fait face à plusieurs défis au cours de ce projet notamment en ce qui concerne la complexité du jeu et la mise en œuvre de l'intelligence artificielle.
