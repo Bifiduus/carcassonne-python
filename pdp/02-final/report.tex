@@ -740,7 +740,9 @@ Quand à la partie la plus complexe à implémenter, il s’agit de la gestion d
 En effet, étant donné que la base de données a été modifiée et a évoluée au fil du projet, la gestion de ce que font les commandes a beaucoup changé. De plus, la base de données se doit de respecter l'état réel du serveur, ainsi les modifications se répercutent
 entre le serveur et la base de données, ce qui rend la gestion des commandes plus complexe.
 De plus, la gestion de l'interruption abrupte du serveur ou du client a été une source de nombreux bugs et a nécessité la mise en place de fonctions de nettoyage pour éviter les fuites de ressources et la corruption de la base de données. 
-
+Cependant, les besoins F39 et F40 n'ont été que partiellement réalisés côté GUI : 
+si la réception et l'affichage des messages serveur fonctionnent correctement, le lancement d'une nouvelle partie via la commande new depuis le GUI reste non opérationnel. 
+Cette fonctionnalité est en revanche pleinement prise en charge dans le CLI.
 
 \subsection{Performance}
 
@@ -748,6 +750,7 @@ Cette section a pour objectif d’évaluer empiriquement les performances des di
 Nous analysons les résultats obtenus à travers plusieurs expérimentations afin d’identifier les comportements observés, leurs limites ainsi que les pistes d’amélioration possibles.
 
 \subsubsection{IA}
+\label{subsubsec:iaperfo}
 
 \begin{table}[h]
 \centering
@@ -808,7 +811,33 @@ Nous avons donc retenu Fisher\-Yates comme algorithme par défaut, tandis que l'
 
 Toutefois, malgré nos efforts pour implémenter correctement les différentes fonctionnalités du projet, nous avons rencontré de nombreux bugs et limitations au cours du développement.
 
+\subsubsection{Limites}
+\begin{itemize}
+  \item [$\bullet$] Nous n'avons pas traité le cas d'une tuile impossible 
+  à placer, ce qui peut survenir dans certaines configurations de jeu. 
+  Dans ce cas, le comportement du programme n'est pas défini : la partie 
+  peut se bloquer sans message d'erreur explicite pour le joueur.
+  \item [$\bullet$] La taille du plateau de jeu dans le GUI est fixe et 
+ne s'adapte pas dynamiquement à la taille de la fenêtre. Ainsi, si la 
+fenêtre est agrandie, les éléments de l'interface tels que les boutons 
+s'ajustent correctement, mais le plateau de jeu reste de taille fixe, 
+créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
+  \item [$\bullet$] Les fonctions d'évaluation heuristiques utilisées par 
+  les IA ne modélisent pas certaines stratégies avancées, comme le blocage 
+  adverse ou la gestion optimale des meeples restants. Cela limite leur 
+  efficacité en contexte compétitif multi-joueurs, comme l'illustrent les 
+  résultats présentés en section \ref{subsubsec:iaperfo}.
+\end{itemize}
 
+
+\subsubsection{Bugs}
+
+\begin{itemize}
+  \item [-] Les besoins F39 et F40 concernant les fonctionnalités avancées du serveur sont pleinement fonctionnels dans le CLI, mais partiellement implémentés dans le GUI. 
+  En particulier, la commande new permettant de lancer une nouvelle partie depuis le GUI n'est pas opérationnelle : le message est bien envoyé au serveur mais la réponse n'est pas correctement traitée et affichée côté GUI. 
+  Cela s'explique par la complexité du pattern Visitor mis en place, qui n'a pas pu être étendu à temps à l'ensemble des types de messages du serveur.
+  \item [-] 
+\end{itemize}
 \subsection{Perspectives d'amélioration}
 
 Une fois le projet complété, nous avons identifié de nombreuses pistes d'amélioration que ce soit au niveau de l'implémentation de certaines fonctionnalités, de la mise en place de notre code ou bien l'extensivité de notre projet.
