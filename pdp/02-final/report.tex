@@ -654,45 +654,85 @@ Dans cette section, nous allons discuter de la manière dont nous avons respect�
 
 \subsubsection{Généralités}
 
-Cette première partie du projet a été globalement respectée. Nous avons pris le temps avant de rendre le projet de vérifier le bon fonctionnement des tests et de vérifier que les différentes bibliothèques utilisées étaient en accord avec les besoins.
-Des tests ont été mis en place tout au long du projet pour vérifier le bon fonctionnement de notre code et pour nous assurer que les différentes fonctionnalités étaient correctement implémentées.
-Grâce à cette approche, le projet atteint alors une couverture globale d'environ 90\%, supérieure à celle exigée dans le cahier des charges.
+Cette première partie du projet a été globalement respectée. Des tests 
+ont été mis en place tout au long du développement afin de vérifier le 
+bon fonctionnement du code et de s'assurer que les différentes 
+fonctionnalités étaient correctement implémentées. Avant le rendu, nous 
+avons également vérifié la compatibilité des bibliothèques utilisées 
+avec les exigences du cahier des charges.
+
+Grâce à cette approche, le projet atteint une couverture globale 
+d'environ 80\% ce qui constitue un résultat conforme aux exigences 
+du cahier des charges.
 
 
 \subsubsection{Besoins généraux}
 
 Cette partie a été relativement simple à respecter.
-La principale difficulté a toutefois résidé dans la mise en place du fichier de configuration en lien avec l'ensemble des fonctionnalités supplémentaires ajoutées au fil du projet.
+La principale difficulté a toutefois résidé dans la mise en place du 
+fichier de configuration du besoin F2 en lien avec l'ensemble des fonctionnalités 
+supplémentaires ajoutées au fil du projet.
+Un problème subsiste cependant : le cahier des charges stipule que le 
+fichier de configuration doit être lu au démarrage et ses options utilisées 
+par défaut. Or, une fois ce fichier présent, il n'est plus possible de 
+revenir aux options par défaut du programme sans modifier manuellement 
+le fichier. Une commande dédiée à la réinitialisation des options par 
+défaut aurait été nécessaire pour pallier ce manque.
 
 \subsubsection{Options au lancement}
 
-Cette partie a été simple à mettre en œuvre. Les besoins portaient principalement sur des options de lancement relativement faciles à implémenter.
-Il a néanmoins fallu intégrer différents modes de jeu comme le mode \textit{Blitz} ou \textit{Contest} ainsi que l'extension \textit{The River}. 
-Ces éléments ont été réalisés en fin de projet une fois les fonctionnalités de base implémentées ce qui a facilité leur intégration.
-Nous pouvons cependant parler des algorithmes de mélange de tuiles et de leurs tests statistiques \ref{subsubsec:melange}.
+Les besoins portaient 
+principalement sur des options de lancement relativement faciles à 
+implémenter. Il a néanmoins fallu intégrer différents modes de jeu 
+comme le mode \textit{Blitz} ou \textit{Contest} (F6 et F7) ainsi que l'extension 
+\textit{The River} (F10). Ces éléments ont été réalisés en fin de projet une 
+fois les fonctionnalités de base implémentées ce qui a facilité leur 
+intégration.
+
+Une difficulté particulière a cependant été rencontrée lors de 
+l'implémentation de \textit{The River}, concernant la règle de virage. 
+En effet, cette règle impose des contraintes sur l'orientation des tuiles 
+rivière afin d'éviter que la rivière ne forme une boucle ce qui s'est 
+révélé non trivial à vérifier lors du placement des tuiles.
+
+Nous pouvons également mentionner les algorithmes de mélange de tuiles 
+et leurs tests statistiques, détaillés en section \ref{subsubsec:melange}.
 
 
 
 \subsubsection{Gestion du jeu}
 
-La gestion des règles de base du jeu a constitué la première grande étape du projet mais aussi l'une des premières difficultés majeures. En effet, les règles de Carcassonne sont relativement complexes à implémenter.
-Entre la connectivité des tuiles, les conditions de placement des pions, les conditions de scoring, une grande rigueur a été nécessaire afin de garantir une implémentation correcte du jeu.
-\begin{itemize}
-  \item [$\bullet$] Les règles de base comme le placement des tuiles et des pions ont été relativement simples à implémenter notamment grâce à une bonne modélisation du plateau de jeu et des tuiles avec le module graph.
-  \item [$\bullet$] En revanche, la gestion du score a représenté un défi majeur. Elle a nécessité la mise en place de composantes connexes, en particulier pour les champs pouvant s'étendre entre routes et cités. 
-  Cette partie s'est révélée longue et complexe, générant de nombreux bugs et ralentissant ainsi l'avancement du projet.
-\end{itemize}
+La gestion des règles de base du jeu a constitué la première grande 
+étape du projet, mais aussi l'une des premières difficultés majeures. 
+Les règles de Carcassonne sont en effet relativement complexes à 
+implémenter : connectivité des tuiles, conditions de placement des 
+pions, calcul du score — chacun de ces aspects a nécessité une grande 
+rigueur afin de garantir une implémentation correcte.
+
+Le placement des tuiles et des pions a été relativement simple à 
+traiter, notamment grâce à une bonne modélisation du plateau de jeu 
+et des tuiles via le module \textit{graph}. En revanche, la gestion 
+du score a représenté un défi majeur. Elle a nécessité la mise en place 
+de composantes connexes, en particulier pour les champs pouvant 
+s'étendre entre routes et cités, dont la délimitation s'est révélée 
+particulièrement délicate à formaliser. Cette partie a été source de 
+nombreux bugs et a significativement ralenti l'avancement du projet.
 
 \subsubsection{Command Line Interface (CLI)}
 
-Le CLI a été relativement simple à implémenter notamment grâce à l'utilisation de bibliothèques comme readline en Python qui facilite la saisie des commandes ainsi que la gestion de leur historique. En effet, l'intégration de cette bibliothèque a permis de répondre aisément à deux besoins principaux :
-\begin{itemize}
-  \item[-] Édition de la commande en cours
-  \item[-] Historique des commandes tapées
-\end{itemize}
-Il a toutefois été nécessaire de développer des fonctions spécifiques pour l'auto-complétion des commandes et de leurs arguments afin de satisfaire le besoin F19.
-Des améliorations restent envisageables, notamment la mise en place d'un design pattern dédié à la gestion des commandes (besoin F15). 
-Une telle approche aurait permis de structurer davantage le système et de faciliter, par la suite, l'implémentation des commandes dans le GUI.
+Le CLI a été relativement simple à implémenter, notamment grâce à la 
+bibliothèque \textit{readline} de Python, qui facilite la saisie des 
+commandes et a permis de répondre aisément à deux besoins principaux : 
+l'édition de la commande en cours et la gestion de l'historique des 
+commandes tapées. Il a toutefois été nécessaire de développer des 
+fonctions spécifiques pour l'auto-complétion des commandes et de leurs 
+arguments afin de satisfaire le besoin F19.
+
+Une amélioration notable resterait la mise en place d'un design pattern 
+dédié à la gestion des commandes (besoin F15). Une telle approche aurait 
+permis de mieux structurer le système dès le départ et d'en faciliter 
+l'évolution, notamment lors de l'implémentation des commandes dans le 
+GUI, où l'absence de cette structure s'est fait ressentir.
 
 
 \subsubsection{Format de sauvegarde}
@@ -711,16 +751,29 @@ Cependant, cette implémentation précoce a également été à l'origine de nom
 
 \subsubsection{Graphical User Interface (GUI)}
 
-L'implémentation du GUI, en parallèle de l'intelligence artificielle, a été la partie la plus longue du projet à implémenter. 
-Le principal défi a été d'attendre la mise en place des différentes fonctionnalités du projet pour pouvoir les implémenter sur le GUI.
-Le GUI s'est révélé plus complexe à développer que le CLI, nécessitant la mise en place de divers éléments graphiques tels que menus, boutons, affichage des tuiles et des meeples.
-Une difficulté rencontrée par exemple a été de pouvoir poser une tuile sur le plateau de jeu.
-Le GUI utilise des coordonnées x et y pour représenter les positions sur le plateau de jeu alors que le module de logique métier utilise une tuile et une orientation pour représenter les positions sur le plateau de jeu.
-Il a alors fallu faire le lien entre ces deux représentations pour pouvoir poser une tuile sur le plateau de jeu à partir du GUI.
-Pour cela, nous avons mis en place une fonction permettant de trouver une tuile voisine autour d'une position donnée (x,y) sur le plateau de jeu qui sera utilisée pour le \textit{play\_move} du module de logique métier.
+L'implémentation du GUI a été, en parallèle de l'intelligence 
+artificielle, la partie la plus longue du projet. Le principal défi a 
+résidé dans la dépendance du GUI vis-à-vis des autres fonctionnalités 
+du projet : il a en effet fallu attendre que les différentes composantes 
+soient suffisamment stables pour pouvoir les intégrer dans l'interface 
+graphique. Le GUI s'est également révélé plus complexe à développer que 
+le CLI, nécessitant la mise en place de nombreux éléments graphiques 
+tels que des menus, des boutons, ainsi que l'affichage des tuiles et 
+des meeples.
 
+Une difficulté technique notable a été la gestion du placement des 
+tuiles sur le plateau. Le GUI repose sur un système de coordonnées 
+$(x, y)$ pour représenter les positions, tandis que le module de logique 
+métier utilise une référence par tuile et orientation. Il a donc fallu 
+établir une correspondance entre ces deux représentations. Pour cela, 
+nous avons mis en place une fonction permettant de retrouver la tuile 
+voisine d'une position $(x, y)$ donnée sur le plateau, utilisée ensuite 
+comme entrée pour le \textit{play\_move} du module de logique métier.
 
-Malgré ces avancées, certaines améliorations restent possibles pour rendre le GUI pleinement cohérent avec l'ensemble des besoins du projet.
+Malgré ces avancées, certaines améliorations restent envisageables, 
+notamment concernant l'adaptabilité du plateau à la taille de la fenêtre 
+et la gestion exhaustive des erreurs utilisateur, pour rendre le GUI 
+pleinement cohérent avec l'ensemble des besoins du projet.
 
 \subsubsection{Joueur artificiel}
 
@@ -734,15 +787,30 @@ Cependant, l'implémentation de cet algorithme s'est avérée très complexe et 
 \subsubsection{Jeu en réseau}
 
 
-La partie la plus chronophage a été la gestion du serveur côté GUI. Plus précisément, il a fallu permettre au GUI d'afficher les messages envoyés par le serveur. 
-Pour cela, nous avons mis en place le design pattern Visitor, afin que le GUI puisse traiter et afficher ces messages sans établir de lien direct entre les deux composants.
-Quand à la partie la plus complexe à implémenter, il s’agit de la gestion des différentes commandes envoyées par le serveur.
-En effet, étant donné que la base de données a été modifiée et a évoluée au fil du projet, la gestion de ce que font les commandes a beaucoup changé. De plus, la base de données se doit de respecter l'état réel du serveur, ainsi les modifications se répercutent
-entre le serveur et la base de données, ce qui rend la gestion des commandes plus complexe.
-De plus, la gestion de l'interruption abrupte du serveur ou du client a été une source de nombreux bugs et a nécessité la mise en place de fonctions de nettoyage pour éviter les fuites de ressources et la corruption de la base de données. 
-Cependant, les besoins F39 et F40 n'ont été que partiellement réalisés côté GUI : 
-si la réception et l'affichage des messages serveur fonctionnent correctement, le lancement d'une nouvelle partie via la commande new depuis le GUI reste non opérationnel. 
-Cette fonctionnalité est en revanche pleinement prise en charge dans le CLI.
+La partie la plus chronophage a été la gestion du serveur côté GUI. 
+Plus précisément, il a fallu permettre au GUI d'afficher les messages 
+envoyés par le serveur, pour laquelle nous avons mis en place le design 
+pattern Visitor, afin que le GUI puisse traiter et afficher ces messages 
+sans établir de lien direct entre les deux composants.
+
+La partie la plus complexe a quant à elle été la gestion des différentes 
+commandes envoyées par le serveur. En effet, la base de données ayant 
+évolué tout au long du projet, le comportement associé à chaque commande 
+a dû être régulièrement revu. De plus, la base de données se devant de 
+refléter fidèlement l'état réel du serveur, toute modification doit se 
+répercuter de manière cohérente entre les deux, ce qui complexifie 
+significativement la gestion des commandes.
+
+Par ailleurs, la gestion des interruptions abruptes du serveur ou du 
+client a été une source de nombreux bugs, nécessitant la mise en place 
+de fonctions de nettoyage afin d'éviter les fuites de ressources et la 
+corruption de la base de données.
+
+Cependant, les besoins F39 et F40 n'ont été que partiellement réalisés 
+côté GUI : si la réception et l'affichage des messages serveur 
+fonctionnent correctement, le lancement d'une nouvelle partie via la 
+commande \texttt{new} depuis le GUI reste non opérationnel. Cette 
+fonctionnalité est en revanche pleinement prise en charge dans le CLI.
 
 \subsection{Performance}
 
@@ -756,36 +824,46 @@ Nous analysons les résultats obtenus à travers plusieurs expérimentations afi
 \centering
 \begin{tabular}{lcccc}
 \hline
-\textbf{IA} & \textbf{Wins (incl. ties)} & \textbf{Win rate} & \textbf{Avg score} & \textbf{Avg place} \\
+\textbf{IA} & \textbf{Wins (incl. ties)} & \textbf{Win rate} & 
+\textbf{Avg score} & \textbf{Avg place} \\
 \hline
-Iterative & 9 & 60.0\% & 22.0 & 1.63 \\
-Random & 3 & 20.0\% & 15.1 & 3.43 \\
-MCTS\_ML & 2 & 13.3\% & 14.3 & 3.20 \\
-Minimax & 2 & 13.3\% & 14.3 & 3.33 \\
-MCTS\_UCT & 1 & 6.7\% & 14.7 & 3.40 \\
+Iterative  & 9 & 60.0\% & 22.0 & 1.63 \\
+Random     & 3 & 20.0\% & 15.1 & 3.43 \\
+MCTS\_ML   & 2 & 13.3\% & 14.3 & 3.20 \\
+Minimax    & 2 & 13.3\% & 14.3 & 3.33 \\
+MCTS\_UCT  & 1 &  6.7\% & 14.7 & 3.40 \\
 \hline
 \end{tabular}
-\caption{Comparaison des performances des différentes IA sur 15 parties mixtes}
+\caption{Comparaison des performances des différentes IA sur 15 parties 
+mixtes, chaque partie incluant une IA de chaque type.}
 \end{table}
 
-Ce tableau présente les performances de différentes intelligences artificielles sur un ensemble de 15 parties, où chaque partie inclut une IA de chaque type.
+Ce tableau présente les performances des différentes intelligences 
+artificielles sur 15 parties mixtes. L'IA Iterative domine nettement 
+avec un taux de victoire de 60\% et une position moyenne de 1.63, tandis 
+que les autres IA, notamment les variantes MCTS, obtiennent des 
+performances significativement plus faibles dans ce contexte compétitif.
 
-Les résultats montrent que l’IA Iterative domine nettement avec un taux de victoire de 60\% et une position moyenne de 1.63, tandis que les autres IA, notamment les variantes MCTS (MCTS\_ML et MCTS\_UCT), obtiennent des performances significativement plus faibles dans ce contexte compétitif.
-
-Pourtant, des expérimentations préalables indiquent que les IA basées sur MCTS atteignent entre 60\% et 80\% de taux de victoire lorsqu’elles sont évaluées individuellement contre des IA aléatoires. Ces performances sont observées avec différentes contraintes de temps de calcul :
+Ce résultat est d'autant plus surprenant que des expérimentations 
+préalables montrent que les IA basées sur MCTS atteignent entre 60\% 
+et 80\% de taux de victoire lorsqu'elles sont évaluées contre des IA 
+aléatoires. Ces performances ont été mesurées sous différentes 
+contraintes de temps de calcul :
 \begin{itemize}
-\item 1 seconde : environ 25 itérations par tour (UCT) contre 15 (ML)
-\item 5 secondes : environ 112 itérations (UCT) contre 68 (ML)
+    \item 1 seconde : environ 25 itérations par tour (UCT) contre 15 (ML)
+    \item 5 secondes : environ 112 itérations (UCT) contre 68 (ML)
 \end{itemize}
 
-Ce contraste met en évidence un point important :
-une IA performante en environnement contrôlé (contre des agents faibles) ne garantit pas de bonnes performances en environnement multi-agents compétitif.
-
-Plusieurs hypothèses peuvent expliquer ce phénomène :
-
-Les simulations MCTS reposent sur des modèles adverses simplifiés (souvent aléatoires), ce qui les rend moins robustes face à des stratégies variées.
-Le coût computationnel des simulations (rejouer toute la logique du jeu) limite le nombre d’itérations et donc la qualité des décisions.
-Les variantes MCTS utilisées (UCT vs ML) peuvent ne pas être optimales pour ce type de jeu ou ce format multi-joueurs.
+Ce contraste met en évidence un point important : une IA performante en 
+environnement contrôlé ne garantit pas de bonnes performances en contexte 
+multi-agents compétitif. Plusieurs hypothèses peuvent expliquer ce 
+phénomène. D'une part, les simulations MCTS reposent sur des modèles 
+adverses simplifiés, souvent aléatoires, ce qui les rend moins robustes 
+face à des stratégies variées. D'autre part, le coût computationnel élevé 
+des simulations, qui impliquent de rejouer toute la logique du jeu, limite 
+le nombre d'itérations réalisables et donc la qualité des décisions prises. 
+Enfin, les variantes MCTS implémentées (UCT et ML) peuvent ne pas être 
+optimalement adaptées à ce type de jeu ou à ce format multi-joueurs.
 
 \subsubsection{Algorithme de mélange des tuiles}
 \label{subsubsec:melange}
@@ -814,7 +892,7 @@ Toutefois, malgré nos efforts pour implémenter correctement les différentes f
 \subsubsection{Limites}
 \begin{itemize}
   \item [$\bullet$] Nous n'avons pas traité le cas d'une tuile impossible 
-  à placer, ce qui peut survenir dans certaines configurations de jeu. 
+  à placer ce qui peut survenir dans certaines configurations de jeu. 
   Dans ce cas, le comportement du programme n'est pas défini : la partie 
   peut se bloquer sans message d'erreur explicite pour le joueur.
   \item [$\bullet$] La taille du plateau de jeu dans le GUI est fixe et 
@@ -827,6 +905,33 @@ créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
   adverse ou la gestion optimale des meeples restants. Cela limite leur 
   efficacité en contexte compétitif multi-joueurs, comme l'illustrent les 
   résultats présentés en section \ref{subsubsec:iaperfo}.
+  \item [$\bullet$]  Un certain nombre de constantes du projet ne sont pas 
+  centralisées et sont dispersées à travers les différents modules ce qui 
+  nuit à la maintenabilité du code. En effet, toute modification d'une 
+  valeur nécessite de retrouver et mettre à jour chaque occurrence 
+  manuellement, augmentant ainsi le risque d'incohérences et d'erreurs 
+  difficiles à détecter.
+  \item [$\bullet$]  Le serveur ne semble fonctionner correctement que dans 
+  l'environnement du Cremi. En effet, les tests effectués en réseau local 
+  n'ont pas été concluants, suggérant que le serveur repose sur des 
+  configurations réseau spécifiques à cet environnement. Cela constitue 
+  une limitation importante quant à la portabilité du mode réseau du projet.
+  \item [$\bullet$] Certaines spécifications du cahier des charges manquent 
+  de clarté ce qui nous a conduits à interpréter et implémenter ces besoins 
+  de manière intuitive, en adoptant la solution qui nous semblait la plus 
+  logique. Ces choix d'interprétation peuvent ainsi ne pas correspondre 
+  exactement aux attentes initiales du projet.
+  C'est notamment le cas du 
+  besoin F39 concernant le mode daemon du serveur, dont la spécification 
+  est restée floue malgré des échanges avec les chargés de TD, et que nous 
+  avons donc implémenté selon notre propre compréhension.
+  De même, le besoin 
+  F10 relatif à l'extension \textit{The River} a fait l'objet d'échanges 
+  avec les chargés de TD dont les attentes semblaient différer de notre 
+  implémentation, laissant penser que notre interprétation pourrait être 
+  à revoir.
+
+  \item [$\bullet$] 
 \end{itemize}
 
 
@@ -840,25 +945,75 @@ créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
 \end{itemize}
 \subsection{Perspectives d'amélioration}
 
-Une fois le projet complété, nous avons identifié de nombreuses pistes d'amélioration que ce soit au niveau de l'implémentation de certaines fonctionnalités, de la mise en place de notre code ou bien l'extensivité de notre projet.
+Une fois le projet complété, nous avons identifié plusieurs pistes 
+d'amélioration, que ce soit au niveau de l'architecture du code, de 
+l'implémentation de certaines fonctionnalités ou de l'extensibilité 
+du projet.
 
-L'amélioration la plus évidente serait la mise en forme de notre code. En effet, notre code est relativement mal organisé et peu lisible ce qui rend la maintenance et l'évolution du projet plus difficile.
-Il aurait été ainsi intéressant de mettre en place un design pattern pour la gestion des commandes par exemple, ou bien de structurer notre code de manière plus claire et lisible.
-Ce manque de prévoyance dans l'architecture initiale a conduit à des choix d'implémentation qui rendent certaines parties du projet difficiles à maintenir.
-Nous aurions dû consacrer plus de temps à la réflexion sur l'implémentation de notre code avant de nous lancer dans le développement, ce qui nous aurait permis d'avoir une meilleure vision d'ensemble du projet et ainsi éviter de faire des choix d'implémentation qui ont rendu notre code plus difficile à maintenir et à faire évoluer.
-Nous avons tenté de remédier à ce problème au fur et à mesure du projet mais nous avons parfois été contraints de faire des compromis pour avancer plus rapidement.
-Nous en avons fait les frais notamment lors de la restructuration des fichiers \textit{game.py} et \textit{gui.py} au cours du projet, qui faisaient plus de 1000 lignes et qui étaient au départ reliés à beaucoup trop de fonctionnalités différentes.
+\subsubsection*{Architecture et qualité du code}
 
+L'amélioration la plus évidente concerne l'organisation générale du code. 
+Un manque de prévoyance dans l'architecture initiale a conduit à des choix 
+d'implémentation qui ont rendu certaines parties du projet difficiles à 
+maintenir et à faire évoluer. Cela s'est illustré notamment lors de la 
+restructuration des fichiers \textit{game.py} et \textit{gui.py}, qui 
+dépassaient chacun les 1000 lignes et concentraient trop de 
+responsabilités distinctes. Nous avons tenté de remédier à ce problème 
+au fil du développement, mais avons parfois dû faire des compromis pour 
+avancer dans les délais.
 
+Une meilleure réflexion en amont sur l'architecture du projet aurait 
+permis d'éviter ces écueils. Par exemple, la mise en place d'un design 
+pattern dédié à la gestion des commandes aurait structuré davantage le 
+système et facilité l'implémentation des commandes dans le GUI. De même, 
+une centralisation des constantes dès le début du projet aurait amélioré 
+la cohérence et la maintenabilité de l'ensemble du code.
+
+\subsubsection*{Fonctionnalités et extensibilité}
+
+Sur le plan fonctionnel, plusieurs aspects pourraient être améliorés.
+La gestion des cas limites, comme celui d'une tuile impossible à placer,
+mériterait d'être traitée explicitement afin de garantir un comportement
+défini dans toutes les situations. Cette même rigueur pourrait être
+appliquée à d'autres composantes du projet : la robustesse du serveur
+face à des situations réseau inattendues, l'expérience utilisateur du
+GUI notamment via un plateau adaptatif et une meilleure gestion des
+erreurs, ou encore les performances de nos IA grâce à des fonctions
+d'évaluation plus élaborées modélisant des stratégies avancées comme
+le blocage adverse ou la gestion optimale des meeples.
+
+Nous avons ainsi réussi à implémenter un projet fonctionnel répondant 
+à une grande partie des besoins du cahier des charges. Les améliorations 
+restantes relèvent principalement de la qualité du code, de la robustesse 
+de certaines fonctionnalités et de l'expérience utilisateur, et ne 
+remettent pas en cause le bon fonctionnement général du projet.
 
 \subsection{Utilisation de l'IA}
 
-Tout au long du projet, nous avons eu recours à l'utilisation de l'intelligence artificielle pour diverses tâches.
-Que ce soit pour la mise en place d'un code de base pour une partie du projet, améliorer la qualité du code ou bien affiner certaines fonctionnalités, l'IA a été un outil précieux pour avancer plus rapidement et efficacement.
-Nous avons ainsi appris à utiliser différents modèles d'IA en fonction de leurs forces et de leurs faiblesses.
 
-Nous avons largement utilisé l'extension \textit{Copilot} de Visual Studio Code qui nous a permis d'obtenir des suggestions de code pertinentes et de gagner du temps dans les tâches de codage répétitives grâce à sa capacité à avoir accès au contexte du code.
-L'utilisation d'autres modèles d'IA tels que \textit{ChatGPT} ou \textit{Claude 4.6} s'est également avérée précieuse pour la mise en place de certaines fonctionnalités plus complexes telles que l'affichage de la réponse du serveur dans le GUI.
+Tout au long du projet, nous avons eu recours à des outils d'intelligence 
+artificielle pour diverses tâches, que ce soit pour la mise en place d'un 
+code de base, l'amélioration de la qualité du code ou l'affinement de 
+certaines fonctionnalités. Cela nous a permis d'avancer plus rapidement 
+et efficacement tout en apprenant à identifier les forces et les 
+faiblesses de chaque outil.
+
+Nous avons largement utilisé l'extension \textit{GitHub Copilot} de 
+Visual Studio Code qui nous a permis d'obtenir des suggestions de code 
+pertinentes et de gagner du temps sur les tâches répétitives grâce à 
+sa capacité à exploiter le contexte du projet.
+
+Pour des problématiques plus complexes, nous avons eu recours à 
+\textit{ChatGPT} et \textit{Claude} notamment pour l'implémentation 
+de fonctionnalités telles que l'affichage des réponses du serveur dans 
+le GUI. Ces modèles se sont révélés particulièrement utiles pour 
+débloquer des situations où la logique à mettre en place dépassait 
+le cadre des simples suggestions de code.
+
+Enfin, l'IA a également contribué à l'amélioration de ce rapport en 
+nous aidant à structurer nos idées, à formuler nos analyses de manière 
+plus claire et concise et à corriger les fautes d'orthographe et de 
+grammaire.
 
 \section{Liste des besoins}
 
@@ -882,7 +1037,7 @@ F6 & Mode blitz & Non fait \\ \hline
 F7 & Mode contest & Non fait \\ \hline
 F8 & Graine aléatoire & Non fait \\ \hline
 F9 & Mélange des tuiles & Non fait \\ \hline
-F10 & Options spécifiques & Non fait \\ \hline
+F10 & Options spécifiques & Partiel \\ \hline
 
 F11 & Gestion des règles & Non fait \\ \hline
 F12 & Gestion des erreurs utilisateur & Non fait \\ \hline
