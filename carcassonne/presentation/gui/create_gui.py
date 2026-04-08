@@ -43,9 +43,9 @@ class CreateGui:
         game_data = GameDataGui(game, client_service, server_service)
         game_gui = GameGUI(game_data)
 
-        # On passe game_gui entier : les vues seront resolues a l'appel.
+        # Pass full game_gui: views are resolved at call time.
         if hasattr(client_service, "register_message_visitor"):
             visitor = ClientMenuMessageVisitor(game_gui)
             client_service.register_message_visitor(visitor)
 
-        game_gui.run()  # do_activate() crée server_view et invitation_view
+        game_gui.run()  # do_activate() creates server_view and invitation_view

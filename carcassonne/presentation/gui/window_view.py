@@ -70,7 +70,7 @@ class WindowView:
         self.window.set_titlebar(header)
         header.add_css_class("headers")
 
-        self.header = header  # garder une référence
+        self.header = header  # keep a reference
         self._setup_header_animation()
 
         self._build_file_menu(header)

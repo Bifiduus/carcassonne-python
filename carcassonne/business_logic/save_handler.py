@@ -316,12 +316,11 @@ class SaveHandler:
                     if line == "":
                         print("Warning: No seed.")
                         continue
-                    self.game.game_data.seed = int(line)
-                    self.game.game_data.initialize_starting_tile_based_on_config()
-                    self.game.shuffle_deck(
-                        "fisher-yates", self.game.game_data.seed
-                    )
-                    if self.game.game_data.game_configuration.get_setting_value("river"):
+                    game_data = self.game.game_data
+                    game_data.seed = int(line)
+                    game_data.initialize_starting_tile_based_on_config()
+                    self.game.shuffle_deck("fisher-yates", game_data.seed)
+                    if game_data.game_configuration.get_setting_value("river"):
                         self.game.river_manager.initialize_river()
 
             elif history_section:

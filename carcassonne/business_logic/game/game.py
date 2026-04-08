@@ -171,7 +171,7 @@ class Game(IGameService):
         dirs = list(vertex.get_name())  # [N, E, S, W]
         rotation = self.game_data.graph.get_vertex_orientation(
             vertex.get_id()
-        )  # 0 à 3
+        )  # 0 to 3
         meeples = self.game_data.graph.get_meeples()
         middle = vertex.get_middle()
         for meeple in meeples:
@@ -231,7 +231,7 @@ class Game(IGameService):
 
     def get_board_data(self) -> list[dict]:
         """
-        Retourne une liste exploitable directement par la GUI.
+        Return a list directly consumable by the GUI.
         """
         vertices = self.game_data.graph.get_vertices_data()
 
@@ -239,7 +239,7 @@ class Game(IGameService):
 
     def get_tile_data(self, tile: str) -> None:
         """
-        Retourne une liste exploitable directement par la GUI.
+        Return a list directly consumable by the GUI.
         """
         self.game_data.graph.get_vertex_data(tile)
 
@@ -247,7 +247,7 @@ class Game(IGameService):
 
     def get_meeples_data(self) -> list[dict]:
         """
-        Retourne une liste exploitable directement par la GUI.
+        Return a list directly consumable by the GUI.
         """
         meeples = self.game_data.graph.get_meeples()
 
@@ -257,8 +257,8 @@ class Game(IGameService):
         TILE_HEIGHT = 3
         EMPTY_TILE = [" " * ASCII_TILE_WIDTH] * TILE_HEIGHT
 
-        for row in board:  # chaque ligne de tuiles
-            for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
+        for row in board:  # each tile row
+            for i in range(TILE_HEIGHT):  # each internal ASCII row
                 line = []
                 for tile in row:
                     if tile is None:
@@ -266,7 +266,7 @@ class Game(IGameService):
                     else:
                         line.append(tile[i])
                 print("   ".join(line))
-            print()  # espace entre lignes de tuiles
+            print()  # spacing between tile rows
 
     def get_printed_board(self) -> str:
         vertices = list(self.game_data.graph.get_vertices().values())
@@ -296,8 +296,8 @@ class Game(IGameService):
         EMPTY_TILE = [" " * ASCII_TILE_WIDTH] * TILE_HEIGHT
         lines: list[str] = []
 
-        for row in board:  # chaque ligne de tuiles
-            for i in range(TILE_HEIGHT):  # chaque ligne ASCII interne
+        for row in board:  # each tile row
+            for i in range(TILE_HEIGHT):  # each internal ASCII row
                 line = []
                 for tile in row:
                     if tile is None:
@@ -305,7 +305,7 @@ class Game(IGameService):
                     else:
                         line.append(tile[i])
                 lines.append("   ".join(line))
-            # espace entre lignes de tuiles
+            # spacing between tile rows
             lines.append("")
 
         return "\n".join(lines)
@@ -461,7 +461,7 @@ class Game(IGameService):
                 move, "it is not this player's turn"
             )
         if self.game_data.current_hand is None:
-            print("Vous devez piocher une tuile avant de jouer.")
+            print("You must draw a tile before playing.")
             return self._log_rejected_move(
                 move, "no tile is currently in hand"
             )
@@ -469,7 +469,7 @@ class Game(IGameService):
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
             print(
-                f"Vous devez jouer la tuile en main:"
+                f"You must play the tile in hand:"
                 f" {self.game_data.current_hand}")
             return self._log_rejected_move(
                 move,
@@ -680,10 +680,12 @@ class Game(IGameService):
             print(self.game_data.current_hand)
             return
 
-        # Validate that the move has the proper format (TILE/POSITION or TILE/POSITION/MEEPLE)
+        # Validate move format: TILE/POSITION or TILE/POSITION/MEEPLE.
         if "/" not in str(move):
             print(
-                f"AI move '{move}' is malformed (missing position). Skipping this turn.")
+                f"AI move '{move}' is malformed (missing position). "
+                "Skipping this turn."
+            )
             # Force change to next player to avoid infinite loop
             self.game_data.current_player_order_list = (
                 self.game_data.current_player_order_list + 1

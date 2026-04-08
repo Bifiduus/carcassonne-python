@@ -259,8 +259,8 @@ class Server(IServerService):
                 if self.client_is_registered(client_socket):
                     # Process data
                     response = self.process_message(str(client_index), message)
-                    # fonction qui check le statut d'une invitation et
-                    # l'envoie à l'host
+                    # function that checks invitation status and
+                    # sends it to the host
                     if self.daemon:
                         answer = ""
                     else:
@@ -662,8 +662,12 @@ class Server(IServerService):
             ok = self.send_to_client(player, message)
         return ok
 
-    def send_to_group_except(self, group_id: int, message: str,
-                            except_player_id: str) -> bool:
+    def send_to_group_except(
+        self,
+        group_id: int,
+        message: str,
+        except_player_id: str,
+    ) -> bool:
         """Send message to all players in group except one player."""
         players: list[str] = self.repo.get_players_from_group(group_id)
         ok = True

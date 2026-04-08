@@ -32,18 +32,18 @@ class PlayersView(Gtk.Box):
 
         self.game_data = game_data
 
-        # placement dans la fenêtre
+        # placement in the window
         self.set_halign(Gtk.Align.START)
         self.set_valign(Gtk.Align.START)
         self.set_margin_top(10)
         self.set_margin_start(10)
 
-        # ---- titre ----
+        # ---- title ----
         self.title = Gtk.Label(label=f"<b>{_('Players')}</b>")
         self.title.set_use_markup(True)
         self.append(self.title)
 
-        # ---- zone qui contiendra les joueurs ----
+        # ---- area that will contain players ----
         self.players_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=4
         )
@@ -63,7 +63,7 @@ class PlayersView(Gtk.Box):
     def refresh(self) -> None:
         """Rebuild players list."""
 
-        # supprimer anciens joueurs
+        # remove previous players
         child = self.players_box.get_first_child()
         while child:
             next_child = child.get_next_sibling()

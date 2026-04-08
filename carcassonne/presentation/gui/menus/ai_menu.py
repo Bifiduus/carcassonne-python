@@ -25,7 +25,7 @@ class AiMenu(Gtk.Box):
             orientation=Gtk.Orientation.VERTICAL, spacing=6
         )
         self.ai_choice = Gtk.ComboBoxText()
-        # Exemple de résolutions courantes
+        # Example of common AI choices
         ais = ["Random", "Minimax", "Monte Carlo", "Iterative"]
         for ai in ais:
             self.ai_choice.append_text(_(ai))

@@ -74,7 +74,7 @@ class GameGUI(Gtk.Application):
         # self.error_message.show_error("Welcome to Carcassonne!")
 
         # main menu is now produced by a small helper
-        # 🌍 Fond global derrière tout le GUI
+        # Global background behind the whole GUI
         css_provider = Gtk.CssProvider()
         bg_path = utils.get_images_dir() + "/background.png"
         css_provider.load_from_data(f"""

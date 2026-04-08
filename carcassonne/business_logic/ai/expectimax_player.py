@@ -298,7 +298,7 @@ class ExpectimaxPlayer:
             return self.eval_fn(game, player_to_max, next_player)
         moves = self._order_moves(moves, depth)
 
-        # ordonner les moves selon un heuristique rapide à calculer
+        # order moves with a quick-to-compute heuristic
         # moves = sorted(
         #     moves,
         #     key=lambda m: self.quick_eval_move(game, m, player_to_max),
@@ -395,7 +395,7 @@ class ExpectimaxPlayer:
         if total_tiles <= 0:
             return self.eval_fn(game, player_to_max, next_player)
 
-        # probabilités
+        # probabilities
         probs = {
             tile: count / total_tiles for tile, count in successors.items()
         }
@@ -515,7 +515,7 @@ class ExpectimaxPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             hand = game.game_data.current_hand
-            print(f"Vous devez jouer la tuile en main: {hand}")
+            print(f"You must play the tile in hand: {hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(

@@ -77,17 +77,17 @@ class GameConfiguration:
         config = configparser.ConfigParser()
         settings = DEFAULT_SETTINGS.copy()
 
-        # Cas 1 : fichier absent → création
+        # Case 1: missing file -> create it
         if not os.path.exists(CONFIG_PATH):
             self.create_default_config()
             return settings
 
-        # Cas 2 / 3 : fichier présent
+        # Case 2/3: file exists
         try:
             config.read(CONFIG_PATH)
 
             if "defaults" not in config:
-                raise ValueError("Section [defaults] manquante")
+                raise ValueError("Missing [defaults] section")
 
             if config.has_option("defaults", "verbose"):
                 settings["verbose"] = config.getboolean("defaults", "verbose")
@@ -136,9 +136,9 @@ class GameConfiguration:
                     )
 
         except Exception as e:
-            print("⚠️  Avertissement : fichier de configuration invalide.")
+            print("⚠️  Warning: invalid configuration file.")
             print(f"   ({e})")
-            print("   Lancement avec les options par défaut.")
+            print("   Starting with default options.")
 
         return settings
 

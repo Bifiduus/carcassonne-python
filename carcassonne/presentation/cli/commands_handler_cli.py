@@ -25,7 +25,9 @@ def new_game(self, args, client_service: IClientService) -> None:
 def _command_help_lines() -> dict[str, str]:
     return {
         "new": _("  new <args>         - Start a new game"),
-        "help": _("  help [CMD]         - Display help for all commands or CMD"),
+        "help": _(
+            "  help [CMD]         - Display help for all commands or CMD"
+        ),
         "quit": _("  quit               - Quit the game"),
         "load": _("  load <file>        - Load a game from a file"),
         "save": _("  save <file>        - Save the game to a file"),
@@ -136,9 +138,13 @@ def load(self, filename, client_service: IClientService) -> None:
         if self.game.load_game_from_file(filename) == 0:
             # Re-initialize river_manager with the loaded config
             self.game.river_manager.reset()
-            if self.game.game_data.game_configuration.get_setting_value("river"):
+            if self.game.game_data.game_configuration.get_setting_value(
+                "river"
+            ):
                 self.game.river_manager.initialize_river()
-            print(_("Game loaded from {filename}.").format(filename=filename))
+            print(
+                _("Game loaded from {filename}.").format(filename=filename)
+            )
         else:
             print(
                 _("Failed to load the game from {filename}.").format(

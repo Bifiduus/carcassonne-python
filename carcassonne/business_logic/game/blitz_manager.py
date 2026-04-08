@@ -123,8 +123,8 @@ class BlitzManager:
         self.active_player_id = None
         self.turn_started_at = None
         self.timeout_message = (
-            f"Le temps du joueur {player_id} est écoulé:"
-            " il ne pourra plus jouer dans cette partie."
+            f"Player {player_id} ran out of time:"
+            " they can no longer play in this game."
         )
 
     def _configured_blitz_minutes(self) -> int:

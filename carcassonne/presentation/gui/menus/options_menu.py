@@ -63,7 +63,7 @@ class OptionsMenu(Gtk.Box):
         res_box.append(Gtk.Label(label=_("Height:")))
         res_box.append(self.height_combo)
 
-        # bouton pour appliquer la résolution
+        # button to apply resolution
         apply_btn = Gtk.Button(label=_("Apply resolution"))
         apply_btn.add_css_class("orange-buttons")
         apply_btn.connect("clicked", self.apply_resolution)

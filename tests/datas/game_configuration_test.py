@@ -91,7 +91,7 @@ def test_configuration_falls_back_to_defaults_on_invalid_file(monkeypatch, tmp_p
     config = GameConfiguration()
 
     assert config.get_setting_value("time") == DEFAULT_SETTINGS["time"]
-    assert "Avertissement" in capsys.readouterr().out
+    assert "Warning" in capsys.readouterr().out
 
 
 def test_configuration_save_show_and_getters_use_current_settings(monkeypatch, tmp_path, capsys) -> None:

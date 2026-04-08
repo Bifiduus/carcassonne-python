@@ -33,19 +33,6 @@ class GameDataGui:
         else:
             return component_name
 
-    def __init__(self, game, client_service, server_service):
-        self.game = game
-        self.client = client_service
-        self.server = server_service
-        self.nb_tiles = 0  # used to give each drawn tile a unique id
-        self.current_tile: TilesView | None = None
-        self.current_orientation = 0
-        self.board_view = None  # set later by Gui
-        self.gui = None
-        self.is_dragging = False
-        self.hint_tile = None  # hint tile data for transparent display
-        self.error = None
-
     def game_configuration(self):
         return self.game.get_game_configuration()
 
@@ -138,7 +125,8 @@ class GameDataGui:
     def _build_error_message(self, move: str) -> str:
         if not move:
             return _(
-                "No tile has been selected. Please select a tile and try again."
+                "No tile has been selected. "
+                "Please select a tile and try again."
             )
 
         if self.game.game_data.current_hand is None:
@@ -150,7 +138,8 @@ class GameDataGui:
             parsed_move = parse_move(move)
         except ValueError:
             return _(
-                "Invalid move format. Use the format <tile>/<position><rotation> or <tile>/<center>/<position><rotation>."
+                "Invalid move format. Use the format <tile>/<position>"
+                "<rotation> or <tile>/<center>/<position><rotation>."
             )
 
         current_player = self.game.get_current_player()
@@ -170,9 +159,13 @@ class GameDataGui:
             )
 
         tile_code = self.game.game_data.extract_tile_code(move)
-        if tile_code is not None and tile_code != self.game.game_data.current_hand:
+        if (
+            tile_code is not None
+            and tile_code != self.game.game_data.current_hand
+        ):
             return _(
-                "You must play the tile in hand {current_tile} and not {played_tile}."
+                "You must play the tile in hand {current_tile} and "
+                "not {played_tile}."
             ).format(
                 current_tile=self.game.game_data.current_hand,
                 played_tile=tile_code,
@@ -180,21 +173,28 @@ class GameDataGui:
 
         if (
             hasattr(self.game.game_data, "rules_manager")
-            and hasattr(self.game.game_data.rules_manager, "explain_invalid_move")
+            and hasattr(
+                self.game.game_data.rules_manager,
+                "explain_invalid_move",
+            )
         ):
-            invalid_reason = self.game.game_data.rules_manager.explain_invalid_move(
-                move,
-                self.game.game_data.graph,
-                self.game.river_manager,
-                current_player_id=current_player.get_id(),
+            invalid_reason = (
+                self.game.game_data.rules_manager.explain_invalid_move(
+                    move,
+                    self.game.game_data.graph,
+                    self.game.river_manager,
+                    current_player_id=current_player.get_id(),
+                )
             )
             translated_reason = self._translate_invalid_move_reason(
-                invalid_reason)
+                invalid_reason
+            )
             if translated_reason is not None:
                 return translated_reason
 
         return _(
-            "This move is not valid according to the placement rules. Check the rotation, meeple and adjacency of terrains."
+            "This move is not valid according to the placement rules. "
+            "Check the rotation, meeple and adjacency of terrains."
         )
 
     def _translate_invalid_move_reason(self, reason: str) -> str | None:
@@ -203,7 +203,8 @@ class GameDataGui:
                 "The move must be a string."
             ),
             "move format is invalid": _(
-                "Invalid move format. Use the format <tile>/<position><rotation> or <tile>/<center>/<position><rotation>."
+                "Invalid move format. Use the format <tile>/<position>"
+                "<rotation> or <tile>/<center>/<position><rotation>."
             ),
             "tile code is invalid": _(
                 "The tile code is invalid."
@@ -251,10 +252,12 @@ class GameDataGui:
                 "A meeple cannot be placed on a river segment."
             ),
             "selected meeple position does not belong to a valid component": _(
-                "The chosen meeple position does not belong to a valid component."
+                "The chosen meeple position does not belong "
+                "to a valid component."
             ),
             "selected meeple position does not map to a component": _(
-                "The chosen meeple position does not correspond to any component."
+                "The chosen meeple position does not correspond "
+                "to any component."
             ),
             "meeple placement is invalid": _(
                 "Meeple placement is invalid."
@@ -276,9 +279,8 @@ class GameDataGui:
         if reason.startswith("component ") and reason.endswith(
             " already contains a meeple"
         ):
-            component_name = reason[len("component "): -len(
-                " already contains a meeple"
-            )]
+            suffix = " already contains a meeple"
+            component_name = reason[len("component "): -len(suffix)]
             display_name = self._get_component_display_name(component_name)
             return _(
                 "A meeple is already present on {component}."

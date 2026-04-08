@@ -86,9 +86,9 @@ class OnlineCommunication:
                 )
                 + "\n"
             )
-        return scoreboard  # Affiche le tableau des scores
-        # joueurs qui ont joué sur le serveur (nombre de
-        # victoires, défaites, parties jouées) de la db.
+        return scoreboard  # Display the scoreboard table
+        # players who played on the server (wins,
+        # losses, total games) from the database.
 
     def command_accept(self, client_id: str) -> str:
         answer = ""
@@ -183,8 +183,11 @@ class OnlineCommunication:
             # Send board update to OTHER players (not the current player)
             board_message = f"OPPONENT_MOVE played move. Board:\n{board}\n"
             client_username = self.server.repo.get_username(client_id)
-            self.server.send_to_group_except(party_id, board_message,
-                                            client_username)
+            self.server.send_to_group_except(
+                party_id,
+                board_message,
+                client_username,
+            )
             return "Move played.\n" + board + "\n"
         board: str = game.get_printed_board()
         return "Move not played.\n" + board + "\n"
@@ -290,8 +293,11 @@ class OnlineCommunication:
         board: str = game.get_printed_board()
         board_message = f"OPPONENT_MOVE redone moves. Board:\n{board}\n"
         client_username = self.server.repo.get_username(client_id)
-        self.server.send_to_group_except(party_id, board_message,
-                                        client_username)
+        self.server.send_to_group_except(
+            party_id,
+            board_message,
+            client_username,
+        )
         return _("Last moves redone.")
 
     def command_undo(self, client_id: str) -> str:
@@ -307,8 +313,11 @@ class OnlineCommunication:
         board: str = game.get_printed_board()
         board_message = f"OPPONENT_MOVE undone moves. Board:\n{board}\n"
         client_username = self.server.repo.get_username(client_id)
-        self.server.send_to_group_except(party_id, board_message,
-                                        client_username)
+        self.server.send_to_group_except(
+            party_id,
+            board_message,
+            client_username,
+        )
         return _("Last moves undone.")
 
     def command_hint(self, client_id: str) -> str:
@@ -337,10 +346,13 @@ class OnlineCommunication:
         else:
             answer = _("Tile drawn: {tile}").format(tile=tile)
             # Notify other players about the tile draw
-            board_message = f"OPPONENT_MOVE drew a tile.\n"
+            board_message = "OPPONENT_MOVE drew a tile.\n"
             client_username = self.server.repo.get_username(client_id)
-            self.server.send_to_group_except(party_id, board_message,
-                                            client_username)
+            self.server.send_to_group_except(
+                party_id,
+                board_message,
+                client_username,
+            )
         return answer
 
     def command_shuffle(self, client_id: str) -> str:

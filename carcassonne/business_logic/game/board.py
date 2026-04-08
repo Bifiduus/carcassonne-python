@@ -196,18 +196,18 @@ class Board:
             log_events=self._last_scoring_log_events,
         )
 
-        # affiche les scores actuels dans la console
-        """print(f"-- Scores après le tour {turn} --")
+        # display current scores in the console
+        """print(f"-- Scores after turn {turn} --")
         for player_id in sorted(players.keys()):
             player = players[player_id]
             print(
-                f"Joueur {player_id + 1} "
+                f"Player {player_id + 1} "
                 f"({player.get_username()}): {player.get_score().score} pts"
             )
         print("------------------------------")
         """
 
-        # enlever la tuile des tuiles disponibles
+        # remove the tile from available tiles
         tile_name = (
             move_parts[0] + "/" + move_parts[1]
             if len(move_parts[1]) == 1
@@ -257,7 +257,7 @@ class Board:
         graph.remove_vertex(vertex_id=tile_id)
         graph.remove_meeple(tile_id, players)
 
-        # rajouter la tuile des tuiles disponibles
+        # add the tile back to available tiles
         tile_name = (
             move_parts[0] + "/" + move_parts[1]
             if len(move_parts[1]) == 1

@@ -1,4 +1,4 @@
-"""Module providing an interface between Présentation and Logique Métier"""
+"""Module providing an interface between Presentation and Business Logic."""
 
 from abc import ABC, abstractmethod
 from typing import Any

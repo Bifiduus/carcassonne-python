@@ -200,7 +200,7 @@ class ServerMenu(Gtk.Box):
         self.show_server_popup(servers)
 
     def show_server_popup(self, servers):
-        """Affiche une popup avec la liste des serveurs."""
+        """Display a popup with the list of servers."""
 
         popup = Gtk.Window(title=_("Available servers"))
         popup.set_modal(True)
@@ -239,12 +239,12 @@ class ServerMenu(Gtk.Box):
         popup.present()
 
     def on_join_server(self, button, server, popup):
-        """Rejoindre un serveur sélectionné."""
+        """Join a selected server."""
         try:
             print(f"Joining server: {server}")
             result = self.client_service.join_server(server)
             if result:
-                # Ferme la popup de manière sécurisée
+                # Close the popup safely
                 GLib.idle_add(popup.destroy)
                 self.update_connection_buttons()
             else:
@@ -510,15 +510,15 @@ class ServerMenu(Gtk.Box):
                 btn_ok.grab_focus()
             except Exception as e:
                 print(f"{title}: {message}")
-                print(f"Erreur affichage dialog: {e}")
+                print(f"Dialog display error: {e}")
             return False
 
         GLib.idle_add(_show_dialog)
 
     def visit_server_message(self, message: str, server: str):
-        """Appelé depuis un thread réseau → déléguer au thread GTK."""
+        """Called from a network thread -> delegate to GTK thread."""
         if self._popup_pending:
-            return  # ignore si une popup est déjà en attente
+            return  # ignore if a popup is already pending
         self._popup_pending = True
         GLib.idle_add(self._handle_server_message, message, server)
 
@@ -532,7 +532,7 @@ class ServerMenu(Gtk.Box):
                 ),
             )
         except Exception as e:
-            print(f"Erreur dans _handle_server_message: {e}")
+            print(f"Error in _handle_server_message: {e}")
         finally:
-            self._popup_pending = False  # libère le verrou
+            self._popup_pending = False  # release lock
         return False

@@ -1,4 +1,4 @@
-"""Module providing an interface between Logique Métier and Données"""
+"""Module providing an interface between Business Logic and Data."""
 
 from abc import ABC, abstractmethod
 

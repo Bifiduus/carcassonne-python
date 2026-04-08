@@ -1,4 +1,3 @@
-import sys
 from carcassonne.presentation.gui import utils
 from gi.repository import Gtk
 
@@ -27,16 +26,22 @@ def on_load(gui) -> None:
         try:
             file = dialog.open_finish(result)
             filename = file.get_path()
-            river_before = gui.game_data.game_configuration().get("river", False)
+            river_before = gui.game_data.game_configuration().get(
+                "river", False
+            )
             if gui.game_data.game.load_game_from_file(filename) == 0:
-                river_after = gui.game_data.game_configuration().get("river", False)
+                river_after = gui.game_data.game_configuration().get(
+                    "river", False
+                )
                 # Re-initialize river_manager with the loaded config
                 gui.game_data.game.river_manager.reset()
                 if river_after:
                     gui.game_data.game.river_manager.initialize_river()
                 # Debug print
                 print(
-                    f"DEBUG: Loaded game with {len(gui.game_data.game.get_board_data())} tiles")
+                    "DEBUG: Loaded game with "
+                    f"{len(gui.game_data.game.get_board_data())} tiles"
+                )
                 # Refresh GUI state after loading
                 gui.game_data.reset()
                 if hasattr(gui, "players_view"):
@@ -52,10 +57,12 @@ def on_load(gui) -> None:
                 if river_before != river_after:
                     if river_after:
                         gui.info_message.show_info(
-                            _("River mode has been enabled for this game."))
+                            _("River mode has been enabled for this game.")
+                        )
                     else:
                         gui.info_message.show_info(
-                            _("River mode has been disabled for this game."))
+                            _("River mode has been disabled for this game.")
+                        )
                 # Success message
                 gui.info_message.show_info(
                     _("Game successfully loaded from {filename}.").format(
@@ -140,11 +147,11 @@ def on_info(gui) -> None:
 Version: {carcassonne.__version__}
 
 {authors_label}:
-- Clément SIMON --- Serveur
+- Clément SIMON --- Server
 - Maxence SALIN --- Client GUI/CLI
-- Loic THIN --- IA et Logique de jeu
-- Anthony BEAUVIEUX --- Logique de jeu
-- Tony HUANG --- Graine, shuffle et logique de jeu
+- Loic THIN --- AI and game logic
+- Anthony BEAUVIEUX --- Game logic
+- Tony HUANG --- Seed, shuffle and game logic
 """
     message = message.format(
         carcassonne=carcassonne,
@@ -212,7 +219,9 @@ def on_undo_gui(gui):
                 gui.error_message.show_error(
                     _(
                         "There are no moves to undo. "
-                        "You need to play at least one move before you can undo.")
+                        "You need to play at least one move before "
+                        "you can undo."
+                    )
                 )
             return
     gui.game_data.undo()
@@ -225,16 +234,23 @@ def on_redo_gui(gui):
         if not hasattr(gui.game_data.game, "undo_redo_manager"):
             if hasattr(gui, "error_message"):
                 gui.error_message.show_error(
-                    _("There are no moves to redo. "
-                      "You need to undo a move before you can redo.")
+                    _(
+                        "There are no moves to redo. "
+                        "You need to undo a move before you can redo."
+                    )
                 )
             return
 
-        if not gui.game_data.game.undo_redo_manager.game_data.history.future_moves:
+        future_moves = (
+            gui.game_data.game.undo_redo_manager.game_data.history.future_moves
+        )
+        if not future_moves:
             if hasattr(gui, "error_message"):
                 gui.error_message.show_error(
-                    _("There are no moves to redo. "
-                      "You need to undo a move before you can redo.")
+                    _(
+                        "There are no moves to redo. "
+                        "You need to undo a move before you can redo."
+                    )
                 )
             return
     gui.game_data.redo()
@@ -250,16 +266,21 @@ def on_draw_gui(gui):
             if gui.game_data.game.game_data.current_hand is not None:
                 error_msg = _(
                     "You already have a tile in hand. "
-                    "You must play it or undo your move before drawing a new tile.")
+                    "You must play it or undo your move before drawing "
+                    "a new tile."
+                )
             elif gui.game_data.game.game_data.deck.is_empty():
                 error_msg = _(
                     "The deck is empty. "
-                    "All tiles have been drawn. No more tiles are available to draw.")
+                    "All tiles have been drawn. No more tiles are "
+                    "available to draw."
+                )
 
         if error_msg is None:
             error_msg = _(
                 "The tile could not be drawn. "
-                "Please check if it is your turn and try again.")
+                "Please check if it is your turn and try again."
+            )
 
         gui.tile_preview.set_filename("")
         if hasattr(gui, "error_message"):
@@ -292,7 +313,10 @@ def on_rotate_gui(gui):
 def on_end_turn_gui(gui):
     """Play the pending move and let GameDataGui handle the reset."""
     # Check preconditions in presentation layer
-    if hasattr(gui.game_data, 'current_tile') and gui.game_data.current_tile is None:
+    if (
+        hasattr(gui.game_data, "current_tile")
+        and gui.game_data.current_tile is None
+    ):
         if hasattr(gui, "error_message"):
             gui.error_message.show_error(
                 _("No tile has been placed on the board. "

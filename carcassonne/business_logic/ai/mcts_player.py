@@ -35,8 +35,8 @@ class MCTSNode:
     ):
         self.state = game
         self.parent = parent
-        self.move = move  # coup qui mène à ce noeud
-        self.player = player  # joueur qui a joué ce coup
+        self.move = move  # move leading to this node
+        self.player = player  # player who played this move
         self.mcts_player = mcts_player
 
         self.children = []
@@ -45,7 +45,7 @@ class MCTSNode:
         )
 
         self.visits = 0
-        self.total_reward = 0.0  # somme des récompenses
+        self.total_reward = 0.0  # sum of rewards
 
     def get_state(self):
         return self.state
@@ -566,7 +566,7 @@ class MCTSPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             hand = game.game_data.current_hand
-            print(f"Vous devez jouer la tuile en main: {hand}")
+            print(f"You must play the tile in hand: {hand}")
             return False
 
         ok = game.game_data.rules_manager.check_move(

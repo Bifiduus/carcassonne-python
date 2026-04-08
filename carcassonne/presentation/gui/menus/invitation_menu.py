@@ -169,7 +169,7 @@ class InvitationMenu(Gtk.Box):
     # ------------------------------------------------------------------
 
     def on_show_players(self, button):
-        """Show player information - la réponse arrivera via le visitor."""
+        """Show player information; response comes via the visitor."""
         player_id = self.entry_player_id.get_text().strip()
         try:
             message = "players " + player_id if player_id else "players"
@@ -179,7 +179,7 @@ class InvitationMenu(Gtk.Box):
                     _("Error"),
                     _("Unable to send the request."),
                 )
-            # Pas de popup ici : la réponse viendra via visit_server_message()
+            # No popup here: response arrives via visit_server_message()
         except Exception as e:
             self.show_message(
                 _("Error"),
@@ -345,23 +345,23 @@ class InvitationMenu(Gtk.Box):
                 btn_ok.grab_focus()
             except Exception as e:
                 print(f"{title}: {message}")
-                print(f"Erreur affichage dialog: {e}")
+                print(f"Dialog display error: {e}")
             return False
 
         GLib.idle_add(_show_dialog)
 
     def visit_server_message(self, message: str, server: str):
-        """Appelé depuis un thread réseau → déléguer au thread GTK."""
+        """Called from a network thread -> delegate to GTK thread."""
         if self._popup_pending:
-            return  # ignore si une popup est déjà en attente
+            return  # ignore if a popup is already pending
         self._popup_pending = True
         self.last_server_message = message
         self.last_server_name = server
-        # ✅ Planifie l'affichage sur le thread principal GTK
+        # Schedule display on the GTK main thread
         GLib.idle_add(self._handle_server_message, message, server)
 
     def _handle_server_message(self, message: str, server: str):
-        """Exécuté sur le thread principal GTK."""
+        """Executed on the GTK main thread."""
         try:
             if "List of current players:" in message:
                 self._display_player_list(message)
@@ -374,14 +374,14 @@ class InvitationMenu(Gtk.Box):
                     ),
                 )
         except Exception as e:
-            print(f"Erreur dans _handle_server_message: {e}")
+            print(f"Error in _handle_server_message: {e}")
         finally:
-            self._popup_pending = False  # libère le verrou
-        # Important : dire a GLib de ne pas rappeler cette fonction.
+            self._popup_pending = False  # release lock
+        # Important: tell GLib not to call this function again.
         return False
 
     def _display_player_list(self, message: str):
-        """Affiche la liste des joueurs de manière sécurisée."""
+        """Display the player list safely."""
         try:
             prefixes = [
                 _("List of current players: "),
@@ -416,13 +416,13 @@ class InvitationMenu(Gtk.Box):
             self.show_message(_("Connected players"), "\n".join(lines))
 
         except (ValueError, SyntaxError, IndexError) as e:
-            print(f"Erreur parsing players list: {e}")
+            print(f"Error parsing players list: {e}")
             self.show_message(
                 _("Connected players"),
                 _("Raw response:\n{message}").format(message=message),
             )
         except Exception as e:
-            print(f"Erreur dans _display_player_list: {e}")
+            print(f"Error in _display_player_list: {e}")
             self.show_message(
                 _("Error"),
                 _("Error while displaying: {error}").format(error=e),
