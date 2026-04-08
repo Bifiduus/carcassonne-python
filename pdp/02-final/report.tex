@@ -232,31 +232,36 @@ class Tile:
 
 Cette structure permet de calculer rapidement les composantes connexes nécessaires au calcul des champs, des routes et des cités.
 
-La pioche est mélangée avec l'algorithme \textit{Fisher–Yates}\cite{fisher_yates} afin d'obtenir une permutation uniforme :
+Les états de partie sont ensuite définis par une classe `GameState` contenant le plateau, la pioche restante, les scores et le nombre de meeples disponibles par joueur.
+
+\subsection{Mélange des tuiles}
+
+La gestion de la pioche repose sur deux algorithmes de mélange. L'algorithme principal retenu est \textit{Fisher–Yates}\cite{fisher_yates}, car il produit une permutation uniforme des tuiles lorsqu'il est associé à un générateur pseudo-aléatoire uniforme. En parallèle, nous conservons également un algorithme naïf, utilisé comme point de comparaison expérimental afin d'illustrer les biais possibles d'un mauvais mélange.
+
+Les deux implémentations sont réalisées \textit{in place} sur la liste représentant la pioche :
 
 {\normalsize
   \begin{minted}[frame=single]{python}
 import random
 
-  @staticmethod
-  def _shuffle_fisher_yates_in_place(
-      items: list[str], rng: random.Random
-  ) -> None:
-  for i in range(len(items) - 1, 0, -1):
-    j = rng.randrange(i + 1)
-    items[i], items[j] = items[j], items[i]
+@staticmethod
+def _shuffle_fisher_yates_in_place(
+    items: list[str], rng: random.Random
+) -> None:
+    for i in range(len(items) - 1, 0, -1):
+        j = rng.randrange(i + 1)
+        items[i], items[j] = items[j], items[i]
 
-  @staticmethod
-  def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
+@staticmethod
+def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
     n = len(items)
     for i in range(n):
-      j = rng.randrange(n)
-      items[i], items[j] = items[j], items[i]
-  
+        j = rng.randrange(n)
+        items[i], items[j] = items[j], items[i]
   \end{minted}
 }
 
-Les états de partie sont ensuite définis par une classe `GameState` contenant le plateau, la pioche restante, les scores et le nombre de meeples disponibles par joueur.
+Dans la pratique, \textit{Fisher–Yates} est utilisé par défaut pour garantir une pioche équitable, tandis que l'algorithme naïf est conservé à des fins de test et de comparaison.
 
 Dans la suite de cette section, nous nous concentrerons plus particulièrement sur les quatre premiers algorithmes présentés qui constituent le cœur du système de prise de décision implémenté dans le projet.
 
