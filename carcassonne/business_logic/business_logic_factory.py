@@ -29,13 +29,21 @@ def _build_registry() -> dict[str, type[Any]]:
     from carcassonne.business_logic.game.game_data import GameData
     from carcassonne.business_logic.game.new_game import NewGame
     from carcassonne.business_logic.game.river_manager import RiverManager
-    from carcassonne.business_logic.game.undo_redo_manager import UndoRedoManager
+    from carcassonne.business_logic.game.undo_redo_manager import (
+        UndoRedoManager,
+    )
     from carcassonne.business_logic.game_mode_manager import GameModeManager
     from carcassonne.business_logic.graph_logic import GraphLogic
     from carcassonne.business_logic.heuristic import HeuristicWeights
-    from carcassonne.business_logic.heuristic_disruption import DisruptionWeights
-    from carcassonne.business_logic.heuristic_short_term import ShortTermWeights
-    from carcassonne.business_logic.online_communication import OnlineCommunication
+    from carcassonne.business_logic.heuristic_disruption import (
+        DisruptionWeights,
+    )
+    from carcassonne.business_logic.heuristic_short_term import (
+        ShortTermWeights,
+    )
+    from carcassonne.business_logic.online_communication import (
+        OnlineCommunication,
+    )
     from carcassonne.business_logic.player import Player, PlayerScore
     from carcassonne.business_logic.rules_manager import RulesManager
     from carcassonne.business_logic.save_handler import SaveHandler

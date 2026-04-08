@@ -698,12 +698,12 @@ class ScoreManager:
             for city_name, city_component in graph.lands_components[
                 "C"
             ].items()
-            for tile_id, _ in city_component
+            for tile_id, _tile_edge in city_component
         }
 
         adjacent_cities: set = set()
 
-        for tile_id, _ in field_component:
+        for tile_id, _field_edge in field_component:
             vertex = graph.vertices.get(tile_id)
             if vertex is None:
                 continue

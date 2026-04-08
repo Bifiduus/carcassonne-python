@@ -233,7 +233,9 @@ def main() -> int:
 
     if args.contest and args.gui:
         parser.error(
-            "--contest and --gui are mutually exclusive (contest mode is non-interactive)")
+            "--contest and --gui are mutually exclusive "
+            "(contest mode is non-interactive)"
+        )
 
     config_overrides = {}
     # CLI contract: blitz mode is enabled only when -b/--blitz is passed.

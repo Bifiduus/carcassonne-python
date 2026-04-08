@@ -17,7 +17,9 @@ class GameDataGui:
         self.is_dragging = False
         self.hint_tile = None  # hint tile data for transparent display
         self.error = None
-        self.highlight_contest_move = False  # highlight last move in contest mode
+        self.highlight_contest_move = (
+            False  # highlight last move in contest mode
+        )
         self.contest_move_str = None  # store the contest move for display
 
     @staticmethod
@@ -115,7 +117,11 @@ class GameDataGui:
         if self.highlight_contest_move:
             if self.gui is not None and hasattr(self.gui, "error_message"):
                 self.gui.error_message.show_error(
-                    _("Contest mode is read-only. View the AI move and use Back to return to menu."))
+                    _(
+                        "Contest mode is read-only. View the AI move and "
+                        "use Back to return to menu."
+                    )
+                )
             return
 
         if self.current_tile is None:

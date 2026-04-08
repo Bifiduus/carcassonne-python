@@ -216,7 +216,8 @@ class SingleplayerMenu(Gtk.Box):
 
         if success:
             # Navigate to the game board display
-            # The board will automatically highlight the last move with white border
+            # The board automatically highlights the last move
+            # with a white border.
             self.gui.window.stack.set_visible_child_name("game")
 
             # Display the move in the GUI
