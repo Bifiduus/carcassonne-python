@@ -484,12 +484,12 @@ Ce module n'implémente aucune règle métier et n'interagit jamais directement 
 \end{tcolorbox}
 
 \subsection{Dépendances entre modules}
-Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{fig:UML_diagram}), conformément au principe d'architecture N-tiers.
+Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{fig:diagram_archi_final}), conformément au principe d'architecture N-tiers.
 \begin{figure}[H]
     \centering
-    \frame{\includegraphics[width=1\textwidth]{images/UML_diagram.png}}
+    \frame{\includegraphics[width=1\textwidth]{images/diagram_archi_final.png}}
     \centering
-    \caption{Diagramme UML du projet}\label{fig:UML_diagram}
+    \caption{Vue d'ensemble de l'architecture du projet}\label{fig:diagram_archi_final}
 \end{figure}
 
 Ainsi, le module Présentation dépend uniquement du module Logique Métier, qu'il sollicite via des interfaces dédiées pour afficher l'état du jeu et transmettre les actions de l'utilisateur, sans accès direct aux données.
