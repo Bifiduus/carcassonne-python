@@ -151,7 +151,12 @@ class BoardView(Gtk.DrawingArea):
             x = offset_x + (t["x"] - min_x) * size
             y = offset_y + (t["y"] - min_y) * size
             border_color = None
-            if i < len(board_data) and i > 0:
+
+            # Highlight the last move in contest mode with white border
+            if (self.game_data.highlight_contest_move and
+                    i == len(board_data) - 1 and i > 0):
+                border_color = (1, 1, 1)  # White
+            elif i < len(board_data) and i > 0:
                 turn = i - 1
                 players_order = self.game_data.game.game_data.players_order
                 player_id = players_order[turn % len(

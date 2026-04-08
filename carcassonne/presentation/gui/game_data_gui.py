@@ -18,6 +18,8 @@ class GameDataGui:
         self.is_dragging = False
         self.hint_tile = None  # hint tile data for transparent display
         self.error = None
+        self.highlight_contest_move = False  # highlight last move in contest mode
+        self.contest_move_str = None  # store the contest move for display
 
     @staticmethod
     def _get_component_display_name(component_name: str) -> str:
@@ -53,11 +55,27 @@ class GameDataGui:
         """Execute contest mode from GUI and return (success, result_or_error).
 
         Loads a game position from file and computes the AI move to play.
+        Sets flags for the GUI to display the board with the move highlighted.
         Returns True with the move string on success, or False with an error
         message on failure.
         """
         try:
+            # Load the position from file
+            import contextlib
+            import io
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = self.game.load_game_from_file(contest_file)
+
+            if result != 0:
+                return False, f"could not load contest file: {contest_file}"
+
+            # Execute AI move and get the result
             move = self.game.game_mode_manager.run_contest()
+
+            # Store the move and enable highlighting for GUI display
+            self.contest_move_str = move
+            self.highlight_contest_move = True
+
             return True, move
         except ValueError as exc:
             return False, str(exc)
@@ -83,6 +101,14 @@ class GameDataGui:
         pass
 
     def play_move_gui(self):
+        # Prevent moves in contest mode (display only)
+        if self.highlight_contest_move:
+            if self.gui is not None and hasattr(self.gui, "error_message"):
+                self.gui.error_message.show_error(
+                    _("Contest mode is read-only. View the AI move and use Back to return to menu.")
+                )
+            return
+
         if self.current_tile is None:
             return
 

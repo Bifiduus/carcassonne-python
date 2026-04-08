@@ -209,47 +209,35 @@ class SingleplayerMenu(Gtk.Box):
         self.gui.window.stack.set_visible_child_name("options_menu")
 
     def _run_contest_mode(self):
-        """Execute contest mode and show result dialog."""
+        """Execute contest mode and display the board with the AI move."""
         success, result = self.gui.game_data.run_contest_gui(
             self.selected_file
         )
 
         if success:
-            self._show_result_dialog(
-                _("Contest Result"),
-                _("The AI chose this move:\n{move}").format(move=result)
-            )
+            # Navigate to the game board display
+            # The board will automatically highlight the last move with white border
+            self.gui.window.stack.set_visible_child_name("game")
+
+            # Display the move in the GUI
+            if self.gui and hasattr(self.gui, "info_message"):
+                self.gui.info_message.show_info(
+                    _("Contest Mode: AI played {move}").format(move=result)
+                )
+
+            # Disable game controls in contest mode
+            if self.gui:
+                self.gui.button_draw.set_sensitive(False)
+                self.gui.button_end_turn.set_sensitive(False)
+
+            # Refresh the board to show the highlighted move
+            if self.gui and hasattr(self.gui, "board_view"):
+                self.gui.board_view.queue_draw()
         else:
             self._show_error_dialog(
                 _("Contest Error"),
                 _("Failed to run contest mode:\n{error}").format(error=result)
             )
-
-    def _show_result_dialog(self, title: str, message: str):
-        """Show an info dialog with the contest result."""
-        dialog = Gtk.Dialog(
-            title=title,
-            transient_for=self.gui.window.window,
-            modal=True
-        )
-
-        content_area = dialog.get_content_area()
-        label = Gtk.Label(label=message)
-        label.set_wrap(True)
-        label.set_margin_top(10)
-        label.set_margin_bottom(10)
-        label.set_margin_start(10)
-        label.set_margin_end(10)
-        content_area.append(label)
-
-        dialog.add_button(_("OK"), Gtk.ResponseType.OK)
-        dialog.set_default_response(Gtk.ResponseType.OK)
-
-        def on_response(dialog, response_id):
-            dialog.close()
-
-        dialog.connect("response", on_response)
-        dialog.show()
 
     def _show_error_dialog(self, title: str, message: str):
         """Show an error dialog."""
