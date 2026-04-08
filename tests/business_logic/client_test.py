@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-import pytest
 
 from carcassonne.business_logic.client import Client
 

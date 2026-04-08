@@ -1,8 +1,7 @@
 import pytest
 pytest.importorskip("gi")
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
-from gi.repository import Gdk
+from unittest.mock import Mock
 
 from carcassonne.presentation.gui.board_view import BoardView
 

@@ -1,3 +1,6 @@
+from carcassonne.i18n import gettext as _
+
+
 class CommandsGame:
     def __init__(self, blitz_manager, deck_manager, game_data, game=None):
         self.game_data = game_data
@@ -57,8 +60,13 @@ class CommandsGame:
             next_player=ai_player.get_id(),
         )
         print(
-            f"AI chooses hint move: {move} "
-            f"with evaluation score: {eval_score}"
+            _(
+                "AI chooses hint move: {move} "
+                "with evaluation score: {eval_score}"
+            ).format(
+                move=move,
+                eval_score=eval_score,
+            )
         )
         return move
 

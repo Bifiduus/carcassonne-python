@@ -20,6 +20,7 @@ from carcassonne.business_logic.game.game_data import GameData
 from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.move_serializer import parse_move
 from carcassonne.business_logic.player import Player
+from carcassonne.i18n import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +239,7 @@ class Game(IGameService):
         vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
-            print("No vertices.")
+            print(_("No vertices."))
             return
 
         positions = [v.get_position() for v in vertices]
@@ -437,8 +438,8 @@ class Game(IGameService):
         except Exception:
             gui_mode = False
         if gui_mode:
-            print(f"{move} failed.", flush=True)
-        logger.info("Move %s rejected: %s", move, reason)
+            print(_("{move} failed.").format(move=move), flush=True)
+        logger.info(_("Move %s rejected: %s"), move, _(reason))
         return False
 
     @staticmethod
@@ -476,27 +477,31 @@ class Game(IGameService):
             ]
             != self.get_current_player().get_id()
         ):
-            print("It is not your turn to play.")
+            print(_("It is not your turn to play."))
             expected_player = self.game_data.players_order[
                 self.game_data.current_player_order_list
             ]
             print(
-                "The one: "
-                f"{expected_player} "
-                f"{self.game_data.current_player_order_list}. "
-                f"You: {self.get_current_player()}"
+                _(
+                    "Expected player: {expected_player} at index "
+                    "{current_index}. Current player: {current_player}"
+                ).format(
+                    expected_player=expected_player,
+                    current_index=self.game_data.current_player_order_list,
+                    current_player=self.get_current_player(),
+                )
             )
             turn = (
                 max(self.game_data.graph.get_vertices().keys(), default=-1)
                 + 1
             )
-            print(f"turn:{turn}")
+            print(_("turn: {turn}").format(turn=turn))
             print(self.game_data.players_order)
             return self._log_rejected_move(
                 move, "it is not this player's turn"
             )
         if self.game_data.current_hand is None:
-            print("You must draw a tile before playing.")
+            print(_("You must draw a tile before you can play it."))
             return self._log_rejected_move(
                 move, "no tile is currently in hand"
             )
@@ -504,12 +509,18 @@ class Game(IGameService):
         tile_code = self.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != self.game_data.current_hand:
             print(
-                f"You must play the tile in hand:"
-                f" {self.game_data.current_hand}")
+                _("You must play the tile in hand: {hand}").format(
+                    hand=self.game_data.current_hand
+                )
+            )
             return self._log_rejected_move(
                 move,
-                f"tile in hand is {self.game_data.current_hand},"
-                f" not {tile_code}"
+                _(
+                    "tile in hand is {current_hand}, not {tile_code}"
+                ).format(
+                    current_hand=self.game_data.current_hand,
+                    tile_code=tile_code,
+                )
             )
 
         try:
@@ -518,7 +529,7 @@ class Game(IGameService):
             return self._log_rejected_move(move, "move format is invalid")
         current_player_meeples = self.get_current_player().get_meeples()
         if parsed_move.get("meeple") and current_player_meeples <= 0:
-            print("No meeple remaining")
+            print(_("No meeple remaining."))
             return self._log_rejected_move(move, "no meeple remaining")
 
         ok = self.game_data.rules_manager.check_move(
@@ -555,13 +566,13 @@ class Game(IGameService):
             self.game_data.players_order,
             current_player,
         )
-        print(move + " placed successfully.", flush=True)
+        print(_("{move} placed successfully.").format(move=move), flush=True)
         turn = max(
             self.game_data.graph.get_vertices().keys(), default=-1
         )
         tile_code = self.game_data.current_hand or "?"
         logger.info(
-            "Turn %d: Player %s places tile %s",
+            _("Turn %d: Player %s places tile %s"),
             turn,
             current_player.get_id(),
             tile_code,
@@ -571,7 +582,7 @@ class Game(IGameService):
         )
         if tile_added_log is not None:
             logger.debug(
-                "Tile %d (%s) added at position %s",
+                _("Tile %d (%s) added at position %s"),
                 tile_added_log[0],
                 tile_added_log[1],
                 tile_added_log[2],
@@ -580,7 +591,7 @@ class Game(IGameService):
         meeple_log = self.game_data.board.consume_last_meeple_log_info()
         if meeple_log is not None:
             logger.info(
-                "Player %d places meeple at %s on component %s",
+                _("Player %d places meeple at %s on component %s"),
                 meeple_log[0],
                 meeple_log[1],
                 meeple_log[2],
@@ -588,13 +599,13 @@ class Game(IGameService):
         for event_type, payload in scoring_events:
             if event_type == "component_completed":
                 logger.info(
-                    "Component %s (%s) completed and scored",
+                    _("Component %s (%s) completed and scored"),
                     payload["name"],
                     payload["terrain"],
                 )
             elif event_type == "meeple_returned":
                 logger.info(
-                    "Player %d gets back %d meeple(s) from component %s",
+                    _("Player %d gets back %d meeple(s) from component %s"),
                     payload["player_id"],
                     payload["count"],
                     payload["component"],
@@ -605,7 +616,7 @@ class Game(IGameService):
             new_score = self._score_value(player)
             if new_score != old_score:
                 logger.info(
-                    "Player %d score updated: %d -> %d (%+d)",
+                    _("Player %d score updated: %d -> %d (%+d)"),
                     player_id,
                     old_score,
                     new_score,
@@ -613,11 +624,11 @@ class Game(IGameService):
                 )
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                "Connected terrain components: %s",
+                _("Connected terrain components: %s"),
                 self._connected_components_snapshot(),
             )
             logger.debug(
-                "Meeples and associated components: %s",
+                _("Meeples and associated components: %s"),
                 self._meeples_components_snapshot(),
             )
         self.river_manager.update_river_turn(move.split("/"))
@@ -648,7 +659,11 @@ class Game(IGameService):
             return
 
         ai_player = self.get_current_player()
-        print(f"AI Player {ai_player.get_username()} is thinking...")
+        print(
+            _("AI Player {player} is thinking...").format(
+                player=ai_player.get_username()
+            )
+        )
         self.deck_manager.draw_tile(silent=True)
         if self.game_data.current_hand is None:
             self.end_game()
@@ -711,15 +726,21 @@ class Game(IGameService):
             )
             move = model.mcts(game)
         if not move:
-            print(f"AI Player {ai_player.get_username()} has no legal move.")
+            print(
+                _("AI Player {player} has no legal move.").format(
+                    player=ai_player.get_username()
+                )
+            )
             print(self.game_data.current_hand)
             return
 
         # Validate move format: TILE/POSITION or TILE/POSITION/MEEPLE.
         if "/" not in str(move):
             print(
-                f"AI move '{move}' is malformed (missing position). "
-                "Skipping this turn."
+                _(
+                    "AI move '{move}' is malformed (missing position). "
+                    "Skipping this turn."
+                ).format(move=move)
             )
             # Force change to next player to avoid infinite loop
             self.game_data.current_player_order_list = (
@@ -728,11 +749,22 @@ class Game(IGameService):
             return
 
         if eval_score is None:
-            print(f"AI Player {ai_player.get_username()} chooses move: {move}")
+            print(
+                _("AI Player {player} chooses move: {move}").format(
+                    player=ai_player.get_username(),
+                    move=move,
+                )
+            )
         else:
             print(
-                f"AI Player {ai_player.get_username()} chooses move: {move} "
-                f"with evaluation score: {eval_score}"
+                _(
+                    "AI Player {player} chooses move: {move} "
+                    "with evaluation score: {score}"
+                ).format(
+                    player=ai_player.get_username(),
+                    move=move,
+                    score=eval_score,
+                )
             )
         # print("main avant de jouer le coup" + self.current_hand)
         move_played = self.play_move(move)
@@ -748,15 +780,21 @@ class Game(IGameService):
             if parsed.get("meeple") and ai_player.get_meeples() <= 0:
                 fallback_move = move.rsplit("/", 1)[0]
                 print(
-                    "AI move rejected (no meeples left). "
-                    f"Retrying without meeple: {fallback_move}"
+                    _(
+                        "AI move rejected (no meeples left). "
+                        "Retrying without meeple: {fallback_move}"
+                    ).format(fallback_move=fallback_move)
                 )
                 fallback_played = self.play_move(fallback_move)
 
             if not fallback_played:
                 print(
-                    f"AI Player {ai_player.get_username()} produced an "
-                    f"invalid move: {move}"
+                    _(
+                        "AI Player {player} produced an invalid move: {move}"
+                    ).format(
+                        player=ai_player.get_username(),
+                        move=move,
+                    )
                 )
                 # Force change to next player to avoid infinite loop
                 self.game_data.current_player_order_list = (

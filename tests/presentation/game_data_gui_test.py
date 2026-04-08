@@ -2,7 +2,7 @@ from carcassonne.presentation.gui.game_data_gui import GameDataGui
 from carcassonne.presentation.gui.tiles_view import TilesView
 import pytest
 from types import SimpleNamespace
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 pytest.importorskip("gi")
 

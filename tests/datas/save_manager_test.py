@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 
 from carcassonne.business_logic.save_handler import SaveHandler
 

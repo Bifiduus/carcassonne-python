@@ -1,8 +1,6 @@
 import socket
-from types import SimpleNamespace
 from unittest.mock import Mock
 
-import pytest
 
 from carcassonne.business_logic.server import Server
 

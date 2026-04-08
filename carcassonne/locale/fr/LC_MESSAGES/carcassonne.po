@@ -955,3 +955,246 @@ msgstr "route {name}"
 
 msgid "monastery {name}"
 msgstr "monastère {name}"
+
+msgid "{move} failed."
+msgstr "{move} a échoué."
+
+msgid "Move %s rejected: %s"
+msgstr "Coup %s rejeté : %s"
+
+msgid "It is not your turn to play."
+msgstr "Ce n'est pas à vous de jouer."
+
+msgid "Expected player: {expected_player} at index {current_index}. Current player: {current_player}"
+msgstr "Joueur attendu : {expected_player} à l'index {current_index}. Joueur courant : {current_player}"
+
+msgid "turn: {turn}"
+msgstr "tour : {turn}"
+
+msgid "You must play the tile in hand: {hand}"
+msgstr "Vous devez jouer la tuile en main : {hand}"
+
+msgid "No meeple remaining."
+msgstr "Il ne reste plus de meeple."
+
+msgid "{move} placed successfully."
+msgstr "{move} placé avec succès."
+
+msgid "Turn %d: Player %s places tile %s"
+msgstr "Tour %d : le joueur %s place la tuile %s"
+
+msgid "Tile %d (%s) added at position %s"
+msgstr "Tuile %d (%s) ajoutée à la position %s"
+
+msgid "Player %d places meeple at %s on component %s"
+msgstr "Le joueur %d place un meeple en %s sur le composant %s"
+
+msgid "Component %s (%s) completed and scored"
+msgstr "Composant %s (%s) complété et scoré"
+
+msgid "Player %d gets back %d meeple(s) from component %s"
+msgstr "Le joueur %d récupère %d meeple(s) du composant %s"
+
+msgid "Player %d score updated: %d -> %d (%+d)"
+msgstr "Score du joueur %d mis à jour : %d -> %d (%+d)"
+
+msgid "Connected terrain components: %s"
+msgstr "Composants de terrain connectés : %s"
+
+msgid "Meeples and associated components: %s"
+msgstr "Meeples et composants associés : %s"
+
+msgid "AI Player {player} is thinking..."
+msgstr "Le joueur IA {player} réfléchit..."
+
+msgid "AI Player {player} has no legal move."
+msgstr "Le joueur IA {player} n'a aucun coup légal."
+
+msgid "AI move '{move}' is malformed (missing position). Skipping this turn."
+msgstr "Le coup IA '{move}' est mal formé (position manquante). Ce tour est ignoré."
+
+msgid "AI Player {player} chooses move: {move}"
+msgstr "Le joueur IA {player} choisit le coup : {move}"
+
+msgid "AI Player {player} chooses move: {move} with evaluation score: {score}"
+msgstr "Le joueur IA {player} choisit le coup : {move} avec le score d'évaluation : {score}"
+
+msgid "AI move rejected (no meeples left). Retrying without meeple: {fallback_move}"
+msgstr "Coup IA rejeté (plus de meeples disponibles). Nouvelle tentative sans meeple : {fallback_move}"
+
+msgid "AI Player {player} produced an invalid move: {move}"
+msgstr "Le joueur IA {player} a produit un coup invalide : {move}"
+
+msgid "blitz timer expired"
+msgstr "temps du blitz expiré"
+
+msgid "current player cannot act"
+msgstr "le joueur courant ne peut pas agir"
+
+msgid "it is not this player's turn"
+msgstr "ce n'est pas le tour de ce joueur"
+
+msgid "no tile is currently in hand"
+msgstr "aucune tuile n'est actuellement en main"
+
+msgid "no meeple remaining"
+msgstr "il ne reste plus de meeple"
+
+msgid "move validation failed"
+msgstr "la validation du coup a échoué"
+
+msgid "tile in hand is {current_hand}, not {tile_code}"
+msgstr "la tuile en main est {current_hand}, pas {tile_code}"
+
+msgid "AI chooses hint move: {move} with evaluation score: {eval_score}"
+msgstr "L'IA choisit le coup conseil : {move} avec le score d'évaluation : {eval_score}"
+
+msgid "AI explored {count} nodes"
+msgstr "L'IA a exploré {count} nœuds"
+
+msgid "[DEBUG RandomPlayer] Possible moves for tile {tile}: {moves}"
+msgstr "[DEBUG RandomPlayer] Coups possibles pour la tuile {tile} : {moves}"
+
+msgid "[DEBUG RandomPlayer] Selected move: {move}"
+msgstr "[DEBUG RandomPlayer] Coup sélectionné : {move}"
+
+msgid "Error: Invalid filename."
+msgstr "Erreur : nom de fichier invalide."
+
+msgid "Error: Could not create directory {path}"
+msgstr "Erreur : impossible de créer le répertoire {path}"
+
+msgid "Error: Could not write to file {path}"
+msgstr "Erreur : impossible d'écrire dans le fichier {path}"
+
+msgid "Error: {path} is a directory, not a file."
+msgstr "Erreur : {path} est un répertoire, pas un fichier."
+
+msgid "Error: Could not open file {path}"
+msgstr "Erreur : impossible d'ouvrir le fichier {path}"
+
+msgid "Warning: [Settings] section not found before [GameState]."
+msgstr "Avertissement : section [Settings] introuvable avant [GameState]."
+
+msgid "Warning: [GameState] section not found before [History]."
+msgstr "Avertissement : section [GameState] introuvable avant [History]."
+
+msgid "Warning: Invalid setting line '{line}'."
+msgstr "Avertissement : ligne de configuration invalide '{line}'."
+
+msgid "Warning: Number of players not specified."
+msgstr "Avertissement : nombre de joueurs non spécifié."
+
+msgid "Warning: Number of players should be between {min_players} and {max_players}."
+msgstr "Avertissement : le nombre de joueurs doit être entre {min_players} et {max_players}."
+
+msgid "Warning: Players order not specified."
+msgstr "Avertissement : ordre des joueurs non spécifié."
+
+msgid "Warning: No score yet."
+msgstr "Avertissement : aucun score pour l'instant."
+
+msgid "Warning: More scores than players."
+msgstr "Avertissement : plus de scores que de joueurs."
+
+msgid "Warning: No seed."
+msgstr "Avertissement : aucune seed."
+
+msgid "Warning: no game score found in [GameState] section."
+msgstr "Avertissement : aucun score de partie trouvé dans la section [GameState]."
+
+msgid "The move does not match the seed."
+msgstr "Le coup ne correspond pas à la seed."
+
+msgid "Failed to play move: {move}"
+msgstr "Échec lors de l'exécution du coup : {move}"
+
+msgid "Warning: Not all sections were found in the file."
+msgstr "Avertissement : toutes les sections n'ont pas été trouvées dans le fichier."
+
+msgid "Warning: [Settings] section missing."
+msgstr "Avertissement : section [Settings] manquante."
+
+msgid "Warning: [GameState] section missing."
+msgstr "Avertissement : section [GameState] manquante."
+
+msgid "Warning: [History] section missing."
+msgstr "Avertissement : section [History] manquante."
+
+msgid "Warning: invalid configuration file."
+msgstr "Avertissement : fichier de configuration invalide."
+
+msgid "Starting with default options."
+msgstr "Démarrage avec les options par défaut."
+
+msgid "Client {username} is not connected."
+msgstr "Le client {username} n'est pas connecté."
+
+msgid "Client socket not found for {player_id}"
+msgstr "Socket client introuvable pour {player_id}"
+
+msgid "Error sending invitation: {error}"
+msgstr "Erreur lors de l'envoi de l'invitation : {error}"
+
+msgid "Starting server shutdown..."
+msgstr "Démarrage de l'arrêt du serveur..."
+
+msgid "Error closing server socket: {error}"
+msgstr "Erreur lors de la fermeture du socket serveur : {error}"
+
+msgid "Error sending shutdown message: {error}"
+msgstr "Erreur lors de l'envoi du message d'arrêt : {error}"
+
+msgid "Error closing client socket: {error}"
+msgstr "Erreur lors de la fermeture du socket client : {error}"
+
+msgid "Cleaning up game: {party_name}"
+msgstr "Nettoyage de la partie : {party_name}"
+
+msgid "Error cleaning up game {game_id}: {error}"
+msgstr "Erreur lors du nettoyage de la partie {game_id} : {error}"
+
+msgid "Error joining client thread: {error}"
+msgstr "Erreur lors de l'attente du thread client : {error}"
+
+msgid "Warning: a client thread did not finish in time."
+msgstr "Avertissement : un thread client ne s'est pas terminé à temps."
+
+msgid "Error closing repository: {error}"
+msgstr "Erreur lors de la fermeture du dépôt : {error}"
+
+msgid "Warning: server thread did not terminate within timeout."
+msgstr "Avertissement : le thread serveur ne s'est pas terminé dans le délai imparti."
+
+msgid "Error joining server thread: {error}"
+msgstr "Erreur lors de l'attente du thread serveur : {error}"
+
+msgid "Server shutdown complete."
+msgstr "Arrêt du serveur terminé."
+
+msgid "Unable to connect to {ip}:{port} -> {error}"
+msgstr "Impossible de se connecter à {ip}:{port} -> {error}"
+
+msgid "Search max failed."
+msgstr "Échec de la recherche max."
+
+msgid "Search min failed."
+msgstr "Échec de la recherche min."
+
+msgid "Could not load contest file: {contest_file}"
+msgstr "Impossible de charger le fichier de contest : {contest_file}"
+
+msgid "No vertices."
+msgstr "Aucun sommet."
+
+msgid "Error handling client: {error}"
+msgstr "Erreur lors du traitement du client : {error}"
+
+msgid "Error creating party in repository: {error}"
+msgstr "Erreur lors de la création de la partie dans le dépôt : {error}"
+
+msgid "Client {username} socket not found."
+msgstr "Socket introuvable pour le client {username}."
+
+msgid "Error sending to client {username}: {error}"
+msgstr "Erreur lors de l'envoi au client {username} : {error}"

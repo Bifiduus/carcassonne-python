@@ -59,7 +59,11 @@ class AIModelManager:
             opponent_score=opponent_score,
         )
 
-        print(f"AI explored {self.player.nodes_explored} nodes")
+        print(
+            _("AI explored {count} nodes").format(
+                count=self.player.nodes_explored
+            )
+        )
 
         return best_move
 

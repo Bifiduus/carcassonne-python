@@ -1,6 +1,5 @@
 """Tests for TilesView - Tile placement and data representation."""
 
-import pytest
 from carcassonne.presentation.gui.tiles_view import TilesView
 
 

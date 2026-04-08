@@ -2,6 +2,8 @@ import configparser
 import os
 import json
 
+from carcassonne.i18n import gettext as _
+
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".carcassonnerc")
 
 DEFAULT_SETTINGS = {
@@ -136,9 +138,9 @@ class GameConfiguration:
                     )
 
         except Exception as e:
-            print("⚠️  Warning: invalid configuration file.")
+            print(_("Warning: invalid configuration file."))
             print(f"   ({e})")
-            print("   Starting with default options.")
+            print(_("Starting with default options."))
 
         return settings
 
@@ -167,7 +169,7 @@ class GameConfiguration:
         self._write_config(config)
 
     def show_config(self):
-        print("Configuration actuelle du jeu:")
+        print(_("Current game configuration:"))
         for key, value in self.settings.items():
             print(f"  {key}: {value}")
 

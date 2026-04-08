@@ -18,6 +18,7 @@ from carcassonne.business_logic.heuristic_short_term import (
 from carcassonne.business_logic.heuristic_disruption import (
     evaluate_state as disruption_evaluate_state,
 )
+from carcassonne.i18n import gettext as _
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.game.game import Game
@@ -212,7 +213,7 @@ class ExpectimaxPlayer:
             for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
-                    print("SEARCH MAX DIDNT WORK")
+                    print(_("Search max failed."))
                     continue
                 eval_score = self.star25(
                     game,
@@ -249,9 +250,9 @@ class ExpectimaxPlayer:
             for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
-                    print("SEARCH MIN DIDNT WORK")
+                    print(_("Search min failed."))
                     game.get_board()
-                    print(f"{move} failed.")
+                    print(_("{move} failed.").format(move=move))
                     continue
                 eval_score = self.star25(
                     game,
@@ -515,7 +516,9 @@ class ExpectimaxPlayer:
         tile_code = game.game_data.extract_tile_code(move)
         if tile_code is not None and tile_code != game.game_data.current_hand:
             hand = game.game_data.current_hand
-            print(f"You must play the tile in hand: {hand}")
+            print(_("You must play the tile in hand: {hand}").format(
+                hand=hand
+            ))
             return False
 
         ok = game.game_data.rules_manager.check_move(

@@ -3,7 +3,6 @@
 from carcassonne.presentation.gui import board_utils
 import pytest
 from types import SimpleNamespace
-from unittest.mock import Mock
 
 pytest.importorskip("gi")
 

@@ -306,7 +306,10 @@ class Server(IServerService):
                 not self.should_stop.is_set()
                 and "Bad file descriptor" not in str(e)
             ):
-                print(f"Error handling client: {e}", file=sys.stderr)
+                print(
+                    _("Error handling client: {error}").format(error=e),
+                    file=sys.stderr,
+                )
             # Mark client as improper if they have a username (registered)
             if client_socket in self.player_clients:
                 username: str = self.player_clients[client_socket]
@@ -398,7 +401,10 @@ class Server(IServerService):
                     formatted_message = preface + f"{id}: " + message
                     client_socket.send(formatted_message.encode())
                 except Exception as e:
-                    print(f"Error handling client: {e}", file=sys.stderr)
+                    print(
+                        _("Error handling client: {error}").format(error=e),
+                        file=sys.stderr,
+                    )
 
     def check_username_taken(self, username: str):
         answer: bool = self.repo.player_exists(username)
@@ -518,7 +524,12 @@ class Server(IServerService):
             for player_id in clients_list:
                 self.repo.change_status(str(player_id), "ingame")
         except Exception as e:
-            print(f"Error creating party in repository: {e}", file=sys.stderr)
+            print(
+                _("Error creating party in repository: {error}").format(
+                    error=e
+                ),
+                file=sys.stderr,
+            )
         return "Your party has been created successfully !\n"
 
     def create_players_from_list(
@@ -557,7 +568,11 @@ class Server(IServerService):
             message += f"Expires in {self.INVITATION_TIMEOUT}s.\n"
             with self.clients_lock:
                 if username not in self.client_sockets:
-                    print(f"Client {username} not connected")
+                    print(
+                        _("Client {username} is not connected.").format(
+                            username=username
+                        )
+                    )
                     return
                 invited_client: socket.socket = self.client_sockets[username]
                 ok = self.repo.send_invitation(invited_player_id,
@@ -566,17 +581,22 @@ class Server(IServerService):
                     invited_client.sendall(message.encode())
         except KeyError:
             print(
-                f"Client socket not found for {invited_player_id}",
+                _("Client socket not found for {player_id}").format(
+                    player_id=invited_player_id
+                ),
                 file=sys.stderr,
             )
         except Exception as e:
-            print(f"Error sending invitation: {e}", file=sys.stderr)
+            print(
+                _("Error sending invitation: {error}").format(error=e),
+                file=sys.stderr,
+            )
 
     def server_stop(self):
         """
         Stop the server gracefully with proper resource cleanup.
         """
-        print("Starting server shutdown...")
+        print(_("Starting server shutdown..."))
 
         if self.server_thread is not None:
             # 1. Signal server loop to stop
@@ -588,7 +608,12 @@ class Server(IServerService):
                 try:
                     self.server.close()
                 except Exception as e:
-                    print(f"Error closing server socket: {e}", file=sys.stderr)
+                    print(
+                        _("Error closing server socket: {error}").format(
+                            error=e
+                        ),
+                        file=sys.stderr,
+                    )
                 self.server = None
 
             # 3. Notify and close all connected clients
@@ -604,7 +629,9 @@ class Server(IServerService):
                         self.repo.client_quit(username)
                     except Exception as e:
                         print(
-                            f"Error sending shutdown message: {e}",
+                            _(
+                                "Error sending shutdown message: {error}"
+                            ).format(error=e),
                             file=sys.stderr,
                         )
                     finally:
@@ -612,7 +639,9 @@ class Server(IServerService):
                             client_socket.close()
                         except Exception as e:
                             print(
-                                f"Error closing client socket: {e}",
+                                _("Error closing client socket: {error}").format(
+                                    error=e
+                                ),
                                 file=sys.stderr,
                             )
                 self.connected_clients.clear()
@@ -623,7 +652,11 @@ class Server(IServerService):
                 for game_id, (party_name, game) in current_games:
                     try:
                         # Save game state or perform cleanup
-                        print(f"Cleaning up game: {party_name}")
+                        print(
+                            _("Cleaning up game: {party_name}").format(
+                                party_name=party_name
+                            )
+                        )
                         self.repo.clean_game(game_id)
                         group_id = self.repo.get_group_from_game(game_id)
                         self.repo.clean_party(group_id)
@@ -636,7 +669,10 @@ class Server(IServerService):
                                 f"{time.asctime(time.localtime())}_backup.txt")
                     except Exception as e:
                         print(
-                            f"Error cleaning up game {game_id}: {e}",
+                            _("Error cleaning up game {game_id}: {error}").format(
+                                game_id=game_id,
+                                error=e,
+                            ),
                             file=sys.stderr,
                         )
                 self.current_games_list.clear()
@@ -654,30 +690,50 @@ class Server(IServerService):
                         t.join(timeout=2.0)
                     except Exception as e:
                         print(
-                            f"Error joining client thread: {e}",
+                            _("Error joining client thread: {error}").format(
+                                error=e
+                            ),
                             file=sys.stderr,
                         )
                     if t.is_alive():
-                        print("Warning: a client thread did"
-                              " not finish in time")
+                        print(
+                            _(
+                                "Warning: a client thread did not finish "
+                                "in time."
+                            )
+                        )
 
             # 7. Close repository
             if hasattr(self, 'repo') and self.repo:
                 try:
                     self.repo.close()
                 except Exception as e:
-                    print(f"Error closing repository: {e}", file=sys.stderr)
+                    print(
+                        _("Error closing repository: {error}").format(
+                            error=e
+                        ),
+                        file=sys.stderr,
+                    )
 
             # 8. Wait for server thread to finish (with timeout)
             try:
                 self.server_thread.join(timeout=5.0)
                 if self.server_thread.is_alive():
-                    print("Warning: Server thread did not"
-                          " terminate within timeout")
+                    print(
+                        _(
+                            "Warning: server thread did not terminate "
+                            "within timeout."
+                        )
+                    )
             except Exception as e:
-                print(f"Error joining server thread: {e}", file=sys.stderr)
+                print(
+                    _("Error joining server thread: {error}").format(
+                        error=e
+                    ),
+                    file=sys.stderr,
+                )
 
-            print("Server shutdown complete")
+            print(_("Server shutdown complete."))
 
     def get_game(self, client_id: str):
         assert self.repo is not None, "No games repository."
@@ -710,7 +766,11 @@ class Server(IServerService):
         with self.clients_lock:
             try:
                 if username not in self.client_sockets:
-                    print(f"Client {username} socket not found")
+                    print(
+                        _("Client {username} socket not found.").format(
+                            username=username
+                        )
+                    )
                     return False
                 client_socket = self.client_sockets[username]
                 client_index = self.repo.get_id_from_username(username)
@@ -718,11 +778,18 @@ class Server(IServerService):
                 client_socket.send(f"{preface}: {message}\n".encode())
                 return True
             except KeyError:
-                print(f"Client {username} socket not found")
+                print(
+                    _("Client {username} socket not found.").format(
+                        username=username
+                    )
+                )
                 return False
             except Exception as e:
                 print(
-                    f"Error sending to client {username}: {e}",
+                    _("Error sending to client {username}: {error}").format(
+                        username=username,
+                        error=e,
+                    ),
                     file=sys.stderr,
                 )
                 return False

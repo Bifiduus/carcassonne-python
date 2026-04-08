@@ -66,7 +66,9 @@ class GameDataGui:
                 result = self.game.load_game_from_file(contest_file)
 
             if result != 0:
-                return False, f"could not load contest file: {contest_file}"
+                return False, _(
+                    "Could not load contest file: {contest_file}"
+                ).format(contest_file=contest_file)
 
             # Execute AI move and get the result
             move = self.game.game_mode_manager.run_contest()

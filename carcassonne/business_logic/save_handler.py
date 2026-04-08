@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from carcassonne.i18n import gettext as _
+
 if TYPE_CHECKING:
     from carcassonne.business_logic.game.game import Game
 
@@ -48,12 +50,12 @@ class SaveHandler:
 
     def save_game_to_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.", file=sys.stderr)
+            print(_("Error: Invalid filename."), file=sys.stderr)
             return -1
 
         path = Path(filename)
         if path.name == "" or path.name in [".", ".."]:
-            print("Error: Invalid filename.", file=sys.stderr)
+            print(_("Error: Invalid filename."), file=sys.stderr)
             return -1
         if path.suffix != ".txt":
             path = path.with_suffix(".txt")
@@ -63,7 +65,9 @@ class SaveHandler:
                 parent.mkdir(parents=True, exist_ok=True)
             except OSError:
                 print(
-                    f"Error: Could not create directory {parent}",
+                    _("Error: Could not create directory {path}").format(
+                        path=parent
+                    ),
                     file=sys.stderr,
                 )
                 return -1
@@ -123,7 +127,10 @@ class SaveHandler:
                 file.write("\n")
                 file.close()
         except OSError:
-            print(f"Error: Could not write to file {path}", file=sys.stderr)
+            print(
+                _("Error: Could not write to file {path}").format(path=path),
+                file=sys.stderr,
+            )
             return -1
         return 0
 
@@ -146,27 +153,34 @@ class SaveHandler:
 
     def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
-            print("Error: Invalid filename.", file=sys.stderr)
+            print(_("Error: Invalid filename."), file=sys.stderr)
             return -1
 
         path = Path(filename)
         if path.name == "" or path.name in {".", ".."}:
-            print("Error: Invalid filename.", file=sys.stderr)
+            print(_("Error: Invalid filename."), file=sys.stderr)
             return -1
 
         if path.suffix != ".txt":
             path = path.with_suffix(".txt")
 
         if path.is_dir():
-            print(f"Error: {path} is a directory, not a file.",
-                  file=sys.stderr)
+            print(
+                _("Error: {path} is a directory, not a file.").format(
+                    path=path
+                ),
+                file=sys.stderr,
+            )
             return -1
 
         try:
             with path.open("r") as file:
                 lines = file.readlines()
         except OSError:
-            print(f"Error: Could not open file {path}", file=sys.stderr)
+            print(
+                _("Error: Could not open file {path}").format(path=path),
+                file=sys.stderr,
+            )
             return -1
 
         # Clear current game state before loading a new one.
@@ -211,8 +225,10 @@ class SaveHandler:
             elif line == "[GameState]":
                 if not settings_section:
                     print(
-                        "Warning: [Settings] section not found before "
-                        "[GameState]."
+                        _(
+                            "Warning: [Settings] section not found before "
+                            "[GameState]."
+                        )
                     )
                 sections_parsed += 1
                 settings_section = False
@@ -223,8 +239,10 @@ class SaveHandler:
             elif line == "[History]":
                 if not game_state_section:
                     print(
-                        "Warning: [GameState] section not found before "
-                        "[History]."
+                        _(
+                            "Warning: [GameState] section not found before "
+                            "[History]."
+                        )
                     )
                 sections_parsed += 1
                 settings_section = False
@@ -241,7 +259,11 @@ class SaveHandler:
                 try:
                     setting, value = self.split_setting_line(line)
                 except ValueError:
-                    print(f"Warning: Invalid setting line '{line}'.")
+                    print(
+                        _("Warning: Invalid setting line '{line}'.").format(
+                            line=line
+                        )
+                    )
                     continue
                 if setting.strip() in self.keybinds_settings:
                     self.handle_keybinds_load(value, setting.strip())
@@ -265,7 +287,7 @@ class SaveHandler:
                 if line.startswith("NumberOfPlayers:"):
                     line = line.split("NumberOfPlayers:")[1].strip()
                     if line == "":
-                        print("Warning: Number of players not specified.")
+                        print(_("Warning: Number of players not specified."))
                         continue
                     number_of_players, number_of_ai_players = (
                         line.split(",") if "," in line else (line, "0")
@@ -277,8 +299,13 @@ class SaveHandler:
                     max_players = self.game.get_maximum_number_of_players()
                     if total_players > max_players:
                         print(
-                            "Warning: Number of players should be between "
-                            f"{min_players} and {max_players}."
+                            _(
+                                "Warning: Number of players should be "
+                                "between {min_players} and {max_players}."
+                            ).format(
+                                min_players=min_players,
+                                max_players=max_players,
+                            )
                         )
                         continue
                     self.game.set_number_of_ai_players(ai_players)
@@ -286,7 +313,7 @@ class SaveHandler:
                 if line.startswith("PlayersOrder:"):
                     line = line.split("PlayersOrder:")[1].strip()
                     if line == "":
-                        print("Warning: Players order not specified.")
+                        print(_("Warning: Players order not specified."))
                         continue
                     self.game.game_data.players_order = [
                         int(player_id.strip())
@@ -298,12 +325,12 @@ class SaveHandler:
                     # Player2ID: 20]"
                     line = line.split("GameScore:")[1].strip()
                     if line == "" or line == "[]":
-                        print("Warning: No score yet.")
+                        print(_("Warning: No score yet."))
                         continue
                     line = line.split("[")[1].strip("]")
                     scores = line.split(",")
                     if len(scores) > len(self.game.game_data.players):
-                        print("Warning: More scores than players.")
+                        print(_("Warning: More scores than players."))
                     for score in scores:
                         playerID, points = score.split(":")
                         for player in self.game.game_data.players.values():
@@ -314,7 +341,7 @@ class SaveHandler:
                     # Assuming the format is "Seed: the seed"
                     line = line.split("Seed:")[1].strip()
                     if line == "":
-                        print("Warning: No seed.")
+                        print(_("Warning: No seed."))
                         continue
                     game_data = self.game.game_data
                     game_data.seed = int(line)
@@ -326,7 +353,10 @@ class SaveHandler:
             elif history_section:
                 if not game_score:
                     print(
-                        "Warning: no game score found in [GameState] section."
+                        _(
+                            "Warning: no game score found in [GameState] "
+                            "section."
+                        )
                     )
                 for player_move in line.strip(" ").split(" "):
                     move = (
@@ -338,20 +368,25 @@ class SaveHandler:
                     self.game.game_data.current_hand = tile
                     if tile != self.game.draw_tile():
                         print(
-                            "The move doesn't match the seed !",
+                            _("The move does not match the seed."),
                             file=sys.stderr,
                         )
                     # Assuming line is in the format "player_id:details"
                     if not self.game.play_move(move):
-                        print(f"Failed to play move: {move}", file=sys.stderr)
+                        print(
+                            _("Failed to play move: {move}").format(
+                                move=move
+                            ),
+                            file=sys.stderr,
+                        )
 
         if sections_parsed < 3:
-            print("Warning: Not all sections were found in the file.")
+            print(_("Warning: Not all sections were found in the file."))
             if not settings_parsed:
-                print("Warning: [Settings] section missing.")
+                print(_("Warning: [Settings] section missing."))
             if not game_state_parsed:
-                print("Warning: [GameState] section missing.")
+                print(_("Warning: [GameState] section missing."))
             if not history_parsed:
-                print("Warning: [History] section missing.")
+                print(_("Warning: [History] section missing."))
         file.close()
         return 0

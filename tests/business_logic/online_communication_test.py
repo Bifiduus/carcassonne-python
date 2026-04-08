@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from carcassonne.business_logic.online_communication import OnlineCommunication
 
