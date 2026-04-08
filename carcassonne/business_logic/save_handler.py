@@ -287,7 +287,10 @@ class SaveHandler:
                 if line.startswith("NumberOfPlayers:"):
                     line = line.split("NumberOfPlayers:")[1].strip()
                     if line == "":
-                        print(_("Warning: Number of players not specified."))
+                        print(
+                            _("Warning: Number of players not specified."),
+                            file=sys.stderr,
+                        )
                         continue
                     number_of_players, number_of_ai_players = (
                         line.split(",") if "," in line else (line, "0")
@@ -305,7 +308,8 @@ class SaveHandler:
                             ).format(
                                 min_players=min_players,
                                 max_players=max_players,
-                            )
+                            ),
+                            file=sys.stderr,
                         )
                         continue
                     self.game.set_number_of_ai_players(ai_players)
@@ -313,7 +317,10 @@ class SaveHandler:
                 if line.startswith("PlayersOrder:"):
                     line = line.split("PlayersOrder:")[1].strip()
                     if line == "":
-                        print(_("Warning: Players order not specified."))
+                        print(
+                            _("Warning: Players order not specified."),
+                            file=sys.stderr,
+                        )
                         continue
                     self.game.game_data.players_order = [
                         int(player_id.strip())
@@ -325,12 +332,15 @@ class SaveHandler:
                     # Player2ID: 20]"
                     line = line.split("GameScore:")[1].strip()
                     if line == "" or line == "[]":
-                        print(_("Warning: No score yet."))
+                        print(_("Warning: No score yet."), file=sys.stderr)
                         continue
                     line = line.split("[")[1].strip("]")
                     scores = line.split(",")
                     if len(scores) > len(self.game.game_data.players):
-                        print(_("Warning: More scores than players."))
+                        print(
+                            _("Warning: More scores than players."),
+                            file=sys.stderr,
+                        )
                     for score in scores:
                         playerID, points = score.split(":")
                         for player in self.game.game_data.players.values():
@@ -341,7 +351,7 @@ class SaveHandler:
                     # Assuming the format is "Seed: the seed"
                     line = line.split("Seed:")[1].strip()
                     if line == "":
-                        print(_("Warning: No seed."))
+                        print(_("Warning: No seed."), file=sys.stderr)
                         continue
                     game_data = self.game.game_data
                     game_data.seed = int(line)
@@ -356,7 +366,8 @@ class SaveHandler:
                         _(
                             "Warning: no game score found in [GameState] "
                             "section."
-                        )
+                        ),
+                        file=sys.stderr,
                     )
                 for player_move in line.strip(" ").split(" "):
                     move = (
@@ -381,12 +392,24 @@ class SaveHandler:
                         )
 
         if sections_parsed < 3:
-            print(_("Warning: Not all sections were found in the file."))
+            print(
+                _("Warning: Not all sections were found in the file."),
+                file=sys.stderr,
+            )
             if not settings_parsed:
-                print(_("Warning: [Settings] section missing."))
+                print(
+                    _("Warning: [Settings] section missing."),
+                    file=sys.stderr,
+                )
             if not game_state_parsed:
-                print(_("Warning: [GameState] section missing."))
+                print(
+                    _("Warning: [GameState] section missing."),
+                    file=sys.stderr,
+                )
             if not history_parsed:
-                print(_("Warning: [History] section missing."))
+                print(
+                    _("Warning: [History] section missing."),
+                    file=sys.stderr,
+                )
         file.close()
         return 0

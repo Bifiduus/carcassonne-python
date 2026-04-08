@@ -233,10 +233,13 @@ class MainBootstrapTestCase(unittest.TestCase):
         failing_client = Mock()
         failing_client.disconnect.side_effect = RuntimeError("oops")
 
-        with patch("sys.stdout", new_callable=io.StringIO) as stdout:
+        with (
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
             main_module.shutdown_all(2, None, server, failing_client)
 
-        self.assertIn("Error shutting down client: oops", stdout.getvalue())
+        self.assertIn("Error shutting down client: oops", stderr.getvalue())
 
 
 if __name__ == "__main__":

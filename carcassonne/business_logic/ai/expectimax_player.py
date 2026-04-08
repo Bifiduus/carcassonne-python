@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import sys
 import time
 from typing import List, Tuple, TYPE_CHECKING
 
@@ -213,7 +214,7 @@ class ExpectimaxPlayer:
             for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
-                    print(_("Search max failed."))
+                    print(_("Search max failed."), file=sys.stderr)
                     continue
                 eval_score = self.star25(
                     game,
@@ -250,7 +251,7 @@ class ExpectimaxPlayer:
             for move in ordered_moves:
                 res = self.play_move_for_ai(game, move)
                 if not res:
-                    print(_("Search min failed."))
+                    print(_("Search min failed."), file=sys.stderr)
                     game.get_board()
                     print(_("{move} failed.").format(move=move))
                     continue

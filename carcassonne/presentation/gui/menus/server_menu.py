@@ -510,7 +510,7 @@ class ServerMenu(Gtk.Box):
                 btn_ok.grab_focus()
             except Exception as e:
                 print(f"{title}: {message}")
-                print(f"Dialog display error: {e}")
+                print(f"Dialog display error: {e}", file=sys.stderr)
             return False
 
         GLib.idle_add(_show_dialog)
@@ -532,7 +532,7 @@ class ServerMenu(Gtk.Box):
                 ),
             )
         except Exception as e:
-            print(f"Error in _handle_server_message: {e}")
+            print(f"Error in _handle_server_message: {e}", file=sys.stderr)
         finally:
             self._popup_pending = False  # release lock
         return False

@@ -1,6 +1,7 @@
 import configparser
 import os
 import json
+import sys
 
 from carcassonne.i18n import gettext as _
 
@@ -138,9 +139,9 @@ class GameConfiguration:
                     )
 
         except Exception as e:
-            print(_("Warning: invalid configuration file."))
-            print(f"   ({e})")
-            print(_("Starting with default options."))
+            print(_("Warning: invalid configuration file."), file=sys.stderr)
+            print(f"   ({e})", file=sys.stderr)
+            print(_("Starting with default options."), file=sys.stderr)
 
         return settings
 

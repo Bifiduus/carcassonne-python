@@ -374,7 +374,7 @@ class InvitationMenu(Gtk.Box):
                     ),
                 )
         except Exception as e:
-            print(f"Error in _handle_server_message: {e}")
+            print(f"Error in _handle_server_message: {e}", file=sys.stderr)
         finally:
             self._popup_pending = False  # release lock
         # Important: tell GLib not to call this function again.
@@ -416,13 +416,13 @@ class InvitationMenu(Gtk.Box):
             self.show_message(_("Connected players"), "\n".join(lines))
 
         except (ValueError, SyntaxError, IndexError) as e:
-            print(f"Error parsing players list: {e}")
+            print(f"Error parsing players list: {e}", file=sys.stderr)
             self.show_message(
                 _("Connected players"),
                 _("Raw response:\n{message}").format(message=message),
             )
         except Exception as e:
-            print(f"Error in _display_player_list: {e}")
+            print(f"Error in _display_player_list: {e}", file=sys.stderr)
             self.show_message(
                 _("Error"),
                 _("Error while displaying: {error}").format(error=e),
