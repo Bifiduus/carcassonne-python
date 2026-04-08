@@ -801,6 +801,11 @@ Cependant, l’implémentation de cet algorithme s’est avérée très complexe
 
 La partie la plus chronophage a été la gestion du serveur côté GUI. Plus précisément, il a fallu permettre au GUI d’afficher les messages envoyés par le serveur. 
 Pour cela, nous avons mis en place le design pattern Visitor, afin que le GUI puisse traiter et afficher ces messages sans établir de lien direct entre les deux composants.
+Quand à la partie la plus complexe à implémenter, il s’agit de la gestion des différentes commandes envoyées par le serveur.
+En effet, étant donné que la base de données a été modifiée et a évoluée au fil du projet, la gestion de ce que font les commandes a beaucoup changé. De plus, la base de données se doit de respecter l'état réel du serveur, ainsi les modifications se répercutent
+entre le serveur et la base de données, ce qui rend la gestion des commandes plus complexe.
+De plus, la gestion de l'interruption abrupte du serveur ou du client a été une source de nombreux bugs et a nécessité la mise en place de fonctions de nettoyage pour éviter les fuites de ressources et la corruption de la base de données. 
+
 
 \subsection{Performance}
 
