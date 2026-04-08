@@ -39,7 +39,6 @@ addopts = [ # Add options for pytest
   "--cov=carcassonne",
   "--cov-report=html",
   "--cov-report=term",
-  "--cov-branch",
 ]
 
 [tool.black]
