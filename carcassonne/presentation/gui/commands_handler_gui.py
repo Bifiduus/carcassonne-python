@@ -214,7 +214,9 @@ def on_undo_gui(gui):
     """Undo last move and refresh the board view."""
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
-        if gui.game_data.game.is_undo_history_empty():
+        history = getattr(gui.game_data.game.game_data, "history", None)
+        past_moves = getattr(history, "past_moves", []) if history else []
+        if not past_moves:
             if hasattr(gui, "error_message"):
                 gui.error_message.show_error(
                     _(
@@ -231,19 +233,8 @@ def on_redo_gui(gui):
     """Redo last undone move and refresh the board view."""
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
-        if not hasattr(gui.game_data.game, "undo_redo_manager"):
-            if hasattr(gui, "error_message"):
-                gui.error_message.show_error(
-                    _(
-                        "There are no moves to redo. "
-                        "You need to undo a move before you can redo."
-                    )
-                )
-            return
-
-        future_moves = (
-            gui.game_data.game.undo_redo_manager.game_data.history.future_moves
-        )
+        history = getattr(gui.game_data.game.game_data, "history", None)
+        future_moves = getattr(history, "future_moves", []) if history else []
         if not future_moves:
             if hasattr(gui, "error_message"):
                 gui.error_message.show_error(

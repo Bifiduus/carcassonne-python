@@ -67,3 +67,31 @@ def test_on_end_turn_gui_plays_move_and_refreshes_players_view() -> None:
 
     gui.game_data.play_move_gui.assert_called_once()
     gui.players_view.refresh.assert_called_once()
+
+
+def test_on_undo_gui_shows_error_when_no_past_moves() -> None:
+    gui = DummyGUI()
+    gui.error_message = SimpleNamespace(show_error=Mock())
+    gui.game_data.game = SimpleNamespace(
+        game_data=SimpleNamespace(history=SimpleNamespace(past_moves=[]))
+    )
+    gui.game_data.undo = Mock()
+
+    commands_handler_gui.on_undo_gui(gui)
+
+    gui.error_message.show_error.assert_called_once()
+    gui.game_data.undo.assert_not_called()
+
+
+def test_on_redo_gui_uses_history_future_moves() -> None:
+    gui = DummyGUI()
+    gui.error_message = SimpleNamespace(show_error=Mock())
+    gui.game_data.game = SimpleNamespace(
+        game_data=SimpleNamespace(history=SimpleNamespace(future_moves=[1]))
+    )
+    gui.game_data.redo = Mock()
+
+    commands_handler_gui.on_redo_gui(gui)
+
+    gui.error_message.show_error.assert_not_called()
+    gui.game_data.redo.assert_called_once()
