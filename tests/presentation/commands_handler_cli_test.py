@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from carcassonne.presentation.cli import commands_handler_cli as handlers
 
@@ -38,6 +38,7 @@ def build_local_context():
         start_new_game=Mock(),
         load_game_from_file=Mock(return_value=0),
         save_game_to_file=Mock(return_value=0),
+        has_unsaved_changes=Mock(return_value=True),
         shuffle_deck=Mock(return_value=123),
         draw_tile=Mock(return_value="CFFF"),
         provide_hint=Mock(return_value="CFFF/12N2/SW"),
@@ -264,11 +265,49 @@ def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch
     assert "Usage: show time [PLAYER_ID]" in output
     assert "Unknown player: 3" in output
     assert "Remaining time for player 3: 00:42" in output
-    assert "Quit command aborted." in output
     assert "Quitting the game. See you soon!" in output
     assert cli.running is False
     ai_game.clear_undo_history.assert_called_once_with()
     ai_game.get_printed_board.assert_called()
+
+
+def test_quit_skips_save_prompt_when_game_is_already_clean(
+    monkeypatch, capsys
+) -> None:
+    cli, game, client, server = build_local_context()
+    game.has_unsaved_changes.return_value = False
+
+    def fail_if_called(prompt=""):
+        raise AssertionError(f"Unexpected prompt: {prompt}")
+
+    monkeypatch.setattr("builtins.input", fail_if_called)
+    handlers.quit(cli, server, client)
+
+    output = capsys.readouterr().out
+    assert "Quitting the game. See you soon!" in output
+    assert cli.running is False
+    game.save_game_to_file.assert_not_called()
+
+
+def test_quit_accepts_uppercase_yes_and_retries_failed_save(
+    monkeypatch, capsys
+) -> None:
+    cli, game, client, server = build_local_context()
+    game.save_game_to_file.side_effect = [-1, 0]
+    answers = iter(["Y", "bad-save", "y", "good-save"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
+
+    handlers.quit(cli, server, client)
+
+    output = capsys.readouterr().out
+    assert "Failed to save the game to bad-save." in output
+    assert "Game saved to good-save." in output
+    assert "Quitting the game. See you soon!" in output
+    assert cli.running is False
+    assert game.save_game_to_file.call_args_list == [
+        call("bad-save"),
+        call("good-save"),
+    ]
 
 
 def test_connected_command_handlers_forward_to_server_and_quit_respects_server_state(

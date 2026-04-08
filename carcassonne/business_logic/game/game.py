@@ -107,6 +107,8 @@ class Game(IGameService):
             self,
         )
         self.river = None
+        self._has_unsaved_changes = False
+        self._save_tracking_suspended = False
         _gui_mode = (config_overrides or {}).get("gui", False)
         if self.game_mode_manager.get_mode() != "contest" and not _gui_mode:
             self.start_new_game()
@@ -122,6 +124,20 @@ class Game(IGameService):
 
     def _initialize_blitz_state(self) -> None:
         self._initialize_mode_state()
+
+    def _mark_game_state_dirty(self) -> None:
+        if getattr(self, "_save_tracking_suspended", False):
+            return
+        self._has_unsaved_changes = True
+
+    def _mark_game_state_clean(self) -> None:
+        self._has_unsaved_changes = False
+
+    @staticmethod
+    def _history_signature(history) -> tuple[int, int]:
+        past_moves = getattr(history, "past_moves", [])
+        future_moves = getattr(history, "future_moves", [])
+        return (len(past_moves), len(future_moves))
 
     def _has_playable_player(self) -> bool:
         return self.game_mode_manager.has_playable_player()
@@ -154,6 +170,9 @@ class Game(IGameService):
 
     def save_config(self) -> None:
         self.game_data.game_configuration.save_config()
+
+    def has_unsaved_changes(self) -> bool:
+        return getattr(self, "_has_unsaved_changes", False)
 
     def set_game_configuration(self, key: str, value) -> None:
         if key == "timeout":
@@ -199,10 +218,21 @@ class Game(IGameService):
         return list(self.game_data.players.values())
 
     def save_game_to_file(self, filename: str) -> int:
-        return self.save_handler.save_game_to_file(filename)
+        result = self.save_handler.save_game_to_file(filename)
+        if result == 0:
+            self._mark_game_state_clean()
+        return result
 
     def load_game_from_file(self, filename: str) -> int:
-        return self.save_handler.load_game_from_file(filename)
+        result = -1
+        self._save_tracking_suspended = True
+        try:
+            result = self.save_handler.load_game_from_file(filename)
+        finally:
+            self._save_tracking_suspended = False
+        if result == 0:
+            self._mark_game_state_clean()
+        return result
 
     def rotate_dirs(self, dirs: str | list, rotation: int) -> list:
         rotation = rotation % 4
@@ -652,6 +682,7 @@ class Game(IGameService):
             self.game_data.current_player_order_list + 1
         ) % self.get_number_of_players()
         self.blitz_manager._ensure_current_player_playable()
+        self._mark_game_state_dirty()
         return True
 
     def play_ai_turn(self, game=None) -> None:
@@ -835,10 +866,16 @@ class Game(IGameService):
         return self.end_game_manager.is_draw()
 
     def undo(self) -> None:
+        before_signature = self._history_signature(self.game_data.history)
         self.undo_redo_manager.undo()
+        if self._history_signature(self.game_data.history) != before_signature:
+            self._mark_game_state_dirty()
 
     def redo(self) -> None:
+        before_signature = self._history_signature(self.game_data.history)
         self.undo_redo_manager.redo()
+        if self._history_signature(self.game_data.history) != before_signature:
+            self._mark_game_state_dirty()
 
     def provide_hint(self) -> str:
         return self.commands.provide_hint()

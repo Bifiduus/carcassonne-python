@@ -382,11 +382,13 @@ class MCTSPlayer:
         while counter > 0:
             self.undo_for_ai(state)
             counter -= 1
-        while node.get_parent() is not None:
+        while node is not None:
             node.add_visitor(1)
             node.add_reward(reward)
-            node = node.get_parent()
-            self.undo_for_ai(state)
+            parent = node.get_parent()
+            if parent is not None:
+                self.undo_for_ai(state)
+            node = parent
 
     def mcts(self, game_root: "Game"):
         root = MCTSNode(game_root, self)

@@ -38,6 +38,10 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def has_unsaved_changes(self) -> bool:
+        pass
+
+    @abstractmethod
     def set_game_configuration(self, key: str, value) -> None:
         pass
 

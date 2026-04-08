@@ -148,6 +148,8 @@ def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
 
 def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game = Game.__new__(Game)
+    game._has_unsaved_changes = False
+    game._save_tracking_suspended = False
     current_player = SimpleNamespace(get_id=lambda: 4)
     history = SimpleNamespace(
         future_moves=[1],
@@ -225,6 +227,7 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.clear_undo_history()
     assert game.is_undo_history_empty() is False
     assert game.get_game_configuration() == {"ai_mode": "random"}
+    assert game.has_unsaved_changes() is False
     game.save_config()
     game.set_game_configuration("timeout", 12)
     game.set_game_configuration("other", "value")
@@ -274,6 +277,46 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.undo_redo_manager.redo.assert_called_once_with()
     game.blitz_manager.pause.assert_called_once_with()
     game.blitz_manager.resume.assert_called_once_with()
+
+
+def test_game_save_tracking_follows_effective_mutations_and_successful_persistence() -> None:
+    game = Game.__new__(Game)
+    history = SimpleNamespace(past_moves=[1], future_moves=[])
+    game._has_unsaved_changes = False
+    game._save_tracking_suspended = False
+    game.game_data = SimpleNamespace(history=history)
+    game.save_handler = SimpleNamespace(
+        save_game_to_file=Mock(return_value=0),
+        load_game_from_file=Mock(
+            side_effect=lambda filename: game._mark_game_state_dirty() or 0
+        ),
+    )
+    game.undo_redo_manager = SimpleNamespace(
+        undo=Mock(
+            side_effect=lambda: (
+                history.past_moves.pop(),
+                history.future_moves.append(1),
+            )
+        ),
+        redo=Mock(
+            side_effect=lambda: (
+                history.future_moves.pop(),
+                history.past_moves.append(1),
+            )
+        ),
+    )
+
+    game.undo()
+    assert game.has_unsaved_changes() is True
+
+    assert game.save_game_to_file("save.txt") == 0
+    assert game.has_unsaved_changes() is False
+
+    game.redo()
+    assert game.has_unsaved_changes() is True
+
+    assert game.load_game_from_file("save.txt") == 0
+    assert game.has_unsaved_changes() is False
 
 
 def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertices() -> None:
