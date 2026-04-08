@@ -896,10 +896,10 @@ Toutefois, malgré nos efforts pour implémenter correctement les différentes f
   Dans ce cas, le comportement du programme n'est pas défini : la partie 
   peut se bloquer sans message d'erreur explicite pour le joueur.
   \item [$\bullet$] La taille du plateau de jeu dans le GUI est fixe et 
-ne s'adapte pas dynamiquement à la taille de la fenêtre. Ainsi, si la 
-fenêtre est agrandie, les éléments de l'interface tels que les boutons 
-s'ajustent correctement, mais le plateau de jeu reste de taille fixe, 
-créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
+  ne s'adapte pas dynamiquement à la taille de la fenêtre. Ainsi, si la 
+  fenêtre est agrandie, les éléments de l'interface tels que les boutons 
+  s'ajustent correctement, mais le plateau de jeu reste de taille fixe, 
+  créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
   \item [$\bullet$] Les fonctions d'évaluation heuristiques utilisées par 
   les IA ne modélisent pas certaines stratégies avancées, comme le blocage 
   adverse ou la gestion optimale des meeples restants. Cela limite leur 
@@ -995,24 +995,33 @@ Tout au long du projet, nous avons eu recours à des outils d'intelligence
 artificielle pour diverses tâches, que ce soit pour la mise en place d'un 
 code de base, l'amélioration de la qualité du code ou l'affinement de 
 certaines fonctionnalités. Cela nous a permis d'avancer plus rapidement 
-et efficacement tout en apprenant à identifier les forces et les 
-faiblesses de chaque outil.
+et efficacement, tout en développant un regard critique sur les forces 
+et les limites de chaque outil.
 
 Nous avons largement utilisé l'extension \textit{GitHub Copilot} de 
-Visual Studio Code qui nous a permis d'obtenir des suggestions de code 
-pertinentes et de gagner du temps sur les tâches répétitives grâce à 
-sa capacité à exploiter le contexte du projet.
+Visual Studio Code, qui s'est révélée particulièrement efficace pour 
+les tâches répétitives et bien délimitées, comme la génération de 
+fonctions utilitaires ou la complétion de blocs de code dont la 
+structure était déjà claire. En revanche, ses suggestions se sont 
+montrées moins pertinentes pour des problèmes nécessitant une 
+compréhension globale de l'architecture du projet, produisant parfois 
+du code fonctionnel en apparence mais incohérent avec le reste du 
+système.
 
 Pour des problématiques plus complexes, nous avons eu recours à 
-\textit{ChatGPT} et \textit{Claude} notamment pour l'implémentation 
-de fonctionnalités telles que l'affichage des réponses du serveur dans 
-le GUI. Ces modèles se sont révélés particulièrement utiles pour 
-débloquer des situations où la logique à mettre en place dépassait 
-le cadre des simples suggestions de code.
+\textit{ChatGPT} et \textit{Claude}, notamment pour l'implémentation 
+de fonctionnalités telles que la mise en place du design pattern Visitor 
+pour l'affichage des réponses du serveur dans le GUI. Ces modèles se 
+sont révélés utiles pour structurer une approche sur des problèmes 
+architecturaux ou pour expliquer des concepts. Toutefois, nous avons 
+constaté leurs limites lorsque le contexte du projet devenait trop 
+volumineux : les suggestions proposées étaient alors déconnectées des 
+choix d'implémentation existants et nécessitaient un travail 
+d'adaptation important, voire introduisaient de nouveaux bugs.
 
-Enfin, l'IA a également contribué à l'amélioration de ce rapport en 
+Enfin, l'IA a également contribué à l'amélioration de ce rapport, en 
 nous aidant à structurer nos idées, à formuler nos analyses de manière 
-plus claire et concise et à corriger les fautes d'orthographe et de 
+plus claire et concise, et à corriger les fautes d'orthographe et de 
 grammaire.
 
 \section{Liste des besoins}
