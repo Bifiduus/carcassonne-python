@@ -255,3 +255,29 @@ def test_load_game_from_file_warns_on_invalid_sections_and_seed_mismatch(
     assert ("The move doesn't match the seed !" in output or "The move does not match the seed." in output)
     assert "Warning: Not all sections were found in the file." in output
     assert "Warning: [Settings] section missing." in output
+
+
+def test_load_game_from_file_accepts_none_seed(tmp_path: Path) -> None:
+    game = DummyGame()
+    handler = SaveHandler(game)
+    save_file = tmp_path / "none_seed.txt"
+    save_file.write_text(
+        "\n".join(
+            [
+                "[Settings]",
+                "verbose=True",
+                "",
+                "[GameState]",
+                "NumberOfPlayers: 2,1",
+                "PlayersOrder: [2, 1, 0]",
+                "GameScore: [0: 5, 1: 8, 2: 13]",
+                "Seed: None",
+                "",
+                "[History]",
+            ]
+        )
+    )
+
+    assert handler.load_game_from_file(str(save_file)) == 0
+    assert game.game_data.seed is None
+    assert game.shuffle_calls == []

@@ -121,7 +121,13 @@ def main() -> int:
     parser.add_argument(
         "-f",
         "--file",
-        help=_("name of the contest file to load in contest mode"),
+        help=_("file to load (contest mode or saved game)"),
+        type=str,
+    )
+    parser.add_argument(
+        "save_file",
+        nargs="?",
+        help=_("saved game file to load at startup"),
         type=str,
     )
 
@@ -234,7 +240,11 @@ def main() -> int:
         print(_("Carcassonne: version {version}").format(version=__version__))
         return 0
 
-    if args.contest and not args.file:
+    file_to_load = args.file or args.save_file
+    if args.file and args.save_file and args.file != args.save_file:
+        parser.error("cannot use both FILE and --file with different values")
+
+    if args.contest and not file_to_load:
         parser.error("--file is required when --contest is enabled")
 
     if args.contest and args.gui:
@@ -253,8 +263,8 @@ def main() -> int:
         config_overrides["debug"] = True
     if args.blitz:
         config_overrides["time"] = args.time if args.time is not None else 30
-    if args.file:
-        config_overrides["contest_file"] = args.file
+    if args.contest and file_to_load:
+        config_overrides["contest_file"] = file_to_load
     # map -p/--players to num_ai_players for AI settings
     if args.players and 1 <= args.players <= 5:
         config_overrides["num_ai_players"] = args.players - 1
@@ -278,10 +288,10 @@ def main() -> int:
 
     if args.debug:
         print(_("Debug mode enabled."), file=sys.stderr, flush=True)
-    if args.file and not args.contest:
+    if file_to_load and not args.contest:
         print(
             _("Loading game from file: {filename}").format(
-                filename=args.file
+                filename=file_to_load
             ),
             flush=True,
         )
@@ -352,6 +362,18 @@ def main() -> int:
             return 1
         print(move)
         return 0
+    if file_to_load and game.load_game_from_file(file_to_load) != 0:
+        print(
+            _("Failed to load the game from {filename}.").format(
+                filename=file_to_load
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    if file_to_load:
+        game.river_manager.reset()
+        if game.game_data.game_configuration.get_setting_value("river"):
+            game.river_manager.initialize_river()
     if args.gui:
         from carcassonne.presentation.gui.create_gui import CreateGui
 

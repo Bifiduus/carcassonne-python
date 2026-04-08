@@ -16,6 +16,7 @@ def build_args(**overrides):
         "seed": None,
         "gui": False,
         "file": None,
+        "save_file": None,
         "blitz": False,
         "contest": False,
         "time": None,
@@ -183,6 +184,9 @@ class MainBootstrapTestCase(unittest.TestCase):
     def test_main_bootstraps_daemon_server_and_cli_mode(self):
         game = Mock()
         game.game_data = Mock()
+        game.load_game_from_file.return_value = 0
+        game.game_data.game_configuration.get_setting_value.return_value = False
+        game.river_manager = Mock()
         server = Mock()
         client = Mock()
         game_cli = Mock()
@@ -220,6 +224,7 @@ class MainBootstrapTestCase(unittest.TestCase):
         server.server_start.assert_any_call("4242")
         client.list_available_servers.assert_called_once_with()
         client.join_server.assert_called_once_with("4242")
+        game.load_game_from_file.assert_called_once_with("save.txt")
         game_cli.run.assert_called_once_with()
         self.assertEqual(game_class.call_args.kwargs["shuffle_algo"], "naive")
         self.assertEqual(game_class.call_args.kwargs["default_seed"], 123)
@@ -231,6 +236,34 @@ class MainBootstrapTestCase(unittest.TestCase):
         self.assertIn("Starting server in daemon mode", stdout.getvalue())
         self.assertIn("Warning: --time is ignored", stderr.getvalue())
         self.assertIn("Debug mode enabled.", stderr.getvalue())
+
+    def test_main_loads_startup_save_from_positional_argument(self):
+        game = Mock()
+        game.game_data = Mock()
+        game.load_game_from_file.return_value = 0
+        game.game_data.game_configuration.get_setting_value.return_value = False
+        game.river_manager = Mock()
+
+        with (
+            patch.object(main_module, "configure_i18n"),
+            patch.object(main_module.signal, "signal"),
+            patch.object(
+                main_module.ArgumentParser,
+                "parse_args",
+                return_value=build_args(save_file="save.txt"),
+            ),
+            patch.object(main_module, "Server", return_value=Mock()),
+            patch.object(main_module, "Client", return_value=Mock()),
+            patch.object(main_module, "Game", return_value=game),
+            patch.object(main_module, "GameCLI", return_value=Mock()) as game_cli,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+        ):
+            exit_code = main_module.main()
+
+        self.assertEqual(exit_code, 0)
+        game.load_game_from_file.assert_called_once_with("save.txt")
+        game_cli.return_value.run.assert_called_once_with()
+        self.assertIn("Loading game from file: save.txt", stdout.getvalue())
 
     def test_main_gui_mode_uses_create_gui(self):
         game = Mock()

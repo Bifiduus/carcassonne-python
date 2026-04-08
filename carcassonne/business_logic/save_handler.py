@@ -350,10 +350,12 @@ class SaveHandler:
                 if line.startswith("Seed:"):
                     # Assuming the format is "Seed: the seed"
                     line = line.split("Seed:")[1].strip()
-                    if line == "":
-                        print(_("Warning: No seed."), file=sys.stderr)
-                        continue
                     game_data = self.game.game_data
+                    if line == "" or line.lower() == "none":
+                        print(_("Warning: No seed."), file=sys.stderr)
+                        game_data.seed = None
+                        game_data.initialize_starting_tile_based_on_config()
+                        continue
                     game_data.seed = int(line)
                     game_data.initialize_starting_tile_based_on_config()
                     self.game.shuffle_deck("fisher-yates", game_data.seed)
