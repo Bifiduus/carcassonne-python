@@ -86,6 +86,10 @@ class BoardView(Gtk.DrawingArea):
         self.ghost_x = self.ghost_y = None
         self.queue_draw()
 
+    def _is_game_paused(self) -> bool:
+        gui = getattr(self.game_data, "gui", None)
+        return bool(getattr(gui, "is_paused", False))
+
     def _create_move_str(self, grid_x: int, grid_y: int) -> str | None:
         """Create a move string if placement is valid, else return None."""
         vertex_id, side = self.game_data.game.get_close_neighbors(
@@ -320,6 +324,8 @@ class BoardView(Gtk.DrawingArea):
 
     def on_click(self, gesture, n_press, mouse_x, mouse_y):
         """Handle left‑button clicks on the board."""
+        if self._is_game_paused():
+            return
         if self.game_data.is_dragging or not self.game_data.current_tile:
             self.queue_draw()
             return
@@ -355,6 +361,9 @@ class BoardView(Gtk.DrawingArea):
 
     def on_drop(self, controller, value, x, y):
         """Handle a tile name string dropped on the board."""
+        if self._is_game_paused():
+            self._reset_ghost()
+            return False
         grid_x, grid_y = self.pixel_to_grid(x, y)
         move_str = self._create_move_str(grid_x, grid_y)
         if move_str:
@@ -364,6 +373,8 @@ class BoardView(Gtk.DrawingArea):
 
     def on_drag_enter(self, controller, x, y):
         """Handle drag entering the board area."""
+        if self._is_game_paused():
+            return 0
         if self.game_data.current_tile:
             self.game_data.is_dragging = True
             self.ghost_x, self.ghost_y = x, y
@@ -374,6 +385,8 @@ class BoardView(Gtk.DrawingArea):
 
     def on_drag_motion(self, controller, x, y):
         """Handle drag motion over the board."""
+        if self._is_game_paused():
+            return 0
         if self.game_data.is_dragging:
             self.ghost_x, self.ghost_y = x, y
             self.queue_draw()
@@ -386,6 +399,8 @@ class BoardView(Gtk.DrawingArea):
         self.grab_focus()
 
     def on_key_press(self, controller, keyval, keycode, state):
+        if self._is_game_paused():
+            return False
         step = 20
         key_map = {
             Gdk.KEY_z: (0, step),  # up
@@ -443,11 +458,16 @@ class BoardView(Gtk.DrawingArea):
         self.queue_draw()
 
     def on_mouse_move(self, controller, x, y):
+        if self._is_game_paused():
+            return
         if self.game_data.is_dragging and self.game_data.current_tile:
             self.ghost_x, self.ghost_y = x, y
             self.queue_draw()
 
     def on_mouse_release(self, gesture, n_press, mouse_x, mouse_y):
+        if self._is_game_paused():
+            self._reset_ghost()
+            return
         if not self.game_data.is_dragging or not self.game_data.current_tile:
             return
         grid_x, grid_y = self.pixel_to_grid(mouse_x, mouse_y)

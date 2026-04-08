@@ -16,6 +16,7 @@ class BlitzManager:
     def __init__(self, game_data) -> None:
         self.game_data = game_data
         self.enabled = False
+        self.paused = False
         self.time_limit_seconds = 0.0
         self.remaining_time_seconds_by_player: dict[int, float] = {}
         self.active_player_id: int | None = None
@@ -33,6 +34,7 @@ class BlitzManager:
             parsed_minutes = 30
         limit_minutes = parsed_minutes if parsed_minutes > 0 else 30
         self.enabled = bool(enabled)
+        self.paused = False
         self.time_limit_seconds = float(limit_minutes * 60)
         self.remaining_time_seconds_by_player = {
             player_id: self.time_limit_seconds for player_id in player_ids
@@ -51,7 +53,7 @@ class BlitzManager:
                 self.time_limit_seconds
             )
         self.active_player_id = player_id
-        self.turn_started_at = time.monotonic()
+        self.turn_started_at = None if self.paused else time.monotonic()
 
     def consume_now(self) -> bool:
         """Consume elapsed time for the active player.
@@ -59,6 +61,8 @@ class BlitzManager:
         Returns True if the active player timed out in this call.
         """
         if not self.enabled:
+            return False
+        if self.paused:
             return False
         if self.active_player_id is None or self.turn_started_at is None:
             return False
@@ -89,6 +93,33 @@ class BlitzManager:
     def tick(self) -> bool:
         """Alias used by periodic tick loops."""
         return self.consume_now()
+
+    def pause(self) -> bool:
+        """Freeze the active blitz clock.
+
+        Returns True if pausing consumes the last remaining time and causes
+        a timeout.
+        """
+        if not self.enabled or self.paused:
+            return False
+
+        timed_out_now = self.consume_now()
+        self.paused = True
+        if self.active_player_id is not None:
+            self.turn_started_at = None
+        return timed_out_now
+
+    def resume(self) -> None:
+        """Resume the active blitz clock from the current moment."""
+        if not self.enabled or not self.paused:
+            return
+
+        self.paused = False
+        if (
+            self.active_player_id is not None
+            and not self.is_player_timed_out(self.active_player_id)
+        ):
+            self.turn_started_at = time.monotonic()
 
     def end_turn(self, next_player_id: int) -> bool:
         """Close current turn accounting and start next player's timer."""
@@ -191,6 +222,8 @@ class BlitzManager:
     def tick_blitz(self) -> bool:
         if not self._is_blitz_enabled():
             return False
+        if self.paused:
+            return False
         if not self._advance_to_next_playable_player():
             return False
 
@@ -241,6 +274,8 @@ class BlitzManager:
             return True
         if not self._advance_to_next_playable_player():
             return False
+        if self.paused:
+            return True
 
         current_player_id = self.game_data.get_current_player().get_id()
         if self.active_player_id != current_player_id:

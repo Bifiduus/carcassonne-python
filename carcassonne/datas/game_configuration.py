@@ -1,11 +1,28 @@
 import configparser
 import os
 import json
+from copy import deepcopy
 import sys
 
 from carcassonne.i18n import gettext as _
 
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".carcassonnerc")
+
+FILE_KEYBIND_DEFAULTS = {
+    "app.new": "n",
+    "app.load": "l",
+    "app.save": "s",
+    "app.config": "comma",
+    "app.info": "i",
+    "app.quit": "q",
+}
+
+GAME_KEYBIND_DEFAULTS = {
+    "app.undo": "u",
+    "app.redo": "r",
+    "app.pause": "p",
+    "app.hint": "h",
+}
 
 DEFAULT_SETTINGS = {
     "verbose": False,
@@ -21,21 +38,22 @@ DEFAULT_SETTINGS = {
     "ai_minimax_scoring": "baseline",
     "ai_mcts_selection": "UCT",
     "contest_file": "",
-    "file_keybinds": {
-        "app.new": "n",
-        "app.load": "l",
-        "app.save": "s",
-        "app.config": "comma",
-        "app.info": "i",
-        "app.quit": "q",
-    },
-    "game_keybinds": {
-        "app.undo": "u",
-        "app.redo": "r",
-        "app.pause": "p",
-        "app.hint": "h",
-    },
+    "file_keybinds": FILE_KEYBIND_DEFAULTS.copy(),
+    "game_keybinds": GAME_KEYBIND_DEFAULTS.copy(),
 }
+
+
+def _merge_keybinds(raw_keybinds, defaults: dict[str, str]) -> dict[str, str]:
+    merged = defaults.copy()
+
+    if not isinstance(raw_keybinds, dict):
+        return merged
+
+    for action, key in raw_keybinds.items():
+        if action in defaults and isinstance(key, str) and key:
+            merged[action] = key
+
+    return merged
 
 
 class GameConfiguration:
@@ -44,11 +62,22 @@ class GameConfiguration:
         if overrides:
             self.settings.update(overrides)
         self._normalize_time_key()
+        self._normalize_keybind_settings()
 
     def _normalize_time_key(self):
         if "time" not in self.settings and "timeout" in self.settings:
             self.settings["time"] = self.settings["timeout"]
         self.settings.pop("timeout", None)
+
+    def _normalize_keybind_settings(self):
+        self.settings["file_keybinds"] = _merge_keybinds(
+            self.settings.get("file_keybinds"),
+            FILE_KEYBIND_DEFAULTS,
+        )
+        self.settings["game_keybinds"] = _merge_keybinds(
+            self.settings.get("game_keybinds"),
+            GAME_KEYBIND_DEFAULTS,
+        )
 
     def _write_config(self, config: configparser.ConfigParser):
         with open(CONFIG_PATH, "w") as f:
@@ -70,15 +99,15 @@ class GameConfiguration:
             "ai_mcts_selection": "UCT",
         }
         config["keybinds"] = {
-            "file_keybinds": json.dumps(DEFAULT_SETTINGS["file_keybinds"]),
-            "game_keybinds": json.dumps(DEFAULT_SETTINGS["game_keybinds"]),
+            "file_keybinds": json.dumps(FILE_KEYBIND_DEFAULTS),
+            "game_keybinds": json.dumps(GAME_KEYBIND_DEFAULTS),
         }
 
         self._write_config(config)
 
     def load_config(self):
         config = configparser.ConfigParser()
-        settings = DEFAULT_SETTINGS.copy()
+        settings = deepcopy(DEFAULT_SETTINGS)
 
         # Case 1: missing file -> create it
         if not os.path.exists(CONFIG_PATH):
@@ -130,12 +159,18 @@ class GameConfiguration:
             # cannot silently reactivate contest mode on the next launch.
             if "keybinds" in config:
                 if config.has_option("keybinds", "file_keybinds"):
-                    settings["file_keybinds"] = json.loads(
-                        config.get("keybinds", "file_keybinds")
+                    settings["file_keybinds"] = _merge_keybinds(
+                        json.loads(
+                            config.get("keybinds", "file_keybinds")
+                        ),
+                        FILE_KEYBIND_DEFAULTS,
                     )
                 if config.has_option("keybinds", "game_keybinds"):
-                    settings["game_keybinds"] = json.loads(
-                        config.get("keybinds", "game_keybinds")
+                    settings["game_keybinds"] = _merge_keybinds(
+                        json.loads(
+                            config.get("keybinds", "game_keybinds")
+                        ),
+                        GAME_KEYBIND_DEFAULTS,
                     )
 
         except Exception as e:

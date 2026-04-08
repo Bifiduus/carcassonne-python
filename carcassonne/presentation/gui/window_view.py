@@ -3,6 +3,10 @@ import math
 
 from gi.repository import Gio, Gtk, GLib
 
+from carcassonne.datas.game_configuration import (
+    FILE_KEYBIND_DEFAULTS,
+    GAME_KEYBIND_DEFAULTS,
+)
 from carcassonne.i18n import gettext as _
 
 
@@ -31,26 +35,14 @@ class WindowView:
 
         # Load keybinds from config
         config = self.game_data.game.get_game_configuration()
-        self.file_keybinds = config.get(
-            "file_keybinds",
-            {
-                "app.new": "n",
-                "app.load": "l",
-                "app.save": "s",
-                "app.config": "comma",
-                "app.info": "i",
-                "app.quit": "q",
-            },
-        )
-        self.game_keybinds = config.get(
-            "game_keybinds",
-            {
-                "app.undo": "u",
-                "app.redo": "r",
-                "app.pause": "p",
-                "app.hint": "h",
-            },
-        )
+        raw_file_keybinds = config.get("file_keybinds", {})
+        raw_game_keybinds = config.get("game_keybinds", {})
+        self.file_keybinds = FILE_KEYBIND_DEFAULTS.copy()
+        self.game_keybinds = GAME_KEYBIND_DEFAULTS.copy()
+        if isinstance(raw_file_keybinds, dict):
+            self.file_keybinds.update(raw_file_keybinds)
+        if isinstance(raw_game_keybinds, dict):
+            self.game_keybinds.update(raw_game_keybinds)
 
         # main window
         self.window = Gtk.ApplicationWindow(application=self.application)

@@ -206,3 +206,37 @@ def test_remaining_time_helpers_cover_enabled_and_disabled_modes() -> None:
     assert all_remaining[0][0] == 0
     assert all_remaining[0][1] == pytest.approx(300.0, abs=0.05)
     assert all_remaining[1] == (1, 300.0)
+
+
+def test_pause_freezes_clock_until_resume(monkeypatch) -> None:
+    manager = BlitzManager(DummyGameData(settings={"blitz": True, "time": 1}))
+    manager.reset([0], enabled=True, minutes=1)
+
+    current_time = 10.0
+
+    def fake_monotonic():
+        return current_time
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.blitz_manager.time.monotonic",
+        fake_monotonic,
+    )
+
+    manager.start_turn(0)
+    current_time = 15.0
+    assert manager.pause() is False
+    assert manager.paused is True
+    assert manager.get_remaining_seconds(0) == 55.0
+    assert manager.turn_started_at is None
+
+    current_time = 40.0
+    assert manager.tick_blitz() is False
+    assert manager.get_remaining_seconds(0) == 55.0
+
+    manager.resume()
+    assert manager.paused is False
+    assert manager.turn_started_at == 40.0
+
+    current_time = 42.5
+    assert manager.consume_now() is False
+    assert manager.get_remaining_seconds(0) == pytest.approx(52.5)

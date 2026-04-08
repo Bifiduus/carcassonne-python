@@ -121,6 +121,17 @@ def test_game_configuration_returns_game_configuration() -> None:
     game.get_game_configuration.assert_called_once()
 
 
+def test_pause_and_resume_delegate_to_game_service() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    gui_data.pause_game()
+    gui_data.resume_game()
+
+    game.pause_game.assert_called_once_with()
+    game.resume_game.assert_called_once_with()
+
+
 def test_new_game_starts_new_game_and_resets_state() -> None:
     game = Mock()
     gui_data = GameDataGui(game, Mock(), Mock())

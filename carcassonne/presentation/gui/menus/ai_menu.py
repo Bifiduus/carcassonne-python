@@ -64,6 +64,17 @@ class AiMenu(Gtk.Box):
         ai_players_box.append(self.ai_players_entry)
         self.append(ai_players_box)
 
+        # --- AI Time (seconds) -------------------------------------------
+        ai_time_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6
+        )
+        self.ai_time_entry = Gtk.Entry()
+        self.ai_time_entry.set_placeholder_text(_("seconds"))
+        ai_time_box.append(Gtk.Label(label=_("AI time (seconds):")))
+        self.ai_time_entry.connect("changed", self.on_ai_time_changed)
+        ai_time_box.append(self.ai_time_entry)
+        self.append(ai_time_box)
+
         # --- back buttons ----------------------------------------
         btn_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         btn_back = Gtk.Button(label=_("Back"))
@@ -111,6 +122,18 @@ class AiMenu(Gtk.Box):
             if 1 <= num_ai_players <= 4:
                 self.gui.game_data.game.set_game_configuration(
                     "num_ai_players", num_ai_players
+                )
+                self.gui.game_data.game.save_config()
+        except ValueError:
+            pass
+
+    def on_ai_time_changed(self, entry):
+        """Apply AI time configuration when entry changes"""
+        try:
+            ai_time = int(self.ai_time_entry.get_text())
+            if ai_time > 0:
+                self.gui.game_data.game.set_game_configuration(
+                    "ai_time", ai_time
                 )
                 self.gui.game_data.game.save_config()
         except ValueError:

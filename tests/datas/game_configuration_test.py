@@ -2,6 +2,8 @@ import configparser
 
 from carcassonne.datas.game_configuration import (
     DEFAULT_SETTINGS,
+    FILE_KEYBIND_DEFAULTS,
+    GAME_KEYBIND_DEFAULTS,
     GameConfiguration,
 )
 
@@ -77,8 +79,33 @@ def test_configuration_loads_existing_values_and_keybinds(monkeypatch, tmp_path)
     assert config.get_setting_value("ai_minimax_scoring") == "short_term"
     assert config.get_setting_value("ai_mcts_selection") == "ML"
     assert config.get_setting_value("contest_file") == ""
-    assert config.get_setting_value("file_keybinds") == {"app.new": "x"}
-    assert config.get_setting_value("game_keybinds") == {"app.undo": "z"}
+    assert config.get_setting_value("file_keybinds") == {
+        **FILE_KEYBIND_DEFAULTS,
+        "app.new": "x",
+    }
+    assert config.get_setting_value("game_keybinds") == {
+        **GAME_KEYBIND_DEFAULTS,
+        "app.undo": "z",
+    }
+
+
+def test_configuration_keeps_default_keybind_templates_isolated(monkeypatch, tmp_path) -> None:
+    config_path = tmp_path / ".carcassonnerc"
+    monkeypatch.setattr(
+        "carcassonne.datas.game_configuration.CONFIG_PATH",
+        str(config_path),
+    )
+
+    first = GameConfiguration()
+    first.settings["file_keybinds"]["app.new"] = "x"
+    first.settings["game_keybinds"]["app.pause"] = "y"
+
+    second = GameConfiguration()
+
+    assert second.get_setting_value("file_keybinds")["app.new"] == "n"
+    assert second.get_setting_value("game_keybinds")["app.pause"] == "p"
+    assert DEFAULT_SETTINGS["file_keybinds"]["app.new"] == "n"
+    assert DEFAULT_SETTINGS["game_keybinds"]["app.pause"] == "p"
 
 
 def test_configuration_falls_back_to_defaults_on_invalid_file(monkeypatch, tmp_path, capsys) -> None:

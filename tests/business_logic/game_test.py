@@ -196,6 +196,8 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.blitz_manager = SimpleNamespace(
         get_all_players_remaining_time_seconds=Mock(return_value=[(4, 12.0)]),
         get_player_remaining_time_seconds=Mock(return_value=9.0),
+        pause=Mock(),
+        resume=Mock(),
         tick_blitz=Mock(return_value=False),
         get_timeout_message=Mock(return_value="timeout"),
     )
@@ -253,6 +255,8 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     assert game.get_all_players_remaining_time_seconds() == [(4, 12.0)]
     assert game.get_current_player_remaining_time_seconds() == 9.0
     assert game.get_player_remaining_time_seconds(9) == 9.0
+    game.pause_game()
+    game.resume_game()
     assert game.tick_blitz() is False
     assert game.get_timeout_message() == "timeout"
 
@@ -268,6 +272,8 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.new_game.start_new_game.assert_not_called()
     game.undo_redo_manager.undo.assert_called_once_with()
     game.undo_redo_manager.redo.assert_called_once_with()
+    game.blitz_manager.pause.assert_called_once_with()
+    game.blitz_manager.resume.assert_called_once_with()
 
 
 def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertices() -> None:

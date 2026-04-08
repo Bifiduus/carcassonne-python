@@ -29,6 +29,24 @@ def test_on_hint_delegates_to_game_data_provide_hint() -> None:
     gui.game_data.provide_hint.assert_called_once()
 
 
+def test_on_pause_delegates_to_gui_toggle_pause() -> None:
+    gui = DummyGUI()
+    gui.toggle_pause = Mock()
+
+    commands_handler_gui.on_pause(gui)
+
+    gui.toggle_pause.assert_called_once()
+
+
+def test_on_hint_is_ignored_while_game_is_paused() -> None:
+    gui = DummyGUI()
+    gui.is_paused = True
+
+    commands_handler_gui.on_hint(gui)
+
+    gui.game_data.provide_hint.assert_not_called()
+
+
 def test_on_draw_gui_updates_preview_and_players_view() -> None:
     gui = DummyGUI()
     with patch.object(commands_handler_gui.utils, "tile_image_path", return_value="/tmp/CFFF.png"):
