@@ -18,3 +18,41 @@ class EndGame:
             return True
         else:
             return False
+
+    @staticmethod
+    def _score_value(player) -> int:
+        if hasattr(player, "get_score_int"):
+            return int(player.get_score_int())
+        if hasattr(player, "get_score"):
+            raw_score = player.get_score()
+            if hasattr(raw_score, "score"):
+                return int(raw_score.score)
+            if isinstance(raw_score, (int, float)):
+                return int(raw_score)
+        if hasattr(player, "score"):
+            raw_score = player.score
+            if hasattr(raw_score, "score"):
+                return int(raw_score.score)
+            if isinstance(raw_score, (int, float)):
+                return int(raw_score)
+        return 0
+
+    def get_winners(self) -> list:
+        players = list(self.game_data.players.values())
+        if not players:
+            return []
+        best_score = max(self._score_value(player) for player in players)
+        return [
+            player for player in players
+            if self._score_value(player) == best_score
+        ]
+
+    def get_winner(self):
+        winners = self.get_winners()
+        if len(winners) != 1:
+            return None
+        return winners[0]
+
+    def is_draw(self) -> bool:
+        winners = self.get_winners()
+        return len(winners) > 1

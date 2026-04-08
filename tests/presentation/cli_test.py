@@ -34,6 +34,9 @@ def build_cli():
     game.get_timeout_message.return_value = ""
     game.end_game.return_value = False
     game.get_players_order.return_value = [1, 2]
+    game.get_winner.return_value = DummyPlayer(1, "Alice", 12)
+    game.get_winners.return_value = [DummyPlayer(1, "Alice", 12)]
+    game.is_draw.return_value = False
     game.game_data = SimpleNamespace(
         players={
             1: DummyPlayer(1, "Alice", 12),
@@ -299,10 +302,31 @@ def test_tick_once_and_on_game_over_cover_timeout_ai_and_final_scores(capsys) ->
     cli._on_game_over()
     output = capsys.readouterr().out
     assert "=== Game finished! Final scores ===" in output
+    assert "Winner: Alice" in output
     assert "1. Alice: 12 points" in output
     assert "2. Bob: 8 points" in output
     assert cli.running is False
     game.get_printed_board.assert_called()
+
+
+def test_on_game_over_prints_draw_when_scores_are_tied(capsys) -> None:
+    cli, game, _, _ = build_cli()
+    game.get_winner.return_value = None
+    game.get_winners.return_value = [
+        DummyPlayer(1, "Alice", 12),
+        DummyPlayer(2, "Bob", 12),
+    ]
+    game.game_data = SimpleNamespace(
+        players={
+            1: DummyPlayer(1, "Alice", 12),
+            2: DummyPlayer(2, "Bob", 12),
+        }
+    )
+
+    cli._on_game_over()
+
+    output = capsys.readouterr().out
+    assert "Draw: Alice, Bob" in output
 
 
 def test_run_executes_main_loop_and_writes_history() -> None:

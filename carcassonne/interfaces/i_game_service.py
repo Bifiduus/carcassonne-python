@@ -108,6 +108,18 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def get_winners(self) -> list[IPlayer]:
+        pass
+
+    @abstractmethod
+    def get_winner(self) -> IPlayer | None:
+        pass
+
+    @abstractmethod
+    def is_draw(self) -> bool:
+        pass
+
+    @abstractmethod
     def provide_hint(self) -> str:
         pass
 

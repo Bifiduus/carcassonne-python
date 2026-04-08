@@ -27,6 +27,18 @@ class DummyScoreManager:
         self.calls.append((graph, players))
 
 
+class DummyPlayer:
+    def __init__(self, username: str, score: int) -> None:
+        self.username = username
+        self.score = score
+
+    def get_username(self) -> str:
+        return self.username
+
+    def get_score_int(self) -> int:
+        return self.score
+
+
 def create_game_data(empty: bool, playable: bool, already_scored: bool = False):
     return SimpleNamespace(
         _end_game_scored=already_scored,
@@ -85,3 +97,33 @@ def test_end_game_returns_false_while_game_can_continue() -> None:
     assert end_game.end_game() is False
     assert score_manager.calls == []
     assert game_data._end_game_scored is False
+
+
+def test_end_game_get_winner_returns_single_high_score_player() -> None:
+    game_data, blitz_manager = create_game_data(empty=False, playable=True)
+    game_data.players = {
+        0: DummyPlayer("Alice", 12),
+        1: DummyPlayer("Bob", 8),
+    }
+    end_game = EndGame(game_data, blitz_manager, DummyScoreManager())
+
+    winner = end_game.get_winner()
+
+    assert winner is not None
+    assert winner.get_username() == "Alice"
+    assert end_game.is_draw() is False
+
+
+def test_end_game_get_winner_returns_none_on_draw() -> None:
+    game_data, blitz_manager = create_game_data(empty=False, playable=True)
+    game_data.players = {
+        0: DummyPlayer("Alice", 12),
+        1: DummyPlayer("Bob", 12),
+    }
+    end_game = EndGame(game_data, blitz_manager, DummyScoreManager())
+
+    winners = end_game.get_winners()
+
+    assert end_game.get_winner() is None
+    assert end_game.is_draw() is True
+    assert [player.get_username() for player in winners] == ["Alice", "Bob"]
