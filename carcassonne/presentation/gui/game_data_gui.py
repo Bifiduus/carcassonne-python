@@ -49,6 +49,19 @@ class GameDataGui:
         self.game.start_new_game(players_order, seed)
         self.reset()
 
+    def run_contest_gui(self, contest_file: str) -> tuple[bool, str]:
+        """Execute contest mode from GUI and return (success, result_or_error).
+
+        Loads a game position from file and computes the AI move to play.
+        Returns True with the move string on success, or False with an error
+        message on failure.
+        """
+        try:
+            move = self.game.game_mode_manager.run_contest()
+            return True, move
+        except ValueError as exc:
+            return False, str(exc)
+
     def undo(self):
         commands_handler_gui.on_undo(self.game)
         if self.board_view:

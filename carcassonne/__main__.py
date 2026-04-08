@@ -225,6 +225,10 @@ def main() -> int:
     if args.contest and not args.file:
         parser.error("--file is required when --contest is enabled")
 
+    if args.contest and args.gui:
+        parser.error(
+            "--contest and --gui are mutually exclusive (contest mode is non-interactive)")
+
     config_overrides = {}
     # CLI contract: blitz mode is enabled only when -b/--blitz is passed.
     config_overrides["blitz"] = bool(args.blitz)

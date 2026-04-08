@@ -132,6 +132,7 @@ class SingleplayerMenu(Gtk.Box):
         self.selected_file = None
         self.file_button.set_label(_("Choose contest file"))
         self.gui.game_data.game.set_game_configuration("contest_file", "")
+        self.gui.game_data.game.set_game_configuration("contest", False)
 
     def on_mode_toggle(self, button):
         """Apply mode configuration when it changes"""
@@ -151,6 +152,7 @@ class SingleplayerMenu(Gtk.Box):
 
             # Apply blitz mode
             self.gui.game_data.game.set_game_configuration("blitz", True)
+            self.gui.game_data.game.set_game_configuration("contest", False)
 
         elif button is self.contest_cb and button.get_active():
             self.blitz_cb.set_active(False)
@@ -160,6 +162,7 @@ class SingleplayerMenu(Gtk.Box):
 
             # Apply contest mode
             self.gui.game_data.game.set_game_configuration("blitz", False)
+            self.gui.game_data.game.set_game_configuration("contest", True)
 
         else:
             self.file_button.set_visible(False)
@@ -168,6 +171,7 @@ class SingleplayerMenu(Gtk.Box):
 
             # Clear both modes
             self.gui.game_data.game.set_game_configuration("blitz", False)
+            self.gui.game_data.game.set_game_configuration("contest", False)
 
         self.gui.game_data.game.save_config()
 
@@ -185,13 +189,90 @@ class SingleplayerMenu(Gtk.Box):
             pass
 
     def on_back(self, button):
-        """Validate configuration and start a new game."""
+        """Validate configuration and start a new game or run contest."""
         # Validate contest file if contest mode is selected
         if self.contest_cb.get_active() and not self.selected_file:
-            print(_("Please select a contest file."))
+            self._show_error_dialog(
+                _("Contest file required"),
+                _("Please select a contest file.")
+            )
             return
 
-        # Start the new game with the seed value
+        # Handle contest mode specially
+        if self.contest_cb.get_active() and self.selected_file:
+            self._run_contest_mode()
+            return
+
+        # Normal game flow
         seed = getattr(self, "seed_value", None)
         self.gui.game_data.new_game(None, seed)
         self.gui.window.stack.set_visible_child_name("options_menu")
+
+    def _run_contest_mode(self):
+        """Execute contest mode and show result dialog."""
+        success, result = self.gui.game_data.run_contest_gui(
+            self.selected_file
+        )
+
+        if success:
+            self._show_result_dialog(
+                _("Contest Result"),
+                _("The AI chose this move:\n{move}").format(move=result)
+            )
+        else:
+            self._show_error_dialog(
+                _("Contest Error"),
+                _("Failed to run contest mode:\n{error}").format(error=result)
+            )
+
+    def _show_result_dialog(self, title: str, message: str):
+        """Show an info dialog with the contest result."""
+        dialog = Gtk.Dialog(
+            title=title,
+            transient_for=self.gui.window.window,
+            modal=True
+        )
+
+        content_area = dialog.get_content_area()
+        label = Gtk.Label(label=message)
+        label.set_wrap(True)
+        label.set_margin_top(10)
+        label.set_margin_bottom(10)
+        label.set_margin_start(10)
+        label.set_margin_end(10)
+        content_area.append(label)
+
+        dialog.add_button(_("OK"), Gtk.ResponseType.OK)
+        dialog.set_default_response(Gtk.ResponseType.OK)
+
+        def on_response(dialog, response_id):
+            dialog.close()
+
+        dialog.connect("response", on_response)
+        dialog.show()
+
+    def _show_error_dialog(self, title: str, message: str):
+        """Show an error dialog."""
+        dialog = Gtk.Dialog(
+            title=title,
+            transient_for=self.gui.window.window,
+            modal=True
+        )
+
+        content_area = dialog.get_content_area()
+        label = Gtk.Label(label=message)
+        label.set_wrap(True)
+        label.set_margin_top(10)
+        label.set_margin_bottom(10)
+        label.set_margin_start(10)
+        label.set_margin_end(10)
+        content_area.append(label)
+
+        dialog.add_button(_("OK"), Gtk.ResponseType.OK)
+        dialog.set_default_response(Gtk.ResponseType.OK)
+
+        def on_response(dialog, response_id):
+            dialog.close()
+
+        dialog.connect("response", on_response)
+        dialog.show()
