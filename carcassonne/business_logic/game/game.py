@@ -444,12 +444,19 @@ class Game(IGameService):
 
     @staticmethod
     def _score_value(player) -> int:
-        if hasattr(player, "get_score_int"):
-            return int(player.get_score_int())
-        if hasattr(player, "get_score"):
-            raw_score = player.get_score()
-            if hasattr(raw_score, "score"):
-                return int(raw_score.score)
+        getter = getattr(player, "get_score_int", None)
+        if callable(getter):
+            try:
+                return int(getter())
+            except (TypeError, ValueError):
+                pass
+
+        getter = getattr(player, "get_score", None)
+        if callable(getter):
+            raw_score = getter()
+            score_attr = getattr(raw_score, "score", None)
+            if isinstance(score_attr, (int, float)):
+                return int(score_attr)
             if isinstance(raw_score, (int, float)):
                 return int(raw_score)
         return 0

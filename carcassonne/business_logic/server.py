@@ -216,7 +216,10 @@ class Server(IServerService):
     def get_winner(self, players: dict[int, Player]) -> int:
         if not players:
             return -1
-        max_score = max(Game._score_value(player) for player in players.values())
+        max_score = max(
+            Game._score_value(player)
+            for player in players.values()
+        )
         winners = [
             player_id for player_id, player in players.items()
             if Game._score_value(player) == max_score
@@ -642,7 +645,10 @@ class Server(IServerService):
                             client_socket.close()
                         except Exception as e:
                             print(
-                                _("Error closing client socket: {error}").format(
+                                _(
+                                    "Error closing client socket: "
+                                    "{error}"
+                                ).format(
                                     error=e
                                 ),
                                 file=sys.stderr,
@@ -669,10 +675,14 @@ class Server(IServerService):
                             #  on the game instance
                             game[1].save_game_to_file(
                                 f"game_{party_name}_"
-                                f"{time.asctime(time.localtime())}_backup.txt")
+                                f"{time.asctime(time.localtime())}_backup.txt"
+                            )
                     except Exception as e:
                         print(
-                            _("Error cleaning up game {game_id}: {error}").format(
+                            _(
+                                "Error cleaning up game {game_id}: "
+                                "{error}"
+                            ).format(
                                 game_id=game_id,
                                 error=e,
                             ),
