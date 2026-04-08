@@ -39,6 +39,12 @@ class GameDataGui:
     def game_configuration(self):
         return self.game.get_game_configuration()
 
+    def pause_game(self) -> None:
+        self.game.pause_game()
+
+    def resume_game(self) -> None:
+        self.game.resume_game()
+
     def new_game(self, players_order, seed):
         """Helper that starts a new game and resets GUI state.
         ``players_order`` and ``seed`` are simply forwarded to the underlying

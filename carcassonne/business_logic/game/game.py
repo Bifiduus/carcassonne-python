@@ -858,6 +858,12 @@ class Game(IGameService):
     ) -> float | None:
         return self.blitz_manager.get_player_remaining_time_seconds(player_id)
 
+    def pause_game(self) -> None:
+        self.blitz_manager.pause()
+
+    def resume_game(self) -> None:
+        self.blitz_manager.resume()
+
     def tick_blitz(self) -> bool:
         return self.blitz_manager.tick_blitz()
 

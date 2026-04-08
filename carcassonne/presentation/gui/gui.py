@@ -47,6 +47,7 @@ class GameGUI(Gtk.Application):
 
         self.game_data = game_data
         self.running = True
+        self.is_paused = False
         self._end_game_dialog_shown = False
 
         # Placeholder views for early visitor registration compatibility
@@ -152,7 +153,9 @@ class GameGUI(Gtk.Application):
         register(
             self, "redo", lambda a, p: commands_handler_gui.on_redo_gui(self)
         )
-        register(self, "pause", lambda a, p: commands_handler_gui.on_pause())
+        register(
+            self, "pause", lambda a, p: commands_handler_gui.on_pause(self)
+        )
         register(self, "hint", lambda a, p: commands_handler_gui.on_hint(self))
 
         # the ``WindowView`` helper already attaches the file/game menus; an
@@ -165,6 +168,7 @@ class GameGUI(Gtk.Application):
 
         # ----------- game overlay (board + controls) -----------------------
         overlay = Gtk.Overlay()
+        self.game_overlay = overlay
 
         self.board_view = BoardView(self.game_data)
         self.game_data.set_board_view(self.board_view)
@@ -183,10 +187,7 @@ class GameGUI(Gtk.Application):
         back_button.set_halign(Gtk.Align.END)
         back_button.set_valign(Gtk.Align.START)
         back_button.add_css_class("red-buttons")
-        back_button.connect(
-            "clicked",
-            lambda b: self.window.stack.set_visible_child_name("menu"),
-        )
+        back_button.connect("clicked", self._on_back_to_menu)
         overlay.add_overlay(back_button)
 
         # end-turn button in a semi-transparent panel
@@ -211,6 +212,9 @@ class GameGUI(Gtk.Application):
 
         overlay.add_overlay(corner_box)
         overlay.add_overlay(end_turn_box)
+
+        self.pause_overlay = self._create_pause_overlay()
+        overlay.add_overlay(self.pause_overlay)
 
         # application shortcuts for the three game actions
         register(
@@ -245,10 +249,90 @@ class GameGUI(Gtk.Application):
 
     def _on_global_key_press(self, controller, keyval, keycode, state):
         self.window.hide_menus()
+        if self.is_paused:
+            return False
         if keyval == Gdk.KEY_r:
             commands_handler_gui.on_rotate_gui(self)
             return True
         return False
+
+    def _create_pause_overlay(self):
+        pause_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=12,
+        )
+        pause_box.set_halign(Gtk.Align.CENTER)
+        pause_box.set_valign(Gtk.Align.CENTER)
+        pause_box.set_margin_top(24)
+        pause_box.set_margin_bottom(24)
+        pause_box.set_margin_start(24)
+        pause_box.set_margin_end(24)
+        pause_box.add_css_class("end-turn-panel")
+        pause_box.set_visible(False)
+
+        title = Gtk.Label()
+        title.set_use_markup(True)
+        title.set_markup(
+            f"<span size='x-large'><b>{_('Game paused')}</b></span>"
+        )
+        pause_box.append(title)
+
+        message = Gtk.Label(
+            label=_("Press Ctrl+P or use the button below to resume.")
+        )
+        message.set_justify(Gtk.Justification.CENTER)
+        pause_box.append(message)
+
+        resume_button = Gtk.Button(label=_("Resume"))
+        resume_button.add_css_class("orange-buttons")
+        resume_button.connect("clicked", lambda b: self.toggle_pause())
+        pause_box.append(resume_button)
+
+        return pause_box
+
+    def _on_back_to_menu(self, button):
+        self.set_paused(False)
+        self.window.stack.set_visible_child_name("menu")
+
+    def set_paused(self, paused: bool) -> bool:
+        if self.is_paused == paused:
+            return self.is_paused
+
+        self.is_paused = paused
+
+        if hasattr(self.game_data, "pause_game") and hasattr(
+            self.game_data, "resume_game"
+        ):
+            if paused:
+                self.game_data.pause_game()
+            else:
+                self.game_data.resume_game()
+
+        if hasattr(self.game_data, "is_dragging"):
+            self.game_data.is_dragging = False
+
+        if hasattr(self, "button_draw"):
+            self.button_draw.set_sensitive(not paused)
+        if hasattr(self, "button_end_turn"):
+            self.button_end_turn.set_sensitive(not paused)
+        if hasattr(self, "tile_preview"):
+            self.tile_preview.set_sensitive(not paused)
+        if hasattr(self, "board_view"):
+            self.board_view.set_sensitive(not paused)
+            self.board_view.refresh()
+        if hasattr(self, "pause_overlay"):
+            self.pause_overlay.set_visible(paused)
+        if hasattr(self, "players_view"):
+            self.players_view.refresh()
+
+        return self.is_paused
+
+    def toggle_pause(self) -> bool:
+        if not hasattr(self, "window"):
+            return self.is_paused
+        if self.window.stack.get_visible_child_name() != "game":
+            return self.is_paused
+        return self.set_paused(not self.is_paused)
 
     def on_end_turn(self, action, param):
         # kept for backward compatibility; newer code should use
@@ -340,11 +424,13 @@ class GameGUI(Gtk.Application):
             self._end_game_scores_box.append(player_label)
 
     def show_end_game_screen(self) -> None:
+        self.set_paused(False)
         self._populate_end_game_scores()
         self.window.stack.set_visible_child_name('end_game')
 
     def start_singleplayer(self, button):
         # self.game.start_new_game(mode="single")
+        self.set_paused(False)
         self.window.stack.set_visible_child_name("game")
         commands_handler_gui.on_new_gui(self)
         self.board_view.grab_focus()

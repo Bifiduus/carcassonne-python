@@ -124,6 +124,14 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def pause_game(self) -> None:
+        pass
+
+    @abstractmethod
+    def resume_game(self) -> None:
+        pass
+
+    @abstractmethod
     def tick_blitz(self) -> bool:
         pass
 

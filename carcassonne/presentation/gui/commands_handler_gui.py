@@ -7,6 +7,11 @@ from carcassonne.i18n import gettext as _
 Lists of commands that can be triggered from the GUI, and their handlers.
 """
 
+
+def _is_game_paused(gui) -> bool:
+    return bool(getattr(gui, "is_paused", False))
+
+
 """
 File menu commands:
 """
@@ -49,6 +54,8 @@ def on_load(gui) -> None:
                 if hasattr(gui, "board_view"):
                     gui.board_view.refresh()
                 gui.tile_preview.set_filename("")
+                if hasattr(gui, "set_paused"):
+                    gui.set_paused(False)
                 gui.window.stack.set_visible_child_name("game")
                 # Final refresh of the board after switching to game view
                 if hasattr(gui, "board_view"):
@@ -177,12 +184,18 @@ def on_redo(game) -> None:
     game.redo()
 
 
-def on_pause() -> None:
+def on_pause(gui=None) -> None:
+    if gui is not None and hasattr(gui, "toggle_pause"):
+        gui.toggle_pause()
+        return
     print(_("Pause is not implemented yet."))
 
 
 def on_hint(gui):
     """Provide a hint for the current position."""
+    if _is_game_paused(gui):
+        return
+
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
         if gui.game_data.game.game_data.current_hand is None:
@@ -201,6 +214,8 @@ def on_hint(gui):
 
 def on_new_gui(gui):
     """Start a new game and refresh GUI elements."""
+    if hasattr(gui, "set_paused"):
+        gui.set_paused(False)
     # delegate game logic to GameDataGui
     gui.game_data.new_game(None, None)
     # refresh any dependent views
@@ -212,6 +227,9 @@ def on_new_gui(gui):
 
 def on_undo_gui(gui):
     """Undo last move and refresh the board view."""
+    if _is_game_paused(gui):
+        return
+
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
         history = getattr(gui.game_data.game.game_data, "history", None)
@@ -231,6 +249,9 @@ def on_undo_gui(gui):
 
 def on_redo_gui(gui):
     """Redo last undone move and refresh the board view."""
+    if _is_game_paused(gui):
+        return
+
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
         history = getattr(gui.game_data.game.game_data, "history", None)
@@ -249,6 +270,9 @@ def on_redo_gui(gui):
 
 def on_draw_gui(gui):
     """Draw a tile from the deck and update preview."""
+    if _is_game_paused(gui):
+        return
+
     tile = gui.game_data.draw_tile()
     if tile is None:
         # Provide specific error message based on context
@@ -286,6 +310,9 @@ def on_draw_gui(gui):
 
 def on_rotate_gui(gui):
     """Rotate the current tile and refresh preview."""
+    if _is_game_paused(gui):
+        return
+
     # Check preconditions in presentation layer
     if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
         if gui.game_data.game.game_data.current_hand is None:
@@ -303,6 +330,9 @@ def on_rotate_gui(gui):
 
 def on_end_turn_gui(gui):
     """Play the pending move and let GameDataGui handle the reset."""
+    if _is_game_paused(gui):
+        return
+
     # Check preconditions in presentation layer
     if (
         hasattr(gui.game_data, "current_tile")
