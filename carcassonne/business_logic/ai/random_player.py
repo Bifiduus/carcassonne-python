@@ -5,8 +5,6 @@ from __future__ import annotations
 import random as r
 from typing import List, TYPE_CHECKING
 
-from carcassonne.i18n import gettext as _
-
 if TYPE_CHECKING:
     from carcassonne.business_logic.game.game import Game
 
@@ -79,19 +77,5 @@ class RandomPlayer:
     def random_move(self, tile, game: "Game") -> str:
         """Select a random move from the list of possible moves."""
         possible_moves = self.get_possible_moves(tile, game)
-        print(
-            _(
-                "[DEBUG RandomPlayer] "
-                "Possible moves for tile {tile}: {moves}"
-            ).format(
-                tile=tile,
-                moves=possible_moves,
-            )
-        )
         selected_move = r.choice(possible_moves) if possible_moves else ""
-        print(
-            _("[DEBUG RandomPlayer] Selected move: {move}").format(
-                move=selected_move
-            )
-        )
         return selected_move
