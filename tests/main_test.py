@@ -22,7 +22,7 @@ def build_args(**overrides):
         "players": 2,
         "river": False,
         "ai_time": 5,
-        "ai_mode": "random",
+        "ai_mode": None,
         "ai_minimax_depth": 83,
         "ai_minimax_scoring": None,
         "ai_mcts_selection": "UCT",
@@ -65,6 +65,52 @@ class MainContestModeTestCase(unittest.TestCase):
 
 
 class MainBootstrapTestCase(unittest.TestCase):
+    def test_main_keeps_configuration_default_ai_mode_when_flag_is_missing(self):
+        game = Mock()
+        game.game_data = Mock()
+
+        with (
+            patch.object(main_module, "configure_i18n"),
+            patch.object(main_module.signal, "signal"),
+            patch.object(
+                main_module.ArgumentParser,
+                "parse_args",
+                return_value=build_args(),
+            ),
+            patch.object(main_module, "Server", return_value=Mock()),
+            patch.object(main_module, "Client", return_value=Mock()),
+            patch.object(main_module, "Game", return_value=game) as game_class,
+            patch.object(main_module, "GameCLI", return_value=Mock()),
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            exit_code = main_module.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertNotIn("ai_mode", game_class.call_args.args[2])
+
+    def test_main_overrides_ai_mode_when_flag_is_provided(self):
+        game = Mock()
+        game.game_data = Mock()
+
+        with (
+            patch.object(main_module, "configure_i18n"),
+            patch.object(main_module.signal, "signal"),
+            patch.object(
+                main_module.ArgumentParser,
+                "parse_args",
+                return_value=build_args(ai_mode="mcts"),
+            ),
+            patch.object(main_module, "Server", return_value=Mock()),
+            patch.object(main_module, "Client", return_value=Mock()),
+            patch.object(main_module, "Game", return_value=game) as game_class,
+            patch.object(main_module, "GameCLI", return_value=Mock()),
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            exit_code = main_module.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(game_class.call_args.args[2]["ai_mode"], "mcts")
+
     def test_argument_parser_error_prints_help_and_exits(self):
         parser = main_module.ArgumentParser()
         stderr = io.StringIO()

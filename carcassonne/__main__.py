@@ -172,9 +172,9 @@ def main() -> int:
     parser.add_argument(
         "-am",
         "--ai-mode",
-        help=_("AI algorithm used (default: random)"),
+        help=_("AI algorithm used (default from configuration: minimax)"),
         type=str,
-        default="random",
+        default=None,
         choices=["random", "minimax", "iterative", "mcts"],
     )
 
@@ -265,7 +265,8 @@ def main() -> int:
         )
     if args.ai_time:
         config_overrides["ai_time"] = args.ai_time
-    config_overrides["ai_mode"] = args.ai_mode
+    if args.ai_mode is not None:
+        config_overrides["ai_mode"] = args.ai_mode
     if args.ai_minimax_depth > 0:
         config_overrides["ai_minimax_depth"] = args.ai_minimax_depth
     if args.ai_minimax_scoring is not None:
