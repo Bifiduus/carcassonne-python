@@ -6,14 +6,14 @@ preview grids.  The idea is that ``BoardView`` can simply delegate to
 these helpers without holding too much implementation detail.
 """
 
-from gi.repository import Gdk
 import math
+import importlib
 from typing import Any, Dict, Tuple
 
 import gi
 
 gi.require_version("Gdk", "4.0")
-gi.require_version("GdkPixbuf", "2.0")
+Gdk = importlib.import_module("gi.repository.Gdk")
 
 color_map = {
     "red": (1, 0, 0),

@@ -121,7 +121,7 @@ def test_consume_now_handles_already_timed_out_and_new_timeout(monkeypatch) -> N
     assert manager.get_remaining_seconds(0) == 0.0
     assert manager.has_timeout_loss() is True
     assert manager.get_timed_out_players() == [0]
-    assert "joueur 0" in manager.get_timeout_message()
+    assert "Player 0" in manager.get_timeout_message()
 
 
 def test_end_turn_starts_next_player_when_they_are_still_playable(monkeypatch) -> None:

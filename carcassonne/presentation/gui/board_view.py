@@ -3,10 +3,15 @@
 from carcassonne.presentation.gui import board_utils
 from typing import Dict, Any, Tuple
 import os
-from gi.repository import Gtk, Gdk, GdkPixbuf
 import gi
+import importlib
 
 gi.require_version("Gtk", "4.0")
+gi.require_version("Gdk", "4.0")
+gi.require_version("GdkPixbuf", "2.0")
+Gtk = importlib.import_module("gi.repository.Gtk")
+Gdk = importlib.import_module("gi.repository.Gdk")
+GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
 
 
 class BoardView(Gtk.DrawingArea):

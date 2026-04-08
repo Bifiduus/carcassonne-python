@@ -19,7 +19,10 @@ def test_show_error_creates_alert_dialog() -> None:
     gui.window.window = Mock()
     error_view = ErrorMessageView(gui)
 
-    with patch("carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog") as mock_dialog_class:
+    with patch(
+        "carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog",
+        create=True,
+    ) as mock_dialog_class:
         mock_dialog = MagicMock()
         mock_dialog_class.return_value = mock_dialog
 
@@ -37,7 +40,10 @@ def test_show_error_presents_gui_window() -> None:
     gui.window.window = Mock()
     error_view = ErrorMessageView(gui)
 
-    with patch("carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog"):
+    with patch(
+        "carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog",
+        create=True,
+    ):
         error_view.show_error("Error message")
 
         gui.window.window.present.assert_called_once()
@@ -54,7 +60,10 @@ def test_show_error_with_different_messages() -> None:
         "Game save failed",
     ]
 
-    with patch("carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog") as mock_dialog_class:
+    with patch(
+        "carcassonne.presentation.gui.error_message_view.Gtk.AlertDialog",
+        create=True,
+    ) as mock_dialog_class:
         mock_dialog = MagicMock()
         mock_dialog_class.return_value = mock_dialog
 

@@ -1,5 +1,5 @@
-from gi.repository import GLib, Gtk, Gio, Gdk, GdkPixbuf
-
+import gi
+import importlib
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.board_view import BoardView
 from carcassonne.presentation.gui.error_message_view import ErrorMessageView
@@ -20,10 +20,16 @@ from carcassonne.presentation.gui.menus.singleplayer_menu import (
 from carcassonne.presentation.gui.menus.options_menu import OptionsMenu
 from carcassonne.i18n import gettext as _
 
-
-import gi
-
 gi.require_version("Gtk", "4.0")
+gi.require_version("Gdk", "4.0")
+gi.require_version("GdkPixbuf", "2.0")
+gi.require_version("Gio", "2.0")
+
+GLib = importlib.import_module("gi.repository.GLib")
+Gtk = importlib.import_module("gi.repository.Gtk")
+Gio = importlib.import_module("gi.repository.Gio")
+Gdk = importlib.import_module("gi.repository.Gdk")
+GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
 
 
 class GameGUI(Gtk.Application):
