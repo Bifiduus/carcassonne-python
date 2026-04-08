@@ -112,6 +112,50 @@ class GameData:
             self.players_order.append(i)
             self.number_of_ai_players += 1
 
+    def set_number_of_ai_players_configured(self, num_ai: int) -> None:
+        """Adjust the number of AI players to match configuration.
+
+        This respects max_players constraint and removes/adds IAs as needed.
+        Always keeps player 0 as the human player.
+
+        Args:
+            num_ai: Desired number of AI players (1-4).
+        """
+        # Clamp to valid range
+        num_ai = max(1, min(num_ai, self.maximum_number_of_players - 1))
+        current_ai_count = len([p for p in self.players if p != 0])
+
+        if current_ai_count == num_ai:
+            return  # Already correct
+
+        colors = ["red", "blue", "yellow", "black", "white"]
+
+        if current_ai_count < num_ai:
+            # Need to add AI players
+            for i in range(current_ai_count + 1, num_ai + 1):
+                if i not in self.players:
+                    self.players[i] = self.business_logic_factory.create(
+                        "Player",
+                        i,
+                        f"Player {i}",
+                        colors[(i - 2) % len(colors)],
+                        True,
+                    )
+                if i not in self.players_order:
+                    self.players_order.append(i)
+                self.number_of_ai_players = num_ai
+        else:
+            # Need to remove AI players
+            players_to_remove = []
+            for i in range(num_ai + 1, current_ai_count + 1):
+                if i in self.players:
+                    players_to_remove.append(i)
+            for i in players_to_remove:
+                del self.players[i]
+                if i in self.players_order:
+                    self.players_order.remove(i)
+            self.number_of_ai_players = num_ai
+
     def add_online_players(self, players: list[Player]) -> None:
         """Add online players to the game."""
         colors = ["red", "blue", "yellow", "black", "white"]

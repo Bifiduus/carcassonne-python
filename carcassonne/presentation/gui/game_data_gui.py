@@ -43,6 +43,15 @@ class GameDataGui:
         game service (``Game.start_new_game``) so callers such as
         :class:`OptionsView` can influence how the match is initialised.
         """
+        # Adjust the number of AI players based on current configuration
+        # This respects the 3-tier architecture:
+        # - Presentation reads config and calls business logic
+        # - Business logic manages the adjustment
+        # - Data layer stores the players
+        config = self.game.get_game_configuration()
+        num_ai = config.get("num_ai_players", 1)
+        self.game.adjust_number_of_ai_players(num_ai)
+
         # the command handler already implements the basic behaviour but it
         # doesn't accept any of the extra keywords, so call the service
         # directly.  ``Game.start_new_game`` is idempotent with respect to

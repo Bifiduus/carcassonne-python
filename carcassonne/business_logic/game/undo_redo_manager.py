@@ -138,6 +138,15 @@ class UndoRedoManager:
         if not self.game_data.history.past_moves:
             return
 
+        # Check if there is at least one human move in history
+        # If only AI moves exist (game start with AI playing first), deny undo
+        has_human_move = any(
+            not is_ai_player(move)
+            for move in self.game_data.history.past_moves
+        )
+        if not has_human_move:
+            return
+
         last_played_record = self._move_last_past_to_future()
         if is_ai_player(last_played_record):
             # The last move was an AI move, which means the human move that
@@ -228,27 +237,20 @@ class UndoRedoManager:
     def _restore_current_player(
         self, past_moves: list, future_moves: list
     ) -> None:
-        """Set current_player_order_list from history context.
+        """Set current_player_order_list from replayed game state.
 
-        Using ``len(past_moves) % len(players_order)`` is wrong when
-        ``players_order[0]`` is an AI (random shuffle at game start): it
-        would point to the AI, causing ``_tick_once`` to auto-play and
-        consume the tile that belongs to the human.  Reading the player id
-        directly from ``future_moves`` avoids this entirely.
+        We calculate based on how many moves have been replayed (past_moves),
+        using modulo to find the next player in rotation. This is correct
+        even when IAs play first, as it simply describes turn order.
 
         Args:
-            past_moves:   Moves already committed after rebuild.
+            past_moves:   Moves already replayed after reset.
             future_moves: Moves not yet replayed (undo stack).
         """
-        if future_moves:
-            next_player_id = future_moves[-1].player_id
-            self.game_data.current_player_order_list = (
-                self.game_data.players_order.index(next_player_id)
-            )
-        else:
-            self.game_data.current_player_order_list = len(
-                past_moves
-            ) % len(self.game_data.players_order)
+        num_players = len(self.game_data.players_order)
+        # Calculate which player's turn is next based on moves replayed
+        self.game_data.current_player_order_list = len(
+            past_moves) % num_players
 
     def _restore_hand_and_realign_deck(self, future_moves: list) -> None:
         """Restore the player's in-hand tile and realign the deck.

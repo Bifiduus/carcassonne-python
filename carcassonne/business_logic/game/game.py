@@ -175,6 +175,14 @@ class Game(IGameService):
         self.game_data.add_players(num_players)
         self.game_data.number_of_ai_players = num_players
 
+    def adjust_number_of_ai_players(self, num_ai: int) -> None:
+        """Adjust AI players to match configuration.
+
+        This replaces any previously set number of AI players with the
+        specified count, respecting the maximum players constraint.
+        """
+        self.game_data.set_number_of_ai_players_configured(num_ai)
+
     def add_players(self, nb_players: int) -> None:
         self.game_data.add_players(nb_players)
 
