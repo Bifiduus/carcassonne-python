@@ -173,66 +173,158 @@ Dans ce contexte, l'utilisation d'algorithmes de recherche heuristique et d'appr
 
 \section{Algorithmes et structures de données}
 
-Dans le cadre de ce projet, \textbf{Carcassonne} est considéré sous une forme restreinte pour la partie de réalisation d'intelligence artificielle afin de rendre possible l'utilisation d'algorithmes classiques de recherche dans les jeux.
+Dans le cadre de ce projet, \textbf{Carcassonne} présente plusieurs 
+caractéristiques qui complexifient l'application directe des algorithmes 
+classiques de recherche dans les jeux. En particulier, la pioche de 
+tuiles introduit une composante stochastique, et le jeu peut accueillir 
+jusqu'à cinq joueurs, ce qui invalide les hypothèses habituelles des 
+formulations à deux joueurs à somme nulle.
 
-Bien que \textbf{Carcassonne} ne soit pas strictement un jeu à somme nulle et qu'il comporte une composante stochastique liée à la pioche des tuiles, certaines hypothèses simplificatrices sont adoptées.
-En particulier, les décisions sont évaluées à partir de fonctions heuristiques estimant l'avantage relatif d'un joueur par rapport à son adversaire à un instant donné.
+Pour pallier ces contraintes, les décisions sont évaluées à partir de 
+fonctions heuristiques estimant l'avantage relatif du joueur IA par 
+rapport à ses adversaires à un instant donné. Cette modélisation permet 
+l'utilisation d'algorithmes de recherche adaptés, tout en restant 
+consciente de leurs limites théoriques dans ce contexte.
 
-Cette modélisation permet l'utilisation d'algorithmes de recherche tels que Minimax et ses variantes, tout en restant consciente des limites théoriques de leur application à un jeu de cette nature.
-
-Plusieurs algorithmes jouent ainsi un rôle central dans la réalisation des besoins du projet, notamment :
+Les algorithmes suivants jouent un rôle central dans la réalisation 
+des besoins du projet :
 \begin{itemize}
-  \item[-] \textbf{Minimax}\cite{minimax}, pour déterminer les coups optimaux en modélisant l'opposition entre les joueurs ;
-  \item[-] \textbf{Alpha-Beta}\cite{alpha_beta}, qui permet de réduire le nombre d'états explorés en élaguant les branches non pertinentes de l'arbre de jeu ;
-  \item[-] \textbf{Iterative Deepening}\cite{iterative_deepening}, utilisé afin de borner le temps de calcul tout en améliorant progressivement la qualité des décisions ;
-  \item[-] \textbf{des fonctions d'évaluation heuristiques}, servant à estimer la qualité d'un état de jeu ;
-  \item[-] des approches basées sur \textit{Monte Carlo Tree Search}\cite{monte_carlo}, envisagées pour des stratégies alternatives ;
-  \item[-] des algorithmes de génération aléatoire, tels que le mélange de \textit{Fisher–Yates}\cite{fisher_yates}, nécessaires à la gestion équitable de la pioche.
+  \item[-] \textbf{Minimax}\cite{minimax}, pour déterminer les coups 
+  optimaux en modélisant l'opposition entre les joueurs ;
+  \item[-] \textbf{Alpha-Beta}\cite{alpha_beta}, qui réduit le nombre 
+  d'états explorés en élaguant les branches non pertinentes ;
+  \item[-] \textbf{Star2.5}, une extension d'Alpha-Beta aux jeux 
+  stochastiques via des nœuds de chance, retenu comme algorithme 
+  principal ;
+  \item[-] \textbf{Iterative Deepening}\cite{iterative_deepening}, 
+  permettant de borner le temps de calcul tout en améliorant 
+  progressivement la qualité des décisions ;
+  \item[-] des \textbf{fonctions d'évaluation heuristiques}, servant 
+  à estimer la qualité d'un état de jeu intermédiaire ;
+  \item[-] des approches basées sur \textit{Monte Carlo Tree 
+  Search}\cite{monte_carlo}, envisagées comme stratégies alternatives ;
+  \item[-] le mélange de \textit{Fisher–Yates}\cite{fisher_yates}, 
+  garantissant une pioche équitable.
 \end{itemize}
 
-La mise en œuvre efficace de ces algorithmes repose sur des structures de données adaptées permettant de représenter l'état du jeu et d'en faciliter la manipulation. 
-Le plateau de jeu, constitué de tuiles connectées par leurs côtés, est modélisé en interne par un graphe de positions, offrant une représentation naturelle des relations d'adjacence entre les tuiles. 
-Les états de jeu sont stockés sous forme d'objets si bien que chaque tuile possède un identifiant, un jeu de côtés, une rotation et des informations sur les meeples attachés.
-
-La gestion de la pioche et du retour des pions utilise des structures séquentielles simples, comme des listes et des piles. Pour les calculs de score et la recherche de composantes connexes, des parcours en largeur (BFS) sur le graphe de tuiles sont employés, avec des ensembles de sommets visités pour éviter les redondances.
-
+La mise en œuvre de ces algorithmes repose sur des structures de 
+données adaptées, détaillées dans la section suivante. Le plateau est 
+modélisé par un graphe non orienté offrant une représentation naturelle 
+des relations d'adjacence entre tuiles, complété par des composantes 
+connexes pour la gestion des terrains et du scoring. La pioche et le 
+retour des pions s'appuient sur des structures séquentielles simples 
+telles que des listes et des piles.
 \subsection{Structures de données}
 
-La représentation des données du jeu est un point clé du projet. En Python, le plateau est principalement géré par un dictionnaire de positions vers les tuiles, complété par une table d'adjacence pour les voisinages.
+
+La représentation des données du jeu repose principalement sur un 
+graphe non orienté où chaque tuile constitue un sommet, connecté à 
+ses voisins cardinaux. Chaque sommet est identifié par son numéro de 
+tour et positionné en coordonnées cartésiennes $(x, y)$ à partir du 
+centre de la tuile de départ.
+
+\paragraph{Structure d'un sommet.}
+Chaque sommet est représenté par la classe \texttt{Vertex}, qui 
+encapsule l'ensemble des informations associées à une tuile posée :
+
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+@dataclass
+class Vertex:
+    id: int                              # Identifiant unique de la tuile
+    name: str                            # Code de la tuile (ex: "CRFR", "FSRS/m")
+    orientation: int                     # Rotation (0-3)
+    position: tuple[int, int]            # Coordonnées (x, y) sur le plateau
+    neighbors: Dict[int, int]            # Arêtes vers les tuiles adjacentes
+    matrix: list[list]                   # Matrice 3x3 des terrains orientée
+\end{minted}
+}
+
+Chaque sommet est associé à une matrice de terrain $3 \times 3$ 
+encodant le type de terrain (Cité \texttt{C}, Route \texttt{R}, 
+Champ \texttt{F}, Monastère \texttt{M}, Stream \texttt{S}) selon sa 
+rotation. La classe \texttt{Tile} fournit les quatre matrices de 
+direction correspondant aux quatre rotations possibles :
 
 {\normalsize
   \begin{minted}[frame=single]{python}
 class Tile:
-    code: str
-
-    # Direction matrices indexed by orientation (0, 1, 2, 3)
-    direction_matrix = [
-        # 0 rotation
-        [["NW", "N", "NE"], ["W", "C", "E"], ["SW", "S", "SE"]],
-        # 1 rotation (90° clockwise)
-        [["SW", "W", "NW"], ["S", "C", "N"], ["SE", "E", "NE"]],
-        # 2 rotations (180° clockwise)
-        [["SE", "S", "SW"], ["E", "C", "W"], ["NE", "N", "NW"]],
-        # 3 rotations (270° clockwise)
-        [["NE", "E", "SE"], ["N", "C", "S"], ["NW", "W", "SW"]],
-    ]
-
-    def __init__(
-        self,
-        code: str,
-        connections: dict | None = None,
-        connect_to: dict | None = None,
-    ) -> None:
-        self.code = code
-        # tiles_lands is the terrain definitions for this tile
-        self.tiles_lands = connections if connections is not None else {}
-        self.connect_to = connect_to if connect_to is not None else {}
-  \end{minted}
+ direction_matrix = [
+ [["NW", "N", "NE"], ["W", "C", "E"], ["SW", "S", "SE"]], # Rotation 0 (0°)
+ [["SW", "W", "NW"], ["S", "C", "N"], ["SE", "E", "NE"]], # Rotation 1 (90°)
+ [["SE", "S", "SW"], ["E", "C", "W"], ["NE", "N", "NW"]], # Rotation 2 (180°)
+ [["NE", "E", "SE"], ["N", "C", "S"], ["NW", "W", "SW"]], # Rotation 3 (270°)
+ ]
+\end{minted}
 }
 
-Cette structure permet de calculer rapidement les composantes connexes nécessaires au calcul des champs, des routes et des cités.
+En complément du graphe de tuiles, le système maintient une structure 
+de composantes connexes par type de terrain :
 
-Les états de partie sont ensuite définis par une classe `GameState` contenant le plateau, la pioche restante, les scores et le nombre de meeples disponibles par joueur.
+{\normalsize
+  \begin{minted}[frame=single]{python}
+lands_components = {
+ 'C': {'set_C1': [(tile_id_1, ['N', 'NE', 'E']), (tile_id_2, ['S'])], ...},
+ 'R': {'set_R1': [(tile_id_1, ['S', 'W']), ...], 'set_R2': [...], ...},
+ 'F': {'set_F1': [...], ...},
+ }		
+\end{minted}
+}
+Cette structure permet d'identifier rapidement les routes, cités et 
+monastères complétés pour le scoring, de détecter les conflits de 
+placement de meeples, et de gérer la fusion de groupes lorsqu'une 
+nouvelle tuile connecte des composantes existantes.
+
+\paragraph{Mise à jour du graphe.}
+Lors du placement d'une nouvelle tuile, la classe \texttt{GraphLogic} 
+orchestre la mise à jour du graphe en quatre phases successives : 
+connexion aux voisins cardinaux (N, E, S, W), connexion aux coins 
+diagonaux (NE, SE, SW, NW), création des composantes isolées sans 
+voisin existant, puis fusion des composantes connexes partageant un 
+même terrain.
+
+
+{\normalsize
+  \begin{minted}[frame=single]{python}
+class GraphLogic:
+ def add_lands_components(self, tile_id, graph, tiles_info):
+ # Groupes de composantes selon leur connexité et leurs terrains
+ group_is_linked = { ... }
+ group_connection_count = { ... }
+ group_land_type = { ... }
+ self._process_cardinal_neighbors(…) # Connexion aux voisins cardinaux
+ self._process_corner_neighbors(…) # Connexion aux coins
+ self._create_unlinked_groups(…) # Création des composantes isolées
+ self._merge_connected_groups(…) # Fusion des composantes connexes
+\end{minted}
+}
+
+\paragraph{Données bas niveau.}
+En complément de \texttt{GraphLogic}, qui applique les règles de 
+connexité métier, la classe \texttt{GraphData} centralise toutes les 
+opérations bas niveau de manipulation du graphe :
+
+{\normalsize
+\begin{minted}[frame=single]{python}
+class GraphData:
+    vertices: Dict[int, Vertex]                    # Sommets du graphe
+    positions_to_vertex_id: Dict[tuple[int,int], int]  # Position -> id
+    turn: int                                      # Compteur de pose
+    lands_components: Dict[str, Dict[str, list]]   # Composantes connexes
+    next_set_id: Dict[str, int]                    # Prochains ids disponibles
+    meeples: List[Meeple]                          # Meeples sur le plateau
+    tiles_dict: Dict[str, Tile]                    # Définitions des tuiles
+\end{minted}
+}
+
+Cette classe assure l'ajout et la suppression de tuiles orientées 
+(\texttt{add}/\texttt{remove\_vertex}), la gestion des arêtes entre 
+tuiles (\texttt{set\_neighbor}), la recherche de voisinage à une 
+position donnée (\texttt{find\_neighbor\_at}), ainsi que la gestion 
+des meeples (\texttt{add}/\texttt{remove}/\texttt{set\_meeple}) et 
+la réinitialisation complète du graphe (\texttt{reset\_graph}).
+
 
 \subsection{Mélange des tuiles}
 
@@ -250,7 +342,6 @@ en détail en section \ref{subsubsec:melange}.
 {\normalsize
   \begin{minted}[frame=single]{python}
 import random
-
 @staticmethod
 def _shuffle_fisher_yates_in_place(
     items: list[str], rng: random.Random
@@ -258,7 +349,6 @@ def _shuffle_fisher_yates_in_place(
     for i in range(len(items) - 1, 0, -1):
         j = rng.randrange(i + 1)
         items[i], items[j] = items[j], items[i]
-
 @staticmethod
 def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
     n = len(items)
@@ -276,75 +366,25 @@ d'intelligence artificielle implémenté dans le projet.
 \subsection{Algorithme Minimax}
 \label{subsec:minimax}
 
-L'algorithme Minimax a pour but de déterminer les coups les plus optimaux pour un joueur à un état donné du jeu face à l'adversaire qui minimise le score du joueur "max".
-Ainsi, l'algorithme parcourt récursivement une partie de l'arbre des états du jeu, limitée par une profondeur maximale fixée afin de contenir la complexité de recherche.
-Chaque score d'une feuille est alors calculé via une fonction d'évaluation prédéfinie. Ce score remonte à son nœud parent qui sélectionne la valeur maximale ou minimale de ses nœuds enfants selon le joueur qu'il représente, et ainsi de suite jusqu'à la racine.
-L'algorithme possède 3 paramètres représentant l'état du jeu courant, la profondeur restante à explorer par rapport à l'état actuel, et un booléen à vrai lors du tour du joueur "max" et à faux sinon.
+L'algorithme Minimax a pour but de déterminer les coups les plus 
+optimaux pour un joueur à un état donné du jeu, face à un adversaire 
+qui cherche à minimiser le score du joueur max. L'algorithme parcourt 
+récursivement une partie de l'arbre des états du jeu, limitée par une 
+profondeur maximale fixée afin de contenir la complexité de recherche. 
+Chaque feuille est évaluée via une fonction d'évaluation prédéfinie, 
+et ce score remonte vers la racine : chaque nœud sélectionne la valeur 
+maximale ou minimale parmi ses enfants selon le joueur qu'il représente. 
+L'algorithme prend en paramètres l'état courant du jeu, la profondeur 
+restante à explorer, et un booléen indiquant si c'est le tour du joueur 
+max.
 
-Voici le pseudocode de l'algorithme Minimax :
-{\normalsize
-  \begin{minted}[frame=single]{text}
-fonction minimax(etat, profondeur, joueur_max):
-    SI profondeur = 0 OU estFeuille(etat) ALORS
-        RETOURNER evalueHeuristique(joueur_max, etat)
-    FIN SI
-    SI joueur_max ALORS
-        valeur = -infini
-        POUR TOUT successeur s de etat FAIRE
-            valeur = max(valeur, minimax(s, profondeur - 1, FAUX))
-        FIN POUR TOUT
-    FIN SI
-    SINON
-        valeur = +infini
-        POUR TOUT successeur s de etat FAIRE
-            valeur = min(valeur, minimax(s, profondeur - 1, VRAI))
-        FIN POUR TOUT
-    FIN SINON
-    RETOURNER valeur
-FIN FONCTION
-
-  \end{minted}
-}
-
-
-\begin{figure}[H]
-    \centering
-    \captionsetup{justification=centering}
-    \frame{\includegraphics[width=0.60\textwidth]{images/minimax.png}}
-    \centering
-    \caption{Exemple d'un arbre de jeu partiel exploré par l'algorithme Minimax\cite{heyden2009implementing}}\label{fig:minimax_example}
-\end{figure}
-
-À la profondeur maximale à explorer, les feuilles remontent la valeur 4 (et non la valeur 3) lors du tour du joueur "max" pour maximiser son gain. 
-Ainsi, au tour suivant, le joueur "min" récupère cette valeur 4 (et non la valeur 8) afin de minimiser le gain de son adversaire. 
-Enfin, le joueur "max" récupère la valeur 4 (et non la valeur 2) pour maximiser son gain minimal. 
-Il finit alors la recherche à la racine de l'arbre, ayant désormais connaissance d'une succession de coups optimaux à jouer pour obtenir un score de 4 en sa faveur à cette profondeur demandée.
-
-\subsection{Technique Iterative Deepening}
-
-L'algorithme Minimax avec approfondissement itératif (Iterative Deepening) est une technique de parcours progressif des profondeurs sur l'arbre des états d'un jeu. 
-Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur "max" est enregistré en remplaçant le précédent, et sera alors renvoyé après épuisement du temps donné. 
-Cette technique a pour avantage de déterminer une solution utile même sur une courte durée, tandis que l'exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après un temps bloquant.
-
-En pratique, la recherche commence à faible profondeur puis augmente progressivement jusqu'à atteindre le temps limite :
-{\normalsize
-  \begin{minted}[frame=single]{text}
-fonction choix_coup(etat, temps_max):
-    profondeur = 1
-    meilleur_coup = null
-    debut = temps()
-    TANT_QUE temps() - debut < temps_max FAIRE
-        meilleur_coup = recherche_minimax(etat, profondeur)
-        profondeur += 1
-    FIN TANT_QUE
-    RETOURNER meilleur_coup
-FIN FONCTION
-  \end{minted}
-}
-
-Cette approche garantit qu'un coup plausible est toujours disponible à la fin du délai, même si la profondeur maximale n'a pas pu être atteinte.
+L'algorithme Minimax étant très similaire à $\alpha\beta$-pruning dans 
+sa structure, nous invitons le lecteur à se référer à la section 
+\ref{subsec:alphabeta} pour une présentation détaillée accompagnée 
+d'un exemple illustratif.
 
 \subsection{Algorithme Alpha-Beta}
+\label{subsec:alphabeta}
 
 Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l'arbre des états d'un jeu en élaguant les branches qui n'apportent aucun gain nouveau pour le joueur "max".\cite{alpha_beta}
 En stockant la meilleure valeur courante pour le joueur maximal ($\alpha$) et celle pour le joueur "min" ($\beta$) lors du parcours, l'algorithme n'évalue plus certains nœuds non-significatifs (et leurs potentiels enfants) quand $\alpha \geq \beta$, en réduisant potentiellement son temps d'exécution selon l'arbre donné.
@@ -381,35 +421,252 @@ FIN FONCTION
   \end{minted}
 }
 
+\begin{figure}[H]
+\begin{minipage}{0.50\textwidth}
+À la profondeur maximale, les feuilles remontent la valeur $4$ lors 
+du tour du joueur max, qui cherche à maximiser son gain. Le joueur 
+min récupère cette valeur et la retient à $4$ plutôt que $8$, afin 
+de minimiser le gain de son adversaire.
+
+Le nœud max transmet alors $4$ comme borne $\beta$ au nœud min 
+parent, qui la propage à son tour à l'enfant max suivant. Cet enfant 
+obtient la valeur $8$ ; or $8 \geq 4$, ce qui signifie que le nœud 
+min parent ne retiendra jamais cette valeur. L'exploration de cette 
+branche est donc interrompue : la valeur $2$ est élaguée.
+
+Finalement, le joueur max retient la valeur $4$ plutôt que $2$, 
+maximisant ainsi son gain minimal. La recherche se termine à la 
+racine de l'arbre : l'algorithme a déterminé une succession de coups 
+optimaux permettant d'atteindre un score de $4$ à la profondeur 
+demandée.
+
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+    \centering
+    \frame{\includegraphics[width=\textwidth]{images/alpha_beta_example.png}}
+    \caption{Exemple d'un arbre de jeu exploré avec coupes par Alpha-Beta}
+    \label{fig:alpha_betaexample}
+\end{minipage}
+\end{figure}
+
+
 Cette version conserve la qualité de la décision de Minimax, tout en réduisant significativement le nombre de nœuds évalués lorsque le tri des coups est efficace.
+
+
+
+
+
+\subsection{Algorithme Star2.5}
+
+Dans Carcassonne, chaque joueur doit piocher une tuile au début de 
+son tour. Cette action aléatoire remet en cause les hypothèses de base 
+des algorithmes présentés précédemment. Nous avons donc étudié une 
+variante prenant en compte les événements aléatoires : 
+\textit{Expectimax}. Cet algorithme fonctionne comme Alpha-Beta, mais 
+introduit entre chaque étage de l'arbre des \textit{nœuds de chance}, 
+dont chaque fils représente un événement aléatoire possible depuis 
+l'état courant — ici, le tirage d'une tuile particulière.
+
+L'ajout de nœuds de chance à chaque niveau de l'arbre augmente 
+cependant considérablement sa taille, rendant son parcours exhaustif 
+impraticable dans le cadre d'un algorithme chronométré. Plusieurs 
+techniques de pruning ont été développées pour pallier ce problème.
+
+\paragraph{Star1.}
+Star1 exploite les bornes $\alpha$ et $\beta$ déjà présentes dans 
+Alpha-Beta pour borner l'évaluation des nœuds de chance. Plutôt que 
+de calculer exactement l'espérance de tous les enfants d'un nœud de 
+chance, on maintient une borne inférieure et une borne supérieure de 
+cette espérance au fur et à mesure de l'exploration. Si, à un moment 
+donné, il devient certain que la valeur finale du nœud de chance ne 
+pourra pas influencer la décision du parent — c'est-à-dire qu'elle 
+est déjà en dehors de l'intervalle $[\alpha, \beta]$ — l'exploration 
+des enfants restants est interrompue. Cela permet d'éviter d'explorer 
+des tirages de tuiles peu pertinents.
+
+\paragraph{Star2.}
+Star2 améliore cette approche en resserrant davantage les bornes 
+utilisées pour le pruning. Là où Star1 se limite aux bornes globales 
+$\alpha$ et $\beta$, Star2 exploite également des bornes locales sur 
+les valeurs possibles des feuilles, telles que les valeurs minimales 
+et maximales de la fonction heuristique. Ces informations 
+supplémentaires permettent de calculer plus précisément l'intervalle 
+dans lequel se situe l'espérance finale d'un nœud de chance, 
+déclenchant ainsi des coupures plus tôt dans l'exploration. Star2 
+se révèle donc plus efficace que Star1, en particulier lorsque le 
+nombre d'événements aléatoires est élevé.
+
+\paragraph{Star2.5.}
+Star2.5 introduit une approche séquentielle : plutôt que de 
+considérer les enfants d'un nœud de chance comme un ensemble non 
+ordonné, on les parcourt dans un ordre spécifique, en priorisant 
+par exemple les événements les plus probables ou les plus influents. 
+À chaque étape, on met à jour une estimation de l'espérance ainsi 
+que des bornes optimistes et pessimistes pour les contributions 
+restantes. En explorant en priorité les événements les plus 
+significatifs, on obtient plus rapidement une estimation suffisamment 
+précise pour déclencher un pruning, maximisant ainsi les chances de 
+coupure précoce.
+
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction expectimax_star25(etat, profondeur, alpha, beta, joueur_max):
+  SI profondeur = 0 OU estFeuille(etat) ALORS
+    RETOURNER evalueHeuristique(joueur_max, etat)
+  FIN SI
+  SI estNoeudChance(etat) ALORS
+    valeur = 0
+    borne_min = 0
+    borne_max = 0
+    // Trier les événements (par probabilité décroissante par exemple)
+    evenements = trierEvenements(etat)
+    POUR TOUT (ev, proba) dans evenements FAIRE
+      v = expectimax_star25(resultat(etat, ev), profondeur - 1, alpha, beta, joueur_max)
+      valeur = valeur + proba * v
+      // Mise à jour des bornes restantes
+      borne_min = valeur + sommeProbaRestante(evenements) * valeurMinPossible()
+      borne_max = valeur + sommeProbaRestante(evenements) * valeurMaxPossible()
+      // Pruning
+      SI borne_max < alpha ALORS
+        RETOURNER borne_max
+      FIN SI
+      SI borne_min > beta ALORS
+        RETOURNER borne_min
+      FIN SI
+    FIN POUR TOUT
+  RETOURNER valeur
+  FIN SI
+  // mettre algo alpha beta appelant expectimax_star25 à la place de alpha beta
+  \end{minted}
+}
+
+Ce pseudo-algorithme illustre l’intégration des nœuds de chance avec une stratégie de pruning avancée, combinant les idées de Star2 et l’optimisation séquentielle propre à Star2.5.
+
+Dans l'exemple de la figure \ref{fig:star2example}, on considère un nœud de chance avec une fenêtre 
+$\alpha\beta$ initiale de $[-10, 10]$ et deux événements possibles 
+de probabilités 0.8 et 0.2. En suivant l'événement de probabilité 
+0.8, on obtient une valeur de $-20$ au nœud min. Une première 
+estimation du nœud de chance est alors calculée en supposant le cas 
+le plus favorable pour la partie restante :
+$$0.8 \times (-20) + 0.2 \times 100 = 4$$
+Cette valeur étant dans la fenêtre $[-10, 10]$, aucun élagage n'est 
+encore possible.
+
+
+En explorant ensuite l'événement de probabilité 0.2, le premier 
+successeur retourne la valeur $10$. Le nœud de chance met à jour 
+sa borne inférieure :
+$$0.8 \times (-20) + 0.2 \times 10 = -14$$
+
+\begin{figure}[H]
+\begin{minipage}{0.45\textwidth}
+    \centering
+    \frame{\includegraphics[width=\textwidth]{images/star2example.png}}
+    \caption{Exemple d'arbre de jeu partiel avec Star2 menant à une coupe}
+    \label{fig:star2example}
+\end{minipage}
+\hfill
+\begin{minipage}{0.50\textwidth}
+
+Cette estimation est désormais inférieure à $-10$, donc en dehors 
+de la fenêtre $\alpha\beta$. La valeur finale de ce nœud de chance 
+sera nécessairement trop faible pour être retenue par le joueur max : 
+les branches restantes sont élaguées. Le nœud max parent rejette 
+alors cette branche et poursuit la recherche ailleurs, évitant ainsi 
+d'explorer inutilement une partie de l'arbre tout en conservant un 
+résultat optimal.
+
+Star2.5 est donc l'algorithme retenu en lieu et place du minimax 
+avec $\alpha\beta$-pruning classique, et sert de base à 
+l'approfondissement itératif. Par ailleurs, Carcassonne se jouant 
+de 2 à 5 joueurs, les algorithmes ont été adaptés pour accueillir 
+plusieurs adversaires. Le joueur IA appelant l'algorithme est 
+considéré comme le joueur max, tandis que tous les autres joueurs 
+sont traités comme des joueurs min. Une branche de l'arbre de jeu 
+se développe alors selon la séquence suivante : un nœud max, suivi 
+d'un nœud chance, puis d'autant de nœuds min qu'il y a de joueurs 
+adverses, avant de revenir à un nœud chance puis à un nœud max.
+
+\end{minipage}
+\end{figure}
+
+
+
+
+
+\subsection{Technique Iterative Deepening}
+
+L'algorithme Minimax avec approfondissement itératif (Iterative Deepening) est une technique de parcours progressif des profondeurs sur l'arbre des états d'un jeu. 
+Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur "max" est enregistré en remplaçant le précédent, et sera alors renvoyé après épuisement du temps donné. 
+Cette technique a pour avantage de déterminer une solution utile même sur une courte durée, tandis que l'exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après un temps bloquant.
+
+En pratique, la recherche commence à faible profondeur puis augmente progressivement jusqu'à atteindre le temps limite :
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction choix_coup(etat, temps_max):
+    profondeur = 1
+    meilleur_coup = null
+    debut = temps()
+    TANT_QUE temps() - debut < temps_max FAIRE
+        meilleur_coup =  expectimax_star25(etat, profondeur, -infinite, +infinite, TRUE)
+        profondeur += 1
+    FIN TANT_QUE
+    RETOURNER meilleur_coup
+FIN FONCTION
+  \end{minted}
+}
+
+Cette approche garantit qu'un coup plausible est toujours disponible à la fin du délai, même si la profondeur maximale n'a pas pu être atteinte.
+
+
+
 
 \subsection{Fonction d'évaluation heuristique}
 
-Étant donné l'impossibilité d'explorer l'arbre de jeu jusqu'à des états terminaux, l'algorithme Minimax repose sur une fonction d'évaluation heuristique permettant d'estimer la qualité d'un état de jeu intermédiaire.
-Cette fonction associe une valeur numérique à un état donné, représentant l'avantage relatif du joueur courant par rapport à son adversaire.
+Étant donné l'impossibilité d'explorer l'arbre de jeu jusqu'aux états 
+terminaux, l'algorithme Star2.5 repose sur une fonction d'évaluation 
+heuristique permettant d'estimer la qualité d'un état de jeu 
+intermédiaire. Cette fonction associe une valeur numérique à un état 
+donné, représentant l'avantage relatif du joueur max par rapport à 
+l'ensemble de ses adversaires.
 
-L'évaluation repose notamment sur les critères suivants :
-\begin{itemize}
-  \item [$\bullet$] le score actuel des joueurs ;
-  \item [$\bullet$] le potentiel de complétion des routes, cités et monastères en cours ;
-  \item [$\bullet$] le nombre de pions disponibles pour chaque joueur ;
-  \item [$\bullet$] la présence de pions bloqués sur des structures difficilement complétables ;
-  \item [$\bullet$] le contrôle des champs adjacents à des cités complètes.
-\end{itemize}
+L'évaluation repose sur plusieurs critères pondérés selon leur 
+importance stratégique : le score actuel des joueurs, le potentiel 
+de complétion des routes, cités et monastères en cours, le nombre 
+de pions disponibles pour chaque joueur, la présence de pions bloqués 
+sur des structures difficilement complétables, et enfin le contrôle 
+des champs adjacents à des cités complètes.
 
-Ces différents éléments sont pondérés afin de refléter leur importance stratégique au cours de la partie.
-La fonction d'évaluation ne prétend pas fournir une estimation parfaite, mais permet de guider efficacement la recherche vers des coups jugés prometteurs.
+La fonction ne prétend pas fournir une estimation parfaite, mais guide 
+efficacement la recherche vers des coups jugés prometteurs. Comme 
+mentionné en section \ref{subsubsec:iaperfo}, certaines notions 
+stratégiques avancées — comme le blocage adverse ou la gestion optimale 
+des meeples — ne sont pas encore modélisées, ce qui constitue une 
+limite connue de l'implémentation actuelle.
 
 \subsection{Lien avec le projet}
 
-Les différentes techniques sont combinées dans le projet afin de rendre la recherche de coups pertinents possible malgré la complexité combinatoire élevée de Carcassonne. 
-L'approche adoptée, mêlant Minimax, élagage Alpha-Beta, approfondissement itératif et fonctions d'évaluation heuristique, permet de guider efficacement la prise de décision des intelligences artificielles tout en respectant des contraintes de temps réalistes.
-La modélisation du plateau sous forme de graphes, associée à l'utilisation de structures de données adaptées comme les tables de hachage et les piles, assure une manipulation efficace de l'état du jeu et des configurations intermédiaires.
+Les différentes techniques présentées dans cette section sont combinées 
+afin de rendre la recherche de coups pertinents possible malgré la 
+complexité combinatoire élevée de Carcassonne. L'approche adoptée mêle 
+Star2.5 — qui étend Alpha-Beta aux jeux stochastiques via des nœuds 
+de chance — l'approfondissement itératif, et une fonction d'évaluation 
+heuristique multi-joueurs où le joueur IA est considéré comme joueur 
+max et ses adversaires comme joueurs min.
 
-Ainsi, bien que l'exploration exhaustive de l'arbre de jeu reste impossible, le système mis en place fournit des conseils et des stratégies de qualité, exploitant de manière pragmatique les ressources computationnelles disponibles. 
-Cette combinaison d'algorithmes et de structures de données constitue le cœur de l'intelligence artificielle du projet et offre une base solide pour l'extension future des fonctionnalités, telles que l'intégration de stratégies plus sophistiquées ou de variantes du jeu.
+La modélisation du plateau sous forme de graphes, associée à des 
+structures de données adaptées comme les tables de hachage et les piles, 
+assure une manipulation efficace de l'état du jeu et des configurations 
+intermédiaires explorées lors de la recherche.
 
-
+Bien que l'exploration exhaustive de l'arbre de jeu reste impossible, 
+le système mis en place fournit des décisions de qualité en exploitant 
+de manière pragmatique les ressources computationnelles disponibles. 
+Cette combinaison d'algorithmes constitue le cœur de l'intelligence 
+artificielle du projet et offre une base solide pour des extensions 
+futures, notamment l'enrichissement des fonctions d'évaluation ou 
+l'intégration de variantes du jeu.
 
 \section{Architecture}
 Dans cette section, nous présentons l'architecture logicielle retenue pour l'implémentation du jeu Carcassonne.
@@ -428,6 +685,7 @@ Cette architecture est pertinente dans notre cas car elle permet de faire évolu
   colframe=black,
   boxrule=0.8pt,
   arc=2mm
+  top=2pt, bottom=2pt, left=4pt, right=4pt
 ]
 \large\textbf{Module Présentation}\normalsize
 \vspace{0.3em}
@@ -505,48 +763,20 @@ Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{
     \caption{Vue d'ensemble de l'architecture du projet}\label{fig:diagram_archi_final}
 \end{figure}
 
-Ainsi, le module Présentation dépend uniquement du module Logique Métier, qu'il sollicite via des interfaces dédiées pour afficher l'état du jeu et transmettre les actions de l'utilisateur, sans accès direct aux données.
-Le module Logique Métier dépend uniquement du module Données pour la persistance des informations, cette interaction étant réalisée au moyen d'interfaces de persistance abstraites.
-Aucune dépendance directe n'existe entre la Présentation et les Données.
+Ainsi, le module Présentation dépend uniquement du module Business 
+Logic via l'interface \texttt{IBusinessLogicFactory}, qui permet 
+d'instancier les objets du module Business Logic et d'en appeler 
+les méthodes sans que la Présentation n'accède directement aux 
+données. De manière analogue, le module Business Logic dépend 
+uniquement du module Données via \texttt{IDatasFactory} pour la 
+persistance des informations. Aucune dépendance directe n'existe 
+entre la Présentation et les Données.
 
-Cette organisation garantit une séparation claire des responsabilités et limite le couplage entre les composants.
-
-\subsection{Interfaces principales}
-
-Les interactions entre modules sont réalisées exclusivement via des interfaces bien définies.
-
-Interface Présentation $\rightarrow$ Logique Métier
-
-Exemples de services exposés :
-
-{\normalsize
-  \begin{minted}[frame=single]{python}
-place_tile(tile, position)
-place_meeple(position)
-get_game_state()
-is_game_over()
-  \end{minted}
-}
+Cette organisation garantit une séparation claire des responsabilités 
+et limite le couplage entre les composants.
 
 
 
-Ces interfaces permettent à la présentation d'agir sur le jeu sans connaître l'implémentation interne des règles.
-
-Interface Logique Métier $\rightarrow$ Données
-
-Exemples de services exposés :
-
-{\normalsize
-  \begin{minted}[frame=single]{python}
-save_game(game_state)
-load_game()
-  \end{minted}
-}
-
-
-
-
-La logique métier délègue la persistance au module Données via ces interfaces abstraites.
 
 
 \section{Explication approfondie}
@@ -574,21 +804,93 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
 
 À l'issue de l'algorithme, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
 
+\begin{figure}[H]
+    \centering
+    \frame{\includegraphics[width=0.8\textwidth]{images/monte_carlo_example.png}}
+    \centering
+    \caption{Exemple d'application de l'algorithme MCTS}\label{fig:monte_carlo_example}
+\end{figure}
+
+
+{\normalsize
+  \begin{minted}[frame=single]{text}
+fonction mcts (etat, t0, budget, racine)
+	TANT QUE tempsActuel() - t0 < budget FAIRE
+    // 1) SELECTION
+    noeud = racine
+    TANT QUE noeud.estEntierementDeveloppe() ET NON noeud.estTerminal() FAIRE
+        noeud = selection(noeud)
+    FIN TANT QUE
+    // 2) EXPANSION
+    SI NON noeud.estTerminal() ALORS
+        action = choisirActionNonEssayee(noeud)
+        etat_enfant = appliquerAction(noeud.etat, action)
+        enfant = ajouterEnfant(noeud, etat_enfant, action)
+        noeud = enfant
+    FIN SI
+    // 3) SIMULATION (ROLLOUT)
+    recompense = simulationAleatoire(noeud.etat)
+    // 4) RETROPROPAGATION
+    TANT QUE noeud != null FAIRE
+        noeud.visites = noeud.visites + 1
+        noeud.gain_total = noeud.gain_total + recompense
+        noeud = noeud.parent
+    FIN TANT QUE
+FIN TANT QUE
+// Choix final: meilleur enfant de la racine (souvent max visites)
+meilleur = argmax_enfant(racine, critere = visites)
+RETOURNER meilleur.action
+  \end{minted}
+}
+
 Les fonctions \texttt{play\_move\_for\_ai} et \texttt{undo\_for\_ai} permettent de simuler des coups sans altérer définitivement l'état réel du jeu. Lorsqu'un coup est joué via \texttt{play\_move\_for\_ai}, l'état courant (scores, meeples, structures du graphe, etc.) est sauvegardé avant application puis stocké dans une pile. À l'inverse, \texttt{undo\_for\_ai} restaure précisément cet état en annulant le dernier coup joué. Ce mécanisme garantit que chaque simulation reste indépendante et n'impacte jamais la partie réelle.
 
 La fonction \texttt{get\_possible\_moves} génère l'ensemble des coups possibles à partir de l'état courant et de la tuile en main. Elle consiste à tester toutes les positions, rotations et placements de meeples possibles, puis à vérifier leur validité à l'aide de la fonction \texttt{check\_move} définie dans \texttt{rules\_manager.py}.
 
-La sélection des nœuds dans l'arbre peut se faire via l'algorithme UCT (Upper Confidence Bound applied to Trees). Cette méthode équilibre exploitation (favoriser les coups déjà performants) et exploration (tester de nouvelles possibilités) grâce à un paramètre de pondération. Elle prend en compte le nombre de visites et les scores des nœuds, tout en priorisant les nœuds encore jamais explorés afin d'assurer une couverture suffisante de l'espace des coups possibles.
+La sélection des nœuds dans l'arbre peut se faire via l'algorithme UCT (Upper Confidence Bound applied to Trees)\cite{kocsis2006bandit}. Cette méthode équilibre exploitation (favoriser les coups déjà performants) et exploration (tester de nouvelles possibilités) grâce à un paramètre de pondération. Elle prend en compte le nombre de visites et les scores des nœuds, tout en priorisant les nœuds encore jamais explorés afin d'assurer une couverture suffisante de l'espace des coups possibles.
 
-Une alternative à la méthode UCT consiste à utiliser une sélection guidée par le machine learning. Dans ce cas, un modèle Keras est chargé afin d'évaluer les coups possibles. Pour chaque enfant d'un nœud, un vecteur de caractéristiques est construit, incluant notamment le reward moyen, le nombre de visites, le score du joueur ou encore la présence d'un meeple. Le modèle prédit ensuite un score pour chaque coup et celui obtenant la meilleure évaluation est sélectionné. En cas d'indisponibilité du modèle, le système revient automatiquement à la méthode UCT.
+Une alternative à la méthode UCT consiste à guider la phase de 
+sélection de MCTS par un modèle de machine learning inspirée du 
+cours de machine learning \cite{ml_course_2026}. Pour chaque 
+nœud enfant, un vecteur de caractéristiques est construit (reward 
+moyen, nombre de visites, score, présence d'un meeple, etc.), 
+identique à celui utilisé lors de l'entraînement. Le modèle prédit 
+alors un score pour chaque coup, et le coup ayant la meilleure 
+évaluation est sélectionné. En cas d'indisponibilité du modèle, le 
+système bascule automatiquement vers la méthode UCT, garantissant 
+ainsi la robustesse de l'ensemble.
 
-Ce modèle de machine learning est entraîné à partir de données générées lors de simulations de parties. Pour chaque état exploré, des caractéristiques sont extraites et associées à un résultat, généralement le reward final ou une estimation de la qualité du coup. Ces données permettent d'entraîner un réseau de neurones (via Keras) capable de prédire la pertinence d'un coup en fonction de son contexte. Une fois entraîné, le modèle est sauvegardé dans un fichier et peut être rechargé pour guider la phase de sélection dans MCTS.
+\paragraph{Entraînement et inférence.}
+Les phases d'entraînement et d'inférence sont explicitement séparées. 
+L'entraînement est réalisé hors ligne via le script 
+\texttt{mcts\_ml\_training.py}, à partir de données issues de 
+simulations de parties. Chaque exemple du dataset est constitué d'un 
+couple \textit{(features, target)}, où les features décrivent un état 
+ou un nœud MCTS, et la target correspond à une mesure de qualité 
+(reward final ou estimation de victoire). Les données sont stockées 
+au format JSON Lines, puis converties en tableaux numériques via 
+NumPy. Le fichier d'exemple fourni constitue une validation technique 
+et ne reflète pas encore un dataset issu de parties réelles.
 
-Les données utilisées pour l'entraînement sont stockées sous forme de fichiers JSON ou JSON Lines. Chaque entrée contient un vecteur de caractéristiques décrivant un état ou un coup, ainsi qu'une valeur cible représentant sa qualité, souvent le reward final ou une probabilité de victoire estimée. Le chargement de ces données est assuré par la fonction \texttt{\_load\_samples}, qui extrait une matrice de caractéristiques (chaque ligne correspondant à un coup) et un vecteur de cibles associées, puis les convertit en tableaux numériques exploitables via NumPy.
+\paragraph{Architecture du modèle.}
+Le modèle utilisé est un perceptron multicouche (MLP) composé de deux 
+couches cachées avec activation ReLU, suivi d'une couche de sortie 
+linéaire adaptée à la régression. Ce choix permet de capturer des 
+relations non linéaires tout en conservant un coût de calcul faible, 
+compatible avec une utilisation en temps réel dans MCTS. 
+L'entraînement minimise l'erreur quadratique moyenne (MSE) à l'aide 
+de l'optimiseur Adam, sur un nombre d'epochs configurable. 
+Contrairement à la phase de jeu, cet entraînement n'est pas contraint 
+par \texttt{ai-time} et s'exécute jusqu'à convergence ou arrêt manuel.
 
-Le modèle adopté est un réseau de neurones de type perceptron multicouche (MLP), implémenté avec Keras. Il se compose d'une couche d'entrée adaptée au nombre de caractéristiques, suivie de deux couches cachées utilisant des fonctions d'activation ReLU, puis d'une couche de sortie produisant une valeur réelle. Cette dernière correspond à l'évaluation prédite du coup, avec une activation linéaire adaptée à une tâche de régression. L'entraînement consiste à ajuster les paramètres du réseau afin de minimiser l'écart entre les prédictions et les valeurs cibles, en utilisant la fonction de perte MSE (Mean Squared Error) ainsi que l'optimiseur Adam, reconnu pour sa stabilité et sa rapidité de convergence. L'apprentissage s'effectue sur plusieurs epochs avec un traitement des données par lots (batchs), ce qui améliore les performances globales.
+\paragraph{Utilisation en partie.}
+Une fois entraîné, le modèle est sauvegardé au format \texttt{.keras} 
+puis rechargé dynamiquement pendant les parties via 
+\texttt{ai\_model.py}. Lors de l'exécution de MCTS, les mêmes 
+features sont reconstruites à la volée pour chaque nœud exploré, 
+garantissant la cohérence entre apprentissage et inférence. Le modèle 
+est utilisé exclusivement en prédiction, sans mise à jour des poids.
 
-Une fois entraîné, le modèle est sauvegardé au format \texttt{.keras}, incluant l'architecture et les poids du réseau. Il peut ainsi être rechargé ultérieurement sans nécessiter de nouvel entraînement. Lors de l'exécution de MCTS, ce modèle est chargé dynamiquement et utilisé pour évaluer les coups à partir de leurs caractéristiques. L'intégration avec MCTS est directe : les mêmes caractéristiques que celles utilisées lors de l'entraînement sont reconstruites en temps réel pour chaque nœud exploré (via \texttt{\_extract\_ml\_features}). Le modèle prédit alors un score pour chaque enfant, permettant d'orienter la sélection vers les coups les plus prometteurs. Cette approche offre une exploration plus informée que la méthode purement statistique UCT, tout en restant compatible avec celle-ci en cas d'absence de modèle.
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
 Afin de permettre à plusieurs joueurs de s'affronter à distance, nous 
@@ -1101,7 +1403,18 @@ nous aidant à structurer nos idées, à formuler nos analyses de manière
 plus claire et concise, et à corriger les fautes d'orthographe et de 
 grammaire.
 
-\section{Liste des besoins}
+
+
+%------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%------------------------------------------------------------------------------
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{bibliography}
+
+\newpage
+\section{Annexe : Liste des besoins}
 
 \begin{longtable}{|c|l|c|}
 \hline
@@ -1166,13 +1479,5 @@ joueurs & Non fait \\ \hline
 
 \end{longtable}
 
-
-%------------------------------------------------------------------------------
-%	BIBLIOGRAPHY
-%------------------------------------------------------------------------------
-
-\nocite{*}
-\bibliographystyle{plain}
-\bibliography{bibliography}
 
 \end{document}
