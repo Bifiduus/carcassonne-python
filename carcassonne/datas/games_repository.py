@@ -6,7 +6,7 @@ from pathlib import Path
 import time
 from typing import Any
 
-from carcassonne.business_logic.interfaces.i_games_repository import (
+from carcassonne.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.i18n import gettext as _

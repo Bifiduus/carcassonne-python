@@ -1,6 +1,5 @@
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
-from carcassonne.datas.serializer import parse_move
 from carcassonne.i18n import gettext as _
 from gi.repository import GLib
 
@@ -105,8 +104,7 @@ class GameDataGui:
         if self.highlight_contest_move:
             if self.gui is not None and hasattr(self.gui, "error_message"):
                 self.gui.error_message.show_error(
-                    _("Contest mode is read-only. View the AI move and use Back to return to menu.")
-                )
+                    _("Contest mode is read-only. View the AI move and use Back to return to menu."))
             return
 
         if self.current_tile is None:
@@ -174,7 +172,7 @@ class GameDataGui:
             )
 
         try:
-            parsed_move = parse_move(move)
+            parsed_move = self.game.parse_move(move)
         except ValueError:
             return _(
                 "Invalid move format. Use the format <tile>/<position>"
@@ -361,7 +359,7 @@ class GameDataGui:
         hint_move = self.game.provide_hint()
         if hint_move:
             # Parse the hint move to get tile and placement info
-            parsed = parse_move(hint_move)
+            parsed = self.game.parse_move(hint_move)
             tile_code = parsed["tile_sides"]
             if parsed.get("center"):
                 tile_code = f"{tile_code}/{parsed['center']}"

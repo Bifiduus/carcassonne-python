@@ -5,16 +5,16 @@ import threading
 import time
 
 from carcassonne.business_logic.server import Server
-from carcassonne.business_logic.interfaces.i_games_repository import (
+from carcassonne.interfaces.i_client_message_visitor import (
+    IClientMessageVisitor,
+)
+from carcassonne.interfaces.i_client_service import (
+    IClientService,
+)
+from carcassonne.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_client_message_visitor import (
-    IClientMessageVisitor,
-)
-from carcassonne.presentation.interfaces.i_client_service import (
-    IClientService,
-)
 
 
 class Client(IClientService):

@@ -4,7 +4,8 @@ This module provides tile-side data, connectivity rules, and counters used to
 draw, place, and restore tiles during gameplay.
 """
 
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.interfaces.i_tile import ITile
 from carcassonne.datas.tiles_constants import CARDINALS
 from carcassonne.datas.tiles_constants import DIRECTION_MAP
 from carcassonne.datas.tiles_constants import MEEPLE_PLACEMENT
@@ -12,7 +13,7 @@ from carcassonne.datas.tiles_constants import MATCH_MATRIX
 from carcassonne.datas.tiles_constants import TILE_PARTS
 
 
-class Tile:
+class Tile(ITile):
     code: str
 
     # Direction matrices indexed by orientation (0, 1, 2, 3)
@@ -48,6 +49,7 @@ class TilesInfo(ITilesInfo):
         self.direction_list = list(CARDINALS)
 
         self.direction_dict = dict(DIRECTION_MAP)
+        self.direction_matrix = Tile.direction_matrix
 
         self.matrix_coordinates = dict(MATCH_MATRIX)
 
@@ -376,3 +378,9 @@ class TilesInfo(ITilesInfo):
         if self.tiles_count.get(tile_code, 0) <= 0:
             raise ValueError(f"No tiles left of type: {tile_code}")
         self.tiles_count[tile_code] -= 1
+
+    def get_tile_definition(self, tile_code: str) -> ITile | None:
+        return self.tiles.get(tile_code)
+
+    def get_direction_matrix(self) -> list[list[list[str]]]:
+        return self.direction_matrix

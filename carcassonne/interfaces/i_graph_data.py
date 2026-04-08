@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from typing import Any, Dict, List, Optional
 
-from carcassonne.datas.meeple_data import Meeple
+from carcassonne.interfaces.i_meeple import IMeeple
 
 
 class IGraphData(ABC):
@@ -73,6 +73,10 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
+    def initialize_starting_tile(self, river: bool = False) -> None:
+        pass
+
+    @abstractmethod
     def get_vertex_orientation(self, vertex_id: int) -> int:
         pass
 
@@ -83,11 +87,11 @@ class IGraphData(ABC):
         pass
 
     @abstractmethod
-    def get_meeples(self) -> List[Meeple]:
+    def get_meeples(self) -> List[IMeeple]:
         pass
 
     @abstractmethod
-    def set_meeples(self, meeples_list: List[Meeple]) -> None:
+    def set_meeples(self, meeples_list: List[IMeeple]) -> None:
         pass
 
     @abstractmethod

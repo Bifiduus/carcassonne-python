@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from carcassonne.interfaces.i_meeple import IMeeple
+
 # Position labels for the 9 positions on a tile (3x3 grid)
 POSITION_LABELS: Final[dict[int, str]] = {
     7: "NW",
@@ -20,7 +22,7 @@ MAX_POSITION: Final[int] = 8
 
 
 @dataclass
-class Meeple:
+class Meeple(IMeeple):
     """Represents a meeple (player token) placed on the board."""
 
     player_id: int

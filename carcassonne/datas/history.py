@@ -3,6 +3,7 @@ This module defines classes used to track and serialize game move history.
 It stores past moves and future moves to support undo/redo workflows.
 """
 
+from carcassonne.interfaces.i_history import IHistory
 from carcassonne.datas.serializer import build_str
 
 
@@ -25,7 +26,7 @@ class MoveRecord:
         self.is_ai_move: bool = is_ai
 
 
-class History:
+class History(IHistory):
     """Manage move history stacks for undo/redo operations."""
 
     def __init__(self) -> None:

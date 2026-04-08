@@ -4,8 +4,8 @@ from gi.repository import Gtk, GLib
 import gi
 
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_client_service import IClientService
-from carcassonne.presentation.interfaces.i_server_service import IServerService
+from carcassonne.interfaces.i_client_service import IClientService
+from carcassonne.interfaces.i_server_service import IServerService
 
 gi.require_version("Gtk", "4.0")
 

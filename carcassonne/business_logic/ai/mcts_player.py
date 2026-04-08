@@ -10,8 +10,8 @@ import time
 from pathlib import Path
 from typing import List, TYPE_CHECKING
 
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
-from carcassonne.datas.serializer import build_str
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.business_logic.move_serializer import build_str
 from carcassonne.business_logic.ai._utils import (
     _discard_unplayable_tile,
     _restore_drawn_tile_after_undo,

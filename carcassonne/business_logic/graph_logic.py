@@ -6,13 +6,13 @@ interacting with `IGraphData`.
 
 from typing import Dict, List, Optional, Tuple
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.datas.tiles_constants import CARDINALS
-from carcassonne.datas.tiles_constants import DIRECTION_MAP
-from carcassonne.datas.tiles_constants import MATCH_MATRIX
-from carcassonne.datas.tiles_constants import OPPOSITE_CARDINAL
-
-from carcassonne.datas.tiles_info import Tile, TilesInfo
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_tile import ITile
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.business_logic.tile_constants import CARDINALS
+from carcassonne.business_logic.tile_constants import DIRECTION_MAP
+from carcassonne.business_logic.tile_constants import MATCH_MATRIX
+from carcassonne.business_logic.tile_constants import OPPOSITE_CARDINAL
 
 DirectionGroup = List[str]
 GroupKey = Tuple[str, ...]
@@ -46,7 +46,7 @@ class GraphLogic:
     }
 
     def add_lands_components(
-        self, tile_id: int, graph: IGraphData, tiles_info: TilesInfo
+        self, tile_id: int, graph: IGraphData, tiles_info: ITilesInfo
     ) -> None:
         """Update terrain components after placing one tile.
 
@@ -69,7 +69,7 @@ class GraphLogic:
             return
 
         vertex = graph.vertices[tile_id]
-        tile_def = tiles_info.tiles.get(vertex.name.split("/")[0])
+        tile_def = tiles_info.get_tile_definition(vertex.name.split("/")[0])
         if tile_def is None or not tile_def.tiles_lands:
             return
 
@@ -126,7 +126,7 @@ class GraphLogic:
 
     def _initialize_group_tracking(
         self,
-        tile_def: Tile,
+        tile_def: ITile,
     ) -> Tuple[GroupIsLinkedMap, GroupConnectionCountMap, GroupLandTypeMap]:
         """Build tracking maps for all direction groups on the tile."""
         group_is_linked: GroupIsLinkedMap = {}
@@ -148,8 +148,8 @@ class GraphLogic:
         tile_orientation: int,
         neighbors: Dict[int, int],
         graph: IGraphData,
-        tile_def: Tile,
-        tiles_info: TilesInfo,
+        tile_def: ITile,
+        tiles_info: ITilesInfo,
         group_is_linked: GroupIsLinkedMap,
         group_connection_count: GroupConnectionCountMap,
         lands_set_index: LandsSetIndex,
@@ -186,8 +186,8 @@ class GraphLogic:
         tile_orientation: int,
         neighbors: Dict[int, int],
         graph: IGraphData,
-        tile_def: Tile,
-        tiles_info: TilesInfo,
+        tile_def: ITile,
+        tiles_info: ITilesInfo,
         group_is_linked: GroupIsLinkedMap,
         group_connection_count: GroupConnectionCountMap,
         lands_set_index: LandsSetIndex,
@@ -507,7 +507,7 @@ class GraphLogic:
 
     @staticmethod
     def _find_land_and_group_for_side(
-        tile_def: Tile,
+        tile_def: ITile,
         side: str,
     ) -> Tuple[Optional[str], Optional[DirectionGroup]]:
         """Resolve the terrain type and group owning one side label.
@@ -528,7 +528,7 @@ class GraphLogic:
 
     @staticmethod
     def _find_neighbor_group(
-        neighbor_def: Tile,
+        neighbor_def: ITile,
         land_type: str,
         neighbor_side: str,
     ) -> Optional[DirectionGroup]:
@@ -559,8 +559,8 @@ class GraphLogic:
         initial_corner: str,
         corner: str,
         graph: IGraphData,
-        tile_def: Tile,
-        tiles_info: TilesInfo,
+        tile_def: ITile,
+        tiles_info: ITilesInfo,
         special_corner: List[str],
         corner_number: int,
         group_is_linked: GroupIsLinkedMap,
@@ -624,7 +624,9 @@ class GraphLogic:
             return
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
-        neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
+        neighbor_def = tiles_info.get_tile_definition(
+            neighbor_vertex.name.split("/")[0]
+        )
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
@@ -665,8 +667,8 @@ class GraphLogic:
         initial_corner: str,
         corner: str,
         graph: IGraphData,
-        tile_def: Tile,
-        tiles_info: TilesInfo,
+        tile_def: ITile,
+        tiles_info: ITilesInfo,
         corner_number: int,
         group_is_linked: GroupIsLinkedMap,
         group_connection_count: GroupConnectionCountMap,
@@ -707,7 +709,9 @@ class GraphLogic:
             return
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
-        neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
+        neighbor_def = tiles_info.get_tile_definition(
+            neighbor_vertex.name.split("/")[0]
+        )
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]
@@ -748,8 +752,8 @@ class GraphLogic:
         initial_side: str,
         cardinal: str,
         graph: IGraphData,
-        tile_def: Tile,
-        tiles_info: TilesInfo,
+        tile_def: ITile,
+        tiles_info: ITilesInfo,
         group_is_linked: GroupIsLinkedMap,
         group_connection_count: GroupConnectionCountMap,
         lands_set_index: LandsSetIndex,
@@ -784,7 +788,9 @@ class GraphLogic:
             return
 
         neighbor_vertex = graph.get_vertex(neighbor_id)
-        neighbor_def = tiles_info.tiles.get(neighbor_vertex.name.split("/")[0])
+        neighbor_def = tiles_info.get_tile_definition(
+            neighbor_vertex.name.split("/")[0]
+        )
         neigh_orientation = neighbor_vertex.get_orientation()
         nx, ny = self.match_matrix.get(neigh_initial_corner)
         neigh_corner = neighbor_def.direction_matrix[neigh_orientation][nx][ny]

@@ -4,8 +4,8 @@ GameCLI accepts commands to start/load/save games, draw and place tiles,
 undo/redo turns, and display game state information.
 """
 
-from carcassonne.presentation.interfaces.i_client_service import IClientService
-from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.interfaces.i_client_service import IClientService
+from carcassonne.interfaces.i_game_service import IGameService
 from carcassonne.presentation.cli import commands_handler_cli
 
 import readline
@@ -13,7 +13,7 @@ import threading
 import time
 
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_server_service import IServerService
+from carcassonne.interfaces.i_server_service import IServerService
 
 COMMANDS = [
     "new",

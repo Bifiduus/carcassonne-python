@@ -1,13 +1,9 @@
 from carcassonne.business_logic.game.game_data import GameData
-from carcassonne.business_logic.player import Player
-from carcassonne.business_logic.game.board import Board
-from carcassonne.datas.deck import Deck
-from carcassonne.datas.tiles_info import TilesInfo
-from carcassonne.business_logic.rules_manager import RulesManager
-from carcassonne.datas.starting_tile import (
-    initialize_starting_tile,
-    initialize_starting_tile_river,
+from carcassonne.interfaces.i_business_logic_factory import (
+    IBusinessLogicFactory,
 )
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.business_logic.player import Player
 
 
 class NewGame:
@@ -17,12 +13,16 @@ class NewGame:
         deck_manager,
         blitz_manager,
         game_data: GameData,
+        business_logic_factory: IBusinessLogicFactory,
+        datas_factory: IDatasFactory,
         game=None,
     ):
         self.game_data = game_data
         self.river_manager = river_manager
         self.deck_manager = deck_manager
         self.blitz_manager = blitz_manager
+        self.business_logic_factory = business_logic_factory
+        self.datas_factory = datas_factory
         self.game = game
 
     def start_online_game(self, players: list[Player]):
@@ -35,14 +35,18 @@ class NewGame:
         self.game_data.graph.reset_graph()
         # ensure starting tile present after reset
         if self.game_data.game_configuration.get_setting_value("river"):
-            initialize_starting_tile_river(self.game_data.graph)
+            self.game_data.graph.initialize_starting_tile(river=True)
         else:
-            initialize_starting_tile(self.game_data.graph)
+            self.game_data.graph.initialize_starting_tile(river=False)
         self.game_data.current_hand = None
-        self.game_data.board = Board()
-        self.game_data.deck = Deck()
-        self.game_data.tiles_info = TilesInfo()
-        self.game_data.rules_manager = RulesManager(self.game_data.tiles_info)
+        self.game_data.board = self.business_logic_factory.create(
+            "Board", self.datas_factory
+        )
+        self.game_data.deck = self.datas_factory.create("Deck")
+        self.game_data.tiles_info = self.datas_factory.create("TilesInfo")
+        self.game_data.rules_manager = self.business_logic_factory.create(
+            "RulesManager", self.game_data.tiles_info
+        )
         self.game_data.players.clear()
         self.game_data.add_online_players(players)
         resolved_seed = self.deck_manager.resolve_seed()
@@ -64,14 +68,18 @@ class NewGame:
         # ensure starting tile present after reset
         if self.game_data.game_configuration.get_setting_value("river"):
             self.river_manager.initialize_river()
-            initialize_starting_tile_river(self.game_data.graph)
+            self.game_data.graph.initialize_starting_tile(river=True)
         else:
-            initialize_starting_tile(self.game_data.graph)
-        self.game_data.board = Board()
-        self.game_data.deck = Deck()
+            self.game_data.graph.initialize_starting_tile(river=False)
+        self.game_data.board = self.business_logic_factory.create(
+            "Board", self.datas_factory
+        )
+        self.game_data.deck = self.datas_factory.create("Deck")
         self.game_data.current_hand = None
-        self.game_data.tiles_info = TilesInfo()
-        self.game_data.rules_manager = RulesManager(self.game_data.tiles_info)
+        self.game_data.tiles_info = self.datas_factory.create("TilesInfo")
+        self.game_data.rules_manager = self.business_logic_factory.create(
+            "RulesManager", self.game_data.tiles_info
+        )
         resolved_seed = self.deck_manager.resolve_seed(seed)
         if players_order is not None:
             self.game_data.players_order = players_order
@@ -85,10 +93,12 @@ class NewGame:
         self.game_data._end_game_scored = False
         self.blitz_manager._initialize_blitz_state()
         while self.game_data.get_current_player().is_ai_player():
-            from .end_game import EndGame
-            end_game = EndGame(
-                self.game_data, self.blitz_manager,
-                self.game_data.rules_manager)
+            end_game = self.business_logic_factory.create(
+                "EndGame",
+                self.game_data,
+                self.blitz_manager,
+                self.game_data.rules_manager,
+            )
             if end_game.end_game():
                 break
             previous_player_id = self.game_data.get_current_player().get_id()

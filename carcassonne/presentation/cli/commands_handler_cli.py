@@ -9,9 +9,9 @@ The command handler functions are designed to be called from the GameCLI class
  when the corresponding commands are entered by the player.
 """
 
-from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.interfaces.i_client_service import IClientService
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_server_service import IServerService
+from carcassonne.interfaces.i_server_service import IServerService
 
 
 def new_game(self, args, client_service: IClientService) -> None:

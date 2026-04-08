@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
-from carcassonne.datas.tiles_constants import DIRECTION_MAP
+from carcassonne.business_logic.tile_constants import DIRECTION_MAP
 
 if TYPE_CHECKING:
     from carcassonne.business_logic.player import Player

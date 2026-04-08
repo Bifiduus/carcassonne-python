@@ -6,9 +6,9 @@ import copy
 import time
 from typing import List, Tuple, TYPE_CHECKING
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
-from carcassonne.datas.serializer import build_str
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.business_logic.move_serializer import build_str
 from carcassonne.business_logic.heuristic import (
     evaluate_state as heuristic_evaluate_state,
 )

@@ -4,17 +4,22 @@ import socket
 import select
 
 from threading import Thread, Event, Lock
+from carcassonne.business_logic.business_logic_factory import (
+    BusinessLogicFactory,
+)
 from carcassonne.business_logic.game.game import Game
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_business_logic_factory import (
+    IBusinessLogicFactory,
+)
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.business_logic.online_communication import OnlineCommunication
 from carcassonne.business_logic.player import Player
-from carcassonne.datas.graph_data import GraphData
-from carcassonne.datas.games_repository import GameRepository
-from carcassonne.business_logic.interfaces.i_games_repository import (
+from carcassonne.interfaces.i_games_repository import (
     IGamesRepository,
 )
+from carcassonne.interfaces.i_server_service import IServerService
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_server_service import IServerService
 
 
 class Server(IServerService):
@@ -27,6 +32,8 @@ class Server(IServerService):
         self,
         repo: IGamesRepository | None = None,
         daemon: bool = False,
+        business_logic_factory: IBusinessLogicFactory | None = None,
+        datas_factory: IDatasFactory | None = None,
     ):
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
@@ -46,9 +53,19 @@ class Server(IServerService):
         self.registered_clients: dict[socket.socket, bool] = {}
         # Track each client handler thread (for clean shutdown)
         self.client_threads: list[Thread] = []
+        if datas_factory is None:
+            raise ValueError("datas_factory must be provided")
+        self.datas_factory: IDatasFactory = datas_factory
+
         # repository for persistence
-        self.repo = repo if repo is not None else GameRepository()
+        self.repo = (
+            repo
+            if repo is not None else self.datas_factory.create(
+                "GameRepository"))
         assert self.repo, "The database should not be None"
+        self.business_logic_factory: IBusinessLogicFactory = (
+            business_logic_factory or BusinessLogicFactory()
+        )
         self.handle_communication = OnlineCommunication(self)
 
     def server_start(self, port: str = "12345"):
@@ -481,8 +498,17 @@ class Server(IServerService):
             party_name = f"Party {party_id}"
         # Initialize the game
         number_of_players_in_group: int = len(clients_list)
-        graph: IGraphData = GraphData()
-        new_party = Game(graph, number_of_players_in_group)
+        graph: IGraphData = self.datas_factory.create("GraphData")
+        new_party = self.business_logic_factory.create(
+            "Game",
+            graph,
+            number_of_players_in_group,
+            None,
+            None,
+            None,
+            self.business_logic_factory,
+            self.datas_factory,
+        )
         try:
             self.repo.create_game(party_name, party_id)
             game_id: int = self.repo.get_game_id(party_id)
@@ -502,7 +528,11 @@ class Server(IServerService):
         assert self.repo, "The database should not be None"
         for client in clients_list:
             username = self.repo.get_username(str(client))
-            players_list.append(Player(int(client), username, "None"))
+            players_list.append(
+                self.business_logic_factory.create(
+                    "Player", int(client), username, "None"
+                )
+            )
         return players_list
 
     def check_profile_player(self, player_id: int) -> str:

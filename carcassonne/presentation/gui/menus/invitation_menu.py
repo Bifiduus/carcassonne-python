@@ -5,7 +5,7 @@ import ast
 import gi
 
 from carcassonne.i18n import gettext as _
-from carcassonne.presentation.interfaces.i_client_service import IClientService
+from carcassonne.interfaces.i_client_service import IClientService
 
 gi.require_version("Gtk", "4.0")
 

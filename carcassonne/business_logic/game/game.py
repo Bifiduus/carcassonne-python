@@ -8,21 +8,18 @@ import logging
 import time
 from typing import Any, List
 
-from carcassonne.business_logic.game.blitz_manager import BlitzManager
-from carcassonne.business_logic.game.commands_game import CommandsGame
-from carcassonne.business_logic.game.deck_manager import DeckManager
-from carcassonne.business_logic.game.end_game import EndGame
+from carcassonne.business_logic.business_logic_factory import (
+    BusinessLogicFactory,
+)
+from carcassonne.interfaces.i_business_logic_factory import (
+    IBusinessLogicFactory,
+)
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game.game_data import GameData
-from carcassonne.business_logic.game.new_game import NewGame
-from carcassonne.business_logic.game.river_manager import RiverManager
-from carcassonne.business_logic.game.undo_redo_manager import UndoRedoManager
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.business_logic.move_serializer import parse_move
 from carcassonne.business_logic.player import Player
-from carcassonne.business_logic.save_handler import SaveHandler
-from carcassonne.business_logic.score_manager import ScoreManager
-from carcassonne.datas.serializer import parse_move
-from carcassonne.presentation.interfaces.i_game_service import IGameService
-from carcassonne.business_logic.game_mode_manager import GameModeManager
 
 logger = logging.getLogger(__name__)
 
@@ -43,34 +40,69 @@ class Game(IGameService):
         config_overrides=None,
         shuffle_algo: str | None = None,
         default_seed: int | None = None,
+        business_logic_factory: IBusinessLogicFactory | None = None,
+        datas_factory: IDatasFactory | None = None,
     ) -> None:
-        self.game_data = GameData(graphData, nb_players, config_overrides)
+        self.business_logic_factory: IBusinessLogicFactory = (
+            business_logic_factory or BusinessLogicFactory()
+        )
+        if datas_factory is None:
+            raise ValueError("datas_factory must be provided")
+        self.datas_factory: IDatasFactory = datas_factory
+        self.game_data = GameData(
+            graphData,
+            nb_players,
+            self.business_logic_factory,
+            self.datas_factory,
+            config_overrides,
+        )
         if shuffle_algo is not None:
             self.game_data.shuffle_algo = shuffle_algo
         if default_seed is not None:
             self.game_data.default_seed = default_seed
-        self.save_handler = SaveHandler(self)
-        self.score_manager = ScoreManager()
-        self.blitz_manager = BlitzManager(self.game_data)
-        self.game_mode_manager = GameModeManager(self.blitz_manager, self)
-        self.end_game_manager = EndGame(
+        self.save_handler = self.business_logic_factory.create(
+            "SaveHandler", self
+        )
+        self.score_manager = self.business_logic_factory.create("ScoreManager")
+        self.blitz_manager = self.business_logic_factory.create(
+            "BlitzManager", self.game_data
+        )
+        self.game_mode_manager = self.business_logic_factory.create(
+            "GameModeManager", self.blitz_manager, self
+        )
+        self.end_game_manager = self.business_logic_factory.create(
+            "EndGame",
             self.game_data, self.blitz_manager, self.score_manager
         )
-        self.river_manager = RiverManager(self.game_data)
-        self.deck_manager = DeckManager(
-            self.game_data, self.blitz_manager, self.river_manager
+        self.river_manager = self.business_logic_factory.create(
+            "RiverManager", self.game_data
         )
-        self.undo_redo_manager = UndoRedoManager(
-            self.blitz_manager, self.deck_manager, self.game_data
+        self.deck_manager = self.business_logic_factory.create(
+            "DeckManager",
+            self.game_data,
+            self.blitz_manager,
+            self.river_manager,
+            self.datas_factory,
         )
-        self.commands = CommandsGame(
+        self.undo_redo_manager = self.business_logic_factory.create(
+            "UndoRedoManager",
+            self.blitz_manager,
+            self.deck_manager,
+            self.game_data,
+            self.datas_factory,
+        )
+        self.commands = self.business_logic_factory.create(
+            "CommandsGame",
             self.blitz_manager, self.deck_manager, self.game_data, self
         )
-        self.new_game = NewGame(
+        self.new_game = self.business_logic_factory.create(
+            "NewGame",
             self.river_manager,
             self.deck_manager,
             self.blitz_manager,
             self.game_data,
+            self.business_logic_factory,
+            self.datas_factory,
             self,
         )
         self.river = None
@@ -339,6 +371,9 @@ class Game(IGameService):
 
     def extract_tile_code(self, move):
         self.game_data.extract_tile_code(move)
+
+    def parse_move(self, move: str) -> dict:
+        return parse_move(move)
 
     def _connected_components_snapshot(
         self,

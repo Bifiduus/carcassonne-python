@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.rules_manager import RulesManager
-from carcassonne.datas.history import MoveRecord
 from carcassonne.business_logic.ai.expectimax_player import ExpectimaxPlayer
 
 
@@ -93,7 +92,7 @@ def initialize_ai(depth: int = 4, eval_name: str = "STAR1") -> None:
     _ai_manager = AIModelManager(depth=depth, eval_name=eval_name)
 
 
-def is_ai_player(play: MoveRecord) -> bool:
+def is_ai_player(play: Any) -> bool:
     """
     Check if a move was made by the AI player.
 

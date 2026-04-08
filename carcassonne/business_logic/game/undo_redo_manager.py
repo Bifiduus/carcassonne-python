@@ -1,12 +1,18 @@
 from carcassonne.business_logic.ai_model import is_ai_player
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
 from carcassonne.business_logic.score_manager import ScoreManager
-from carcassonne.datas.deck import Deck
 
 
 class UndoRedoManager:
     """Handle undo/redo by replaying the game from recorded move history."""
 
-    def __init__(self, blitz_manager, deck_manager, game_data):
+    def __init__(
+        self,
+        blitz_manager,
+        deck_manager,
+        game_data,
+        datas_factory: IDatasFactory,
+    ):
         """Initialise the manager with the shared game state and sub-managers.
 
         Args:
@@ -20,6 +26,7 @@ class UndoRedoManager:
         self.game_data = game_data
         self.blitz_manager = blitz_manager
         self.deck_manager = deck_manager
+        self.datas_factory = datas_factory
 
     def _can_time_travel(self) -> bool:
         """Return whether current state allows undo/redo operations.
@@ -185,7 +192,7 @@ class UndoRedoManager:
 
         # Re-create and re-shuffle the deck with the original seed so that
         # the draw order matches the one used during the original game.
-        self.game_data.deck = Deck()
+        self.game_data.deck = self.datas_factory.create("Deck")
         self.deck_manager.shuffle_deck(
             self.game_data.shuffle_algo, self.game_data.seed
         )

@@ -6,14 +6,13 @@ history.
 
 import sys
 import re
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_history import IHistory
 from carcassonne.business_logic.player import Player
-from carcassonne.datas.history import History, MoveRecord
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
 from carcassonne.business_logic.score_manager import ScoreManager
-from carcassonne.datas.meeple_data import Meeple
-from carcassonne.datas.tiles_info import Tile
 
 NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)
@@ -39,8 +38,9 @@ class Board:
         "C": "C",
     }
 
-    def __init__(self):
+    def __init__(self, datas_factory: IDatasFactory):
         """Initialize Board with tracking for already-scored components."""
+        self.datas_factory = datas_factory
         self.scored_components = (
             set()
         )  # Track components that have already scored
@@ -81,7 +81,7 @@ class Board:
         move: str,
         graph: IGraphData,
         tiles_info: ITilesInfo,
-        history: History,
+        history: IHistory,
         players: dict[int, Player],
         players_order: list[int],
         current_player: Player,
@@ -136,9 +136,9 @@ class Board:
 
                     if land_type and land_type in graph.lands_components:
                         integer_placement_1 = integers_placement[1]
-                        land_pos = Tile.direction_matrix[integer_placement_1][
-                            side_x
-                        ][side_y]
+                        land_pos = tiles_info.get_direction_matrix()[
+                            integer_placement_1
+                        ][side_x][side_y]
                         set_name_to_place = None
                         for set_name, sets in graph.lands_components[
                             land_type
@@ -167,7 +167,8 @@ class Board:
                                     )
                                 )
 
-                            meeple = Meeple(
+                            meeple = self.datas_factory.create(
+                                "Meeple",
                                 player_id=current_player_id,
                                 tile_id=tile_id,
                                 position=(
@@ -217,7 +218,8 @@ class Board:
 
         if record_history:
             try:
-                record = MoveRecord(
+                record = self.datas_factory.create(
+                    "MoveRecord",
                     move_str=move,
                     player_id=current_player.get_id(),
                     is_ai=current_player.is_ai,
@@ -232,7 +234,7 @@ class Board:
         move: str,
         graph: IGraphData,
         tiles_info: ITilesInfo,
-        history: History,
+        history: IHistory,
         players: dict[int, Player],
     ) -> None:
 

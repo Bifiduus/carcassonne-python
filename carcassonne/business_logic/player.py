@@ -1,4 +1,8 @@
-class PlayerScore:
+from carcassonne.interfaces.i_player import IPlayer
+from carcassonne.interfaces.i_player_score import IPlayerScore
+
+
+class PlayerScore(IPlayerScore):
     id: int
     score: int
 
@@ -34,7 +38,7 @@ class PlayerScore:
         self.score = points
 
 
-class Player:
+class Player(IPlayer):
 
     id: int
     name: str

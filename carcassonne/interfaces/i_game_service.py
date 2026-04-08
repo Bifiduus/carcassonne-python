@@ -1,19 +1,20 @@
-"""Module providing an interface between Presentation and Business Logic."""
-
 from abc import ABC, abstractmethod
 from typing import Any
 
-from carcassonne.business_logic.player import Player
+from carcassonne.interfaces.i_player import IPlayer
 
 
 class IGameService(ABC):
-    # pylint: disable=missing-class-docstring
     @abstractmethod
     def start_new_game(self) -> None:
         pass
 
     @abstractmethod
     def play_move(self, move: str) -> bool:
+        pass
+
+    @abstractmethod
+    def parse_move(self, move: str) -> dict:
         pass
 
     @abstractmethod
@@ -71,7 +72,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_current_player(self) -> Player:
+    def get_current_player(self) -> IPlayer:
         pass
 
     @abstractmethod
@@ -79,7 +80,7 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def get_all_players(self) -> list[Player]:
+    def get_all_players(self) -> list[IPlayer]:
         pass
 
     @abstractmethod

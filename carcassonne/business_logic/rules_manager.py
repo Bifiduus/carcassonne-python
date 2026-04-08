@@ -7,12 +7,11 @@ the current graph and tile definitions.
 import copy
 import re
 from carcassonne.business_logic.game.river_manager import RiverManager
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
 from carcassonne.business_logic.graph_logic import GraphLogic
-from carcassonne.datas.tiles_constants import MATCH_MATRIX
-from carcassonne.datas.tiles_constants import OPPOSITE_SIDE_MATRIX
-from carcassonne.datas.tiles_info import Tile
+from carcassonne.business_logic.tile_constants import MATCH_MATRIX
+from carcassonne.business_logic.tile_constants import OPPOSITE_SIDE_MATRIX
 
 
 class RulesManager:
@@ -161,9 +160,10 @@ class RulesManager:
         if not land_type or land_type not in graph_copy.lands_components:
             graph_copy.remove_vertex(new_tile_id)
             return False
-        land_pos = Tile.direction_matrix[placement_numbers[1]][
-            self.match_matrix[side_placement][0]
-        ][self.match_matrix[side_placement][1]]
+        land_pos = self.tiles_info.get_direction_matrix()[
+            placement_numbers[1]][
+            self.match_matrix[side_placement][0]][
+            self.match_matrix[side_placement][1]]
         component_set_name = self._find_component_set_name(
             graph_copy,
             land_type,
@@ -237,7 +237,8 @@ class RulesManager:
                 " to a valid component"
             )
 
-        land_pos = Tile.direction_matrix[placement_numbers[1]][side_x][side_y]
+        land_pos = self.tiles_info.get_direction_matrix()[
+            placement_numbers[1]][side_x][side_y]
         component_set_name = self._find_component_set_name(
             graph_copy,
             land_type,

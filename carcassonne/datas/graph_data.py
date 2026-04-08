@@ -5,10 +5,9 @@ related lookup helpers.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.player import Player
+from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.datas.tiles_constants import EAST_DIR
 from carcassonne.datas.tiles_constants import NORTH_DIR
 from carcassonne.datas.tiles_constants import ORIENTATIONS
@@ -201,6 +200,23 @@ class GraphData(IGraphData):
             self.lands_components[land_type] = {}
             self.next_set_id[land_type] = 1
 
+    def initialize_starting_tile(self, river: bool = False) -> None:
+        """Initialize the first tile and its initial land components."""
+        tile_name = "FFSF" if river else "CRFR"
+        self.add_vertex(
+            vertex_id=0,
+            name=tile_name,
+            middle="",
+            orientation=0,
+            position=(0, 0),
+        )
+        tile = self.tiles_dict[tile_name]
+        for land in tile.tiles_lands.keys():
+            for connected in tile.tiles_lands[land]:
+                land_id = land + str(self.next_set_id[land])
+                self.lands_components[land][land_id] = [(0, connected)]
+                self.next_set_id[land] += 1
+
     def add_vertex(
         self,
         vertex_id: int,
@@ -335,7 +351,7 @@ class GraphData(IGraphData):
                 if not self.lands_components[land_type][comp_name]:
                     del self.lands_components[land_type][comp_name]
 
-    def remove_meeple(self, tile_id: int, players: dict[int, Player]) -> None:
+    def remove_meeple(self, tile_id: int, players: dict[int, Any]) -> None:
         """Remove the meeple placed on a tile and refund it to its owner.
 
         Args:
@@ -349,7 +365,8 @@ class GraphData(IGraphData):
             if meeple.tile_id == tile_id:
                 self.meeples.remove(meeple)
                 meeple_owner = players.get(meeple.player_id)
-                meeple_owner.add_meeple()  # Return the meeple to the player
+                if meeple_owner is not None:
+                    meeple_owner.add_meeple()  # Return the meeple to owner
                 break
 
     def get_vertex(self, vertex_id: int) -> Optional[Vertex]:

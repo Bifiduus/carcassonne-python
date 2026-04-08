@@ -1,11 +1,7 @@
-"""Module providing an interface between Presentation and Business Logic."""
-
 from abc import ABC, abstractmethod
 
 
 class IServerService(ABC):
-    # pylint: disable=missing-class-docstring
-
     @abstractmethod
     def is_server_running(self) -> bool:
         pass

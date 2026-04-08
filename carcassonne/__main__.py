@@ -6,21 +6,27 @@ import signal
 import sys
 
 from carcassonne import __version__
+from carcassonne.business_logic.business_logic_factory import (
+    BusinessLogicFactory,
+)
 from carcassonne.business_logic.client import Client
-from carcassonne.business_logic.interfaces.i_games_repository import (
+from carcassonne.interfaces.i_business_logic_factory import (
+    IBusinessLogicFactory,
+)
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.interfaces.i_games_repository import (
     IGamesRepository,
 )
 from carcassonne.business_logic.server import Server
-from carcassonne.datas.games_repository import GameRepository
-from carcassonne.presentation.interfaces.i_client_service import IClientService
-from carcassonne.presentation.interfaces.i_game_service import IGameService
+from carcassonne.interfaces.i_client_service import IClientService
+from carcassonne.interfaces.i_game_service import IGameService
 from carcassonne.business_logic.game.game import Game
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
+from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
-from carcassonne.datas.graph_data import GraphData
+from carcassonne.datas.datas_factory import DatasFactory
 from carcassonne.i18n import configure_i18n, gettext as _
 from carcassonne.logger import setup_logging
-from carcassonne.presentation.interfaces.i_server_service import IServerService
+from carcassonne.interfaces.i_server_service import IServerService
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -279,7 +285,10 @@ def main() -> int:
         print(_("Welcome to Carcassonne"))
         print(_("Type 'help' to see the list of commands.") + "\n")
 
-    game_data: IGraphData = GraphData()
+    business_logic_factory: IBusinessLogicFactory = BusinessLogicFactory()
+    datas_factory: IDatasFactory = DatasFactory()
+
+    game_data: IGraphData = datas_factory.create("GraphData")
     nb_players = args.players if args.players and 1 < args.players <= 5 else 2
     game: IGameService = Game(
         game_data,
@@ -287,10 +296,17 @@ def main() -> int:
         config_overrides,
         shuffle_algo=args.shuffle,
         default_seed=args.seed,
+        business_logic_factory=business_logic_factory,
+        datas_factory=datas_factory,
     )
-    game_repo: IGamesRepository = GameRepository()
+    game_repo: IGamesRepository = datas_factory.create("GameRepository")
     daemon: bool = bool(args.daemon)
-    server_service: IServerService = Server(game_repo, daemon=daemon)
+    server_service: IServerService = Server(
+        game_repo,
+        daemon=daemon,
+        business_logic_factory=business_logic_factory,
+        datas_factory=datas_factory,
+    )
     client_service: IClientService = Client(game_repo, server_service)
 
     # Register the global signal handler once

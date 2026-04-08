@@ -1,18 +1,11 @@
-from carcassonne.datas.deck import Deck
-from carcassonne.datas.serializer import parse_move
-from carcassonne.business_logic.interfaces.i_graph_data import IGraphData
-from carcassonne.business_logic.player import Player
-from carcassonne.business_logic.rules_manager import RulesManager
-from carcassonne.business_logic.game.board import Board
-from carcassonne.datas.games_repository import GameRepository
-from carcassonne.datas.game_configuration import GameConfiguration
-from carcassonne.datas.history import History
-from carcassonne.business_logic.interfaces.i_tiles_info import ITilesInfo
-from carcassonne.datas.tiles_info import TilesInfo
-from carcassonne.datas.starting_tile import (
-    initialize_starting_tile,
-    initialize_starting_tile_river,
+from carcassonne.business_logic.move_serializer import parse_move
+from carcassonne.interfaces.i_business_logic_factory import (
+    IBusinessLogicFactory,
 )
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
+from carcassonne.interfaces.i_graph_data import IGraphData
+from carcassonne.business_logic.player import Player
+from carcassonne.interfaces.i_tiles_info import ITilesInfo
 import random as r
 
 
@@ -20,16 +13,29 @@ class GameData:
     """Class to store all game data, and be able to reset it when needed."""
 
     def __init__(
-        self, graphData: IGraphData, nb_players: int, config_overrides=None
+        self,
+        graphData: IGraphData,
+        nb_players: int,
+        business_logic_factory: IBusinessLogicFactory,
+        datas_factory: IDatasFactory,
+        config_overrides=None,
     ):
-        self.game_configuration = GameConfiguration(config_overrides)
-        self.game_repository: GameRepository = GameRepository()
+        self.business_logic_factory = business_logic_factory
+        self.datas_factory = datas_factory
+        self.game_configuration = self.datas_factory.create(
+            "GameConfiguration", config_overrides
+        )
+        self.game_repository = self.datas_factory.create("GameRepository")
         self.graph: IGraphData = graphData
-        self.tiles_info: ITilesInfo = TilesInfo()
-        self.rules_manager: RulesManager = RulesManager(self.tiles_info)
-        self.board: Board = Board()
-        self.deck = Deck()
-        self.history = History()
+        self.tiles_info: ITilesInfo = self.datas_factory.create("TilesInfo")
+        self.rules_manager = self.business_logic_factory.create(
+            "RulesManager", self.tiles_info
+        )
+        self.board = self.business_logic_factory.create(
+            "Board", self.datas_factory
+        )
+        self.deck = self.datas_factory.create("Deck")
+        self.history = self.datas_factory.create("History")
         self.seed = None
         self.maximum_number_of_players = 5
         self.minimum_number_of_players = 2
@@ -39,7 +45,9 @@ class GameData:
         self.current_hand: str | None = None
         self.save_file = None
         self.players: dict[int, Player] = {}
-        self.players[0] = Player(0, "Player 0", "green")
+        self.players[0] = self.business_logic_factory.create(
+            "Player", 0, "Player 0", "green"
+        )
         self.players_order: list[int] = [0]
         self.add_players(nb_players - 1)
         self.shuffle_players_order()
@@ -52,42 +60,54 @@ class GameData:
         self.graph.reset_graph()
         # Initialize the starting tile on the graph after reset
         if self.game_configuration.get_setting_value("river"):
-            initialize_starting_tile_river(self.graph)
+            self.graph.initialize_starting_tile(river=True)
         else:
-            initialize_starting_tile(self.graph)
-        self.board = Board()
-        self.tiles_info = TilesInfo()
-        self.rules_manager = RulesManager(self.tiles_info)
+            self.graph.initialize_starting_tile(river=False)
+        self.board = self.business_logic_factory.create(
+            "Board", self.datas_factory
+        )
+        self.tiles_info = self.datas_factory.create("TilesInfo")
+        self.rules_manager = self.business_logic_factory.create(
+            "RulesManager", self.tiles_info
+        )
         self.current_hand = None
-        self.history = History()
+        self.history = self.datas_factory.create("History")
         self._end_game_scored = False
 
     def start_load_game(self):
         self.history.clear_history()
         self.graph.reset_graph()
 
-        self.game_repository = GameRepository()
-        self.board = Board()
-        self.deck = Deck()
+        self.game_repository = self.datas_factory.create("GameRepository")
+        self.board = self.business_logic_factory.create(
+            "Board", self.datas_factory
+        )
+        self.deck = self.datas_factory.create("Deck")
         self.current_hand = None
-        self.tiles_info = TilesInfo()
-        self.rules_manager = RulesManager(self.tiles_info)
+        self.tiles_info = self.datas_factory.create("TilesInfo")
+        self.rules_manager = self.business_logic_factory.create(
+            "RulesManager", self.tiles_info
+        )
         self.current_player_order_list = 0
         self._end_game_scored = False
 
     def initialize_starting_tile_based_on_config(self):
         """Initialize the starting tile based on current game configuration."""
         if self.game_configuration.get_setting_value("river"):
-            initialize_starting_tile_river(self.graph)
+            self.graph.initialize_starting_tile(river=True)
         else:
-            initialize_starting_tile(self.graph)
+            self.graph.initialize_starting_tile(river=False)
 
     def add_players(self, nb_players: int) -> None:
         """Add AI players to the game."""
         colors = ["red", "blue", "yellow", "black", "white"]
         for i in range(1, nb_players + 1):
-            self.players[i] = Player(
-                i, f"Player {i}", colors[(i - 2) % len(colors)], True
+            self.players[i] = self.business_logic_factory.create(
+                "Player",
+                i,
+                f"Player {i}",
+                colors[(i - 2) % len(colors)],
+                True,
             )
             self.players_order.append(i)
             self.number_of_ai_players += 1
@@ -99,7 +119,7 @@ class GameData:
         self.players_order.clear()
         for i in range(len(players)):
             players[i].set_color(colors[i % len(colors)])
-            self.players[i+1] = players[i]
+            self.players[i + 1] = players[i]
             self.players_order.append(players[i].get_id())
 
     def shuffle_players_order(self, seed: int | None = None) -> None:

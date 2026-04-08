@@ -1,15 +1,22 @@
 import random
 
-from carcassonne.datas.seed import Seed
+from carcassonne.interfaces.i_datas_factory import IDatasFactory
 
 
 class DeckManager:
     """Manage the deck of the game, resetting it as needed."""
 
-    def __init__(self, game_data, blitz_manager, river_manager):
+    def __init__(
+        self,
+        game_data,
+        blitz_manager,
+        river_manager,
+        datas_factory: IDatasFactory,
+    ):
         self.game_data = game_data
         self.blitz_manager = blitz_manager
         self.river_manager = river_manager
+        self.datas_factory = datas_factory
 
     def draw_tile(self, silent: bool = False) -> str | None:
         """Draw a tile, checking blitz timeout and player playability."""
@@ -42,7 +49,7 @@ class DeckManager:
             return seed
         if self.game_data.default_seed is not None:
             return self.game_data.default_seed
-        return Seed().seed
+        return self.datas_factory.create("Seed").seed
 
     @staticmethod
     def seed_runtime_rng(seed: int) -> None:

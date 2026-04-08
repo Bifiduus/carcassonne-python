@@ -1,10 +1,7 @@
-"""Module providing an interface between Presentation and Business Logic."""
-
 from abc import ABC, abstractmethod
 
 
 class IClientService(ABC):
-
     @abstractmethod
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
         pass
@@ -38,5 +35,4 @@ class IClientService(ABC):
 
     @abstractmethod
     def register_message_visitor(self, visitor):
-        """Register a visitor callback for incoming server messages."""
         pass

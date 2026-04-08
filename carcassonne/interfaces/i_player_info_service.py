@@ -2,7 +2,8 @@
 
 from abc import ABC, abstractmethod
 
-from carcassonne.business_logic.player import Player, PlayerScore
+from carcassonne.interfaces.i_player import IPlayer
+from carcassonne.interfaces.i_player_score import IPlayerScore
 
 
 class IPlayerInfoService(ABC):
@@ -16,7 +17,7 @@ class IPlayerInfoService(ABC):
         pass
 
     @abstractmethod
-    def get_score(self) -> PlayerScore:
+    def get_score(self) -> IPlayerScore:
         pass
 
     @abstractmethod
@@ -32,7 +33,7 @@ class IPlayerInfoService(ABC):
         pass
 
     @abstractmethod
-    def get_current_player(self) -> Player:
+    def get_current_player(self) -> IPlayer:
         pass
 
     @abstractmethod
