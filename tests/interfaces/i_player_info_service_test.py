@@ -58,15 +58,10 @@ def test_concrete_implementation_satisfies_contract() -> None:
     assert service.get_meeples() == 6
 
 
-def test_abstract_method_bodies_are_noops() -> None:
-    placeholder = object()
-
-    assert IPlayerInfoService.get_id(placeholder) is None
-    assert IPlayerInfoService.get_username(placeholder) is None
-    assert IPlayerInfoService.get_score(placeholder) is None
-    assert IPlayerInfoService.get_color(placeholder) is None
-    assert IPlayerInfoService.is_ai_player(placeholder) is None
-    assert IPlayerInfoService.get_number_of_players(placeholder) is None
-    assert IPlayerInfoService.get_current_player(placeholder) is None
-    assert IPlayerInfoService.get_score_int(placeholder) is None
-    assert IPlayerInfoService.get_meeples(placeholder) is None
+def test_cannot_instantiate_abstract_service_directly() -> None:
+    try:
+        IPlayerInfoService()
+    except TypeError as exc:
+        assert "abstract" in str(exc).lower()
+    else:
+        assert False, "IPlayerInfoService should remain abstract"
