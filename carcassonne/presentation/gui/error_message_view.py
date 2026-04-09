@@ -1,3 +1,5 @@
+"""Error dialog helpers for the GTK interface."""
+
 import gi
 import importlib
 from carcassonne.i18n import gettext as _
@@ -7,10 +9,14 @@ Gtk = importlib.import_module("gi.repository.Gtk")
 
 
 class ErrorMessageView:
+    """Display non-blocking error dialogs tied to the main application window."""
+
     def __init__(self, gui):
+        """Store parent GUI reference used as transient window parent."""
         self.gui = gui
 
     def show_error(self, message: str):
+        """Display an error message using AlertDialog or a fallback window."""
         self.gui.window.window.present()
         if hasattr(Gtk, "AlertDialog"):
             dialog = Gtk.AlertDialog()

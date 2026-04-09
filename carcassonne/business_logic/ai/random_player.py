@@ -10,8 +10,13 @@ if TYPE_CHECKING:
 
 
 class RandomPlayer:
+    """Baseline AI that uniformly samples one legal move.
 
-    # Example positions for meeple placement
+    It enumerates all legal placements for the current hand tile, then picks
+    one at random.
+    """
+
+    # Ordered labels used when generating optional meeple placements.
     meeple_placement_list = ["NW", "N", "NE", "E", "SE", "S", "SW", "W", "C"]
 
     def get_possible_moves(self, tile, game: "Game") -> List[str]:
@@ -25,6 +30,7 @@ class RandomPlayer:
         Returns:
             List of possible moves as strings
         """
+        # Collects all legal move strings for ``tile`` in current state.
         possible_moves = []
 
         # Try to place each available tile on each empty neighbor position
@@ -32,6 +38,7 @@ class RandomPlayer:
         can_place_meeple = (
             game.game_data.get_current_player().get_meeples() > 0
         )
+        # Use -1 sentinel to represent "no meeple" in move generation.
         meeple_indices = (
             range(-1, len(self.meeple_placement_list))
             if can_place_meeple
@@ -75,7 +82,7 @@ class RandomPlayer:
         return possible_moves
 
     def random_move(self, tile, game: "Game") -> str:
-        """Select a random move from the list of possible moves."""
+        """Select and return one random legal move (or empty string)."""
         possible_moves = self.get_possible_moves(tile, game)
         selected_move = r.choice(possible_moves) if possible_moves else ""
         return selected_move

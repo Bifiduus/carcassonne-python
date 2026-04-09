@@ -1,3 +1,9 @@
+"""Scoring rules for Carcassonne components.
+
+Implements both end-of-turn scoring for completed components and final
+end-of-game scoring for incomplete components and fields.
+"""
+
 import logging
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 from carcassonne.i18n import gettext as _

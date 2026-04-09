@@ -1,3 +1,9 @@
+"""Client-side network service for online multiplayer sessions.
+
+Handles server discovery, TCP connection lifecycle, incoming message dispatch,
+and account registration/login flows for remote games.
+"""
+
 import sys
 import select
 import socket
@@ -18,9 +24,18 @@ from carcassonne.i18n import gettext as _
 
 
 class Client(IClientService):
+    """Network client responsible for interacting with a remote server."""
+
+    # Time window (seconds) used when pruning stale discovered servers.
     SERVER_TIMEOUT = 30
 
     def __init__(self, repo: IGamesRepository, server_service: Server):
+        """Initialize client runtime state and load/create online identity.
+
+        Args:
+            repo: Persistence repository storing online profile data.
+            server_service: Local server service used for default server name.
+        """
         # client state
         self.client = None
         self.client_player = None

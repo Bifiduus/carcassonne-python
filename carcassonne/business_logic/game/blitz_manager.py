@@ -14,14 +14,23 @@ class BlitzManager:
     """Track and update per-player clocks for blitz mode."""
 
     def __init__(self, game_data) -> None:
+        # All mutable game state; used to read player list and configuration.
         self.game_data = game_data
+        # True when blitz (time-limited) mode is active for this game.
         self.enabled = False
+        # True when the active clock has been frozen (e.g. game is paused).
         self.paused = False
+        # Maximum time budget in seconds granted to each player at game start.
         self.time_limit_seconds = 0.0
+        # Maps player_id -> remaining seconds on that player's clock.
         self.remaining_time_seconds_by_player: dict[int, float] = {}
+        # Id of the player whose clock is currently counting down.
         self.active_player_id: int | None = None
+        # Monotonic timestamp (seconds) when the current turn's clock started.
         self.turn_started_at: float | None = None
+        # Set of player ids whose time has expired; they can no longer play.
         self.timed_out_player_ids: set[int] = set()
+        # Human-readable message describing the most recent timeout event.
         self.timeout_message = ""
 
     def reset(

@@ -1,3 +1,9 @@
+"""GUI command handlers and menu actions.
+
+This module centralizes callbacks triggered by buttons/menu items and delegates
+business operations to GameDataGui/Game service objects.
+"""
+
 from carcassonne.presentation.gui import utils
 from gi.repository import Gtk
 
@@ -9,6 +15,7 @@ Lists of commands that can be triggered from the GUI, and their handlers.
 
 
 def _is_game_paused(gui) -> bool:
+    """Return True when the GUI is currently in paused state."""
     return bool(getattr(gui, "is_paused", False))
 
 
@@ -18,6 +25,7 @@ File menu commands:
 
 
 def on_new(game):
+    """Start a new game and shuffle deck (legacy direct game callback)."""
     game.start_new_game()
     game.shuffle_deck()
 
@@ -139,6 +147,7 @@ def on_save(gui) -> None:
 
 
 def on_config(gui) -> None:
+    """Print current configuration and navigate to singleplayer options."""
     config = gui.game_data.game_configuration()
     print(_("Current game configuration:"))
     for key, value in config.items():
@@ -147,6 +156,7 @@ def on_config(gui) -> None:
 
 
 def on_info(gui) -> None:
+    """Show application information dialog (version and authors)."""
     import carcassonne
 
     message = """Carcassonne Python
@@ -168,6 +178,7 @@ Version: {carcassonne.__version__}
 
 
 def on_quit(self) -> None:
+    """Quit the GUI application."""
     self.quit()
 
 
@@ -177,10 +188,12 @@ Game menu commands:
 
 
 def on_undo(game) -> None:
+    """Undo one move through the game service."""
     game.undo()
 
 
 def on_redo(game) -> None:
+    """Redo one move through the game service."""
     game.redo()
 
 

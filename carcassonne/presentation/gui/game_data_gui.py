@@ -1,3 +1,9 @@
+"""GUI-side state adapter around the core game service.
+
+Encapsulates presentation-specific state (preview tile, hint overlays,
+highlighted contest move) and delegates game operations to business logic.
+"""
+
 from carcassonne.presentation.gui import commands_handler_gui
 from carcassonne.presentation.gui.tiles_view import TilesView
 from carcassonne.i18n import gettext as _
@@ -5,7 +11,10 @@ from gi.repository import GLib
 
 
 class GameDataGui:
+    """Bridge object between GTK widgets and the core Game service."""
+
     def __init__(self, game, client_service, server_service):
+        """Initialize GUI-specific state and references to services."""
         self.game = game
         self.client = client_service
         self.server = server_service
@@ -41,12 +50,15 @@ class GameDataGui:
             return component_name
 
     def game_configuration(self):
+        """Return current configuration dict from game service."""
         return self.game.get_game_configuration()
 
     def pause_game(self) -> None:
+        """Pause underlying game timers/state."""
         self.game.pause_game()
 
     def resume_game(self) -> None:
+        """Resume underlying game timers/state."""
         self.game.resume_game()
 
     def new_game(self, players_order, seed):
@@ -109,6 +121,7 @@ class GameDataGui:
             return False, str(exc)
 
     def undo(self):
+        """Undo one move and refresh relevant GUI views."""
         commands_handler_gui.on_undo(self.game)
         self.hint_tile = None
         self.hint_neighbor_id = None
@@ -119,6 +132,7 @@ class GameDataGui:
             self.gui.players_view.refresh()
 
     def redo(self):
+        """Redo one move and refresh relevant GUI views."""
         commands_handler_gui.on_redo(self.game)
         self.hint_tile = None
         self.hint_neighbor_id = None
@@ -135,6 +149,7 @@ class GameDataGui:
         pass
 
     def play_move_gui(self):
+        """Apply the currently prepared move and process AI follow-up turns."""
         # Prevent moves in contest mode (display only)
         if self.highlight_contest_move:
             if self.gui is not None and hasattr(self.gui, "error_message"):
@@ -192,6 +207,7 @@ class GameDataGui:
             context.iteration(False)
 
     def reset(self):
+        """Reset transient GUI placement/hint state and refresh board."""
         self.current_tile = None
         self.current_orientation = 0
         self.hint_tile = None  # clear hint when resetting
@@ -201,9 +217,11 @@ class GameDataGui:
             self.board_view.refresh()
 
     def set_board_view(self, board):
+        """Inject BoardView reference after widget construction."""
         self.board_view = board
 
     def get_error(self):
+        """Return the last human-readable placement error message."""
         return self.error
 
     def _build_error_message(self, move: str) -> str:

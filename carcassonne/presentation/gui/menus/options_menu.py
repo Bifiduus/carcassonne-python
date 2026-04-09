@@ -1,3 +1,5 @@
+"""General GUI options menu (navigation, fullscreen, resolution)."""
+
 from gi.repository import Gtk
 
 import gi
@@ -8,7 +10,10 @@ gi.require_version("Gtk", "4.0")
 
 
 class OptionsMenu(Gtk.Box):
+    """Menu exposing non-gameplay GUI options and shortcuts to submenus."""
+
     def __init__(self, gui):
+        """Build options widgets and wire callbacks."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
@@ -80,15 +85,19 @@ class OptionsMenu(Gtk.Box):
         self.append(btn_box)
 
     def on_back(self, button):
+        """Return to main menu."""
         self.gui.window.stack.set_visible_child_name("menu")
 
     def on_keybinds(self, button):
+        """Open keybinds menu."""
         self.gui.window.stack.set_visible_child_name("keybinds_menu")
 
     def on_game_options(self, button):
+        """Open singleplayer options menu."""
         self.gui.window.stack.set_visible_child_name("singleplayer_menu")
 
     def on_fullscreen_toggled(self, button):
+        """Toggle fullscreen and restore selected resolution when exiting."""
         if self.fullscreen_cb.get_active():
             self.gui.window.fullscreen()
         else:
@@ -96,6 +105,7 @@ class OptionsMenu(Gtk.Box):
             self.apply_resolution()
 
     def apply_resolution(self, button=None):
+        """Apply selected window size (unless fullscreen is active)."""
         width = int(self.width_combo.get_active_text())
         height = int(self.height_combo.get_active_text())
         if self.fullscreen_cb.get_active():

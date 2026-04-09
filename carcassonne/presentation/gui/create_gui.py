@@ -1,3 +1,9 @@
+"""GUI bootstrap helpers.
+
+Creates GameDataGui/GameGUI objects and registers message visitors used to
+route server notifications into the appropriate menu widgets.
+"""
+
 from carcassonne.presentation.gui.gui import GameGUI
 from carcassonne.presentation.gui.game_data_gui import GameDataGui
 
@@ -39,7 +45,10 @@ class ClientMenuMessageVisitor:
 
 
 class CreateGui:
+    """Small orchestrator that instantiates and launches the GTK GUI."""
+
     def __init__(self, game, client_service, server_service) -> None:
+        """Build GUI objects, hook visitor callbacks, then run application."""
         game_data = GameDataGui(game, client_service, server_service)
         game_gui = GameGUI(game_data)
 

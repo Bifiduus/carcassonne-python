@@ -234,7 +234,7 @@ def test_get_possible_moves_filters_legal_moves(
     assert player.get_possible_moves("CFFF", game) == expected
 
 
-def test_order_moves_prefers_root_hint_then_history() -> None:
+def test_order_moves_randomizes_candidates() -> None:
     game = DummyGame(set())
     player = ExpectimaxPlayer(
         game,
@@ -246,16 +246,23 @@ def test_order_moves_prefers_root_hint_then_history() -> None:
         history_table={"move-a": 2, "move-c": 5},
     )
 
-    assert player._order_moves(["move-a", "move-b", "move-c"], 3) == [
-        "move-b",
-        "move-c",
-        "move-a",
-    ]
-    assert player._order_moves(["move-a", "move-b", "move-c"], 2) == [
-        "move-c",
-        "move-a",
-        "move-b",
-    ]
+    calls: list[list[str]] = []
+
+    def _fake_shuffle(values: list[str]) -> None:
+        calls.append(list(values))
+        values.reverse()
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(expectimax_module.random, "shuffle", _fake_shuffle)
+    try:
+        assert player._order_moves(["move-a", "move-b", "move-c"], 3) == [
+            "move-c",
+            "move-b",
+            "move-a",
+        ]
+        assert calls == [["move-a", "move-b", "move-c"]]
+    finally:
+        monkeypatch.undo()
 
 
 def test_search_returns_evaluation_on_terminal_depth_or_timeout() -> None:

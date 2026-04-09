@@ -7,6 +7,7 @@ from typing import Any
 PLACEMENT_RE: re.Pattern[str] = re.compile(
     r"^(?P<target>\d+)(?P<side>[NESW])(?P<rot>[0-3])$"
 )
+# Valid meeple placement labels used by move parser/validator.
 MEEPLE_SET: set[str] = {
     "N",
     "NE",
@@ -21,6 +22,20 @@ MEEPLE_SET: set[str] = {
 
 
 def parse_move(move: str) -> dict:
+    """Parse a move string into structured fields.
+
+    Supported formats:
+    - ``TILE/TARGETSIDE_ROT``               (no center, no meeple)
+    - ``TILE/CENTER/TARGETSIDE_ROT``        (center tile type)
+    - each of the above + ``/MEEPLE_POS``   (optional meeple placement)
+
+    Returns:
+        A dict containing tile_sides, center, target_id, target_side,
+        rotation, and meeple.
+
+    Raises:
+        ValueError: If the move format is invalid.
+    """
     if not isinstance(move, str):
         raise ValueError("move must be a string")
 
@@ -75,4 +90,5 @@ def parse_move(move: str) -> dict:
 
 
 def build_str(record: Any) -> str:
+    """Build the history serialization form ``player_id:move;``."""
     return f"{record.player_id}:{record.move_str.strip(';')};"

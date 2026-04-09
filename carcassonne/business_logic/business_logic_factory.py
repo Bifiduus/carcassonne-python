@@ -1,3 +1,9 @@
+"""Factory wiring for business-logic classes.
+
+Provides a single registry-based creation point so callers can instantiate
+business-logic objects by name without importing each implementation.
+"""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -96,4 +102,5 @@ class BusinessLogicFactory(IBusinessLogicFactory):
         return registry[class_name](*args, **kwargs)
 
     def available_classes(self) -> list[str]:
+        """Return the sorted list of class names known by the factory."""
         return sorted(_build_registry().keys())

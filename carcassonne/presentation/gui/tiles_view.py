@@ -1,4 +1,8 @@
+"""Tile preview model used by the GUI drag-and-drop workflow."""
+
 class TilesView:
+    """Store transient tile placement data for the currently drawn tile."""
+
     def __init__(self, tile_name: str, tile_id: int = 0) -> None:
         # name of the tile that is currently held by the player
         self.current_tile = tile_name
@@ -14,11 +18,13 @@ class TilesView:
         self.meeple_pos = ""
 
     def playable_tile(self):
+        """Return full move string, appending meeple part when present."""
         if self.meeple_pos != "":
             return self.move + "/" + self.meeple_pos
         return self.move
 
     def parse_move(self, move, x, y):
+        """Parse a move string into board payload consumed by BoardView."""
         # Move string may be either "name/..." or "name/middle/..."
         # depending on whether the tile has a middle symbol.
         if move.count("/") == 1:

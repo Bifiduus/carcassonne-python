@@ -1,3 +1,5 @@
+"""Information dialog helpers for the GTK interface."""
+
 import gi
 import importlib
 
@@ -8,10 +10,14 @@ Gtk = importlib.import_module("gi.repository.Gtk")
 
 
 class InfoMessage:
+    """Display informational dialogs tied to the main GUI window."""
+
     def __init__(self, gui):
+        """Store parent GUI reference used as transient window parent."""
         self.gui = gui
 
     def show_info(self, message: str):
+        """Show a scrollable non-modal information dialog."""
         dialog = Gtk.Dialog()
         dialog.set_title(_("Information"))
         dialog.set_modal(False)

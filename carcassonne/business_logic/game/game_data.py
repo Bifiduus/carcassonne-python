@@ -12,6 +12,7 @@ import random as r
 class GameData:
     """Class to store all game data, and be able to reset it when needed."""
 
+    # Ordered list of colors assigned to players (index 0 = human player).
     PLAYER_COLORS = ["green", "red", "blue", "yellow", "black", "white"]
 
     def __init__(
@@ -24,38 +25,57 @@ class GameData:
     ):
         self.business_logic_factory = business_logic_factory
         self.datas_factory = datas_factory
+        # Persistent game settings (river mode, AI mode, blitz, …).
         self.game_configuration = self.datas_factory.create(
             "GameConfiguration", config_overrides
         )
+        # Repository of saved/loaded game files.
         self.game_repository = self.datas_factory.create("GameRepository")
+        # The graph representing all tiles and terrain connectivity.
         self.graph: IGraphData = graphData
+        # Metadata about tile types (sides, orientations, direction mappings).
         self.tiles_info: ITilesInfo = self.datas_factory.create("TilesInfo")
+        # Validates and checks every proposed move.
         self.rules_manager = self.business_logic_factory.create(
             "RulesManager", self.tiles_info
         )
+        # Applies/removes tiles and meeples on the graph.
         self.board = self.business_logic_factory.create(
             "Board", self.datas_factory
         )
+        # The shuffled deck of remaining tiles.
         self.deck = self.datas_factory.create("Deck")
+        # Undo/redo history (past and future move stacks).
         self.history = self.datas_factory.create("History")
+        # Seed used for deterministic deck shuffling; None = random each game.
         self.seed = None
         self.maximum_number_of_players = 5
         self.minimum_number_of_players = 2
+        # Number of AI-controlled players in the current game.
         self.number_of_ai_players = 0
+        # Optional fixed seed set via configuration; None = generate at runtime.
         self.default_seed = None
+        # Algorithm used to shuffle the deck ("fisher-yates" or "naive").
         self.shuffle_algo = "fisher-yates"
+        # The tile currently in the active player's hand (drawn but not placed).
         self.current_hand: str | None = None
+        # Path to the current save file, if any.
         self.save_file = None
+        # Dict mapping player_id → Player for all players in the game.
         self.players: dict[int, Player] = {}
         self.players[0] = self.business_logic_factory.create(
             "Player", 0, "Player 0", "green"
         )
+        # Ordered list of player ids representing the turn rotation.
         self.players_order: list[int] = [0]
         self.add_players(nb_players - 1)
         self.shuffle_players_order()
+        # Index into players_order pointing at the current player's slot.
         self.current_player_order_list = 0
 
+        # True once end-of-game scoring has been applied (prevents double scoring).
         self._end_game_scored = False
+        # True when all remaining tiles are unplayable for the current state.
         self.no_playable_tiles_remaining = False
 
     def reset(self):
@@ -79,6 +99,11 @@ class GameData:
         self.no_playable_tiles_remaining = False
 
     def start_load_game(self):
+        """Prepare game state before loading a saved game from disk.
+
+        Clears history, resets the graph and sub-managers so that the loader
+        can replay moves onto a clean slate.
+        """
         self.history.clear_history()
         self.graph.reset_graph()
 
@@ -121,6 +146,16 @@ class GameData:
         self,
         preferred_human_color: str | None = None,
     ) -> None:
+        """Assign distinct colors to all players.
+
+        Player 0 (human) receives ``preferred_human_color`` (or keeps its
+        current color when the argument is None).  Remaining players are
+        assigned the next available colors in ``PLAYER_COLORS`` order.
+
+        Args:
+            preferred_human_color: Desired color for the human player.
+                Raises ``ValueError`` if the color is not in PLAYER_COLORS.
+        """
         if 0 not in self.players:
             return
         if preferred_human_color is None:

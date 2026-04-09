@@ -333,7 +333,7 @@ def _compress_to_star_bounds(
         scale: Sigmoid scale. Larger scale compresses less aggressively.
 
     Returns:
-        Bounded value in [-100, 100].
+        Continuous bounded value in [-100, 100].
     """
     if scale <= 0:
         raise ValueError("Compression scale must be > 0.")
@@ -348,7 +348,7 @@ def _compress_to_star_bounds(
         exp_term = math.exp(centered_value)
         win_prob = exp_term / (1.0 + exp_term)
 
-    return float(round((200.0 * win_prob) - 100.0))
+    return float((200.0 * win_prob) - 100.0)
 
 
 def evaluate_state(

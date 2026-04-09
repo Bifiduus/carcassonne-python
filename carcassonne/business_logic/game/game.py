@@ -24,9 +24,12 @@ from carcassonne.i18n import gettext as _
 
 logger = logging.getLogger(__name__)
 
+# Mapping of cardinal directions to their geographic opposite.
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
-ASCII_TILE_EDGE_WIDTH = 3
-ASCII_TILE_CENTER_WIDTH = 7
+
+# Widths (in characters) used when rendering the board as ASCII art.
+ASCII_TILE_EDGE_WIDTH = 3    # width of the N/S/E/W edge labels
+ASCII_TILE_CENTER_WIDTH = 7  # width of the center cell (tile id + middle)
 ASCII_TILE_WIDTH = (
     ASCII_TILE_EDGE_WIDTH * 2 + ASCII_TILE_CENTER_WIDTH
 )
@@ -50,6 +53,7 @@ class Game(IGameService):
         if datas_factory is None:
             raise ValueError("datas_factory must be provided")
         self.datas_factory: IDatasFactory = datas_factory
+        # Central store of all mutable game state (board, players, deck, …).
         self.game_data = GameData(
             graphData,
             nb_players,
@@ -61,23 +65,31 @@ class Game(IGameService):
             self.game_data.shuffle_algo = shuffle_algo
         if default_seed is not None:
             self.game_data.default_seed = default_seed
+        # Handles serialisation/deserialisation of game state to disk.
         self.save_handler = self.business_logic_factory.create(
             "SaveHandler", self
         )
+        # Computes scores for completed components and end-of-game.
         self.score_manager = self.business_logic_factory.create("ScoreManager")
+        # Tracks per-player time budgets in blitz mode.
         self.blitz_manager = self.business_logic_factory.create(
             "BlitzManager", self.game_data
         )
+        # Determines current game mode (normal / blitz / contest) and delegates
+        # player advancement and playability checks accordingly.
         self.game_mode_manager = self.business_logic_factory.create(
             "GameModeManager", self.blitz_manager, self
         )
+        # Detects end-of-game conditions and triggers final score.
         self.end_game_manager = self.business_logic_factory.create(
             "EndGame",
             self.game_data, self.blitz_manager, self.score_manager
         )
+        # Tracks river-tile constraints (direction, turns, activity).
         self.river_manager = self.business_logic_factory.create(
             "RiverManager", self.game_data
         )
+        # Draws tiles from the deck and decides which are playable.
         self.deck_manager = self.business_logic_factory.create(
             "DeckManager",
             self.game_data,
@@ -85,6 +97,7 @@ class Game(IGameService):
             self.river_manager,
             self.datas_factory,
         )
+        # Rebuilds game state from history to support undo/redo.
         self.undo_redo_manager = self.business_logic_factory.create(
             "UndoRedoManager",
             self.blitz_manager,
@@ -92,10 +105,12 @@ class Game(IGameService):
             self.game_data,
             self.datas_factory,
         )
+        # High-level game commands (hints, tile placement, player shuffle, …).
         self.commands = self.business_logic_factory.create(
             "CommandsGame",
             self.blitz_manager, self.deck_manager, self.game_data, self
         )
+        # Orchestrates new-game initialisation (river setup, AI opening turns).
         self.new_game = self.business_logic_factory.create(
             "NewGame",
             self.river_manager,
@@ -107,7 +122,9 @@ class Game(IGameService):
             self,
         )
         self.river = None
+        # Dirty flag: True when the game has unsaved changes.
         self._has_unsaved_changes = False
+        # When True, mutations do not set _has_unsaved_changes (used during load).
         self._save_tracking_suspended = False
         _gui_mode = (config_overrides or {}).get("gui", False)
         if self.game_mode_manager.get_mode() != "contest" and not _gui_mode:
@@ -275,6 +292,22 @@ class Game(IGameService):
         return dirs[-rotation:] + dirs[:-rotation]
 
     def generate_tile_ascii(self, vertex: Any) -> list[str]:
+        """Return a 3-line ASCII representation of a placed tile.
+
+        Each line corresponds to one row of the tile's visual layout:
+        - Row 0: north edge
+        - Row 1: west edge, center (tile id + middle type), east edge
+        - Row 2: south edge
+
+        Meeples on the tile are appended to their edge or center string,
+        e.g. ``"C2"`` when player 2 has a meeple in the center.
+
+        Args:
+            vertex: The graph vertex representing the placed tile.
+
+        Returns:
+            A list of exactly 3 strings, ready to be printed row by row.
+        """
         dirs = list(vertex.get_name())  # [N, E, S, W]
         rotation = self.game_data.graph.get_vertex_orientation(
             vertex.get_id()
@@ -310,6 +343,11 @@ class Game(IGameService):
         ]
 
     def get_board(self) -> list[Any] | None:
+        """Return the list of all placed tile vertices.
+
+        Also prints the ASCII board to stdout as a side-effect.
+        Returns None when the graph is empty.
+        """
         vertices = list(self.game_data.graph.get_vertices().values())
 
         if not vertices:
@@ -337,8 +375,9 @@ class Game(IGameService):
         return vertices
 
     def get_board_data(self) -> list[dict]:
-        """
-        Return a list directly consumable by the GUI.
+        """Return a list of vertex data dicts directly consumable by the GUI.
+
+        Each dict contains the tile id, name, orientation, position and matrix.
         """
         vertices = self.game_data.graph.get_vertices_data()
 
@@ -353,8 +392,9 @@ class Game(IGameService):
         return None
 
     def get_meeples_data(self) -> list[dict]:
-        """
-        Return a list directly consumable by the GUI.
+        """Return a list of meeple attribute dicts directly consumable by the GUI.
+
+        Each dict contains player_id, tile_id, position and lands_components.
         """
         meeples = self.game_data.graph.get_meeples()
 
@@ -558,6 +598,7 @@ class Game(IGameService):
             return self._log_rejected_move(
                 move, "current player cannot act"
             )
+        # Guard: the player whose slot is active must be the current player.
         if (
             self.game_data.players_order[
                 self.game_data.current_player_order_list
@@ -719,7 +760,9 @@ class Game(IGameService):
                 self._meeples_components_snapshot(),
             )
         self.river_manager.update_river_turn(move.split("/"))
+        # The tile that was in hand has been placed; clear it.
         self.game_data.current_hand = None
+        # Advance the turn rotation to the next player.
         self.game_data.current_player_order_list = (
             self.game_data.current_player_order_list + 1
         ) % self.get_number_of_players()
@@ -728,6 +771,21 @@ class Game(IGameService):
         return True
 
     def play_ai_turn(self, game=None) -> None:
+        """Let the current AI player draw a tile and play its chosen move.
+
+        Selects the AI backend based on the ``ai_mode`` configuration key:
+        - ``"random"``    : RandomPlayer (random legal move)
+        - ``"minimax"``   : ExpectimaxPlayer with fixed depth
+        - ``"iterative"`` : IterativeDeepeningPlayer (time-limited minimax)
+        - ``"mcts"``      : MCTSPlayer (Monte Carlo Tree Search)
+
+        After the AI search the game-over flags and current_hand are restored
+        to the values they had before the search, so exploring hypothetical
+        game states during the search does not corrupt the live game state.
+
+        Args:
+            game: The Game instance passed to AI models (must not be None).
+        """
         from carcassonne.business_logic.ai_model import RandomPlayer
         from carcassonne.business_logic.ai_model import ExpectimaxPlayer
         from carcassonne.business_logic.ai_model import (

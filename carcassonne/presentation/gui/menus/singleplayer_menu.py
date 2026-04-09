@@ -1,3 +1,5 @@
+"""Singleplayer setup menu (seed, modes, contest file, AI submenu)."""
+
 from gi.repository import Gtk
 import os
 

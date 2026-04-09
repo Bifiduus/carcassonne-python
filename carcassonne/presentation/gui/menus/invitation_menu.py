@@ -1,3 +1,5 @@
+"""Invitation-management menu for multiplayer GUI workflows."""
+
 import sys
 from gi.repository import Gtk, GLib
 import ast

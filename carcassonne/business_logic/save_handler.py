@@ -1,3 +1,5 @@
+"""Persistence helper for saving/loading game state to text files."""
+
 from __future__ import annotations
 import sys
 from pathlib import Path
@@ -10,6 +12,9 @@ if TYPE_CHECKING:
 
 
 class SaveHandler:
+    """Serialize and restore configuration and game progression history."""
+
+    # Settings parsed as booleans when loading a save/config file.
     boolean_settings = [
         "verbose",
         "debug",
@@ -17,18 +22,21 @@ class SaveHandler:
         "contest",
         "river",
     ]
+    # Settings parsed as integers.
     integer_settings = [
         "time",
         "num_ai_players",
         "ai_time",
         "ai_minimax_depth",
     ]
+    # Settings parsed as plain strings.
     string_settings = [
         "ai_mode",
         "ai_minimax_scoring",
         "ai_mcts_selection",
         "contest_file",
     ]
+    # Settings containing action->shortcut dictionaries.
     keybinds_settings = [
         "file_keybinds",
         "game_keybinds",
@@ -41,13 +49,11 @@ class SaveHandler:
     }
 
     def __init__(self, game: "Game"):
+        """Keep a reference to the game service being persisted."""
         self.game = game
 
     def serialize_value(self, value: Any) -> str:
-        # This function would convert the current game state into a string
-        # representation that can be saved to a file. This is a placeholder
-        # implementation and should be expanded based on the actual game state
-        # structure.
+        """Serialize a Python value into the custom text save format."""
         if isinstance(value, dict):
             return "[" + ", ".join(
                 f"{k}: {self.serialize_value(v)}" for k, v in value.items()

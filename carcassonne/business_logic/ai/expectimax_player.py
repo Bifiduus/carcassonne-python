@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import random
 import sys
 import time
 from typing import List, Tuple, TYPE_CHECKING
@@ -31,8 +32,9 @@ class ExpectimaxPlayer:
     for intelligent move selection.
     """
 
-    L = -100  # Should be minimum of evaluation function
-    U = 100  # Should be maximum of evaluation function
+    # Lower and upper bounds used by STAR* (star25) chance-node pruning.
+    L = -100  # expected minimum value of evaluation function
+    U = 100   # expected maximum value of evaluation function
 
     # Example positions for meeple placement
     meeple_placement_list = ["NW", "N", "NE", "E", "SE", "S", "SW", "W", "C"]
@@ -58,6 +60,7 @@ class ExpectimaxPlayer:
                 (True for AI, False for opponent)
         """
         self.game = game
+        # Maximum depth explored by this solver instance.
         self.depth = depth
         self.is_maximizing = is_maximizing
         self.nodes_explored = 0
@@ -69,6 +72,7 @@ class ExpectimaxPlayer:
             self.eval_fn = eval_fn
         else:
             self.set_evaluation_method(eval_name)
+        # Root depth used to detect top-level move selection.
         self.depth_max = depth
         self.start_time = start_time
         self.max_time = max_time
@@ -77,6 +81,7 @@ class ExpectimaxPlayer:
         self.history_table = history_table if history_table is not None else {}
 
     def _time_exceeded(self) -> bool:
+        """Return True when the per-search time budget has been exhausted."""
         return time.time() - self.start_time > self.max_time
 
     def set_evaluation_method(self, name_or_fn):
@@ -163,25 +168,15 @@ class ExpectimaxPlayer:
         return possible_moves
 
     def _order_moves(self, moves: List[str], depth: int) -> List[str]:
-        """Order candidate moves to improve pruning efficiency.
+        """Return candidate moves in random order.
 
-        Priority:
-        1) Root preferred move from previous iterative-deepening pass.
-        2) History heuristic score (higher first).
+        This avoids systematic traversal bias (e.g. always early meeple or
+        always early non-meeple branches) while keeping search logic intact.
         """
-        if not moves:
-            return moves
-
-        preferred = None
-        if depth == self.depth_max:
-            preferred = self.preferred_root_move
-
-        def _score(move: str) -> tuple[int, int]:
-            is_preferred = 1 if preferred and move == preferred else 0
-            history_score = self.history_table.get(move, 0)
-            return (is_preferred, history_score)
-
-        return sorted(moves, key=_score, reverse=True)
+        del depth
+        shuffled = list(moves)
+        random.shuffle(shuffled)
+        return shuffled
 
     def search(
         self,
@@ -294,6 +289,11 @@ class ExpectimaxPlayer:
         next_player: int,
         probingFactor: int = 1,
     ) -> float:
+        """Probe a subset of successor moves for STAR* chance-node bounds.
+
+        This fast partial search helps tighten alpha/beta bounds before the
+        full expectation pass in ``star25``.
+        """
 
         moves = self.get_possible_moves(game.game_data.current_hand, game)
         if not moves:
@@ -307,6 +307,7 @@ class ExpectimaxPlayer:
         #     reverse=True,
         # )
 
+        # Current best lower bound for this node.
         best = alpha
         explored_move = False
 
@@ -381,6 +382,12 @@ class ExpectimaxPlayer:
         player_to_max: int,
         next_player: int,
     ) -> float:
+        """Evaluate a chance node using STAR* pruning (a.k.a. star2.5).
+
+        This method combines:
+        - a probing phase to estimate bounds quickly, then
+        - a search phase over chance outcomes ordered by probability.
+        """
         check_time = self._time_exceeded()
         if (
             self.terminal(game.game_data.tiles_info)
@@ -397,12 +404,14 @@ class ExpectimaxPlayer:
         if total_tiles <= 0:
             return self.eval_fn(game, player_to_max, next_player)
 
-        # probabilities
+        # Outcome probabilities for each drawable tile.
         probs = {
             tile: count / total_tiles for tile, count in successors.items()
         }
         probs = dict(sorted(probs.items(), key=lambda x: -x[1]))
 
+        # Running decomposition of expected value:
+        # expected = cur_x + cur_y * unresolved_term.
         cur_x = 0
         cur_y = 1
         probe_bounds = {}
@@ -591,10 +600,13 @@ class IterativeDeepeningPlayer:
         self.game = game
         self.start_time = start_time
         self.max_time = max_time
+        # Maximum depth target; deepening loop starts at depth 1.
         self.max_depth = max(1, int(max_depth or 1))
         self.eval_name = eval_name
         self.eval_fn = eval_fn
+        # Last depth fully completed before time cutoff.
         self.last_completed_depth = 0
+        # Cross-iteration history heuristic table for move ordering.
         self.history_table: dict[str, int] = {}
 
     def _time_exceeded(self) -> bool:

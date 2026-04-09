@@ -1,3 +1,9 @@
+"""Server command handlers for online multiplayer communication.
+
+This module maps textual client commands (play, board, set, accept, etc.)
+to repository/game operations and builds response messages.
+"""
+
 from __future__ import annotations
 from time import time
 import sys
@@ -11,8 +17,10 @@ if TYPE_CHECKING:
 
 
 class OnlineCommunication:
+    """Command dispatcher used by the server for client messages."""
 
     def __init__(self, server: Server):
+        """Store a reference to the owning server service."""
         self.server = server
 
     def command_ping(self, message: str) -> str:

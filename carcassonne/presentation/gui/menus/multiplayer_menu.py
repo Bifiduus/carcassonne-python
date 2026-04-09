@@ -1,3 +1,5 @@
+"""Multiplayer hub menu (server and invitation navigation + side panels)."""
+
 import sys
 from gi.repository import Gtk
 

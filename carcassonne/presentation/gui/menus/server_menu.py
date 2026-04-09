@@ -155,6 +155,8 @@ class ServerMenu(Gtk.Box):
         self.btn_disconnect.add_css_class("orange-buttons")
         self.btn_disconnect.connect("clicked", self.on_disconnect_from_server)
         self.btn_disconnect.set_visible(False)  # Hidden by default
+        """Server management menu for multiplayer GUI workflows."""
+
         connection_buttons_box.append(self.btn_disconnect)
 
         # Ping button (only shown if connected)

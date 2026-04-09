@@ -404,7 +404,7 @@ def _compress_to_star_bounds(
         scale: Divisor controlling sensitivity around 0.
 
     Returns:
-        Rounded heuristic value in the STAR-compatible range ``[-100, 100]``.
+        Continuous heuristic value in the STAR-compatible range ``[-100, 100]``.
     """
     if scale <= 0:
         raise ValueError("Compression scale must be > 0.")
@@ -417,7 +417,7 @@ def _compress_to_star_bounds(
         exp_term = math.exp(centered_value)
         win_prob = exp_term / (1.0 + exp_term)
 
-    return float(round((200.0 * win_prob) - 100.0))
+    return float((200.0 * win_prob) - 100.0)
 
 
 def evaluate_state(

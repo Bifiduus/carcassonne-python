@@ -1,3 +1,5 @@
+"""Top-level GTK window and header/menu construction helpers."""
+
 import math
 
 
@@ -69,6 +71,7 @@ class WindowView:
         self._build_game_menu(header)
 
     def _build_file_menu(self, header: Gtk.HeaderBar):
+        """Create and attach the File menu button with accelerators."""
         menu_file = Gio.Menu()
         menu_file.append(_("New game"), "app.new")
         menu_file.append(_("Load game"), "app.load")
@@ -83,6 +86,7 @@ class WindowView:
         header.pack_start(file_button)
 
     def _build_game_menu(self, header: Gtk.HeaderBar):
+        """Create and attach the Game menu button with accelerators."""
         menu_game = Gio.Menu()
         menu_game.append(_("Undo"), "app.undo")
         menu_game.append(_("Redo"), "app.redo")
@@ -96,6 +100,7 @@ class WindowView:
         header.pack_start(game_button)
 
     def create_menu_button(self, label: str, menu: Gio.Menu) -> Gtk.MenuButton:
+        """Return a Gtk.MenuButton bound to the provided Gio.Menu model."""
         button = Gtk.MenuButton()
         button.set_label(label)
         button.set_menu_model(menu)
@@ -127,6 +132,7 @@ class WindowView:
             self.game_button.set_visible(True)
 
     def _setup_header_animation(self):
+        """Initialize animated gradient state for the header bar."""
         self._t = 0
 
         self._css_provider = Gtk.CssProvider()
@@ -139,6 +145,7 @@ class WindowView:
         GLib.timeout_add(50, self._animate_header)
 
     def _animate_header(self):
+        """Update header gradient colors; returns True to keep timeout alive."""
         self._t += 0.02
 
         # Animated colors for a fluid header effect.

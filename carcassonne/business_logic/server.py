@@ -1,3 +1,9 @@
+"""Server-side service for online multiplayer matches.
+
+Responsible for accepting clients, managing parties/games, broadcasting
+announcements, and relaying commands/messages between clients and game state.
+"""
+
 import sys
 import time
 import socket
@@ -23,9 +29,15 @@ from carcassonne.i18n import gettext as _
 
 
 class Server(IServerService):
+    """TCP game server coordinating connected clients and active matches."""
+
+    # Maximum age (seconds) for discovered server announcements.
     SERVER_TIMEOUT = 30
+    # Broadcast period (seconds) for UDP server discovery beacons.
     SERVER_DIFFUSION_PERIOD = 10
+    # Invitation validity duration (seconds).
     INVITATION_TIMEOUT = 300
+    # Client inactivity timeout (seconds).
     CLIENT_TIMEOUT = 60
 
     def __init__(
@@ -35,6 +47,7 @@ class Server(IServerService):
         business_logic_factory: IBusinessLogicFactory | None = None,
         datas_factory: IDatasFactory | None = None,
     ):
+        """Initialize server networking state and repositories/managers."""
         # networking/server state
         self.server_name = socket.gethostbyname(socket.gethostname())
         self.server = None

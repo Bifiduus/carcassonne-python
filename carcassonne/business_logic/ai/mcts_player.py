@@ -26,6 +26,12 @@ DEFAULT_MCTS_ML_MODEL_PATH = str(DEFAULT_MCTS_ML_DIR / "mcts_selection.keras")
 
 
 class MCTSNode:
+    """One node in the MCTS search tree.
+
+    Stores the move leading to this state, bookkeeping statistics
+    (visits/reward), and expansion metadata.
+    """
+
     def __init__(
         self,
         game: "Game",
@@ -34,19 +40,26 @@ class MCTSNode:
         move=None,
         player=None,
     ):
+        # Game state represented by this node.
         self.state = game
+        # Parent node in the search tree (None for root).
         self.parent = parent
-        self.move = move  # move leading to this node
-        self.player = player  # player who played this move
+        # Move string that produced this node from its parent.
+        self.move = move
+        # Player who played ``move``.
+        self.player = player
         self.mcts_player = mcts_player
 
+        # Children already expanded from this state.
         self.children = []
+        # Legal moves still not expanded into child nodes.
         self.untried_moves = mcts_player.get_possible_moves(
             game.game_data.current_hand, game
         )
 
+        # Standard MCTS statistics.
         self.visits = 0
-        self.total_reward = 0.0  # sum of rewards
+        self.total_reward = 0.0  # sum of rollout rewards
 
     def get_state(self):
         return self.state
@@ -80,8 +93,9 @@ class MCTSNode:
 
 
 class MCTSPlayer:
+    """MCTS-based AI with optional ML-assisted child selection."""
 
-    # Example positions for meeple placement
+    # Ordered labels used when generating optional meeple placements.
     meeple_placement_list = ["NW", "N", "NE", "E", "SE", "S", "SW", "W", "C"]
 
     def __init__(
@@ -112,9 +126,11 @@ class MCTSPlayer:
             self.set_evaluation_method(eval_name)
         self.start_time = start_time
         self.max_time = max_time
+        # Hard deadline for the whole MCTS loop.
         self.end_time = self.start_time + self.max_time
         # Stack used to save/restore scoring state around each simulation step
         self._sim_state_stack = []
+        # Lazily-loaded model used only when eval_name == "ML".
         self.ml_model = None
         self._ml_model_attempted = False
 
@@ -298,6 +314,7 @@ class MCTSPlayer:
         return False
 
     def uct_select_child(self, node: MCTSNode, c=1.41):
+        """Select the child maximizing the UCT score."""
         def uct_score(child: MCTSNode) -> float:
             child_visits = child.get_visits()
             if child_visits <= 0:
@@ -314,6 +331,7 @@ class MCTSPlayer:
         return max(node.get_children(), key=uct_score)
 
     def expand(self, node: MCTSNode):
+        """Expand one untried move from ``node`` and return the new child."""
         move = node.get_untried_moves().pop()
         self.play_move_for_ai(node.get_state(), move)
 
@@ -329,6 +347,10 @@ class MCTSPlayer:
         return child
 
     def rollout(self, state: "Game"):
+        """Run one simulation (playout) from ``state`` until terminal/deadline.
+
+        Returns the number of simulated moves so backpropagation can undo them.
+        """
         counter = 0
         while (
             not self.terminal(state.game_data.tiles_info)
@@ -372,6 +394,7 @@ class MCTSPlayer:
         return counter
 
     def compute_reward(self, state: "Game", root_player_id):
+        """Return rollout reward as score gap root-vs-best-opponent."""
         scores = {
             i: state.game_data.players[i].get_score().score
             for i in range(len(state.game_data.players))
@@ -383,6 +406,7 @@ class MCTSPlayer:
         return vp1 - vp2
 
     def backpropagate(self, node: MCTSNode, reward: float, counter: int):
+        """Propagate rollout reward up to root and undo simulated moves."""
         state: "Game" = node.get_state()
         while counter > 0:
             self.undo_for_ai(state)
@@ -396,9 +420,12 @@ class MCTSPlayer:
             node = parent
 
     def mcts(self, game_root: "Game"):
+        """Run MCTS iterations until timeout and return the best root move."""
         root = MCTSNode(game_root, self)
         root_player = game_root.get_current_player()
 
+        # Snapshot full mutable state so each iteration starts from the same
+        # canonical position, regardless of simulation side effects.
         hand_to_restore: str = game_root.game_data.current_hand
 
         deck_to_restore: list[str] = game_root.game_data.deck.tiles.copy()

@@ -7,6 +7,13 @@ from carcassonne.business_logic.player import Player
 
 
 class NewGame:
+    """Orchestrates the initialisation of new and online game sessions.
+
+    Responsible for resetting all game-data structures, setting up the deck
+    (including river tiles when enabled), and running any AI opening turns
+    before the first human move.
+    """
+
     def __init__(
         self,
         river_manager,
@@ -17,15 +24,32 @@ class NewGame:
         datas_factory: IDatasFactory,
         game=None,
     ):
+        # Central store of mutable game state shared across all managers.
         self.game_data = game_data
+        # Manages river-tile constraints (direction changes, activity flag).
         self.river_manager = river_manager
+        # Responsible for drawing and shuffling the tile deck.
         self.deck_manager = deck_manager
+        # Handles blitz-mode timers and per-player playability checks.
         self.blitz_manager = blitz_manager
         self.business_logic_factory = business_logic_factory
         self.datas_factory = datas_factory
+        # Reference to the Game service; needed to call play_ai_turn.
         self.game = game
 
     def start_online_game(self, players: list[Player]):
+        """Initialise a multiplayer online game with the supplied player list.
+
+        Resets the board, deck and graph, then registers the given players,
+        resolves a seed and shuffles the deck and player order.
+
+        Args:
+            players: Ordered list of Player objects joining the online game.
+
+        Returns:
+            An error string if there are too many players, otherwise a
+            confirmation string ``"Starting the game."``.
+        """
         if len(players) > self.game_data.get_maximum_number_of_players():
             return (
                 "Error, too many players: Maximum players"

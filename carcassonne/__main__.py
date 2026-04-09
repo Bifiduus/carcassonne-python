@@ -180,7 +180,7 @@ def main() -> int:
         "--ai-mode",
         help=_("AI algorithm used (default from configuration: minimax)"),
         type=str,
-        default=None,
+        default="minimax",
         choices=["random", "minimax", "iterative", "mcts"],
     )
 
@@ -203,7 +203,7 @@ def main() -> int:
         ),
         type=str,
         choices=["baseline", "short_term", "disruption"],
-        default=None,
+        default="disruption",
     )
 
     parser.add_argument(

@@ -1,3 +1,5 @@
+"""Key binding customization menu for GTK actions."""
+
 from gi.repository import Gtk
 
 import gi
@@ -8,7 +10,10 @@ gi.require_version("Gtk", "4.0")
 
 
 class KeybindsMenu(Gtk.Box):
+    """Menu that lets users rebind file/game keyboard shortcuts."""
+
     def __init__(self, gui):
+        """Build keybind sections and back navigation."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
@@ -80,6 +85,7 @@ class KeybindsMenu(Gtk.Box):
         return box
 
     def on_rebind_clicked(self, button, action, button_widget, keybind_dict):
+        """Start listening for next key press to rebind ``action``."""
         button_widget.set_label(_("Press key..."))
 
         controller = Gtk.EventControllerKey.new()
@@ -103,6 +109,7 @@ class KeybindsMenu(Gtk.Box):
         button_widget,
         keybind_dict,
     ):
+        """Apply chosen key, update config and refresh GTK accelerator map."""
 
         keyname = Gtk.accelerator_name(keyval, 0)
         key = keyname.replace("<Primary>", "").lower()

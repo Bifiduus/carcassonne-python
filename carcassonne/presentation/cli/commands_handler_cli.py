@@ -12,6 +12,7 @@ from carcassonne.interfaces.i_server_service import IServerService
 
 
 def new_game(self, args, client_service: IClientService) -> bool:
+    """Start a new game locally or forward the command to the server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("new " + args)
         return True
@@ -26,6 +27,7 @@ def new_game(self, args, client_service: IClientService) -> bool:
 
 
 def _parse_new_game_args(raw_args: str) -> dict[str, object]:
+    """Parse CLI arguments for ``new`` into typed option dictionary."""
     if not raw_args.strip():
         return {}
 
@@ -94,12 +96,14 @@ def _parse_new_game_args(raw_args: str) -> dict[str, object]:
 
 
 def _display_value(value) -> str:
+    """Format a configuration value for user-friendly CLI display."""
     if isinstance(value, bool):
         return str(value).lower()
     return str(value)
 
 
 def _apply_history_action(game, action_name: str, count: int) -> int:
+    """Apply undo/redo repeatedly and return how many actions changed state."""
     if action_name == "undo":
         action_many = getattr(game, "undo_moves", None)
         action_single = game.undo
@@ -129,6 +133,7 @@ def _apply_history_action(game, action_name: str, count: int) -> int:
 
 
 def _command_help_lines() -> dict[str, str]:
+    """Return command->help-line mapping used by ``help`` command."""
     return {
         "new": _(
             "  new [ARGS]         - Start a new game "
@@ -199,6 +204,7 @@ def _command_help_lines() -> dict[str, str]:
 
 
 def help(self, command_name: str | None = None) -> None:
+    """Print global help or detailed help for a single command."""
     command_help = _command_help_lines()
     if command_name is None:
         print(_("Available commands:"))
@@ -219,6 +225,7 @@ def help(self, command_name: str | None = None) -> None:
 def quit(
     self, server_service: IServerService, client_service: IClientService
 ) -> None:
+    """Quit session safely, optionally prompting to save unsaved progress."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("quit")
         return
@@ -238,6 +245,7 @@ def quit(
 
 
 def load(self, filename, client_service: IClientService) -> None:
+    """Load a game from file locally or delegate to remote server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"load {filename}")
     else:
@@ -260,6 +268,7 @@ def load(self, filename, client_service: IClientService) -> None:
 
 
 def save(self, filename, client_service: IClientService) -> int | None:
+    """Save local game to file or forward save request to server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"save {filename}")
         return None
@@ -274,6 +283,7 @@ def save(self, filename, client_service: IClientService) -> int | None:
 
 
 def shuffle(self, client_service: IClientService) -> None:
+    """Shuffle deck locally or request shuffle on server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("shuffle")
     else:
@@ -287,6 +297,7 @@ def shuffle(self, client_service: IClientService) -> None:
 
 
 def draw(self, client_service: IClientService) -> None:
+    """Draw one tile and print contextual feedback to the user."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("draw")
     else:
@@ -318,6 +329,7 @@ def draw(self, client_service: IClientService) -> None:
 
 
 def hint(self, client_service) -> None:
+    """Compute and print a local hint (or request one from server)."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("hint")
         return
@@ -337,6 +349,7 @@ def hint(self, client_service) -> None:
 
 
 def undo(self, N, client_service: IClientService) -> None:
+    """Undo one or multiple moves and report the result."""
     if N < 1:
         print(_("Usage: undo [N]"))
         return
@@ -352,6 +365,7 @@ def undo(self, N, client_service: IClientService) -> None:
 
 
 def redo(self, N, client_service: IClientService) -> None:
+    """Redo one or multiple previously undone moves."""
     if N < 1:
         print(_("Usage: redo [N]"))
         return
@@ -367,6 +381,7 @@ def redo(self, N, client_service: IClientService) -> None:
 
 
 def show_hand(self, client_service: IClientService) -> None:
+    """Display the tile currently in hand for the active local player."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("show hand")
     else:
@@ -381,12 +396,14 @@ def show_hand(self, client_service: IClientService) -> None:
 
 
 def _format_clock(remaining_seconds: float) -> str:
+    """Format seconds as mm:ss."""
     minutes = int(remaining_seconds // 60)
     seconds = int(remaining_seconds % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
 
 def show_time(self, player_id_raw: str | None = None) -> None:
+    """Show blitz remaining time for all players or one player id."""
     if not self.game.get_game_configuration().get("blitz", False):
         print(_("Blitz mode is disabled."))
         return
@@ -426,6 +443,7 @@ def show_time(self, player_id_raw: str | None = None) -> None:
 
 
 def show_score(self, client_service: IClientService) -> None:
+    """Display players scores in turn order (or ask server)."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("show score")
         return
@@ -449,6 +467,7 @@ def show_score(self, client_service: IClientService) -> None:
 
 
 def show_history(self, game, client_service: IClientService) -> None:
+    """Print move history from local game or server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("show history")
     else:
@@ -459,6 +478,7 @@ def show_history(self, game, client_service: IClientService) -> None:
 
 
 def show_configuration(self, game, client_service: IClientService) -> None:
+    """Print active game configuration key/value pairs."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("show configuration")
     else:
@@ -469,6 +489,7 @@ def show_configuration(self, game, client_service: IClientService) -> None:
 
 
 def _print_board(game) -> None:
+    """Print normalized board text ensuring final newline presence."""
     printed = game.get_printed_board()
     if not printed.endswith("\n"):
         printed += "\n"
@@ -476,6 +497,7 @@ def _print_board(game) -> None:
 
 
 def _print_scores(game) -> None:
+    """Print per-player scores following current turn order."""
     print(_("Scores:"))
     players_order = game.get_players_order()
     for player_id in players_order:
@@ -489,6 +511,7 @@ def _print_scores(game) -> None:
 
 
 def set_parameter(self, param, value, client_service: IClientService) -> None:
+    """Set one configuration parameter locally or on the server."""
     if not param or value is None:
         print(_("Usage: set PARAM=VALUE"))
         return
@@ -520,6 +543,7 @@ def set_parameter(self, param, value, client_service: IClientService) -> None:
 
 
 def play(self, move, game, client_service: IClientService) -> None:
+    """Play one move, then process any immediate AI follow-up turns."""
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"play {move}")
         return
@@ -546,6 +570,7 @@ def play(self, move, game, client_service: IClientService) -> None:
 
 
 def show_board(self, game, client_service: IClientService) -> None:
+    """Display current board text locally or request it from server."""
     if client_service.connected_to_a_server():
         client_service.send_to_server("board")
     else:
@@ -553,6 +578,7 @@ def show_board(self, game, client_service: IClientService) -> None:
 
 
 def show_server_list(self, client_service: IClientService):
+    """Query and display currently discoverable online servers."""
     server_list = client_service.list_available_servers()
     print(_("Available servers list:"))
     for server in server_list:
@@ -560,10 +586,12 @@ def show_server_list(self, client_service: IClientService):
 
 
 def server_start(self, port: str, server_service: IServerService):
+    """Start local server on the provided port."""
     server_service.server_start(port)
 
 
 def stop_server(self, server_service: IServerService):
+    """Stop local server if running."""
     server_service.server_stop()
 
 
@@ -573,6 +601,7 @@ def join(
     ip: str | None = None,
     port: str | None = None,
 ):
+    """Join server using optional IP and port from command line."""
     if port is None and ip is None:
         client_service.join_server()
     if port is not None:
@@ -582,36 +611,45 @@ def join(
 
 
 def ping(self, client_service: IClientService):
+    """Send ping request to currently connected server."""
     client_service.send_to_server("ping")
 
 
 def server_status(self, client_service: IClientService):
+    """Request current server status string."""
     client_service.send_to_server("server status")
 
 
 def players(self, client_service: IClientService, message: str):
+    """Request player list/details from server."""
     client_service.send_to_server(message)
 
 
 def scoreboard(self, client_service: IClientService):
+    """Request scoreboard from server."""
     client_service.send_to_server("scoreboard")
 
 
 def accept(self, client_service: IClientService):
+    """Accept pending invitation on server."""
     client_service.send_to_server("accept")
 
 
 def decline(self, client_service: IClientService):
+    """Decline pending invitation on server."""
     client_service.send_to_server("decline")
 
 
 def cancel(self, client_service: IClientService):
+    """Cancel sent invitation(s) on server."""
     client_service.send_to_server("cancel")
 
 
 def back(self, client_service: IClientService):
+    """Set server-side user status to idle."""
     client_service.send_to_server("back")
 
 
 def away(self, client_service: IClientService):
+    """Set server-side user status to away."""
     client_service.send_to_server("away")

@@ -21,6 +21,7 @@ DIRECTION_MAP = {
     "W": WEST_DIR,
 }
 
+# 3x3 matrix coordinates used to reference tile cells/edges/corners.
 NORTHWEST_MATRIX = (0, 0)
 NORTH_MATRIX = (0, 1)
 NORTHEAST_MATRIX = (0, 2)
@@ -31,6 +32,7 @@ SOUTHWEST_MATRIX = (2, 0)
 SOUTH_MATRIX = (2, 1)
 SOUTHEAST_MATRIX = (2, 2)
 
+# Mapping from meeple placement labels to 3x3 matrix positions.
 MATCH_MATRIX = {
     "NW": NORTHWEST_MATRIX,
     "N": NORTH_MATRIX,
@@ -43,6 +45,7 @@ MATCH_MATRIX = {
     "SE": SOUTHEAST_MATRIX,
 }
 
+# For each board-side index (N/E/S/W), gives the opposite matrix position.
 OPPOSITE_SIDE_MATRIX = {
     0: SOUTH_MATRIX,
     1: WEST_MATRIX,

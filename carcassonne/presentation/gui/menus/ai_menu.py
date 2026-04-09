@@ -1,3 +1,5 @@
+"""AI settings menu for the GTK GUI."""
+
 from gi.repository import Gtk
 import gi
 
@@ -7,7 +9,10 @@ gi.require_version("Gtk", "4.0")
 
 
 class AiMenu(Gtk.Box):
+    """Menu for selecting AI mode, count, time budget and MCTS selector."""
+
     def __init__(self, gui):
+        """Build AI configuration controls and connect change handlers."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.gui = gui
@@ -150,4 +155,5 @@ class AiMenu(Gtk.Box):
             self.gui.game_data.game.save_config()
 
     def on_back(self, button):
+        """Return to singleplayer settings menu."""
         self.gui.window.stack.set_visible_child_name("singleplayer_menu")

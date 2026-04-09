@@ -17,6 +17,7 @@ import time
 from carcassonne.i18n import gettext as _
 from carcassonne.interfaces.i_server_service import IServerService
 
+# All command prefixes exposed by TAB completion.
 COMMANDS = [
     "new",
     "help",
@@ -58,6 +59,11 @@ class GameFinishedInterrupt(Exception):
 
 
 def completer(texte, state):
+    """Readline completer with two-step behavior on ambiguous matches.
+
+    First TAB on an ambiguous prefix emits a bell, second TAB prints
+    candidates.
+    """
     global _LAST_AMBIGUOUS_QUERY
 
     # filtrer les commandes qui commencent par text
@@ -97,6 +103,7 @@ def completer(texte, state):
 
 
 class GameCLI:
+    """Interactive CLI runner coordinating input loop and game ticks."""
 
     def __init__(
         self,
@@ -104,6 +111,7 @@ class GameCLI:
         server_service: IServerService,
         client_service: IClientService,
     ):
+        """Initialize CLI state and configure readline history/completion."""
         self.server = server_service
         self.client = client_service
         self.game = game_service
@@ -128,6 +136,7 @@ class GameCLI:
             pass
 
     def _is_turn_bound_command(self, command: str) -> bool:
+        """Return True when command requires the local player to be active."""
         return (
             command == "draw"
             or command == "hint"
@@ -139,18 +148,22 @@ class GameCLI:
         )
 
     def _local_player_can_act(self) -> bool:
+        """Return whether the local player currently owns the active turn."""
         return self.game.get_current_player().get_id() == self.local_player_id
 
     def _handle_game_finished_signal(self, signum, frame) -> None:
+        """Interrupt blocking input when the game ends from another thread."""
         raise GameFinishedInterrupt()
 
     def _install_wakeup_signal_handler(self) -> None:
+        """Install temporary signal handler used to wake the input prompt."""
         if self._wakeup_signal is None:
             return
         self._previous_wakeup_handler = signal.getsignal(self._wakeup_signal)
         signal.signal(self._wakeup_signal, self._handle_game_finished_signal)
 
     def _restore_wakeup_signal_handler(self) -> None:
+        """Restore the signal handler that was active before CLI startup."""
         if self._wakeup_signal is None:
             return
         previous_handler = self._previous_wakeup_handler
@@ -160,6 +173,7 @@ class GameCLI:
         self._previous_wakeup_handler = None
 
     def _wake_input_prompt(self) -> None:
+        """Send wake-up signal to unblock input() in the main thread."""
         if self._wakeup_signal is None:
             return
         if threading.current_thread() is threading.main_thread():
@@ -170,6 +184,7 @@ class GameCLI:
             return
 
     def _start_tick_loop(self) -> None:
+        """Start background tick loop once (idempotent)."""
         if self._tick_thread is not None and self._tick_thread.is_alive():
             return
         self._tick_thread = threading.Thread(
@@ -179,6 +194,7 @@ class GameCLI:
         self._tick_thread.start()
 
     def _tick_loop(self) -> None:
+        """Background periodic loop that drives blitz and AI turns."""
         last_tick = time.monotonic()
         while self.running and not self._stop_event.is_set():
             now = time.monotonic()
@@ -191,6 +207,7 @@ class GameCLI:
             time.sleep(self._tick_sleep_seconds)
 
     def run(self):
+        """Run the interactive CLI session until quit or game over."""
         with self._game_lock:
             if not self.game.end_game():
                 self._render_board()
@@ -233,12 +250,14 @@ class GameCLI:
             readline.write_history_file('.carcassonne_history')
 
     def _render_board(self) -> None:
+        """Print board representation while preserving trailing newline rules."""
         board = self.game.get_printed_board()
         if not board.endswith("\n"):
             board += "\n"
         print(board, end="")
 
     def _tick_once(self) -> None:
+        """Execute one periodic tick: blitz update, timeout messages, AI turn."""
         self.game.tick_blitz()
         timeout_message = str(self.game.get_timeout_message() or "")
         clean_message = timeout_message.strip()
@@ -301,6 +320,7 @@ class GameCLI:
         self._wake_input_prompt()
 
     def handle_command(self, command):
+        """Parse one raw command line and dispatch to command handlers."""
         is_turn_bound_command = self._is_turn_bound_command(command)
         if is_turn_bound_command and not self._local_player_can_act():
             print(

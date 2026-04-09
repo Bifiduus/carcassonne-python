@@ -1,3 +1,5 @@
+"""Main GTK application object for the Carcassonne GUI."""
+
 import gi
 import importlib
 from carcassonne.presentation.gui import commands_handler_gui
@@ -76,6 +78,7 @@ class GameGUI(Gtk.Application):
         self.info_message = InfoMessage(self)
 
     def do_activate(self):
+        """Build and wire all GUI views, menus, actions and shortcuts."""
         window = WindowView(self, self.game_data)
         self.window = window
         # self.error_message.show_error("Welcome to Carcassonne!")
@@ -248,6 +251,7 @@ class GameGUI(Gtk.Application):
         window.window.add_controller(key_controller)
 
     def _on_global_key_press(self, controller, keyval, keycode, state):
+        """Handle global shortcuts that should work regardless of focus."""
         self.window.hide_menus()
         if self.is_paused:
             return False
@@ -257,6 +261,7 @@ class GameGUI(Gtk.Application):
         return False
 
     def _create_pause_overlay(self):
+        """Create centered pause overlay shown above the board."""
         pause_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=12,
@@ -291,10 +296,12 @@ class GameGUI(Gtk.Application):
         return pause_box
 
     def _on_back_to_menu(self, button):
+        """Return from game view to menu and clear pause state."""
         self.set_paused(False)
         self.window.stack.set_visible_child_name("menu")
 
     def set_paused(self, paused: bool) -> bool:
+        """Apply paused state to game timers and interactive widgets."""
         if self.is_paused == paused:
             return self.is_paused
 
@@ -328,6 +335,7 @@ class GameGUI(Gtk.Application):
         return self.is_paused
 
     def toggle_pause(self) -> bool:
+        """Toggle paused state when currently displayed view is the board."""
         if not hasattr(self, "window"):
             return self.is_paused
         if self.window.stack.get_visible_child_name() != "game":
@@ -335,23 +343,28 @@ class GameGUI(Gtk.Application):
         return self.set_paused(not self.is_paused)
 
     def on_end_turn(self, action, param):
+        """Backward-compatible proxy to end-turn GUI command handler."""
         # kept for backward compatibility; newer code should use
         # commands_handler_gui
         commands_handler_gui.on_end_turn_gui(self)
 
     def on_rotate(self, action, param):
+        """Backward-compatible proxy to rotate GUI command handler."""
         commands_handler_gui.on_rotate_gui(self)
 
     def on_preview_pressed(self, gesture, n_press, x, y):
+        """Mark drag state active when preview interaction begins."""
         self.game_data.is_dragging = True
         self.board_view.grab_focus()
         self.game_data.refresh()
 
     def on_preview_released(self, gesture, n_press, x, y):
+        """Clear drag state when preview interaction ends."""
         self.game_data.is_dragging = False
         self.game_data.refresh()
 
     def _create_end_game_view(self):
+        """Build the dedicated end-of-game view with rankings."""
         end_game_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=16,
@@ -424,11 +437,13 @@ class GameGUI(Gtk.Application):
             self._end_game_scores_box.append(player_label)
 
     def show_end_game_screen(self) -> None:
+        """Populate and display end-game view."""
         self.set_paused(False)
         self._populate_end_game_scores()
         self.window.stack.set_visible_child_name('end_game')
 
     def start_singleplayer(self, button):
+        """Start a new local singleplayer game and switch to board view."""
         # self.game.start_new_game(mode="single")
         self.set_paused(False)
         self.window.stack.set_visible_child_name("game")
@@ -436,10 +451,12 @@ class GameGUI(Gtk.Application):
         self.board_view.grab_focus()
 
     def start_multiplayer(self, button):
+        """Switch to multiplayer menu view."""
         # self.game.start_new_game(mode="multi")
         self.window.stack.set_visible_child_name("multiplayer_menu")
 
     def show_options(self, button):
+        """Switch to options menu view."""
         self.window.stack.set_visible_child_name("options_menu")
 
     def on_draw(self, action, param):
