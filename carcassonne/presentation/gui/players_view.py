@@ -76,11 +76,34 @@ class PlayersView(Gtk.Box):
 
         players = game.get_all_players()
         current = game.get_current_player()
+        players_by_id = {player.get_id(): player for player in players}
+
+        ordered_players = players
+        get_players_order = getattr(game, "get_players_order", None)
+        if callable(get_players_order):
+            try:
+                player_order = get_players_order() or []
+            except Exception:
+                player_order = []
+            if player_order:
+                ordered_players = [
+                    players_by_id[player_id]
+                    for player_id in player_order
+                    if player_id in players_by_id
+                ]
+                # Keep any remaining players at the end for safety.
+                remaining = [
+                    player
+                    for player in players
+                    if player.get_id() not in set(player_order)
+                ]
+                ordered_players.extend(remaining)
 
         # Check if blitz mode is enabled
         is_blitz = game.get_game_configuration().get("blitz", False)
 
-        for p in players:
+        current_id = current.get_id() if current is not None else None
+        for p in ordered_players:
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
             name = p.get_username()
@@ -101,7 +124,7 @@ class PlayersView(Gtk.Box):
                 time_str = self._format_time(remaining)
                 base_text += f" | {time_str}"
 
-            if p is current:
+            if p.get_id() == current_id:
                 label.set_markup(
                     f'<span foreground="{color}"><b>{base_text}</b></span>'
                 )

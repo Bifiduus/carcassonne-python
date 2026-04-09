@@ -158,6 +158,12 @@ class GameDataGui:
                 self.gui.error_message.show_error(self.error)
         else:
             self.error = None
+            # The move is now committed in game state: drop transient preview
+            # immediately so rendering uses real meeple ownership while AI
+            # turns are running.
+            self.current_tile = None
+            # Ensure this redraw is actually displayed before first AI think.
+            self._refresh_after_ai_turn()
             while (
                 self.game.get_current_player().is_ai_player()
                 and not self.game.end_game()

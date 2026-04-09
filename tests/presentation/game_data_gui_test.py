@@ -197,6 +197,59 @@ def test_play_move_gui_sets_error_and_shows_dialog_when_move_fails() -> None:
     )
 
 
+def test_play_move_gui_clears_preview_before_ai_turns() -> None:
+    game = Mock()
+    game.play_move.return_value = True
+    game.is_undo_history_empty.return_value = True
+    game.end_game.return_value = False
+
+    ai_player = SimpleNamespace(is_ai_player=Mock(return_value=True))
+    human_player = SimpleNamespace(is_ai_player=Mock(return_value=False))
+    game.get_current_player.side_effect = [ai_player, human_player]
+
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.current_tile = TilesView("CFFF", tile_id=1)
+    gui_data.current_tile.move = "CFFF/0N0/N"
+    gui_data.board_view = Mock()
+    gui_data.gui = SimpleNamespace(show_end_game_screen=Mock())
+
+    def _assert_preview_cleared(_game):
+        assert gui_data.current_tile is None
+
+    game.play_ai_turn.side_effect = _assert_preview_cleared
+
+    gui_data.play_move_gui()
+
+    game.play_ai_turn.assert_called_once_with(game)
+    assert gui_data.current_tile is None
+
+
+def test_play_move_gui_refreshes_before_first_ai_turn() -> None:
+    game = Mock()
+    game.play_move.return_value = True
+    game.is_undo_history_empty.return_value = True
+    game.end_game.return_value = False
+
+    ai_player = SimpleNamespace(is_ai_player=Mock(return_value=True))
+    human_player = SimpleNamespace(is_ai_player=Mock(return_value=False))
+    game.get_current_player.side_effect = [ai_player, human_player]
+
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.current_tile = TilesView("CFFF", tile_id=1)
+    gui_data.current_tile.move = "CFFF/0N0/N"
+    gui_data.board_view = Mock()
+    gui_data.gui = SimpleNamespace(players_view=Mock(), show_end_game_screen=Mock())
+
+    def _assert_refreshed(_game):
+        assert gui_data.board_view.refresh.call_count >= 1
+
+    game.play_ai_turn.side_effect = _assert_refreshed
+
+    gui_data.play_move_gui()
+
+    game.play_ai_turn.assert_called_once_with(game)
+
+
 def test_undo_calls_game_undo_and_refreshes_views() -> None:
     game = Mock()
     gui_data = GameDataGui(game, Mock(), Mock())
