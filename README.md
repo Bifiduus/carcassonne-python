@@ -9,7 +9,7 @@ This project provides a playable version of Carcassonne with several game and
 runtime modes:
 
 - CLI and GTK4 GUI frontends
-- Configurable AI opponents: `random`, `minimax`, `iterative`, `mcts`
+- Configurable AI opponents: `random`, `minimax`, `iterative`, `mcts` (UCT or ML for selection function)
 - Optional ML-assisted MCTS selection
 - Blitz mode and river mode
 - Save/load support for game states in `.txt` format
@@ -31,10 +31,22 @@ sudo apt install python3-gi gir1.2-gtk-4.0
 If you only use CLI, tests, or contest mode, the GUI system packages are not
 required.
 
+## Sound activation
+
+If you are in VSCode, for the full experience you can activate the CLI sounds with :
+Ctrl + shift + p
+Select "Preferences : Open User Settings"
+and add :
+
+"terminal.integrated.enableVisualBell": true,
+"accessibility.signals.terminalBell": {
+    "sound": "on"
+},
+
 ## Installation
 
 ```bash
-python3 -m venv .venv
+python3 -m venv .venv (or python3 -m venv .venv --system-site-packages if first doesn t work)
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install -e .
