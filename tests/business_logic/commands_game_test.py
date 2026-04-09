@@ -57,13 +57,15 @@ class DummyGameData:
 
 def test_provide_hint_returns_empty_on_timeout_or_unplayable_player() -> None:
     data = DummyGameData({"ai_mode": "random"})
-    command = CommandsGame(
+    data.current_hand = "CFFF"
+
+    timed_out = CommandsGame(
         DummyBlitzManager(timed_out=True),
         DummyDeckManager(data, "CFFF"),
         data,
         game=object(),
     )
-    assert command.provide_hint() == ""
+    assert timed_out.provide_hint() == ""
 
     blocked = CommandsGame(
         DummyBlitzManager(playable=False),
@@ -74,7 +76,7 @@ def test_provide_hint_returns_empty_on_timeout_or_unplayable_player() -> None:
     assert blocked.provide_hint() == ""
 
 
-def test_provide_hint_returns_empty_when_no_tile_is_drawn() -> None:
+def test_provide_hint_returns_empty_when_no_tile_in_hand() -> None:
     data = DummyGameData({"ai_mode": "random"})
     deck_manager = DummyDeckManager(data, None)
     command = CommandsGame(
@@ -85,15 +87,19 @@ def test_provide_hint_returns_empty_when_no_tile_is_drawn() -> None:
     )
 
     assert command.provide_hint() == ""
-    assert deck_manager.draw_calls == 1
+    assert deck_manager.draw_calls == 0
 
 
-def test_provide_hint_always_uses_iterative_with_5_second_limit(monkeypatch) -> None:
+def test_provide_hint_always_uses_iterative_with_5_second_limit(
+    monkeypatch,
+) -> None:
     """Hints always use iterative deepening AI with 5-second time limit."""
     created = {}
 
     class FakeIterativePlayer:
-        def __init__(self, game, start_time, ai_time, depth, eval_name) -> None:
+        def __init__(
+            self, game, start_time, ai_time, depth, eval_name
+        ) -> None:
             created["init"] = (game, start_time, ai_time, depth, eval_name)
 
         def search(self, game, **kwargs):
@@ -106,7 +112,9 @@ def test_provide_hint_always_uses_iterative_with_5_second_limit(monkeypatch) -> 
     )
     monkeypatch.setattr("time.time", lambda: 10.0)
     data = DummyGameData(
-        {"ai_minimax_depth": 2, "ai_minimax_scoring": "baseline"})
+        {"ai_minimax_depth": 2, "ai_minimax_scoring": "baseline"}
+    )
+    data.current_hand = "CFFF"
     game = object()
     command = CommandsGame(
         DummyBlitzManager(),
@@ -137,12 +145,16 @@ def test_provide_hint_requires_game(monkeypatch) -> None:
     assert move == ""
 
 
-def test_provide_hint_uses_configuration_for_depth_and_eval_name(monkeypatch) -> None:
-    """Hints use configuration for depth and evaluation name but fixed 5-second limit."""
+def test_provide_hint_uses_configuration_for_depth_and_eval_name(
+    monkeypatch,
+) -> None:
+    """Hints use config for depth/eval and fixed 5-second time limit."""
     created = {}
 
     class FakeIterativePlayer:
-        def __init__(self, game, start_time, ai_time, depth, eval_name) -> None:
+        def __init__(
+            self, game, start_time, ai_time, depth, eval_name
+        ) -> None:
             created["init"] = (game, start_time, ai_time, depth, eval_name)
 
         def search(self, game, **kwargs):
@@ -160,6 +172,7 @@ def test_provide_hint_uses_configuration_for_depth_and_eval_name(monkeypatch) ->
             "ai_minimax_scoring": "short",
         }
     )
+    data.current_hand = "CFFF"
     game = object()
     command = CommandsGame(
         DummyBlitzManager(),
@@ -175,6 +188,52 @@ def test_provide_hint_uses_configuration_for_depth_and_eval_name(monkeypatch) ->
     assert created["init"] == (game, 21.0, 5.0, 3, "short")
     assert created["search"][0] is game
     assert created["search"][1]["player_to_max"] == 0
+
+
+def test_provide_hint_does_not_touch_future_history_or_draw(
+    monkeypatch,
+) -> None:
+    created = {}
+
+    class FakeIterativePlayer:
+        def __init__(
+            self, game, start_time, ai_time, depth, eval_name
+        ) -> None:
+            created["init"] = (game, start_time, ai_time, depth, eval_name)
+
+        def search(self, game, **kwargs):
+            created["search"] = (game, kwargs)
+            return 1.0, "CFFF/0N0/N"
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.ai_model.IterativeDeepeningPlayer",
+        FakeIterativePlayer,
+    )
+
+    data = DummyGameData({"ai_minimax_depth": 2, "ai_minimax_scoring": ""})
+    data.current_hand = "CFFF"
+    data.history = type(
+        "History",
+        (),
+        {
+            "past_moves": ["m1", "m2"],
+            "future_moves": ["f1", "f2"],
+        },
+    )()
+    deck_manager = DummyDeckManager(data, "XXXX")
+    command = CommandsGame(
+        DummyBlitzManager(),
+        deck_manager,
+        data,
+        game=object(),
+    )
+
+    move = command.provide_hint()
+
+    assert move == "CFFF/0N0/N"
+    assert deck_manager.draw_calls == 0
+    assert data.current_hand == "CFFF"
+    assert data.history.future_moves == ["f1", "f2"]
 
 
 def test_shuffle_players_order_delegates_to_game_data() -> None:

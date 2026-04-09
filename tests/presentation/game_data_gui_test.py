@@ -25,7 +25,8 @@ class DummyGame:
             parts = hint_move.split("/")
             tile_sides = parts[0] if parts else "CFFF"
             extra_info = parts[1] if len(parts) > 1 else "0N0"
-            # Parse extra_info: first char(s) is target_id, next is target_side, last is rotation
+            # Parse extra_info: first char(s) is target_id, next is
+            # target_side, last is rotation.
             # Format: [target_id][target_side][rotation]
             # e.g., "5E1" -> target_id=5, target_side=E, rotation=1
             target_id = int(extra_info[0]) if extra_info[0].isdigit() else 0
@@ -202,10 +203,19 @@ def test_undo_calls_game_undo_and_refreshes_views() -> None:
     gui_data.board_view = Mock()
     gui_data.gui = Mock()
     gui_data.gui.players_view = Mock()
+    gui_data.hint_tile = {"dummy": "data"}
+    gui_data.hint_neighbor_id = 3
+    gui_data.hint_empty_positions = [(1, 2)]
 
-    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_undo"):
+    with patch(
+        "carcassonne.presentation.gui.game_data_gui."
+        "commands_handler_gui.on_undo"
+    ):
         gui_data.undo()
 
+    assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_empty_positions == []
     gui_data.board_view.refresh.assert_called_once()
     gui_data.gui.players_view.refresh.assert_called_once()
 
@@ -216,7 +226,10 @@ def test_undo_without_board_view() -> None:
     gui_data.board_view = None
     gui_data.gui = None
 
-    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_undo"):
+    with patch(
+        "carcassonne.presentation.gui.game_data_gui."
+        "commands_handler_gui.on_undo"
+    ):
         gui_data.undo()  # Should not raise
 
 
@@ -226,10 +239,19 @@ def test_redo_calls_game_redo_and_refreshes_views() -> None:
     gui_data.board_view = Mock()
     gui_data.gui = Mock()
     gui_data.gui.players_view = Mock()
+    gui_data.hint_tile = {"dummy": "data"}
+    gui_data.hint_neighbor_id = 3
+    gui_data.hint_empty_positions = [(1, 2)]
 
-    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_redo"):
+    with patch(
+        "carcassonne.presentation.gui.game_data_gui."
+        "commands_handler_gui.on_redo"
+    ):
         gui_data.redo()
 
+    assert gui_data.hint_tile is None
+    assert gui_data.hint_neighbor_id is None
+    assert gui_data.hint_empty_positions == []
     gui_data.board_view.refresh.assert_called_once()
     gui_data.gui.players_view.refresh.assert_called_once()
 
@@ -240,7 +262,10 @@ def test_redo_without_board_view() -> None:
     gui_data.board_view = None
     gui_data.gui = None
 
-    with patch("carcassonne.presentation.gui.game_data_gui.commands_handler_gui.on_redo"):
+    with patch(
+        "carcassonne.presentation.gui.game_data_gui."
+        "commands_handler_gui.on_redo"
+    ):
         gui_data.redo()  # Should not raise
 
 

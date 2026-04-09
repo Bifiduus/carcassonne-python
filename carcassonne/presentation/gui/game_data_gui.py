@@ -110,6 +110,9 @@ class GameDataGui:
 
     def undo(self):
         commands_handler_gui.on_undo(self.game)
+        self.hint_tile = None
+        self.hint_neighbor_id = None
+        self.hint_empty_positions = []
         if self.board_view:
             self.board_view.refresh()
         if self.gui and hasattr(self.gui, "players_view"):
@@ -117,6 +120,9 @@ class GameDataGui:
 
     def redo(self):
         commands_handler_gui.on_redo(self.game)
+        self.hint_tile = None
+        self.hint_neighbor_id = None
+        self.hint_empty_positions = []
         if self.board_view:
             self.board_view.refresh()
         if self.gui and hasattr(self.gui, "players_view"):

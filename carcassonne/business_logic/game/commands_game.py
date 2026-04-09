@@ -26,16 +26,18 @@ class CommandsGame:
         timed_out_now = self.blitz_manager.tick_blitz()
         if timed_out_now:
             return ""
+
         if not self.blitz_manager._ensure_current_player_playable():
             return ""
 
         if not self.game:
             return ""
 
-        ai_player = self.game_data.get_current_player()
-        self.deck_manager.draw_tile()
+        # Keep hints informational: do not draw a tile from the deck here.
         if self.game_data.current_hand is None:
             return ""
+
+        ai_player = self.game_data.get_current_player()
 
         start_time = time.time()
         configuration = self.game_data.get_game_configuration()
