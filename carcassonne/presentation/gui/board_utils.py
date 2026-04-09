@@ -21,6 +21,7 @@ color_map = {
     "yellow": (1, 1, 0),
     "white": (0.9, 0.9, 0.9),
     "green": (0, 1, 0),
+    "black": (0, 0, 0),
 }
 
 # Meeple position mappings (9-position grid)

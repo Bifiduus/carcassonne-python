@@ -181,6 +181,7 @@ class TestColorMap:
         assert board_utils.color_map["yellow"] == (1, 1, 0)
         assert board_utils.color_map["white"] == (0.9, 0.9, 0.9)
         assert board_utils.color_map["green"] == (0, 1, 0)
+        assert board_utils.color_map["black"] == (0, 0, 0)
 
 
 class TestMeeplePosGrids:
