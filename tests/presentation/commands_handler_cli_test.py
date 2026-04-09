@@ -212,6 +212,19 @@ def test_help_with_specific_command_displays_only_requested_help(capsys) -> None
     assert "Available commands:" not in output
 
 
+def test_draw_triggers_cli_end_game_when_no_playable_tiles_remain(capsys) -> None:
+    cli, game, client, _ = build_local_context()
+    cli._on_game_over = Mock()
+    game.draw_tile.return_value = None
+    game.game_data.no_playable_tiles_remaining = True
+
+    handlers.draw(cli, client)
+
+    output = capsys.readouterr().out
+    assert "No playable move exists for the remaining tiles." in output
+    cli._on_game_over.assert_called_once_with()
+
+
 def test_hint_undo_redo_show_time_play_and_quit_cover_local_branches(monkeypatch, capsys) -> None:
     cli, game, client, server = build_local_context()
 

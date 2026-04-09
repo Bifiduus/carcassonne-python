@@ -56,6 +56,7 @@ class GameData:
         self.current_player_order_list = 0
 
         self._end_game_scored = False
+        self.no_playable_tiles_remaining = False
 
     def reset(self):
         """Reset all game data to start a new game."""
@@ -75,6 +76,7 @@ class GameData:
         self.current_hand = None
         self.history = self.datas_factory.create("History")
         self._end_game_scored = False
+        self.no_playable_tiles_remaining = False
 
     def start_load_game(self):
         self.history.clear_history()
@@ -92,6 +94,7 @@ class GameData:
         )
         self.current_player_order_list = 0
         self._end_game_scored = False
+        self.no_playable_tiles_remaining = False
 
     def initialize_starting_tile_based_on_config(self):
         """Initialize the starting tile based on current game configuration."""

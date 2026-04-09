@@ -118,7 +118,7 @@ def _apply_history_action(game, action_name: str, count: int) -> int:
         return action_many(count)
 
     changed = 0
-    for _ in range(count):
+    for _step in range(count):
         available_moves = getattr(game.game_data.history, history_attr, [])
         if len(available_moves) == 0:
             break
@@ -298,7 +298,24 @@ def draw(self, client_service: IClientService) -> None:
         already_had_tile: bool = self.game.game_data.current_hand is not None
         tile = self.game.draw_tile()
         if tile is None:
-            print(_("The deck is empty!"))
+            if getattr(
+                self.game.game_data,
+                "no_playable_tiles_remaining",
+                False,
+            ):
+                print(
+                    _(
+                        "No playable move exists for the remaining tiles. "
+                        "The game is over."
+                    )
+                )
+                # Trigger the CLI end-of-game flow immediately so final
+                # ranking and scores are displayed right away.
+                on_game_over = getattr(self, "_on_game_over", None)
+                if callable(on_game_over):
+                    on_game_over()
+            else:
+                print(_("The deck is empty!"))
         elif already_had_tile:
             print(_("You already have a tile in hand."))
         else:

@@ -19,6 +19,7 @@ class DummyGUI:
         self.tile_preview = SimpleNamespace(set_filename=Mock(), update_rotation=Mock())
         self.players_view = SimpleNamespace(refresh=Mock())
         self.update_preview_rotation = Mock()
+        self.show_end_game_screen = Mock()
 
 
 def test_on_hint_delegates_to_game_data_provide_hint() -> None:
@@ -66,6 +67,24 @@ def test_on_draw_gui_clears_preview_when_no_tile() -> None:
     gui.tile_preview.set_filename.assert_called_once_with("")
     assert gui.players_view.refresh.called
     gui.update_preview_rotation.assert_not_called()
+
+
+def test_on_draw_gui_shows_end_game_screen_when_no_playable_tiles_remain() -> None:
+    gui = DummyGUI()
+    gui.error_message = SimpleNamespace(show_error=Mock())
+    gui.game_data.draw_tile.return_value = None
+    gui.game_data.game = SimpleNamespace(
+        game_data=SimpleNamespace(
+            no_playable_tiles_remaining=True,
+            current_hand=None,
+            deck=SimpleNamespace(is_empty=Mock(return_value=False)),
+        )
+    )
+
+    commands_handler_gui.on_draw_gui(gui)
+
+    gui.show_end_game_screen.assert_called_once()
+    gui.error_message.show_error.assert_called_once()
 
 
 def test_on_rotate_gui_rotates_tile_and_refreshes_preview() -> None:
