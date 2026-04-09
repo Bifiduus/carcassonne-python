@@ -268,7 +268,7 @@ def main() -> int:
     # map -p/--players to num_ai_players for AI settings
     if args.players and 1 <= args.players <= 5:
         config_overrides["num_ai_players"] = args.players - 1
-    elif args.time is not None:
+    if args.time is not None and not args.blitz:
         print(
             _("Warning: --time is ignored because --blitz is not enabled."),
             file=sys.stderr,
