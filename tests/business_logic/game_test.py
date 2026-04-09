@@ -17,7 +17,7 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
 
     graph = GraphData()
     graph.initialize_starting_tile()
-    
+
     game = Game(
         graph,
         2,
@@ -103,7 +103,7 @@ def test_play_ai_turn_restores_end_game_flags_after_minimax_search(
 
     graph = GraphData()
     graph.initialize_starting_tile()
-    
+
     game = Game(
         graph,
         2,
@@ -199,7 +199,7 @@ def test_play_ai_turn_restores_end_game_flags_after_mcts_search(
 
     graph = GraphData()
     graph.initialize_starting_tile()
-    
+
     game = Game(
         graph,
         2,
