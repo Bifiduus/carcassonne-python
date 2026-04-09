@@ -40,7 +40,7 @@ def build_online_context(
         end_game=lambda: ended,
         play_move=Mock(return_value=play_result),
         get_printed_board=lambda: "BOARD",
-        set_game_configuration=Mock(),
+        set_game_configuration=Mock(side_effect=lambda key, value: (key, value)),
         get_game_configuration=lambda: {"blitz": True, "ai_mode": "random"},
         get_history=lambda: ["0:CFFF/0N0;", "1:FFFF/m/1E0;"],
         score_manager=SimpleNamespace(
@@ -55,6 +55,8 @@ def build_online_context(
         ),
         redo=Mock(),
         undo=Mock(),
+        redo_moves=Mock(return_value=1),
+        undo_moves=Mock(return_value=1),
         provide_hint=Mock(return_value="CFFF/0N0"),
         draw_tile=Mock(return_value=draw_tile_result),
         shuffle_deck=Mock(return_value=321),
@@ -190,6 +192,7 @@ def test_online_communication_gameplay_commands_cover_play_board_set_config_and_
         "play CFFF/0N0", "1").startswith("Move not played.\nBOARD\n")
     assert communication.command_board("1") == "Game board:\nBOARD"
 
+    assert communication.command_set("1", "set ai_mode") == "Usage: set PARAM=VALUE"
     assert communication.command_set(
         "1", "set ai_mode=minimax") == "Parameter 'ai_mode' set to 'minimax'."
     game.set_game_configuration.assert_called_with("ai_mode", "minimax")
@@ -203,8 +206,8 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
     repo.get_party_id.return_value = -1
     assert communication.command_score("1") == "You are not in a game."
     assert communication.command_hand("1") == "You are not in a game."
-    assert communication.command_redo("1") == "You are not in a game."
-    assert communication.command_undo("1") == "You are not in a game."
+    assert communication.command_redo("redo", "1") == "You are not in a game."
+    assert communication.command_undo("undo", "1") == "You are not in a game."
     assert communication.command_hint("1") == "You are not in a game."
     assert communication.command_draw("1") == "You are not in a game."
     assert communication.command_shuffle("1") == "You are not in a game."
@@ -229,8 +232,8 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
     assert communication.command_hand("1") == "Tile in hand: CFFF"
 
     game.get_current_player = lambda: SimpleNamespace(get_id=lambda: 2)
-    assert communication.command_redo("1") == "It is not your turn to play"
-    assert communication.command_undo("1") == "It is not your turn to play"
+    assert communication.command_redo("redo", "1") == "It is not your turn to play"
+    assert communication.command_undo("undo", "1") == "It is not your turn to play"
     assert communication.command_draw("1") == "It is not your turn to play"
     assert communication.command_shuffle("1") == "It is not your turn to play"
     assert communication.command_save(
@@ -240,15 +243,17 @@ def test_online_communication_score_hand_undo_redo_hint_draw_shuffle_save_and_lo
 
     game.get_current_player = lambda: SimpleNamespace(get_id=lambda: 1)
     assert communication.command_hint("1") == "CFFF/0N0"
-    assert communication.command_redo("1") == "Last moves redone."
-    game.redo.assert_called_once_with()
+    assert communication.command_redo("redo nope", "1") == "Usage: redo [N]"
+    assert communication.command_undo("undo 0", "1") == "Usage: undo [N]"
+    assert communication.command_redo("redo", "1") == "Last 1 move(s) redone."
+    game.redo_moves.assert_called_once_with(1)
     server.send_to_group_except.assert_called_with(
         7,
         "OPPONENT_MOVE redone moves. Board:\nBOARD\n",
         "Alice",
     )
-    assert communication.command_undo("1") == "Last moves undone."
-    game.undo.assert_called_once_with()
+    assert communication.command_undo("undo 2", "1") == "Last 2 move(s) undone."
+    game.undo_moves.assert_called_once_with(2)
     server.send_to_group_except.assert_called_with(
         7,
         "OPPONENT_MOVE undone moves. Board:\nBOARD\n",

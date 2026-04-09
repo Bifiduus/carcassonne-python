@@ -9,22 +9,136 @@ The command handler functions are designed to be called from the GameCLI class
  when the corresponding commands are entered by the player.
 """
 
+import shlex
+
 from carcassonne.interfaces.i_client_service import IClientService
 from carcassonne.i18n import gettext as _
 from carcassonne.interfaces.i_server_service import IServerService
 
 
-def new_game(self, args, client_service: IClientService) -> None:
+def new_game(self, args, client_service: IClientService) -> bool:
     if client_service.connected_to_a_server():
         client_service.send_to_server("new " + args)
-        return
-    self.game.start_new_game()
+        return True
+    try:
+        options = _parse_new_game_args(args)
+        self.game.start_new_game_from_options(**options)
+    except ValueError as error:
+        print(_("Invalid new command: {error}").format(error=error))
+        return False
     print(_("New game started."))
+    return True
+
+
+def _parse_new_game_args(raw_args: str) -> dict[str, object]:
+    if not raw_args.strip():
+        return {}
+
+    option_aliases = {
+        "ai": "num_ai_players",
+        "ia": "num_ai_players",
+        "num_ai_players": "num_ai_players",
+        "color": "player_color",
+        "colour": "player_color",
+        "couleur": "player_color",
+        "seed": "seed",
+    }
+    int_options = {"num_ai_players", "seed"}
+    parsed_options: dict[str, object] = {}
+
+    try:
+        tokens = shlex.split(raw_args)
+    except ValueError as error:
+        raise ValueError(
+            _("unable to parse arguments: {error}").format(error=error)
+        ) from error
+
+    for token in tokens:
+        if "=" not in token:
+            raise ValueError(
+                _(
+                    "expected KEY=VALUE arguments such as "
+                    "'ai=2 color=red seed=42', got '{token}'"
+                ).format(token=token)
+            )
+        raw_key, raw_value = token.split("=", 1)
+        key = option_aliases.get(raw_key.strip().lower())
+        if key is None:
+            raise ValueError(
+                _("unknown new-game option: {option}").format(
+                    option=raw_key.strip()
+                )
+            )
+        if key in parsed_options:
+            raise ValueError(
+                _("duplicate new-game option: {option}").format(
+                    option=raw_key.strip()
+                )
+            )
+        value = raw_value.strip()
+        if value == "":
+            raise ValueError(
+                _("missing value for new-game option: {option}").format(
+                    option=raw_key.strip()
+                )
+            )
+        if key in int_options:
+            try:
+                parsed_options[key] = int(value)
+            except ValueError as error:
+                raise ValueError(
+                    _("invalid integer for {option}: {value}").format(
+                        option=raw_key.strip(),
+                        value=value,
+                    )
+                ) from error
+        else:
+            parsed_options[key] = value.lower()
+
+    return parsed_options
+
+
+def _display_value(value) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    return str(value)
+
+
+def _apply_history_action(game, action_name: str, count: int) -> int:
+    if action_name == "undo":
+        action_many = getattr(game, "undo_moves", None)
+        action_single = game.undo
+        history_attr = "past_moves"
+    else:
+        action_many = getattr(game, "redo_moves", None)
+        action_single = game.redo
+        history_attr = "future_moves"
+
+    if callable(action_many):
+        return action_many(count)
+
+    changed = 0
+    for _ in range(count):
+        available_moves = getattr(game.game_data.history, history_attr, [])
+        if len(available_moves) == 0:
+            break
+        before_past = len(game.game_data.history.past_moves)
+        before_future = len(game.game_data.history.future_moves)
+        action_single()
+        after_past = len(game.game_data.history.past_moves)
+        after_future = len(game.game_data.history.future_moves)
+        if before_past == after_past and before_future == after_future:
+            break
+        changed += 1
+    return changed
 
 
 def _command_help_lines() -> dict[str, str]:
     return {
-        "new": _("  new <args>         - Start a new game"),
+        "new": _(
+            "  new [ARGS]         - Start a new game "
+            "(ai=N color=COLOR seed=SEED)"
+        ),
         "help": _(
             "  help [CMD]         - Display help for all commands or CMD"
         ),
@@ -57,7 +171,7 @@ def _command_help_lines() -> dict[str, str]:
         "show configuration": _(
             "  show configuration - Display the current game configuration"
         ),
-        "set": _("  set (PARAM=VALUE)  - Set a configuration parameter"),
+        "set": _("  set PARAM=VALUE    - Set a configuration parameter"),
         "play": _("  play <move>        - Play the specified move"),
         "server start": _(
             "  server start [PORT] - Start the server on port [PORT]"
@@ -211,30 +325,30 @@ def hint(self, client_service) -> None:
 
 
 def undo(self, N, client_service: IClientService) -> None:
+    if N < 1:
+        print(_("Usage: undo [N]"))
+        return
     if client_service.connected_to_a_server():
-        client_service.send_to_server("undo")
+        message = "undo" if N == 1 else f"undo {N}"
+        client_service.send_to_server(message)
     else:
-        before_past = len(self.game.game_data.history.past_moves)
-        before_future = len(self.game.game_data.history.future_moves)
-        self.game.undo()
-        after_past = len(self.game.game_data.history.past_moves)
-        after_future = len(self.game.game_data.history.future_moves)
-        if before_past == after_past and before_future == after_future:
+        undone = _apply_history_action(self.game, "undo", N)
+        if undone == 0:
             print(_("No move to undo."))
         else:
             print(_("Last {count} move(s) undone.").format(count=N))
 
 
 def redo(self, N, client_service: IClientService) -> None:
+    if N < 1:
+        print(_("Usage: redo [N]"))
+        return
     if client_service.connected_to_a_server():
-        client_service.send_to_server("redo")
+        message = "redo" if N == 1 else f"redo {N}"
+        client_service.send_to_server(message)
     else:
-        before_past = len(self.game.game_data.history.past_moves)
-        before_future = len(self.game.game_data.history.future_moves)
-        self.game.redo()
-        after_past = len(self.game.game_data.history.past_moves)
-        after_future = len(self.game.game_data.history.future_moves)
-        if before_past == after_past and before_future == after_future:
+        redone = _apply_history_action(self.game, "redo", N)
+        if redone == 0:
             print(_("No move to redo."))
         else:
             print(_("Last {count} move(s) redone.").format(count=N))
@@ -363,14 +477,32 @@ def _print_scores(game) -> None:
 
 
 def set_parameter(self, param, value, client_service: IClientService) -> None:
+    if not param or value is None:
+        print(_("Usage: set PARAM=VALUE"))
+        return
     if client_service.connected_to_a_server():
         client_service.send_to_server(f"set {param}={value}")
     else:
-        # self.game.setGameParameter(param, value)
+        try:
+            param, value = self.game.set_game_configuration(param, value)
+        except KeyError as error:
+            print(
+                _("Invalid configuration parameter: {error}").format(
+                    error=error.args[0]
+                )
+            )
+            return
+        except (TypeError, ValueError) as error:
+            print(
+                _("Invalid configuration parameter: {error}").format(
+                    error=error
+                )
+            )
+            return
         print(
             _("Parameter '{param}' set to '{value}'.").format(
                 param=param,
-                value=value,
+                value=_display_value(value),
             )
         )
 

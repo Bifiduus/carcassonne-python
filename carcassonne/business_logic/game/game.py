@@ -174,12 +174,24 @@ class Game(IGameService):
     def has_unsaved_changes(self) -> bool:
         return getattr(self, "_has_unsaved_changes", False)
 
-    def set_game_configuration(self, key: str, value) -> None:
-        if key == "timeout":
-            key = "time"
-        self.game_data.game_configuration.settings[key] = value
-        if key in ("blitz", "time", "contest_file"):
+    def set_game_configuration(self, key: str, value) -> tuple[str, object]:
+        if hasattr(self.game_data.game_configuration, "set_setting_value"):
+            key, value = self.game_data.game_configuration.set_setting_value(
+                key,
+                value,
+            )
+        else:
+            if key == "timeout":
+                key = "time"
+            self.game_data.game_configuration.settings[key] = value
+
+        if key == "num_ai_players":
+            self.adjust_number_of_ai_players(int(value))
+
+        if key in ("blitz", "time", "contest", "contest_file"):
             self._initialize_mode_state()
+        self._mark_game_state_dirty()
+        return key, value
 
     def get_maximum_number_of_players(self) -> int:
         return self.game_data.get_maximum_number_of_players()
@@ -191,8 +203,7 @@ class Game(IGameService):
         return self.game_data.get_number_of_players()
 
     def set_number_of_ai_players(self, num_players: int) -> None:
-        self.game_data.add_players(num_players)
-        self.game_data.number_of_ai_players = num_players
+        self.adjust_number_of_ai_players(num_players)
 
     def adjust_number_of_ai_players(self, num_ai: int) -> None:
         """Adjust AI players to match configuration.
@@ -201,6 +212,31 @@ class Game(IGameService):
         specified count, respecting the maximum players constraint.
         """
         self.game_data.set_number_of_ai_players_configured(num_ai)
+
+    def set_local_player_color(self, color: str) -> str:
+        normalized_color = str(color).strip().lower()
+        if hasattr(self.game_data, "assign_player_colors"):
+            self.game_data.assign_player_colors(normalized_color)
+        else:
+            local_player = self.game_data.players.get(0)
+            if local_player is None:
+                raise ValueError("no local player to recolor")
+            local_player.set_color(normalized_color)
+        self._mark_game_state_dirty()
+        return normalized_color
+
+    def start_new_game_from_options(
+        self,
+        *,
+        seed: int | None = None,
+        num_ai_players: int | None = None,
+        player_color: str | None = None,
+    ) -> None:
+        if num_ai_players is not None:
+            self.set_game_configuration("num_ai_players", num_ai_players)
+        if player_color is not None:
+            self.set_local_player_color(player_color)
+        self.start_new_game(seed=seed)
 
     def add_players(self, nb_players: int) -> None:
         self.game_data.add_players(nb_players)
@@ -876,6 +912,30 @@ class Game(IGameService):
         self.undo_redo_manager.redo()
         if self._history_signature(self.game_data.history) != before_signature:
             self._mark_game_state_dirty()
+
+    def undo_moves(self, count: int) -> int:
+        if count < 1:
+            raise ValueError("undo count must be a positive integer")
+        undone = 0
+        for _ in range(count):
+            before_signature = self._history_signature(self.game_data.history)
+            self.undo()
+            if self._history_signature(self.game_data.history) == before_signature:
+                break
+            undone += 1
+        return undone
+
+    def redo_moves(self, count: int) -> int:
+        if count < 1:
+            raise ValueError("redo count must be a positive integer")
+        redone = 0
+        for _ in range(count):
+            before_signature = self._history_signature(self.game_data.history)
+            self.redo()
+            if self._history_signature(self.game_data.history) == before_signature:
+                break
+            redone += 1
+        return redone
 
     def provide_hint(self) -> str:
         return self.commands.provide_hint()

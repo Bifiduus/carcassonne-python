@@ -167,3 +167,52 @@ def test_configuration_save_show_and_getters_use_current_settings(monkeypatch, t
     assert parser.getint("defaults", "num_ai_players") == 3
     assert parser.get("defaults", "ai_mode") == "iterative"
     assert not parser.has_option("defaults", "contest_file")
+
+
+def test_configuration_set_setting_value_normalizes_types(monkeypatch, tmp_path) -> None:
+    config_path = tmp_path / ".carcassonnerc"
+    monkeypatch.setattr(
+        "carcassonne.datas.game_configuration.CONFIG_PATH",
+        str(config_path),
+    )
+    config = GameConfiguration()
+
+    assert config.set_setting_value("timeout", "12") == ("time", 12)
+    assert config.set_setting_value("blitz", "true") == ("blitz", True)
+    assert config.set_setting_value("ai_mode", "MCTS") == (
+        "ai_mode",
+        "mcts",
+    )
+    assert config.set_setting_value("ai_mcts_selection", "ml") == (
+        "ai_mcts_selection",
+        "ML",
+    )
+
+
+def test_configuration_set_setting_value_rejects_unknown_or_invalid_values(
+    monkeypatch, tmp_path
+) -> None:
+    config_path = tmp_path / ".carcassonnerc"
+    monkeypatch.setattr(
+        "carcassonne.datas.game_configuration.CONFIG_PATH",
+        str(config_path),
+    )
+    config = GameConfiguration()
+
+    try:
+        config.set_setting_value("mystery", "value")
+        raise AssertionError("Expected KeyError for unknown setting")
+    except KeyError:
+        pass
+
+    try:
+        config.set_setting_value("time", "oops")
+        raise AssertionError("Expected ValueError for invalid integer")
+    except ValueError:
+        pass
+
+    try:
+        config.set_setting_value("blitz", "maybe")
+        raise AssertionError("Expected ValueError for invalid boolean")
+    except ValueError:
+        pass

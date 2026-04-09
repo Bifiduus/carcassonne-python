@@ -156,15 +156,28 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
         list_history=lambda: ["0:CFFF/0N0;"],
         clear_future=Mock(),
     )
+    normalized_settings = []
     game.game_data = SimpleNamespace(
         history=history,
-        game_configuration=SimpleNamespace(settings={}, save_config=Mock()),
+        game_configuration=SimpleNamespace(
+            settings={},
+            save_config=Mock(),
+            set_setting_value=Mock(
+                side_effect=lambda key, value: normalized_settings.append(
+                    ("time" if key == "timeout" else key, value)
+                )
+                or ("time" if key == "timeout" else key, value)
+            ),
+        ),
         get_game_configuration=lambda: {"ai_mode": "random"},
         get_maximum_number_of_players=lambda: 5,
         get_minimum_number_of_players=lambda: 2,
         get_number_of_players=lambda: 3,
         add_players=Mock(),
+        set_number_of_ai_players_configured=Mock(),
         number_of_ai_players=1,
+        assign_player_colors=Mock(),
+        players={0: SimpleNamespace(get_color=lambda: "green")},
         players_order=[4, 1, 2],
         get_current_player=lambda: current_player,
         start_load_game=Mock(),
@@ -179,6 +192,9 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
             get_vertex_data=Mock(),
             get_meeples=lambda: [SimpleNamespace(player_id=0, tile_id=1)],
         ),
+    )
+    game.game_data.set_number_of_ai_players_configured.side_effect = (
+        lambda num: setattr(game.game_data, "number_of_ai_players", num)
     )
     game.save_handler = SimpleNamespace(
         save_game_to_file=Mock(return_value=1),
@@ -231,6 +247,10 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.save_config()
     game.set_game_configuration("timeout", 12)
     game.set_game_configuration("other", "value")
+    assert game.set_local_player_color("red") == "red"
+    game.start_new_game_from_options(
+        seed=5, num_ai_players=2, player_color="blue"
+    )
     assert game.get_maximum_number_of_players() == 5
     assert game.get_minimum_number_of_players() == 2
     assert game.get_number_of_players() == 3
@@ -267,12 +287,15 @@ def test_game_wrapper_methods_delegate_to_underlying_services() -> None:
     game.game_data.start_load_game.assert_called_once_with()
     history.clear_future.assert_called_once_with()
     game.game_data.game_configuration.save_config.assert_called_once_with()
-    game.game_data.add_players.assert_any_call(2)
+    assert normalized_settings[:2] == [("time", 12), ("other", "value")]
+    game.game_data.set_number_of_ai_players_configured.assert_any_call(2)
     game.game_data.add_players.assert_any_call(1)
+    game.game_data.assign_player_colors.assert_any_call("red")
+    game.game_data.assign_player_colors.assert_any_call("blue")
     game.game_data.add_online_players.assert_called_once_with(["p2"])
     game.deck_manager.draw_tile.assert_called_once_with(silent=True)
     game.deck_manager.shuffle_deck.assert_called_once_with("naive", 5)
-    game.new_game.start_new_game.assert_not_called()
+    game.new_game.start_new_game.assert_called_once_with(None, 5)
     game.undo_redo_manager.undo.assert_called_once_with()
     game.undo_redo_manager.redo.assert_called_once_with()
     game.blitz_manager.pause.assert_called_once_with()
@@ -317,6 +340,38 @@ def test_game_save_tracking_follows_effective_mutations_and_successful_persisten
 
     assert game.load_game_from_file("save.txt") == 0
     assert game.has_unsaved_changes() is False
+
+
+def test_game_undo_and_redo_moves_return_effective_counts() -> None:
+    game = Game.__new__(Game)
+    game._has_unsaved_changes = False
+    game._save_tracking_suspended = False
+    history = SimpleNamespace(past_moves=[1, 2], future_moves=[3])
+    game.game_data = SimpleNamespace(history=history)
+    game.undo_redo_manager = SimpleNamespace(
+        undo=Mock(
+            side_effect=lambda: (
+                history.past_moves.pop(),
+                history.future_moves.append(9),
+            )
+            if history.past_moves
+            else None
+        ),
+        redo=Mock(
+            side_effect=lambda: (
+                history.future_moves.pop(),
+                history.past_moves.append(4),
+            )
+            if history.future_moves
+            else None
+        ),
+    )
+
+    assert game.undo_moves(3) == 2
+    assert game.has_unsaved_changes() is True
+    assert game.redo_moves(2) == 2
+    assert game.undo_redo_manager.undo.call_count == 3
+    assert game.undo_redo_manager.redo.call_count == 2
 
 
 def test_rotate_generate_board_and_printed_board_helpers_work_with_simple_vertices() -> None:

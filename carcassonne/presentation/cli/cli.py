@@ -93,7 +93,9 @@ class GameCLI:
             command == "draw"
             or command == "hint"
             or command == "undo"
+            or command.startswith("undo ")
             or command == "redo"
+            or command.startswith("redo ")
             or command.startswith("play")
         )
 
@@ -245,34 +247,66 @@ class GameCLI:
             )
             return
 
-        if command.startswith("new"):
+        if command == "new" or command.startswith("new "):
             args = command[4:].strip()
-            commands_handler_cli.new_game(self, args, self.client)
-            self.local_player_id = self.game.get_current_player().get_id()
-            self._tick_last_message = ""
+            if commands_handler_cli.new_game(self, args, self.client):
+                self.local_player_id = self.game.get_current_player().get_id()
+                self._tick_last_message = ""
         elif command == "help" or command.startswith("help "):
             help_command = command[4:].strip() or None
             commands_handler_cli.help(self, help_command)
         elif command == "quit":
             commands_handler_cli.quit(self, self.server, self.client)
+        elif command == "load":
+            print(_("Usage: load FILE"))
         elif command.startswith("load "):
             filename = command[5:].strip()
-            commands_handler_cli.load(self, filename, self.client)
-            self.local_player_id = self.game.get_current_player().get_id()
-            self._tick_last_message = ""
+            if not filename:
+                print(_("Usage: load FILE"))
+            else:
+                commands_handler_cli.load(self, filename, self.client)
+                self.local_player_id = self.game.get_current_player().get_id()
+                self._tick_last_message = ""
+        elif command == "save":
+            print(_("Usage: save FILE"))
         elif command.startswith("save "):
             filename = command[5:].strip()
-            commands_handler_cli.save(self, filename, self.client)
+            if not filename:
+                print(_("Usage: save FILE"))
+            else:
+                commands_handler_cli.save(self, filename, self.client)
         elif command == "shuffle":
             commands_handler_cli.shuffle(self, self.client)
         elif command == "draw":
             commands_handler_cli.draw(self, self.client)
         elif command == "hint":
             commands_handler_cli.hint(self, self.client)
-        elif command == "undo":
-            commands_handler_cli.undo(self, 1, self.client)
-        elif command == "redo":
-            commands_handler_cli.redo(self, 1, self.client)
+        elif command == "undo" or command.startswith("undo "):
+            count_arg = command[4:].strip()
+            if not count_arg:
+                commands_handler_cli.undo(self, 1, self.client)
+            else:
+                try:
+                    count = int(count_arg)
+                    if count < 1:
+                        raise ValueError
+                except ValueError:
+                    print(_("Usage: undo [N]"))
+                else:
+                    commands_handler_cli.undo(self, count, self.client)
+        elif command == "redo" or command.startswith("redo "):
+            count_arg = command[4:].strip()
+            if not count_arg:
+                commands_handler_cli.redo(self, 1, self.client)
+            else:
+                try:
+                    count = int(count_arg)
+                    if count < 1:
+                        raise ValueError
+                except ValueError:
+                    print(_("Usage: redo [N]"))
+                else:
+                    commands_handler_cli.redo(self, count, self.client)
         elif command == "show hand":
             commands_handler_cli.show_hand(self, self.client)
         elif command == "show time" or command.startswith("show time "):
@@ -288,16 +322,22 @@ class GameCLI:
             commands_handler_cli.show_configuration(
                 self, game=self.game, client_service=self.client
             )
-        elif command.startswith("set"):
+        elif command == "set":
+            print(_("Usage: set PARAM=VALUE"))
+        elif command.startswith("set "):
             content = command[3:].strip()
             if "=" in content:
                 param, value = content.split("=", 1)
                 param = param.strip()
                 value = value.strip()
+                if not param:
+                    print(_("Usage: set PARAM=VALUE"))
+                else:
+                    commands_handler_cli.set_parameter(
+                        self, param, value, self.client
+                    )
             else:
-                param = content
-                value = None
-            commands_handler_cli.set_parameter(self, param, value, self.client)
+                print(_("Usage: set PARAM=VALUE"))
         elif command.startswith("players"):
             commands_handler_cli.players(self, self.client, command)
         elif command.startswith("play "):
@@ -311,8 +351,8 @@ class GameCLI:
             )
         elif command == "server list":
             commands_handler_cli.show_server_list(self, self.client)
-        elif command.startswith("server start"):
-            port = command.strip("server start")
+        elif command == "server start" or command.startswith("server start "):
+            port = command.removeprefix("server start").strip()
             commands_handler_cli.server_start(self, port, self.server)
         elif command == "server stop":
             commands_handler_cli.stop_server(self, self.server)

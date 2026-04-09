@@ -271,6 +271,28 @@ def test_cli_handle_command_supports_help_with_command_name() -> None:
     help_cmd.assert_called_once_with(cli, "undo")
 
 
+def test_cli_handle_command_parses_undo_redo_counts_and_reports_usage(
+    capsys,
+) -> None:
+    cli, _, _, client = build_cli()
+
+    with (
+        patch.object(cli_module.readline, "add_history"),
+        patch.object(cli_module.commands_handler_cli, "undo") as undo_cmd,
+        patch.object(cli_module.commands_handler_cli, "redo") as redo_cmd,
+    ):
+        cli.handle_command("undo 3")
+        cli.handle_command("redo 2")
+        cli.handle_command("undo nope")
+        cli.handle_command("redo 0")
+
+    undo_cmd.assert_called_once_with(cli, 3, client)
+    redo_cmd.assert_called_once_with(cli, 2, client)
+    output = capsys.readouterr().out
+    assert "Usage: undo [N]" in output
+    assert "Usage: redo [N]" in output
+
+
 def test_cli_rejects_turn_bound_commands_when_local_player_cannot_act(capsys) -> None:
     cli, game, _, _ = build_cli()
     cli.local_player_id = 7
@@ -418,8 +440,8 @@ def test_on_game_over_ignores_repeated_calls() -> None:
     game.get_board.assert_not_called()
 
 
-def test_handle_command_supports_set_without_value() -> None:
-    cli, _, _, client = build_cli()
+def test_handle_command_reports_usage_for_invalid_set_syntax(capsys) -> None:
+    cli, _, _, _ = build_cli()
 
     with (
         patch.object(cli_module.readline, "add_history"),
@@ -427,4 +449,5 @@ def test_handle_command_supports_set_without_value() -> None:
     ):
         cli.handle_command("set blitz")
 
-    setter.assert_called_once_with(cli, "blitz", None, client)
+    setter.assert_not_called()
+    assert "Usage: set PARAM=VALUE" in capsys.readouterr().out

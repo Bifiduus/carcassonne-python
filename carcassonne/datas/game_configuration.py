@@ -42,6 +42,23 @@ DEFAULT_SETTINGS = {
     "game_keybinds": GAME_KEYBIND_DEFAULTS.copy(),
 }
 
+BOOLEAN_SETTINGS = {"verbose", "debug", "blitz", "contest", "river"}
+INTEGER_SETTINGS = {"time", "num_ai_players", "ai_time", "ai_minimax_depth"}
+INTEGER_BOUNDS = {
+    "time": (1, None),
+    "num_ai_players": (1, 4),
+    "ai_time": (1, None),
+    "ai_minimax_depth": (1, None),
+}
+ENUM_SETTINGS = {
+    "ai_mode": {"random", "minimax", "iterative", "mcts"},
+    "ai_minimax_scoring": {"baseline", "short_term", "disruption"},
+    "ai_mcts_selection": {"UCT", "ML"},
+}
+DICT_SETTINGS = {"file_keybinds", "game_keybinds"}
+STRING_SETTINGS = {"contest_file"}
+SETTING_ALIASES = {"timeout": "time"}
+
 
 def _merge_keybinds(raw_keybinds, defaults: dict[str, str]) -> dict[str, str]:
     merged = defaults.copy()
@@ -68,6 +85,132 @@ class GameConfiguration:
         if "time" not in self.settings and "timeout" in self.settings:
             self.settings["time"] = self.settings["timeout"]
         self.settings.pop("timeout", None)
+
+    @staticmethod
+    def _normalize_setting_key(key: str) -> str:
+        if not isinstance(key, str):
+            raise TypeError("configuration key must be a string")
+        normalized = key.strip()
+        if not normalized:
+            raise ValueError("configuration key cannot be empty")
+        return SETTING_ALIASES.get(normalized, normalized)
+
+    @staticmethod
+    def _parse_bool(value) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"true", "1", "yes", "on"}:
+                return True
+            if lowered in {"false", "0", "no", "off"}:
+                return False
+        raise ValueError(f"invalid boolean value: {value}")
+
+    @staticmethod
+    def _parse_int(value) -> int:
+        if isinstance(value, bool):
+            raise ValueError(f"invalid integer value: {value}")
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped:
+                try:
+                    return int(stripped)
+                except ValueError as error:
+                    raise ValueError(
+                        f"invalid integer value: {value}"
+                    ) from error
+        raise ValueError(f"invalid integer value: {value}")
+
+    def normalize_setting_update(self, key: str, value) -> tuple[str, object]:
+        normalized_key = self._normalize_setting_key(key)
+        if normalized_key not in DEFAULT_SETTINGS:
+            raise KeyError(
+                _("Unknown configuration parameter: {param}").format(
+                    param=normalized_key
+                )
+            )
+
+        if normalized_key in BOOLEAN_SETTINGS:
+            return normalized_key, self._parse_bool(value)
+        if normalized_key in INTEGER_SETTINGS:
+            normalized_value = self._parse_int(value)
+            minimum, maximum = INTEGER_BOUNDS.get(normalized_key, (None, None))
+            if minimum is not None and normalized_value < minimum:
+                raise ValueError(
+                    _(
+                        "Invalid value for '{param}': {value}. "
+                        "Minimum allowed is {minimum}."
+                    ).format(
+                        param=normalized_key,
+                        value=normalized_value,
+                        minimum=minimum,
+                    )
+                )
+            if maximum is not None and normalized_value > maximum:
+                raise ValueError(
+                    _(
+                        "Invalid value for '{param}': {value}. "
+                        "Maximum allowed is {maximum}."
+                    ).format(
+                        param=normalized_key,
+                        value=normalized_value,
+                        maximum=maximum,
+                    )
+                )
+            return normalized_key, normalized_value
+        if normalized_key in ENUM_SETTINGS:
+            if value is None:
+                raise ValueError(
+                    _("Missing value for parameter '{param}'.").format(
+                        param=normalized_key
+                    )
+                )
+            normalized_value = str(value).strip()
+            if normalized_key == "ai_mcts_selection":
+                normalized_value = normalized_value.upper()
+            else:
+                normalized_value = normalized_value.lower()
+            if normalized_value not in ENUM_SETTINGS[normalized_key]:
+                allowed = ", ".join(sorted(ENUM_SETTINGS[normalized_key]))
+                raise ValueError(
+                    _(
+                        "Invalid value for '{param}': {value}. "
+                        "Expected one of: {allowed}."
+                    ).format(
+                        param=normalized_key,
+                        value=value,
+                        allowed=allowed,
+                    )
+                )
+            return normalized_key, normalized_value
+        if normalized_key in DICT_SETTINGS:
+            if not isinstance(value, dict):
+                raise ValueError(
+                    _("Invalid value for '{param}': expected a mapping.").format(
+                        param=normalized_key
+                    )
+                )
+            defaults = (
+                FILE_KEYBIND_DEFAULTS
+                if normalized_key == "file_keybinds"
+                else GAME_KEYBIND_DEFAULTS
+            )
+            return normalized_key, _merge_keybinds(value, defaults)
+        if normalized_key in STRING_SETTINGS:
+            return normalized_key, "" if value is None else str(value)
+        return normalized_key, value
+
+    def set_setting_value(self, key: str, value) -> tuple[str, object]:
+        normalized_key, normalized_value = self.normalize_setting_update(
+            key,
+            value,
+        )
+        self.settings[normalized_key] = normalized_value
+        self._normalize_keybind_settings()
+        return normalized_key, normalized_value
 
     def _normalize_keybind_settings(self):
         self.settings["file_keybinds"] = _merge_keybinds(

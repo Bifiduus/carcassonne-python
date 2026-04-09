@@ -10,6 +10,16 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def start_new_game_from_options(
+        self,
+        *,
+        seed: int | None = None,
+        num_ai_players: int | None = None,
+        player_color: str | None = None,
+    ) -> None:
+        pass
+
+    @abstractmethod
     def play_move(self, move: str) -> bool:
         pass
 
@@ -22,7 +32,15 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
+    def undo_moves(self, count: int) -> int:
+        pass
+
+    @abstractmethod
     def redo(self) -> None:
+        pass
+
+    @abstractmethod
+    def redo_moves(self, count: int) -> int:
         pass
 
     @abstractmethod
@@ -42,7 +60,11 @@ class IGameService(ABC):
         pass
 
     @abstractmethod
-    def set_game_configuration(self, key: str, value) -> None:
+    def set_game_configuration(self, key: str, value) -> tuple[str, object]:
+        pass
+
+    @abstractmethod
+    def set_local_player_color(self, color: str) -> str:
         pass
 
     @abstractmethod

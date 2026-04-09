@@ -36,6 +36,7 @@ def build_local_context():
     history = SimpleNamespace(past_moves=[1], future_moves=[2])
     game = SimpleNamespace(
         start_new_game=Mock(),
+        start_new_game_from_options=Mock(),
         load_game_from_file=Mock(return_value=0),
         save_game_to_file=Mock(return_value=0),
         has_unsaved_changes=Mock(return_value=True),
@@ -49,7 +50,7 @@ def build_local_context():
         get_all_players_remaining_time_seconds=Mock(return_value=[(1, 65.0)]),
         get_player_remaining_time_seconds=Mock(return_value=42.0),
         get_history=Mock(return_value=["0:CFFF/0N0;", "1:FFFF/m/1E0;"]),
-        set_game_configuration=Mock(),
+        set_game_configuration=Mock(side_effect=lambda key, value: (key, value)),
         play_move=Mock(return_value=True),
         get_printed_board=Mock(return_value="BOARD"),
         is_undo_history_empty=Mock(return_value=False),
@@ -155,7 +156,7 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     assert "127.0.0.1:5000" in output
     client.send_to_server.assert_any_call("ping")
 
-    game.start_new_game.assert_called_once_with()
+    game.start_new_game_from_options.assert_called_once_with()
     game.get_printed_board.assert_called()
     server.server_start.assert_called_once_with("4242")
     server.server_stop.assert_called_once_with()
@@ -170,6 +171,34 @@ def test_local_command_handlers_cover_main_game_actions(capsys) -> None:
     client.join_server.assert_any_call()
     client.join_server.assert_any_call("127.0.0.1", 4242)
     client.join_server.assert_any_call("127.0.0.1")
+
+
+def test_new_game_supports_options_and_reports_invalid_arguments(capsys) -> None:
+    cli, game, client, _ = build_local_context()
+
+    handlers.new_game(cli, "ai=2 color=red seed=7", client)
+    handlers.new_game(cli, "players", client)
+
+    game.start_new_game_from_options.assert_called_once_with(
+        num_ai_players=2,
+        player_color="red",
+        seed=7,
+    )
+    output = capsys.readouterr().out
+    assert "New game started." in output
+    assert "Invalid new command:" in output
+
+
+def test_save_reports_failure_and_set_parameter_requires_real_value(capsys) -> None:
+    cli, game, client, _ = build_local_context()
+    game.save_game_to_file.return_value = -1
+
+    handlers.save(cli, "bad-save", client)
+    handlers.set_parameter(cli, "debug", None, client)
+
+    output = capsys.readouterr().out
+    assert "Failed to save the game to bad-save." in output
+    assert "Usage: set PARAM=VALUE" in output
 
 
 def test_help_with_specific_command_displays_only_requested_help(capsys) -> None:
@@ -324,7 +353,7 @@ def test_connected_command_handlers_forward_to_server_and_quit_respects_server_s
     handlers.draw(cli, client)
     handlers.hint(cli, client)
     handlers.undo(cli, 1, client)
-    handlers.redo(cli, 1, client)
+    handlers.redo(cli, 2, client)
     handlers.show_hand(cli, client)
     handlers.show_history(cli, game, client)
     handlers.show_configuration(cli, game, client)
@@ -342,7 +371,7 @@ def test_connected_command_handlers_forward_to_server_and_quit_respects_server_s
     client.send_to_server.assert_any_call("draw")
     client.send_to_server.assert_any_call("hint")
     client.send_to_server.assert_any_call("undo")
-    client.send_to_server.assert_any_call("redo")
+    client.send_to_server.assert_any_call("redo 2")
     client.send_to_server.assert_any_call("show hand")
     client.send_to_server.assert_any_call("show history")
     client.send_to_server.assert_any_call("show configuration")

@@ -204,17 +204,22 @@ class OnlineCommunication:
         if self.server.repo.get_party_id(client_id) == -1:
             return "You are not in a game."
         content = message[3:].strip()
-        if "=" in content:
-            param, value = content.split("=", 1)
-            param = param.strip()
-            value = value.strip()
-        else:
-            param = content
-            value = None
+        if "=" not in content:
+            return "Usage: set PARAM=VALUE"
+        param, value = content.split("=", 1)
+        param = param.strip()
+        value = value.strip()
+        if not param:
+            return "Usage: set PARAM=VALUE"
         party_id = self.server.repo.get_party_id(client_id)
         game_id: int = self.server.repo.get_game_id(party_id)
         game: Game = self.server.current_games_list[game_id][1]
-        game.set_game_configuration(param, value)
+        try:
+            param, value = game.set_game_configuration(param, value)
+        except KeyError as error:
+            return "Invalid configuration parameter: " + str(error.args[0])
+        except (TypeError, ValueError) as error:
+            return "Invalid configuration parameter: " + str(error)
         return _("Parameter '{param}' set to '{value}'.").format(
             param=param,
             value=value,
@@ -275,7 +280,17 @@ class OnlineCommunication:
             )
         return answer
 
-    def command_redo(self, client_id: str) -> str:
+    @staticmethod
+    def _parse_optional_count(message: str, command: str) -> int:
+        suffix = message.removeprefix(command).strip()
+        if suffix == "":
+            return 1
+        count = int(suffix)
+        if count < 1:
+            raise ValueError
+        return count
+
+    def command_redo(self, message: str, client_id: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
             return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
@@ -283,7 +298,13 @@ class OnlineCommunication:
         game: Game = self.server.current_games_list[game_id][1]
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
-        game.redo()
+        try:
+            count = self._parse_optional_count(message, "redo")
+        except ValueError:
+            return "Usage: redo [N]"
+        redone = game.redo_moves(count)
+        if redone == 0:
+            return _("No move to redo.")
         # Notify other players about the board state change
         board: str = game.get_printed_board()
         board_message = f"OPPONENT_MOVE redone moves. Board:\n{board}\n"
@@ -293,9 +314,9 @@ class OnlineCommunication:
             board_message,
             client_username,
         )
-        return _("Last moves redone.")
+        return _("Last {count} move(s) redone.").format(count=count)
 
-    def command_undo(self, client_id: str) -> str:
+    def command_undo(self, message: str, client_id: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:
             return "You are not in a game."
         party_id = self.server.repo.get_party_id(client_id)
@@ -303,7 +324,13 @@ class OnlineCommunication:
         game: Game = self.server.current_games_list[game_id][1]
         if game.get_current_player().get_id() != int(client_id):
             return "It is not your turn to play"
-        game.undo()
+        try:
+            count = self._parse_optional_count(message, "undo")
+        except ValueError:
+            return "Usage: undo [N]"
+        undone = game.undo_moves(count)
+        if undone == 0:
+            return _("No move to undo.")
         # Notify other players about the board state change
         board: str = game.get_printed_board()
         board_message = f"OPPONENT_MOVE undone moves. Board:\n{board}\n"
@@ -313,7 +340,7 @@ class OnlineCommunication:
             board_message,
             client_username,
         )
-        return _("Last moves undone.")
+        return _("Last {count} move(s) undone.").format(count=count)
 
     def command_hint(self, client_id: str) -> str:
         if self.server.repo.get_party_id(client_id) == -1:

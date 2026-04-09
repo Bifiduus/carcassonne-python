@@ -469,10 +469,14 @@ class Server(IServerService):
                 answer = self.handle_communication.command_score(client_id)
             elif message == "show hand":
                 answer = self.handle_communication.command_hand(client_id)
-            elif message == "redo":
-                answer = self.handle_communication.command_redo(client_id)
-            elif message == "undo":
-                answer = self.handle_communication.command_undo(client_id)
+            elif message == "redo" or message.startswith("redo "):
+                answer = self.handle_communication.command_redo(
+                    message, client_id
+                )
+            elif message == "undo" or message.startswith("undo "):
+                answer = self.handle_communication.command_undo(
+                    message, client_id
+                )
             elif message == "hint":
                 answer = self.handle_communication.command_hint(client_id)
             elif message == "draw":

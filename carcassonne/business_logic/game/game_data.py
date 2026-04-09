@@ -12,6 +12,8 @@ import random as r
 class GameData:
     """Class to store all game data, and be able to reset it when needed."""
 
+    PLAYER_COLORS = ["green", "red", "blue", "yellow", "black", "white"]
+
     def __init__(
         self,
         graphData: IGraphData,
@@ -100,17 +102,40 @@ class GameData:
 
     def add_players(self, nb_players: int) -> None:
         """Add AI players to the game."""
-        colors = ["red", "blue", "yellow", "black", "white"]
         for i in range(1, nb_players + 1):
             self.players[i] = self.business_logic_factory.create(
                 "Player",
                 i,
                 f"Player {i}",
-                colors[(i - 2) % len(colors)],
+                self.PLAYER_COLORS[i % len(self.PLAYER_COLORS)],
                 True,
             )
             self.players_order.append(i)
             self.number_of_ai_players += 1
+        self.assign_player_colors()
+
+    def assign_player_colors(
+        self,
+        preferred_human_color: str | None = None,
+    ) -> None:
+        if 0 not in self.players:
+            return
+        if preferred_human_color is None:
+            preferred_human_color = self.players[0].get_color()
+        if preferred_human_color not in self.PLAYER_COLORS:
+            raise ValueError(f"invalid player color: {preferred_human_color}")
+
+        ordered_colors = [preferred_human_color] + [
+            color
+            for color in self.PLAYER_COLORS
+            if color != preferred_human_color
+        ]
+        self.players[0].set_color(ordered_colors[0])
+        for index, player_id in enumerate(
+            sorted(pid for pid in self.players if pid != 0),
+            start=1,
+        ):
+            self.players[player_id].set_color(ordered_colors[index])
 
     def set_number_of_ai_players_configured(self, num_ai: int) -> None:
         """Adjust the number of AI players to match configuration.
@@ -121,14 +146,15 @@ class GameData:
         Args:
             num_ai: Desired number of AI players (1-4).
         """
-        # Clamp to valid range
-        num_ai = max(1, min(num_ai, self.maximum_number_of_players - 1))
+        if num_ai < 1 or num_ai > self.maximum_number_of_players - 1:
+            raise ValueError(
+                "num_ai_players must be between 1 and "
+                f"{self.maximum_number_of_players - 1}"
+            )
         current_ai_count = len([p for p in self.players if p != 0])
 
         if current_ai_count == num_ai:
             return  # Already correct
-
-        colors = ["red", "blue", "yellow", "black", "white"]
 
         if current_ai_count < num_ai:
             # Need to add AI players
@@ -138,7 +164,7 @@ class GameData:
                         "Player",
                         i,
                         f"Player {i}",
-                        colors[(i - 2) % len(colors)],
+                        self.PLAYER_COLORS[i % len(self.PLAYER_COLORS)],
                         True,
                     )
                 if i not in self.players_order:
@@ -155,6 +181,7 @@ class GameData:
                 if i in self.players_order:
                     self.players_order.remove(i)
             self.number_of_ai_players = num_ai
+        self.assign_player_colors()
 
     def add_online_players(self, players: list[Player]) -> None:
         """Add online players to the game."""
