@@ -154,11 +154,11 @@ def on_info(gui) -> None:
 Version: {carcassonne.__version__}
 
 {authors_label}:
-- Clément SIMON --- Server
-- Maxence SALIN --- Client GUI/CLI
-- Loic THIN --- AI and game logic
-- Anthony BEAUVIEUX --- Game logic
-- Tony HUANG --- Seed, shuffle and game logic
+- Clément SIMON --- Server, Undo/Redo
+- Maxence SALIN --- Client GUI/CLI, Latex
+- Loic THIN --- AI, Game logic, Graphs algorithms, River extension
+- Anthony BEAUVIEUX --- Game logic and Graphs structures / algorithms
+- Tony HUANG --- Seed, Shuffle, Heuristics and Game logic
 """
     message = message.format(
         carcassonne=carcassonne,
