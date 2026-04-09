@@ -94,6 +94,51 @@ class RulesManager:
                     return set_name
         return None
 
+    def _resolve_meeple_component_name(self, graph: IGraphData, meeple) -> str | None:
+        """Resolve the live component name for a meeple from tile and position.
+
+        Falls back to the stored `lands_components` label when resolution is
+        not possible (missing tile, position label, or land mapping).
+        """
+        stored_component = getattr(meeple, "lands_components", None)
+        tile_id = getattr(meeple, "tile_id", None)
+        if tile_id is None:
+            return stored_component
+
+        vertex = graph.get_vertex(tile_id)
+        if vertex is None:
+            return stored_component
+
+        position_getter = getattr(meeple, "get_position_label", None)
+        if not callable(position_getter):
+            return stored_component
+        land_pos = position_getter()
+
+        tile_code = vertex.get_name().split("/")[0]
+        tile_def = self.tiles_info.get_tile_definition(tile_code)
+        if tile_def is None:
+            return stored_component
+
+        land_type = None
+        for candidate_land_type, groups in tile_def.tiles_lands.items():
+            for direction_group in groups:
+                if land_pos in direction_group:
+                    land_type = candidate_land_type
+                    break
+            if land_type is not None:
+                break
+
+        if land_type is None:
+            return stored_component
+
+        resolved_component = self._find_component_set_name(
+            graph,
+            land_type,
+            tile_id,
+            land_pos,
+        )
+        return resolved_component or stored_component
+
     def can_place_meeple_on_tile_side(
         self,
         move_parts: list[str],
@@ -174,7 +219,11 @@ class RulesManager:
             graph_copy.remove_vertex(new_tile_id)
             return False
         for meeple in graph_copy.get_meeples():
-            if meeple.lands_components == component_set_name:
+            meeple_component_name = self._resolve_meeple_component_name(
+                graph_copy,
+                meeple,
+            )
+            if meeple_component_name == component_set_name:
                 if (
                     current_player_id is not None
                     and meeple.player_id == current_player_id
@@ -250,7 +299,11 @@ class RulesManager:
             return "selected meeple position does not map to a component"
 
         for meeple in graph_copy.get_meeples():
-            if meeple.lands_components == component_set_name:
+            meeple_component_name = self._resolve_meeple_component_name(
+                graph_copy,
+                meeple,
+            )
+            if meeple_component_name == component_set_name:
                 if (
                     current_player_id is not None
                     and meeple.player_id == current_player_id

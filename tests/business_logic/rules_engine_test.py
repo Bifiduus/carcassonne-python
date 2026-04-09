@@ -53,19 +53,34 @@ class DummyGraphForSides:
 
 
 class DummyMeeple:
-    def __init__(self, lands_components: str, player_id: int) -> None:
+    def __init__(
+        self,
+        lands_components: str,
+        player_id: int,
+        tile_id: int = 1,
+        position_label: str = "N",
+    ) -> None:
         self.lands_components = lands_components
         self.player_id = player_id
+        self.tile_id = tile_id
+        self._position_label = position_label
+
+    def get_position_label(self) -> str:
+        return self._position_label
 
 
 class DummyVertexForMeeple:
-    def __init__(self, land_type: str) -> None:
+    def __init__(self, land_type: str, name: str = "CFFF") -> None:
         self.land_type = land_type
+        self.name = name
 
     def get_matrix(self):
         matrix = [["" for _ in range(3)] for _ in range(3)]
         matrix[0][1] = self.land_type
         return matrix
+
+    def get_name(self):
+        return self.name
 
 
 class DummyGraphForMeeple:
@@ -282,6 +297,37 @@ def test_can_place_meeple_on_tile_side_covers_success_and_rejections(monkeypatch
     )
 
 
+def test_can_place_meeple_uses_resolved_component_not_stale_label(
+    monkeypatch,
+) -> None:
+    manager = RulesManager(TilesInfo())
+    monkeypatch.setattr(manager, "_get_graph_logic", lambda: DummyGraphLogic())
+
+    # Existing meeple stores stale component label C1 but is actually on C2.
+    # New simulated tile would also resolve to C1, so placement should stay
+    # valid when we resolve component from tile+position.
+    graph = DummyGraphForMeeple(
+        component_name="C1",
+        meeples=[DummyMeeple("C1", 7, tile_id=0, position_label="N")],
+    )
+    graph.vertices[0] = DummyVertexForMeeple("C", name="CFFF")
+    graph.lands_components = {
+        "C": {
+            "C1": [(1, ["N"])],
+            "C2": [(0, ["N"])],
+        }
+    }
+
+    assert (
+        manager.can_place_meeple_on_tile_side(
+            ["CFFF", "0N0", "N"],
+            2,
+            graph,
+        )
+        is True
+    )
+
+
 def test_is_legal_move_covers_major_branch_failures_and_success(monkeypatch) -> None:
     manager = RulesManager(TilesInfo())
     river_manager = DummyRiverManager()
@@ -486,3 +532,29 @@ def test_explain_meeple_placement_failure_covers_all_specific_reasons(
         DummyGraphForMeeple(meeples=[DummyMeeple("C1", 3)]),
         current_player_id=3,
     ) == "meeple placement is invalid"
+
+
+def test_explain_meeple_failure_ignores_stale_component_labels(monkeypatch) -> None:
+    manager = RulesManager(TilesInfo())
+    monkeypatch.setattr(manager, "_get_graph_logic", lambda: DummyGraphLogic())
+
+    graph = DummyGraphForMeeple(
+        component_name="C1",
+        meeples=[DummyMeeple("C1", 7, tile_id=0, position_label="N")],
+    )
+    graph.vertices[0] = DummyVertexForMeeple("C", name="CFFF")
+    graph.lands_components = {
+        "C": {
+            "C1": [(1, ["N"])],
+            "C2": [(0, ["N"])],
+        }
+    }
+
+    assert (
+        manager.explain_meeple_placement_failure(
+            ["CFFF", "0N0", "N"],
+            2,
+            graph,
+        )
+        == "meeple placement is invalid"
+    )
