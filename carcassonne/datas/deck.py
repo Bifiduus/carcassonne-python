@@ -15,12 +15,30 @@ class Deck:
     def _shuffle_fisher_yates_in_place(
         items: list[str], rng: random.Random
     ) -> None:
+        """Shuffle a tile list in place with the Fisher-Yates algorithm.
+
+        Args:
+            items: Tile codes to reorder.
+            rng: Random generator used to pick swap indices.
+
+        Returns:
+            None.
+        """
         for i in range(len(items) - 1, 0, -1):
             j = rng.randrange(i + 1)
             items[i], items[j] = items[j], items[i]
 
     @staticmethod
     def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
+        """Shuffle a tile list in place with repeated random swaps.
+
+        Args:
+            items: Tile codes to reorder.
+            rng: Random generator used to pick swap indices.
+
+        Returns:
+            None.
+        """
         n = len(items)
         for i in range(n):
             j = rng.randrange(n)
@@ -117,11 +135,13 @@ class Deck:
         ]
 
     def draw(self, silent: bool = False) -> str | None:
-        """
-        Draw and return the top tile from the deck.
+        """Draw the next tile from the main deck.
+
+        Args:
+            silent: When True, do not print an error if the deck is empty.
 
         Returns:
-            The drawn tile string, or None if the deck is empty
+            str | None: Drawn tile code, or None when no tile remains.
         """
         if not self.tiles:
             if not silent:
@@ -130,11 +150,15 @@ class Deck:
         return self.tiles.pop()
 
     def draw_river_tile(self, silent: bool = False) -> str | None:
-        """
-        Draw and return the next river tile from the river tile list.
+        """Draw the next tile from the river deck.
+
+        Args:
+            silent: When True, do not print an error if the river deck is
+                empty.
 
         Returns:
-            The drawn river tile string, or None if no river tiles remain
+            str | None: Drawn river tile code, or None when no river tile
+                remains.
         """
         if not self.river_tiles:
             if not silent:
@@ -143,14 +167,15 @@ class Deck:
         return self.river_tiles.pop(0)
 
     def append(self, tile):
+        """Put one tile back on top of the main deck."""
         self.tiles = [tile] + self.tiles
 
     def len(self) -> int:
-        """Return the number of tiles currently left in the deck."""
+        """Return the number of tiles still available in the main deck."""
         return len(self.tiles)
 
     def len_river(self) -> int:
-        """Return the number of tiles currently left in the river deck."""
+        """Return the number of tiles still available in the river deck."""
         return len(self.river_tiles)
 
     def shuffle_fisher_yates(self, seed: int) -> None:
@@ -169,11 +194,13 @@ class Deck:
             self.river_tiles[:-1] = river_prefix
 
     def shuffle_naive(self, seed: int) -> None:
-        """
-        Shuffle the deck with a deterministic naive swap strategy.
+        """Shuffle the deck with a deterministic naive swap strategy.
 
         Args:
             seed: Seed used to generate pseudo-random swap indices
+
+        Returns:
+            None.
         """
         rng = random.Random(seed)
         self._shuffle_naive_in_place(self.tiles, rng)
@@ -184,7 +211,11 @@ class Deck:
             self.river_tiles[:-1] = river_prefix
 
     def is_empty(self) -> bool:
-        """Return True when no tile remains in the deck."""
+        """Check whether the main deck contains any drawable tile.
+
+        Returns:
+            bool: True when `self.tiles` is empty.
+        """
         if not self.tiles:
             return True
         else:
