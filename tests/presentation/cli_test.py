@@ -354,14 +354,12 @@ def test_on_game_over_prints_draw_when_scores_are_tied(capsys) -> None:
 def test_run_executes_main_loop_and_writes_history() -> None:
     cli, _, _, _ = build_cli()
 
-    def stop_after_tick():
-        cli.running = False
-
     with (
-        patch.object(cli, "_start_input_loop"),
-        patch.object(cli, "_tick_once", side_effect=stop_after_tick),
-        patch.object(cli_module.time, "monotonic", side_effect=[0.0, 0.2]),
-        patch.object(cli_module.time, "sleep"),
+        patch.object(cli, "_tick_once"),
+        patch.object(cli, "_start_tick_loop"),
+        patch.object(cli, "_install_wakeup_signal_handler"),
+        patch.object(cli, "_restore_wakeup_signal_handler"),
+        patch("builtins.input", side_effect=EOFError),
         patch.object(cli_module.readline, "write_history_file") as write_history,
     ):
         cli.run()
@@ -369,66 +367,96 @@ def test_run_executes_main_loop_and_writes_history() -> None:
     write_history.assert_called_once_with(".carcassonne_history")
 
 
-def test_run_handles_keyboard_interrupt_and_joins_input_thread(capsys) -> None:
+def test_run_handles_keyboard_interrupt_and_joins_tick_thread(
+    capsys,
+) -> None:
     cli, _, _, _ = build_cli()
-    cli._input_thread = Mock()
-    cli._input_thread.join = Mock()
+    cli._tick_thread = Mock()
+    cli._tick_thread.join = Mock()
 
     with (
-        patch.object(cli, "_start_input_loop"),
-        patch.object(
-            cli_module.time,
-            "monotonic",
-            side_effect=[0.0, KeyboardInterrupt()],
-        ),
-        patch.object(cli_module.time, "sleep"),
+        patch.object(cli, "_tick_once"),
+        patch.object(cli, "_start_tick_loop"),
+        patch.object(cli, "_install_wakeup_signal_handler"),
+        patch.object(cli, "_restore_wakeup_signal_handler"),
+        patch("builtins.input", side_effect=KeyboardInterrupt),
         patch.object(cli_module.readline, "write_history_file") as write_history,
     ):
         cli.run()
 
     assert "Game over." in capsys.readouterr().out
-    cli._input_thread.join.assert_called_once_with(timeout=0.2)
+    cli._tick_thread.join.assert_called_once_with(timeout=0.2)
     write_history.assert_called_once_with(".carcassonne_history")
 
 
-def test_start_input_loop_skips_when_thread_is_already_running() -> None:
+def test_start_tick_loop_skips_when_thread_is_already_running() -> None:
     cli, _, _, _ = build_cli()
-    cli._input_thread = Mock()
-    cli._input_thread.is_alive.return_value = True
+    cli._tick_thread = Mock()
+    cli._tick_thread.is_alive.return_value = True
 
     with patch.object(cli_module.threading, "Thread") as thread_ctor:
-        cli._start_input_loop()
+        cli._start_tick_loop()
 
     thread_ctor.assert_not_called()
 
 
-def test_input_loop_handles_ai_bootstrap_game_over_and_input_errors(capsys) -> None:
+def test_tick_loop_calls_tick_once_until_stopped() -> None:
     cli, game, _, _ = build_cli()
-    ai_player = DummyPlayer(2, is_ai=True)
-    human_player = DummyPlayer(1, is_ai=False)
-    game.get_current_player.side_effect = [
-        ai_player, human_player, human_player]
-    game.end_game.return_value = True
-    cli._on_game_over = Mock()
+    tick_once = Mock(side_effect=lambda: setattr(cli, "running", False))
 
-    cli._input_loop()
+    with (
+        patch.object(cli, "_tick_once", tick_once),
+        patch.object(cli_module.time, "monotonic", side_effect=[0.0, 0.2]),
+        patch.object(cli_module.time, "sleep"),
+    ):
+        cli._tick_loop()
 
-    game.play_ai_turn.assert_called_once_with(game)
-    cli._on_game_over.assert_called_once_with()
+    tick_once.assert_called_once_with()
 
-    cli, game, _, _ = build_cli()
-    game.get_current_player.return_value = human_player
-    game.end_game.return_value = False
-    with patch("builtins.input", side_effect=EOFError):
-        cli._input_loop()
-    assert cli.running is False
 
-    cli, game, _, _ = build_cli()
-    game.get_current_player.return_value = human_player
-    game.end_game.return_value = False
-    with patch("builtins.input", side_effect=KeyboardInterrupt):
-        cli._input_loop()
-    assert "Game over." in capsys.readouterr().out
+def test_wakeup_signal_handler_install_restore_and_raise() -> None:
+    cli, _, _, _ = build_cli()
+    cli._wakeup_signal = 10
+
+    with (
+        patch.object(cli_module.signal, "getsignal", return_value="old"),
+        patch.object(cli_module.signal, "signal") as signal_mock,
+    ):
+        cli._install_wakeup_signal_handler()
+        cli._restore_wakeup_signal_handler()
+
+    assert cli._previous_wakeup_handler is None
+    assert signal_mock.call_count == 2
+
+    try:
+        cli._handle_game_finished_signal(10, None)
+        assert False
+    except cli_module.GameFinishedInterrupt:
+        pass
+
+
+def test_wake_input_prompt_only_signals_from_background_thread() -> None:
+    cli, _, _, _ = build_cli()
+    cli._wakeup_signal = 10
+
+    with (
+        patch.object(cli_module.threading, "current_thread", return_value="main"),
+        patch.object(cli_module.threading, "main_thread", return_value="main"),
+        patch.object(cli_module.os, "kill") as kill_mock,
+    ):
+        cli._wake_input_prompt()
+
+    kill_mock.assert_not_called()
+
+    with (
+        patch.object(cli_module.threading, "current_thread", return_value="worker"),
+        patch.object(cli_module.threading, "main_thread", return_value="main"),
+        patch.object(cli_module.os, "kill") as kill_mock,
+        patch.object(cli_module.os, "getpid", return_value=123),
+    ):
+        cli._wake_input_prompt()
+
+    kill_mock.assert_called_once_with(123, 10)
 
 
 def test_on_game_over_ignores_repeated_calls() -> None:

@@ -436,7 +436,13 @@ class Game(IGameService):
         self.game_data.add_online_players(players)
 
     def draw_tile(self, silent: bool = False) -> str | None:
-        return self.deck_manager.draw_tile(silent=silent)
+        tile = self.deck_manager.draw_tile(silent=silent)
+        if (
+            tile is None
+            and getattr(self.game_data, "no_playable_tiles_remaining", False)
+        ):
+            self.end_game()
+        return tile
 
     def shuffle_deck(self, algo=None, seed=None) -> int:
         return self.deck_manager.shuffle_deck(algo, seed)
@@ -917,11 +923,13 @@ class Game(IGameService):
         if count < 1:
             raise ValueError("undo count must be a positive integer")
         undone = 0
-        for i in range(count):
+        for _step in range(count):
             before_signature = self._history_signature(self.game_data.history)
             self.undo()
-            if (self._history_signature(self.game_data.history)
-                    == before_signature):
+            if (
+                self._history_signature(self.game_data.history)
+                == before_signature
+            ):
                 break
             undone += 1
         return undone
@@ -930,11 +938,13 @@ class Game(IGameService):
         if count < 1:
             raise ValueError("redo count must be a positive integer")
         redone = 0
-        for i in range(count):
+        for _step in range(count):
             before_signature = self._history_signature(self.game_data.history)
             self.redo()
-            if (self._history_signature(self.game_data.history)
-                    == before_signature):
+            if (
+                self._history_signature(self.game_data.history)
+                == before_signature
+            ):
                 break
             redone += 1
         return redone

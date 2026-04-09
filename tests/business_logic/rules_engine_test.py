@@ -338,3 +338,151 @@ def test_check_move_short_circuits_and_delegates(monkeypatch) -> None:
         lambda move_parts, graph, river_manager, current_player_id=None: True,
     )
     assert manager.check_move("CFFF/0N0", graph, river_manager, current_player_id=1) is True
+
+
+@pytest.mark.parametrize(
+    ("move", "expected_reason"),
+    [
+        (None, "move must be a string"),
+        ("CFFF", "move format is invalid"),
+        ("XXXX/0N0", "tile code is invalid"),
+        ("FFFF/x/0N0", "tile center variant is invalid"),
+        ("CFFF/00", "placement format is invalid"),
+        ("CFFF/0X0", "target side is invalid"),
+        ("CFFF/0N4", "tile rotation is invalid"),
+        ("CFFF/0N0/INVALID", "meeple position is invalid"),
+    ],
+)
+def test_explain_invalid_move_reports_format_and_syntax_issues(
+    move,
+    expected_reason,
+) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = GraphData()
+    initialize_starting_tile(graph)
+
+    assert manager.explain_invalid_move(
+        move,
+        graph,
+        DummyRiverManager(),
+    ) == expected_reason
+
+
+def test_explain_invalid_move_reports_unavailable_tile(monkeypatch) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = GraphData()
+    initialize_starting_tile(graph)
+    monkeypatch.setattr(manager.tiles_info, "is_tile_left", lambda _: False)
+
+    assert (
+        manager.explain_invalid_move("CFFF/0N0", graph, DummyRiverManager())
+        == "tile CFFF is not available"
+    )
+
+
+def test_explain_invalid_move_reports_occupied_side(monkeypatch) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = DummyGraphForLegal(free=False)
+    monkeypatch.setattr(manager.tiles_info, "is_tile_left", lambda _: True)
+
+    assert (
+        manager.explain_invalid_move("CFFF/0N0", graph, DummyRiverManager())
+        == "target side is already occupied"
+    )
+
+
+def test_explain_invalid_move_reports_neighbor_side_mismatch(monkeypatch) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = DummyGraphForLegal()
+    monkeypatch.setattr(manager.tiles_info, "is_tile_left", lambda _: True)
+    monkeypatch.setattr(manager, "are_equal_sides", lambda *args, **kwargs: False)
+
+    assert (
+        manager.explain_invalid_move("CFFF/0N0", graph, DummyRiverManager())
+        == "tile sides do not match neighboring tiles"
+    )
+
+
+def test_explain_invalid_move_reports_river_rule_violation(monkeypatch) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = DummyGraphForLegal()
+    monkeypatch.setattr(manager.tiles_info, "is_tile_left", lambda _: True)
+    monkeypatch.setattr(manager, "are_equal_sides", lambda *args, **kwargs: True)
+
+    assert (
+        manager.explain_invalid_move(
+            "CFFF/0N0",
+            graph,
+            DummyRiverManager(turn_ok=False),
+        )
+        == "river placement rules are violated"
+    )
+
+
+def test_explain_invalid_move_delegates_to_meeple_failure_explanation(
+    monkeypatch,
+) -> None:
+    manager = RulesManager(TilesInfo())
+    graph = DummyGraphForLegal()
+    monkeypatch.setattr(manager.tiles_info, "is_tile_left", lambda _: True)
+    monkeypatch.setattr(manager, "are_equal_sides", lambda *args, **kwargs: True)
+    monkeypatch.setattr(
+        manager,
+        "can_place_meeple_on_tile_side",
+        lambda *args, **kwargs: False,
+    )
+    monkeypatch.setattr(
+        manager,
+        "explain_meeple_placement_failure",
+        lambda *args, **kwargs: "component C1 already contains a meeple",
+    )
+
+    assert (
+        manager.explain_invalid_move(
+            "CFFF/0N0/N",
+            graph,
+            DummyRiverManager(),
+        )
+        == "component C1 already contains a meeple"
+    )
+
+
+def test_explain_meeple_placement_failure_covers_all_specific_reasons(
+    monkeypatch,
+) -> None:
+    manager = RulesManager(TilesInfo())
+    monkeypatch.setattr(manager, "_get_graph_logic", lambda: DummyGraphLogic())
+
+    assert manager.explain_meeple_placement_failure(
+        ["CFFF", "0N0", "N"],
+        2,
+        DummyGraphForMeeple(tile_pos=None),
+    ) == "target tile position is invalid"
+
+    assert manager.explain_meeple_placement_failure(
+        ["FSFS", "0N0", "N"],
+        2,
+        DummyGraphForMeeple(land_type="S", component_name="S1"),
+    ) == "meeples cannot be placed on river segments"
+
+    assert manager.explain_meeple_placement_failure(
+        ["CFFF", "0N0", "N"],
+        2,
+        DummyGraphForMeeple(component_name=None),
+    ) == "selected meeple position does not map to a component"
+
+    assert (
+        manager.explain_meeple_placement_failure(
+            ["CFFF", "0N0", "N"],
+            2,
+            DummyGraphForMeeple(meeples=[DummyMeeple("C1", 7)]),
+        )
+        == "component C1 already contains a meeple"
+    )
+
+    assert manager.explain_meeple_placement_failure(
+        ["CFFF", "0N0", "N"],
+        2,
+        DummyGraphForMeeple(meeples=[DummyMeeple("C1", 3)]),
+        current_player_id=3,
+    ) == "meeple placement is invalid"

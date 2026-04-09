@@ -19,9 +19,17 @@ def test_show_info_creates_dialog() -> None:
     gui.window.window = Mock()
     info_msg = InfoMessage(gui)
 
-    with patch("carcassonne.presentation.gui.info_message.Gtk.Dialog") as mock_dialog_class:
+    with patch(
+        "carcassonne.presentation.gui.info_message.Gtk.Dialog"
+    ) as mock_dialog_class, patch(
+        "carcassonne.presentation.gui.info_message.Gtk.TextView"
+    ) as mock_text_view_class, patch(
+        "carcassonne.presentation.gui.info_message.Gtk.ScrolledWindow"
+    ) as mock_scrolled_class:
         mock_dialog = MagicMock()
         mock_dialog_class.return_value = mock_dialog
+        mock_text_view_class.return_value = MagicMock()
+        mock_scrolled_class.return_value = MagicMock()
         mock_dialog.get_content_area.return_value = MagicMock()
 
         info_msg.show_info("Test info message")

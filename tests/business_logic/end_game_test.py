@@ -48,6 +48,24 @@ def create_game_data(empty: bool, playable: bool, already_scored: bool = False):
     ), DummyBlitzManager(playable)
 
 
+class DummyPlayerScoreObject:
+    def __init__(self, score: int) -> None:
+        self.score = score
+
+
+class DummyPlayerWithGetScore:
+    def __init__(self, value) -> None:
+        self._value = value
+
+    def get_score(self):
+        return self._value
+
+
+class DummyPlayerWithScoreAttr:
+    def __init__(self, value) -> None:
+        self.score = value
+
+
 def test_end_game_returns_true_without_scoring_twice() -> None:
     game_data, blitz_manager = create_game_data(
         empty=False,
@@ -99,6 +117,18 @@ def test_end_game_returns_false_while_game_can_continue() -> None:
     assert game_data._end_game_scored is False
 
 
+def test_end_game_scores_when_no_playable_tiles_flag_is_set() -> None:
+    game_data, blitz_manager = create_game_data(empty=False, playable=True)
+    game_data.no_playable_tiles_remaining = True
+    score_manager = DummyScoreManager()
+    end_game = EndGame(game_data, blitz_manager, score_manager)
+
+    assert end_game.end_game() is True
+    assert score_manager.calls == [(game_data.graph, game_data.players)]
+    assert game_data._end_game_scored is True
+    assert game_data.no_playable_tiles_remaining is False
+
+
 def test_end_game_get_winner_returns_single_high_score_player() -> None:
     game_data, blitz_manager = create_game_data(empty=False, playable=True)
     game_data.players = {
@@ -127,3 +157,27 @@ def test_end_game_get_winner_returns_none_on_draw() -> None:
     assert end_game.get_winner() is None
     assert end_game.is_draw() is True
     assert [player.get_username() for player in winners] == ["Alice", "Bob"]
+
+
+def test_end_game_get_winners_returns_empty_list_when_no_players() -> None:
+    game_data, blitz_manager = create_game_data(empty=False, playable=True)
+    game_data.players = {}
+    end_game = EndGame(game_data, blitz_manager, DummyScoreManager())
+
+    assert end_game.get_winners() == []
+    assert end_game.get_winner() is None
+    assert end_game.is_draw() is False
+
+
+def test_score_value_supports_get_score_and_score_attribute_variants() -> None:
+    get_score_obj = DummyPlayerWithGetScore(DummyPlayerScoreObject(9))
+    get_score_number = DummyPlayerWithGetScore(8.6)
+    score_attr_obj = DummyPlayerWithScoreAttr(DummyPlayerScoreObject(7))
+    score_attr_number = DummyPlayerWithScoreAttr(6.4)
+    no_score = object()
+
+    assert EndGame._score_value(get_score_obj) == 9
+    assert EndGame._score_value(get_score_number) == 8
+    assert EndGame._score_value(score_attr_obj) == 7
+    assert EndGame._score_value(score_attr_number) == 6
+    assert EndGame._score_value(no_score) == 0

@@ -1,7 +1,5 @@
-carcassonne.business\_logic namespace
-=====================================
-
-.. py:module:: carcassonne.business_logic
+carcassonne.business\_logic package
+===================================
 
 Subpackages
 -----------
@@ -9,6 +7,8 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   carcassonne.business_logic.ai
+   carcassonne.business_logic.game
    carcassonne.business_logic.interfaces
 
 Submodules
@@ -22,26 +22,34 @@ carcassonne.business\_logic.ai\_model module
    :show-inheritance:
    :undoc-members:
 
-carcassonne.business\_logic.board module
-----------------------------------------
+carcassonne.business\_logic.business\_logic\_factory module
+-----------------------------------------------------------
 
-.. automodule:: carcassonne.business_logic.board
+.. automodule:: carcassonne.business_logic.business_logic_factory
    :members:
    :show-inheritance:
    :undoc-members:
 
-carcassonne.business\_logic.game module
----------------------------------------
+carcassonne.business\_logic.client module
+-----------------------------------------
 
-.. automodule:: carcassonne.business_logic.game
+.. automodule:: carcassonne.business_logic.client
    :members:
    :show-inheritance:
    :undoc-members:
 
-carcassonne.business\_logic.game\_service module
-------------------------------------------------
+carcassonne.business\_logic.contest\_manager module
+---------------------------------------------------
 
-.. automodule:: carcassonne.business_logic.game_service
+.. automodule:: carcassonne.business_logic.contest_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.game\_mode\_manager module
+------------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.game_mode_manager
    :members:
    :show-inheritance:
    :undoc-members:
@@ -58,6 +66,46 @@ carcassonne.business\_logic.heuristic module
 --------------------------------------------
 
 .. automodule:: carcassonne.business_logic.heuristic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.heuristic\_disruption module
+--------------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.heuristic_disruption
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.heuristic\_short\_term module
+---------------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.heuristic_short_term
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.mcts\_ml\_training module
+-----------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.mcts_ml_training
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.move\_serializer module
+---------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.move_serializer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.online\_communication module
+--------------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.online_communication
    :members:
    :show-inheritance:
    :undoc-members:
@@ -90,6 +138,30 @@ carcassonne.business\_logic.score\_manager module
 -------------------------------------------------
 
 .. automodule:: carcassonne.business_logic.score_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.server module
+-----------------------------------------
+
+.. automodule:: carcassonne.business_logic.server
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.business\_logic.tile\_constants module
+--------------------------------------------------
+
+.. automodule:: carcassonne.business_logic.tile_constants
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: carcassonne.business_logic
    :members:
    :show-inheritance:
    :undoc-members:

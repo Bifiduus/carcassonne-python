@@ -127,7 +127,7 @@ class Vertex:
         """Build the 3x3 terrain matrix for the current orientation.
 
         Returns:
-            None. Mutates `self.matrix`.
+            None. Mutates ``self.matrix``.
         """
         dir_matrix = Tile.direction_matrix[self.orientation]
         for i in range(3):
@@ -381,7 +381,7 @@ class GraphData(IGraphData):
         """Return all vertex payloads required by the GUI.
 
         Returns:
-            Mapping `{vertex_id: serialized_vertex_data}`.
+            Mapping ``{vertex_id: serialized_vertex_data}``.
         """
         return {
             vertex_id: self._vertex_to_gui_data(vertex)
@@ -395,7 +395,7 @@ class GraphData(IGraphData):
             vertex: Vertex object to serialize.
 
         Returns:
-            Mapping `{vertex_id: serialized_vertex_data}`.
+            Mapping ``{vertex_id: serialized_vertex_data}``.
         """
         return {
             vertex.get_id(): {
@@ -472,7 +472,7 @@ class GraphData(IGraphData):
             vertex_id: Vertex identifier.
 
         Returns:
-            Mapping `{side_index: neighbor_vertex_id}`.
+            Mapping ``{side_index: neighbor_vertex_id}``.
         """
         if vertex_id not in self.vertices:
             return {}

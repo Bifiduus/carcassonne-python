@@ -9,12 +9,16 @@ class EndGame:
     def end_game(self) -> bool:
         if self.game_data._end_game_scored:
             return True
-        if (self.game_data.deck.is_empty() or
-                not self.blitz_manager._has_playable_player()):
+        if (
+            self.game_data.deck.is_empty()
+            or not self.blitz_manager._has_playable_player()
+            or getattr(self.game_data, "no_playable_tiles_remaining", False)
+        ):
             self.score_manager.score_end_of_game(
                 self.game_data.graph, self.game_data.players
             )
             self.game_data._end_game_scored = True
+            self.game_data.no_playable_tiles_remaining = False
             return True
         else:
             return False

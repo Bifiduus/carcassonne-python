@@ -362,7 +362,13 @@ class OnlineCommunication:
         tile = game.draw_tile()
         answer = ""
         if tile is None:
-            answer = _("The deck is empty!")
+            if getattr(game.game_data, "no_playable_tiles_remaining", False):
+                answer = _(
+                    "No playable move exists for the remaining tiles. "
+                    "The game is over."
+                )
+            else:
+                answer = _("The deck is empty!")
         elif already_had_tile:
             answer = _("You already have a tile in hand.")
         else:

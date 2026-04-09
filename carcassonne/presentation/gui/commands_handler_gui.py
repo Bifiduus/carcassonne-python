@@ -277,8 +277,19 @@ def on_draw_gui(gui):
     if tile is None:
         # Provide specific error message based on context
         error_msg = None
+        no_playable_tiles_remaining = False
         if hasattr(gui, "game_data") and hasattr(gui.game_data, "game"):
-            if gui.game_data.game.game_data.current_hand is not None:
+            if getattr(
+                gui.game_data.game.game_data,
+                "no_playable_tiles_remaining",
+                False,
+            ):
+                no_playable_tiles_remaining = True
+                error_msg = _(
+                    "No playable move exists for the remaining tiles. "
+                    "The game is over."
+                )
+            elif gui.game_data.game.game_data.current_hand is not None:
                 error_msg = _(
                     "You already have a tile in hand. "
                     "You must play it or undo your move before drawing "
@@ -302,6 +313,11 @@ def on_draw_gui(gui):
             gui.error_message.show_error(error_msg)
         if hasattr(gui, "players_view"):
             gui.players_view.refresh()
+        if no_playable_tiles_remaining and hasattr(
+            gui,
+            "show_end_game_screen",
+        ):
+            gui.show_end_game_screen()
         return
     image_path = utils.tile_image_path(tile)
     gui.tile_preview.set_filename(image_path)

@@ -1,10 +1,16 @@
-carcassonne.datas namespace
-===========================
-
-.. py:module:: carcassonne.datas
+carcassonne.datas package
+=========================
 
 Submodules
 ----------
+
+carcassonne.datas.datas\_factory module
+---------------------------------------
+
+.. automodule:: carcassonne.datas.datas_factory
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 carcassonne.datas.deck module
 -----------------------------
@@ -22,10 +28,10 @@ carcassonne.datas.game\_configuration module
    :show-inheritance:
    :undoc-members:
 
-carcassonne.datas.game\_repository module
------------------------------------------
+carcassonne.datas.games\_repository module
+------------------------------------------
 
-.. automodule:: carcassonne.datas.game_repository
+.. automodule:: carcassonne.datas.games_repository
    :members:
    :show-inheritance:
    :undoc-members:
@@ -54,14 +60,6 @@ carcassonne.datas.meeple\_data module
    :show-inheritance:
    :undoc-members:
 
-carcassonne.datas.save\_manager module
---------------------------------------
-
-.. automodule:: carcassonne.datas.save_manager
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 carcassonne.datas.seed module
 -----------------------------
 
@@ -78,10 +76,18 @@ carcassonne.datas.serializer module
    :show-inheritance:
    :undoc-members:
 
-carcassonne.datas.servers module
---------------------------------
+carcassonne.datas.starting\_tile module
+---------------------------------------
 
-.. automodule:: carcassonne.datas.servers
+.. automodule:: carcassonne.datas.starting_tile
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.datas.tiles\_constants module
+-----------------------------------------
+
+.. automodule:: carcassonne.datas.tiles_constants
    :members:
    :show-inheritance:
    :undoc-members:
@@ -90,6 +96,14 @@ carcassonne.datas.tiles\_info module
 ------------------------------------
 
 .. automodule:: carcassonne.datas.tiles_info
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: carcassonne.datas
    :members:
    :show-inheritance:
    :undoc-members:

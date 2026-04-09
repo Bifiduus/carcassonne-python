@@ -1,7 +1,5 @@
-carcassonne.presentation.gui namespace
-======================================
-
-.. py:module:: carcassonne.presentation.gui
+carcassonne.presentation.gui package
+====================================
 
 Subpackages
 -----------
@@ -46,6 +44,14 @@ carcassonne.presentation.gui.create\_gui module
    :show-inheritance:
    :undoc-members:
 
+carcassonne.presentation.gui.error\_message\_view module
+--------------------------------------------------------
+
+.. automodule:: carcassonne.presentation.gui.error_message_view
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 carcassonne.presentation.gui.game\_data\_gui module
 ---------------------------------------------------
 
@@ -58,6 +64,14 @@ carcassonne.presentation.gui.gui module
 ---------------------------------------
 
 .. automodule:: carcassonne.presentation.gui.gui
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+carcassonne.presentation.gui.info\_message module
+-------------------------------------------------
+
+.. automodule:: carcassonne.presentation.gui.info_message
    :members:
    :show-inheritance:
    :undoc-members:
@@ -98,6 +112,14 @@ carcassonne.presentation.gui.window\_view module
 ------------------------------------------------
 
 .. automodule:: carcassonne.presentation.gui.window_view
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: carcassonne.presentation.gui
    :members:
    :show-inheritance:
    :undoc-members:

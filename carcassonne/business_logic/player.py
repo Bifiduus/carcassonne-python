@@ -120,8 +120,8 @@ class Player(IPlayer):
     def set_color(self, color: str) -> None:
         """Set the player's meeple color if it is a valid choice.
 
-        Valid colors: ``"green"``, ``"red"``, ``"blue"``, ``"yellow"``,
-          ``"black"``, ``"white"``.
+        Valid colors are ``"green"``, ``"red"``, ``"blue"``,
+        ``"yellow"``, ``"black"``, and ``"white"``.
         Silently ignores invalid values.
 
         Args:

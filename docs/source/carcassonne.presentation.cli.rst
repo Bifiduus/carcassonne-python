@@ -1,7 +1,5 @@
-carcassonne.presentation.cli namespace
-======================================
-
-.. py:module:: carcassonne.presentation.cli
+carcassonne.presentation.cli package
+====================================
 
 Submodules
 ----------
@@ -18,6 +16,14 @@ carcassonne.presentation.cli.commands\_handler\_cli module
 ----------------------------------------------------------
 
 .. automodule:: carcassonne.presentation.cli.commands_handler_cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: carcassonne.presentation.cli
    :members:
    :show-inheritance:
    :undoc-members:
