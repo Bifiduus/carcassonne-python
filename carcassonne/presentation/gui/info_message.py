@@ -1,9 +1,10 @@
-from gi.repository import Gtk
 import gi
+import importlib
 
 from carcassonne.i18n import gettext as _
 
 gi.require_version("Gtk", "4.0")
+Gtk = importlib.import_module("gi.repository.Gtk")
 
 
 class InfoMessage:

@@ -427,7 +427,7 @@ class SaveHandler:
                     line_content = line.split("NumberOfPlayers:")[1].strip()
                     if line_content == "":
                         print(
-                            _("Error: Number of players not specified."),
+                            _("Warning: Number of players not specified."),
                             file=sys.stderr,
                         )
                         continue
@@ -445,7 +445,7 @@ class SaveHandler:
                                 or total_players > max_players):
                             print(
                                 _(
-                                    "Error: Number of players should be "
+                                    "Warning: Number of players should be "
                                     "between {min_players} and {max_players}."
                                 ).format(
                                     min_players=min_players,
@@ -470,7 +470,7 @@ class SaveHandler:
                     line_content = line.split("PlayersOrder:")[1].strip()
                     if line_content == "":
                         print(
-                            _("Error: Players order not specified."),
+                            _("Warning: Players order not specified."),
                             file=sys.stderr,
                         )
                         continue
