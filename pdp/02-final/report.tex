@@ -218,13 +218,12 @@ telles que des listes et des piles.
 
 
 La représentation des données du jeu repose principalement sur un 
-graphe non orienté où chaque tuile constitue un sommet, connecté à 
-ses voisins cardinaux. Chaque sommet est identifié par son numéro de 
-tour et positionné en coordonnées cartésiennes $(x, y)$ à partir du 
+graphe non orienté où chaque tuile constitue un sommet connecté à 
+ses voisins cardinaux. Chaque sommet possède un identifiant unique correspondant à l'ordre de pose et des positions en coordonnées cartésiennes $(x, y)$ à partir du 
 centre de la tuile de départ.
 
 \paragraph{Structure d'un sommet.}
-Chaque sommet est représenté par la classe \texttt{Vertex}, qui 
+Chaque sommet est représenté par la classe \texttt{Vertex} qui 
 encapsule l'ensemble des informations associées à une tuile posée :
 
 
@@ -331,10 +330,10 @@ la réinitialisation complète du graphe (\texttt{reset\_graph}).
 La gestion de la pioche repose sur deux algorithmes de mélange, tous 
 deux implémentés \textit{in place} sur la liste représentant la pioche.
 
-L'algorithme principal retenu est \textit{Fisher-Yates}\cite{fisher_yates}, 
+L'algorithme principal retenu est \textit{Fisher-Yates}\cite{fisher_yates} 
 qui garantit une permutation uniforme des tuiles lorsqu'il est associé 
 à un générateur pseudo-aléatoire uniforme. Un algorithme naïf est 
-également conservé à des fins de comparaison expérimentale, afin 
+également conservé à des fins de comparaison expérimentale afin 
 d'illustrer les biais qu'un mauvais mélange peut introduire. Les 
 propriétés statistiques de ces deux algorithmes sont analysées plus 
 en détail en section \ref{subsubsec:melange}.
@@ -359,7 +358,7 @@ def _shuffle_naive_in_place(items: list[str], rng: random.Random) -> None:
 }
 
 Dans la suite de cette section, nous nous concentrerons sur les 
-algorithmes de prise de décision, qui constituent le cœur du système 
+algorithmes de prise de décision qui constituent le cœur du système 
 d'intelligence artificielle implémenté dans le projet.
 
 
@@ -367,15 +366,15 @@ d'intelligence artificielle implémenté dans le projet.
 \label{subsec:minimax}
 
 L'algorithme Minimax a pour but de déterminer les coups les plus 
-optimaux pour un joueur à un état donné du jeu, face à un adversaire 
-qui cherche à minimiser le score du joueur max. L'algorithme parcourt 
+avantageux pour un joueur en supposant que son adversaire agit de 
+manière à minimiser son gain. L'algorithme parcourt 
 récursivement une partie de l'arbre des états du jeu, limitée par une 
 profondeur maximale fixée afin de contenir la complexité de recherche. 
 Chaque feuille est évaluée via une fonction d'évaluation prédéfinie, 
-et ce score remonte vers la racine : chaque nœud sélectionne la valeur 
+et ce score remonte vers la racine. Chaque nœud sélectionne la valeur 
 maximale ou minimale parmi ses enfants selon le joueur qu'il représente. 
 L'algorithme prend en paramètres l'état courant du jeu, la profondeur 
-restante à explorer, et un booléen indiquant si c'est le tour du joueur 
+restante à explorer et un booléen indiquant si c'est le tour du joueur 
 max.
 
 L'algorithme Minimax étant très similaire à $\alpha\beta$-pruning dans 
@@ -387,9 +386,9 @@ d'un exemple illustratif.
 \label{subsec:alphabeta}
 
 Alpha-Beta (ou $\alpha\beta$-pruning) est une variante de l'algorithme Minimax consistant à explorer partiellement l'arbre des états d'un jeu en élaguant les branches qui n'apportent aucun gain nouveau pour le joueur "max".\cite{alpha_beta}
-En stockant la meilleure valeur courante pour le joueur maximal ($\alpha$) et celle pour le joueur "min" ($\beta$) lors du parcours, l'algorithme n'évalue plus certains nœuds non-significatifs (et leurs potentiels enfants) quand $\alpha \geq \beta$, en réduisant potentiellement son temps d'exécution selon l'arbre donné.
+En stockant la meilleure valeur courante pour le joueur "max" ($\alpha$) et celle pour le joueur "min" ($\beta$) lors du parcours, l’algorithme évite d’évaluer certains nœuds non pertinents (ainsi que leurs descendants potentiels) lorsque $\alpha \geq \beta$ ce qui peut réduire le temps d’exécution selon la structure de l’arbre.
 
-Le principe est le suivant : dès qu'une branche devient trop mauvaise pour l'un des joueurs, elle ne peut plus influencer la décision finale et peut être abandonnée. Le gain en temps est particulièrement important lorsque les successeurs sont ordonnés de manière à évaluer d'abord les coups les plus prometteurs.
+Le principe est le suivant : dès qu’une branche s’avère trop défavorable pour l’un des joueurs, elle ne peut plus influencer la décision finale et peut être abandonnée. Le gain en temps est particulièrement important lorsque les successeurs sont ordonnés de manière à évaluer d'abord les coups les plus prometteurs.
 
 {\normalsize
   \begin{minted}[frame=single]{text}
@@ -423,14 +422,14 @@ FIN FONCTION
 
 \begin{figure}[H]
 \begin{minipage}{0.50\textwidth}
-À la profondeur maximale, les feuilles remontent la valeur $4$ lors 
-du tour du joueur max, qui cherche à maximiser son gain. Le joueur 
-min récupère cette valeur et la retient à $4$ plutôt que $8$, afin 
+À la profondeur maximale (Figure \ref{fig:alpha_betaexample}), les feuilles remontent la valeur $4$ lors 
+du tour du joueur max qui cherche à maximiser son gain. Le joueur 
+min récupère cette valeur et la retient à $4$ plutôt que $8$ afin 
 de minimiser le gain de son adversaire.
 
 Le nœud max transmet alors $4$ comme borne $\beta$ au nœud min 
 parent, qui la propage à son tour à l'enfant max suivant. Cet enfant 
-obtient la valeur $8$ ; or $8 \geq 4$, ce qui signifie que le nœud 
+obtient la valeur $8$ ; or $8 \geq 4$ ce qui signifie que le nœud 
 min parent ne retiendra jamais cette valeur. L'exploration de cette 
 branche est donc interrompue : la valeur $2$ est élaguée.
 
@@ -477,8 +476,8 @@ techniques de pruning ont été développées pour pallier ce problème.
 Star1 exploite les bornes $\alpha$ et $\beta$ déjà présentes dans 
 Alpha-Beta pour borner l'évaluation des nœuds de chance. Plutôt que 
 de calculer exactement l'espérance de tous les enfants d'un nœud de 
-chance, on maintient une borne inférieure et une borne supérieure de 
-cette espérance au fur et à mesure de l'exploration. Si, à un moment 
+chance, une borne inférieure et une borne supérieure de 
+cette espérance au fur et à mesure de l'exploration sont maintenues. Si, à un moment 
 donné, il devient certain que la valeur finale du nœud de chance ne 
 pourra pas influencer la décision du parent — c'est-à-dire qu'elle 
 est déjà en dehors de l'intervalle $[\alpha, \beta]$ — l'exploration 
@@ -500,11 +499,11 @@ nombre d'événements aléatoires est élevé.
 \paragraph{Star2.5.}
 Star2.5 introduit une approche séquentielle : plutôt que de 
 considérer les enfants d'un nœud de chance comme un ensemble non 
-ordonné, on les parcourt dans un ordre spécifique, en priorisant 
+ordonné, ils sont parcourus dans un ordre spécifique, en priorisant 
 par exemple les événements les plus probables ou les plus influents. 
-À chaque étape, on met à jour une estimation de l'espérance ainsi 
+À chaque étape, une estimation de l'espérance ainsi 
 que des bornes optimistes et pessimistes pour les contributions 
-restantes. En explorant en priorité les événements les plus 
+restantes est mise à jour. En explorant en priorité les événements les plus 
 significatifs, on obtient plus rapidement une estimation suffisamment 
 précise pour déclencher un pruning, maximisant ainsi les chances de 
 coupure précoce.
@@ -578,7 +577,7 @@ d'explorer inutilement une partie de l'arbre tout en conservant un
 résultat optimal.
 
 Star2.5 est donc l'algorithme retenu en lieu et place du minimax 
-avec $\alpha\beta$-pruning classique, et sert de base à 
+avec $\alpha\beta$-pruning classique et sert de base à 
 l'approfondissement itératif. Par ailleurs, Carcassonne se jouant 
 de 2 à 5 joueurs, les algorithmes ont été adaptés pour accueillir 
 plusieurs adversaires. Le joueur IA appelant l'algorithme est 
@@ -651,7 +650,7 @@ Les différentes techniques présentées dans cette section sont combinées
 afin de rendre la recherche de coups pertinents possible malgré la 
 complexité combinatoire élevée de Carcassonne. L'approche adoptée mêle 
 Star2.5 — qui étend Alpha-Beta aux jeux stochastiques via des nœuds 
-de chance — l'approfondissement itératif, et une fonction d'évaluation 
+de chance — l'approfondissement itératif et une fonction d'évaluation 
 heuristique multi-joueurs où le joueur IA est considéré comme joueur 
 max et ses adversaires comme joueurs min.
 
@@ -781,7 +780,7 @@ et limite le couplage entre les composants.
 
 \section{Explication approfondie}
 
-Notre projet de Carcassonne en Python a été bien différent de ce que nous avions initialement prévu, notamment en raison de la complexité du jeu et des défis techniques rencontrés.
+Notre projet de Carcassonne en Python a été bien différent de ce que nous avions initialement prévu notamment en raison de la complexité du jeu et des défis techniques rencontrés.
 Dans cette section, nous allons expliquer en détail les différentes étapes de notre développement, les choix que nous avons faits ainsi que les difficultés que nous avons rencontrées pour deux fonctionnalités principales.
 
 
@@ -789,11 +788,11 @@ Dans cette section, nous allons expliquer en détail les différentes étapes de
 
 Parmi les intelligences artificielles implémentées, nous avons développé l'algorithme MCTS (Monte Carlo Tree Search). Les fichiers correspondants à son implémentation se trouvent dans le module Business Logic, plus précisément dans le fichier \texttt{mcts\_player.py}.
 
-Pour appliquer cet algorithme, nous avons représenté les nœuds de l'arbre à l'aide de la classe \texttt{MCTSNode}. Celle-ci contient l'état courant du jeu (\texttt{state}), son parent éventuel (\texttt{parent}), le coup ayant mené à ce nœud (\texttt{move}), le joueur associé à ce nœud (\texttt{player}), ainsi que le joueur MCTS à l'origine de son appel (\texttt{mcts\_player}). Elle inclut également la liste de ses enfants (\texttt{children}), les coups encore non explorés depuis ce nœud (\texttt{untried\_moves}), le nombre de visites (\texttt{visits}) et le score cumulé (\texttt{total\_reward}). Des accesseurs sont définis pour chacun de ces attributs, ainsi que deux méthodes dédiées à la mise à jour du nombre de visites et du score.
+Pour appliquer cet algorithme, nous avons représenté les nœuds de l'arbre à l'aide de la classe \texttt{MCTSNode}. Celle-ci contient l'état courant du jeu (\texttt{state}), son parent éventuel (\texttt{parent}), le coup ayant mené à ce nœud (\texttt{move}), le joueur associé à ce nœud (\texttt{player}), ainsi que le joueur MCTS à l'origine de son appel (\texttt{mcts\_player}). Elle inclut également la liste de ses enfants (\texttt{children}), les coups encore non explorés depuis ce nœud (\texttt{untried\_moves}), le nombre de visites (\texttt{visits}) et le score cumulé (\texttt{total\_reward}). Des Getters sont définis pour chacun de ces attributs ainsi que deux méthodes dédiées à la mise à jour du nombre de visites et du score.
 
 La classe \texttt{MCTSPlayer} centralise le déroulement complet de l'algorithme et construit progressivement l'arbre d'exploration via les \texttt{MCTSNode}. Elle inclut notamment l'état courant du jeu (\texttt{game}), les informations temporelles liées au tour de jeu de l'IA (à savoir le temps de départ, la durée maximale autorisée et le temps de fin : \texttt{start\_time}, \texttt{max\_time} et \texttt{end\_time}) afin d'interrompre l'algorithme si la limite est atteinte. Elle intègre également une fonction de sélection des enfants (\texttt{eval\_fn}), un modèle de sélection basé sur le machine learning (\texttt{ml\_model}), un booléen indiquant si ce modèle doit être utilisé comme fonction de sélection (\texttt{\_ml\_model\_attempted}), ainsi qu'une structure de stockage permettant d'enregistrer les scores au fil des simulations et d'en permettre la restauration pendant l'exécution de l'algorithme (\texttt{\_sim\_state\_stack}).
 
-Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes principales :
+Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes principales (Figure \ref{fig:monte_carlo_example}) :
 \begin{itemize}
   \item[$\bullet$] \textbf{Sélection :} à partir de la racine, on descend dans l'arbre en choisissant les enfants selon une fonction de sélection, jusqu'à atteindre un nœud à explorer.
   \item[$\bullet$] \textbf{Expansion :} un nouveau coup est sélectionné parmi ceux non encore explorés, ce qui crée un nouvel enfant.
@@ -802,8 +801,6 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
   \item[$\bullet$] \textbf{Rétropropagation :} les résultats sont propagés en remontant l'arbre jusqu'à la racine, en mettant à jour les statistiques des nœuds.
 \end{itemize}
 
-À l'issue de l'algorithme, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
-
 \begin{figure}[H]
     \centering
     \frame{\includegraphics[width=0.8\textwidth]{images/monte_carlo_example.png}}
@@ -811,6 +808,9 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
     \caption{Exemple d'application de l'algorithme MCTS}\label{fig:monte_carlo_example}
 \end{figure}
 
+
+À l'issue de l'algorithme, dont le fonctionnement est détaillé par 
+le pseudo-code ci-après, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
 
 {\normalsize
   \begin{minted}[frame=single]{text}
@@ -958,7 +958,7 @@ La deuxième fonction rencontrée est \texttt{list\_available\_servers}. Elle é
 
 Ensuite, la fonction \texttt{join\_server} permet de rejoindre un serveur figurant dans la liste des serveurs disponibles. Si aucun argument n'est fourni à cette fonction, elle récupérera les informations nécessaires auprès du serveur personnel, à condition que celui-ci figure dans la liste des serveurs disponibles ; sinon, aucune connexion ne sera établie. Lorsqu'une connexion est effectuée, un thread est créé côté client pour gérer la communication avec le serveur.
 
-La fonction interne \texttt{\_receive\_loop} s'occupe de lire les messages tant que la connexion est active. Si elle reçoit un message du serveur indiquant un arrêt (\textit{shutdown}), la boucle se termine ; dans le cas contraire, les messages sont transmis à la fonction \texttt{handle\_server\_message}. Cette fonction sert à transmettre les messages du serveur au GUI si celui-ci est disponible. Elle se charge également d'automatiser certains comportements du client : par exemple, lorsqu'un client tente de se connecter pour la première fois et que le serveur renvoie un message indiquant que son nom d'utilisateur est déjà pris, la fonction offre au client la possibilité de modifier son nom d'utilisateur. En CLI, cette fonction affiche les messages du serveur sous une forme plus lisible.
+La fonction interne \texttt{\_receive\_loop} s'occupe de lire les messages tant que la connexion est active. Si elle reçoit un message du serveur indiquant un arrêt (\textit{shutdown}), la boucle se termine. Dans le cas contraire, les messages sont transmis à la fonction \texttt{handle\_server\_message}. Cette fonction sert à transmettre les messages du serveur au GUI si celui-ci est disponible. Elle se charge également d'automatiser certains comportements du client. Par exemple, lorsqu'un client tente de se connecter pour la première fois et que le serveur renvoie un message indiquant que son nom d'utilisateur est déjà pris, la fonction offre au client la possibilité de modifier son nom d'utilisateur. En CLI, cette fonction affiche les messages du serveur sous une forme plus lisible.
 
 Une autre fonction importante est \texttt{send\_to\_server}. Assez simple, elle transmet le message fourni en paramètre au serveur, selon le format suivant :
 
@@ -985,11 +985,14 @@ Toutes les opérations sur la base de données reposent sur deux types de transa
 
 Pour répondre aux besoins de Carcassonne, plusieurs tables ont été créées. La première, et l'une des plus importantes, est la table des joueurs. Chaque joueur y possède un identifiant unique généré automatiquement par la base de données. La table contient également le nom d'utilisateur principal et le mot de passe. Le statut du joueur est inclus pour gérer correctement les événements et peut prendre l'une des quatre valeurs suivantes : \texttt{idle}, \texttt{away}, \texttt{waitgame} ou \texttt{ingame}, représentant les différents états possibles du joueur. Le numéro de groupe du joueur est également présent et est initialement à \texttt{null}. Enfin, deux booléens sont utilisés : l'un indique si le joueur est connecté et l'autre s'il est un client courtois, c'est-à-dire un client qui quitte le serveur correctement.
 
-Pour représenter les groupes de joueurs dans chaque partie, la table \texttt{groups} contient l'identifiant auto-généré du groupe, le nombre de joueurs dans celui-ci et l'identifiant de l'hôte. La table \texttt{scoreboard} est plus simple : elle stocke pour chaque joueur son identifiant, son nombre de victoires et de défaites. La table \texttt{current\_games} conserve les parties en cours avec l'identifiant auto-généré de la partie, son nom et le groupe associé.
+Pour représenter les groupes de joueurs dans chaque partie, la table \texttt{groups} contient l'identifiant auto-généré du groupe, le nombre de joueurs dans celui-ci et l'identifiant de l'hôte. La table \texttt{scoreboard} est plus simple. Elle stocke pour chaque joueur son identifiant, son nombre de victoires et de défaites. La table \texttt{current\_games} conserve les parties en cours avec l'identifiant auto-généré de la partie, son nom et le groupe associé.
 
 L'une des tables les plus importantes pour la gestion des parties est la table \texttt{pending\_invitations}. Chaque invitation y possède un identifiant auto-généré, l'identifiant du groupe concerné, l'identifiant du joueur invité et le statut de l'invitation, qui peut être soit \texttt{waiting} soit \texttt{accepted}. La date d'envoi de l'invitation est également enregistrée afin de gérer le temps maximum de réponse.
 
-Pour gérer les conflits de noms d'utilisateurs entre différents serveurs, la table \texttt{usernames} a été créée. Elle contient l'adresse du serveur et le nom d'utilisateur associé. Si un serveur n'est pas présent dans cette table, le nom d'utilisateur principal est utilisé à condition qu'il ne soit pas déjà pris sur ce serveur, ou la phase d'enregistrement n'a pas encore eu lieu. Cette table est la seule à contenir des données propres au propriétaire de l'ordinateur. Enfin, la table \texttt{timeouts} enregistre les identifiants des joueurs qui se sont déconnectés de manière inattendue ainsi que la date à laquelle cette déconnexion a été constatée par le serveur.
+Pour gérer les conflits de noms d'utilisateurs entre différents serveurs, la table \texttt{usernames} a été créée. Elle contient l'adresse du serveur et le nom d'utilisateur associé. Si un serveur n'est pas référencé dans cette table, le nom 
+d'utilisateur principal est utilisé par défaut, sous réserve qu'il 
+ne soit pas déjà pris sur ce serveur et que la phase d'enregistrement 
+ait déjà eu lieu. Cette table est la seule à contenir des données propres au propriétaire de l'ordinateur. Enfin, la table \texttt{timeouts} enregistre les identifiants des joueurs qui se sont déconnectés de manière inattendue ainsi que la date à laquelle cette déconnexion a été constatée par le serveur.
 
 
 Le jeu en réseau est basé sur les besoins F38 à F40, tous les besoins ont étaient effectués en CLI, mais pas en GUI.
@@ -999,7 +1002,7 @@ Cependant, l'implémentation en GUI du besoin F38 est complète.
 
 
 
-Ce projet nous a confrontés à plusieurs défis majeurs, notamment la 
+Ce projet nous a confrontés à plusieurs défis majeurs notamment la 
 complexité des règles de Carcassonne et la mise en œuvre des 
 intelligences artificielles. Cette section propose une analyse critique 
 de notre travail, organisée en cinq parties : le respect du cahier 
@@ -1030,7 +1033,7 @@ du cahier des charges.
 La principale difficulté de cette partie a résidé dans la mise en place du 
 fichier de configuration du besoin F2 en lien avec l'ensemble des fonctionnalités 
 supplémentaires ajoutées au fil du projet.
-Un problème subsiste cependant : le cahier des charges stipule que le 
+Un problème subsiste cependant. Le cahier des charges stipule que le 
 fichier de configuration doit être lu au démarrage et ses options utilisées 
 par défaut. Or, une fois ce fichier présent, il n'est plus possible de 
 revenir aux options par défaut du programme sans modifier manuellement 
@@ -1064,7 +1067,7 @@ La gestion des règles de base du jeu a constitué la première grande
 étape du projet, mais aussi l'une des premières difficultés majeures. 
 Les règles de Carcassonne sont en effet relativement complexes à 
 implémenter : connectivité des tuiles, conditions de placement des 
-pions, calcul du score — chacun de ces aspects a nécessité une grande 
+pions, calcul du score. Chacun de ces aspects a nécessité une grande 
 rigueur afin de garantir une implémentation correcte.
 
 Le placement des tuiles et des pions a été relativement simple à 
@@ -1079,7 +1082,7 @@ nombreux bugs et a significativement ralenti l'avancement du projet.
 \subsubsection{Command Line Interface (CLI)}
 
 Le CLI a été relativement simple à implémenter, notamment grâce à la 
-bibliothèque \textit{readline} de Python, qui facilite la saisie des 
+bibliothèque \textit{readline} de Python qui facilite la saisie des 
 commandes et a permis de répondre aisément à deux besoins principaux : 
 l'édition de la commande en cours et la gestion de l'historique des 
 commandes tapées. Il a toutefois été nécessaire de développer des 
@@ -1096,10 +1099,10 @@ GUI, où l'absence de cette structure s'est fait ressentir.
 \subsubsection{Format de sauvegarde}
 
 Cette partie a été développée progressivement au fil de l'avancement du projet. 
-Nous avons d'abord mis en place une sauvegarde basique de l'état du jeu, avant d'y ajouter des fonctionnalités complémentaires, telles que la gestion du format de l'historique et la conformité avec le fichier de configuration.
+Nous avons d'abord mis en place une sauvegarde basique de l'état du jeu avant d'y ajouter des fonctionnalités complémentaires, telles que la gestion du format de l'historique et la conformité avec le fichier de configuration.
 La 
-représentation textuelle du plateau de jeu a quant à elle été 
-relativement simple à implémenter, la structure du plateau se prêtant 
+représentation textuelle du plateau de jeu a, quant à elle, n'a pas 
+revelé de problèmes; la structure du plateau se prêtant 
 naturellement à une expression sous forme textuelle.
 
 
@@ -1112,19 +1115,20 @@ pour le calcul du score des champs via des composantes connexes.
 
 Cependant, certains choix effectués lors de cette implémentation 
 précoce ont été source de difficultés par la suite. En particulier, 
-l'absence d'une véritable classe \texttt{Tile}, les éléments du 
-graphe étant modélisés comme des \texttt{Vertex}, a progressivement 
-complexifié la gestion du code à mesure que le projet évoluait, et 
-s'est révélée particulièrement contraignante lors de l'implémentation 
-du GUI, où la distinction entre tuile et sommet de graphe aurait 
-apporté une clarté appréciable.
-
+les tuiles du plateau sont modélisées comme de simples sommets 
+(\texttt{Vertex}) du graphe, sans classe \texttt{Tile} dédiée. 
+Cette décision, anodine au départ, s'est révélée de plus en plus 
+contraignante à mesure que le projet évoluait. L'absence de 
+distinction claire entre une tuile et un sommet de graphe a alourdi 
+la gestion du code notamment lors de l'implémentation du GUI où 
+manipuler directement des tuiles en tant qu'objets aurait 
+considérablement simplifié le développement.
 \subsubsection{Graphical User Interface (GUI)}
 
 L'implémentation du GUI a été, en parallèle de l'intelligence 
 artificielle, la partie la plus longue du projet. Le principal défi a 
 résidé dans la dépendance du GUI vis-à-vis des autres fonctionnalités 
-du projet : il a en effet fallu attendre que les différentes composantes 
+du projet. Il a en effet fallu attendre que les différentes composantes 
 soient suffisamment stables pour pouvoir les intégrer dans l'interface 
 graphique. Le GUI s'est également révélé plus complexe à développer que 
 le CLI, nécessitant la mise en place de nombreux éléments graphiques 
@@ -1159,11 +1163,11 @@ Cependant, l'implémentation de cet algorithme s'est avérée très complexe et 
 
 La partie la plus chronophage a été la gestion du serveur côté GUI. 
 Plus précisément, il a fallu permettre au GUI d'afficher les messages 
-envoyés par le serveur, pour laquelle nous avons mis en place le design 
-pattern Visitor, afin que le GUI puisse traiter et afficher ces messages 
+envoyés par le serveur. Pour cela, nous avons mis en place le design 
+pattern Visitor afin que le GUI puisse traiter et afficher ces messages 
 sans établir de lien direct entre les deux composants.
 
-La partie la plus complexe a quant à elle été la gestion des différentes 
+La partie la plus complexe a, quant à elle, été la gestion des différentes 
 commandes envoyées par le serveur. En effet, la base de données ayant 
 évolué tout au long du projet, le comportement associé à chaque commande 
 a dû être régulièrement revu. De plus, la base de données se devant de 
@@ -1206,9 +1210,10 @@ MCTS\_UCT  & 1 &  6.7\% & 14.7 & 3.40 \\
 \end{tabular}
 \caption{Comparaison des performances des différentes IA sur 15 parties 
 mixtes, chaque partie incluant une IA de chaque type.}
+\label{ia_comparaison}
 \end{table}
 
-Ce tableau présente les performances des différentes intelligences 
+La table \ref{ia_comparaison} présente les performances des différentes intelligences 
 artificielles sur 15 parties mixtes. L'IA Iterative domine nettement 
 avec un taux de victoire de 60\% et une position moyenne de 1.63, tandis 
 que les autres IA, notamment les variantes MCTS, obtiennent des 
@@ -1257,7 +1262,7 @@ Nous avons donc retenu Fisher\-Yates comme algorithme par défaut, tandis que l'
 
 \subsection{Limites et bugs}
 
-Toutefois, malgré nos efforts pour implémenter correctement les différentes fonctionnalités du projet, nous avons rencontré de nombreux bugs et limitations au cours du développement.
+Malgré nos efforts pour implémenter correctement les différentes fonctionnalités du projet, nous avons rencontré de nombreux bugs et limitations au cours du développement.
 
 \subsubsection{Limites}
 \begin{itemize}
@@ -1286,22 +1291,18 @@ Toutefois, malgré nos efforts pour implémenter correctement les différentes f
   n'ont pas été concluants, suggérant que le serveur repose sur des 
   configurations réseau spécifiques à cet environnement. Cela constitue 
   une limitation importante quant à la portabilité du mode réseau du projet.
-  \item [$\bullet$] Certaines spécifications du cahier des charges manquent 
-  de clarté ce qui nous a conduits à interpréter et implémenter ces besoins 
-  de manière intuitive, en adoptant la solution qui nous semblait la plus 
-  logique. Ces choix d'interprétation peuvent ainsi ne pas correspondre 
-  exactement aux attentes initiales du projet.
-  C'est notamment le cas du 
-  besoin F39 concernant le mode daemon du serveur, dont la spécification 
-  est restée floue malgré des échanges avec les chargés de TD, et que nous 
-  avons donc implémenté selon notre propre compréhension.
-  De même, le besoin 
-  F10 relatif à l'extension \textit{The River} a fait l'objet d'échanges 
-  avec les chargés de TD dont les attentes semblaient différer de notre 
-  implémentation, laissant penser que notre interprétation pourrait être 
-  à revoir.
-
-  \item [$\bullet$] 
+  \item [$\bullet$] Pour certains besoins du cahier des charges, nous avons fait le choix 
+  d'une implémentation basée sur notre propre compréhension des 
+  spécifications, en adoptant la solution qui nous semblait la plus 
+  cohérente avec l'ensemble du projet. Ces choix peuvent ainsi ne pas 
+  correspondre exactement aux attentes initiales.
+  C'est notamment le cas du besoin F39 concernant le mode daemon du 
+  serveur, que nous avons implémenté selon notre interprétation, après 
+  des échanges avec les chargés de TD. De même, le besoin F10 relatif 
+  à l'extension \textit{The River} a fait l'objet de discussions avec 
+  les chargés de TD, dont les retours ont laissé entrevoir un écart 
+  entre leurs attentes et notre implémentation, suggérant que notre 
+  interprétation pourrait être à revoir.
 \end{itemize}
 
 
@@ -1309,9 +1310,8 @@ Toutefois, malgré nos efforts pour implémenter correctement les différentes f
 
 \begin{itemize}
   \item [-] Les besoins F39 et F40 concernant les fonctionnalités avancées du serveur sont pleinement fonctionnels dans le CLI, mais partiellement implémentés dans le GUI. 
-  En particulier, la commande new permettant de lancer une nouvelle partie depuis le GUI n'est pas opérationnelle : le message est bien envoyé au serveur mais la réponse n'est pas correctement traitée et affichée côté GUI. 
-  Cela s'explique par la complexité du pattern Visitor mis en place, qui n'a pas pu être étendu à temps à l'ensemble des types de messages du serveur.
-  \item [-] 
+  En particulier, la commande new permettant de lancer une nouvelle partie depuis le GUI n'est pas opérationnelle. Le message est bien envoyé au serveur mais la réponse n'est pas correctement traitée et affichée côté GUI. 
+  Cela s'explique par la complexité du pattern Visitor mis en place qui n'a pas pu être étendu à temps à l'ensemble des types de messages du serveur.
 \end{itemize}
 \subsection{Perspectives d'amélioration}
 
@@ -1373,18 +1373,18 @@ Studio Code, en mode \textit{chat} et \textit{inline}. Cet outil s'est
 révélé particulièrement efficace pour les tâches répétitives et bien 
 délimitées, comme la génération de fonctions utilitaires ou la complétion 
 de blocs de code dont la structure était déjà claire. En revanche, ses 
-suggestions pouvaient s'avérer lentes à apparaître et souvent inadaptées 
+suggestions pouvaient s'avérer longues à apparaître et souvent inadaptées 
 lorsque le contexte fourni était insuffisant ou que la tâche demandée 
 dépassait la simple complétion locale.
 
 Pour des problématiques plus complexes, nous avons eu recours à 
 \textit{ChatGPT} (version gratuite, modèle GPT-4o mini) et à 
 \textit{Claude Sonnet 4.6} via claude.ai, notamment pour la mise en 
-place du design pattern Visitor pour l'affichage des réponses du serveur 
-dans le GUI. Ces modèles se sont révélés utiles pour structurer une 
+place du design pattern Visitor afin de permettre au GUI d’afficher les réponses du serveur. 
+Ces modèles se sont révélés utiles pour structurer une 
 approche face à des problèmes architecturaux ou pour clarifier des 
 concepts. Toutefois, nous avons constaté leurs limites lorsque le 
-contexte du projet devenait trop volumineux : les suggestions proposées 
+contexte du projet devenait trop volumineux. Les suggestions proposées 
 étaient alors déconnectées des choix d'implémentation existants, 
 nécessitaient un travail d'adaptation important, voire introduisaient 
 de nouveaux bugs.
