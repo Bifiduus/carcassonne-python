@@ -163,7 +163,7 @@ Les choix offerts aux joueurs se multiplient progressivement en fonction de la c
 Contrairement à des jeux déterministes comme les échecs ou le shogi, \textbf{Carcassonne} introduit une composante stochastique via la pioche des tuiles, ce qui complexifie l'anticipation des coups futurs. 
 Néanmoins, il demeure un jeu à information parfaite dans la mesure où l'ensemble des éléments placés sur le plateau est visible par tous les joueurs à tout instant.
 
-La complexité combinatoire du jeu est particulièrement élevée pour plusieurs raisons. D'abord, chaque tuile peut être orientée de quatre manières, et chaque position libre sur le plateau peut être un emplacement légitime lorsque les côtés adjacents correspondent. Ensuite, la taille effective de l'espace d'états dépend de l'ordre de tirage des 72 tuiles, du placement des meeples et de la résolution des structures incomplètes. Sur un plateau en croissance, le nombre de successeurs possibles à un instant donné peut rapidement dépasser plusieurs dizaines, ce qui conduit à un arbre de jeu de taille astronomique. La taille de l'arbre de jeu est estimée à environ $10^{194}$\cite{heyden2009implementing}, ce qui rend toute exploration exhaustive irréaliste.
+La complexité combinatoire du jeu est particulièrement élevée pour plusieurs raisons. D'abord, chaque tuile peut être orientée de quatre manières et chaque position libre sur le plateau peut être un emplacement légitime lorsque les côtés adjacents correspondent. Ensuite, la taille effective de l'espace d'états dépend de l'ordre de tirage des 72 tuiles, du placement des meeples et de la résolution des structures incomplètes. Sur un plateau en croissance, le nombre de successeurs possibles à un instant donné peut rapidement dépasser plusieurs dizaines, ce qui conduit à un arbre de jeu de taille astronomique. La taille de l'arbre de jeu est estimée à environ $10^{194}$\cite{heyden2009implementing}, ce qui rend toute exploration exhaustive irréaliste.
 
 Mathématiquement, ce type de complexité se situe entre la simple permutation des tuiles et un vaste graphe de configurations : il faut combiner 72 choix de tuiles avec 4 orientations possibles et un grand nombre de positions valides, d'où un nombre de branches extrêmement élevé. D'où la nécessité d'un compromis entre profondeur de recherche, précision des heuristiques et temps de calcul.
 
@@ -176,7 +176,7 @@ Dans ce contexte, l'utilisation d'algorithmes de recherche heuristique et d'appr
 Dans le cadre de ce projet, \textbf{Carcassonne} présente plusieurs 
 caractéristiques qui complexifient l'application directe des algorithmes 
 classiques de recherche dans les jeux. En particulier, la pioche de 
-tuiles introduit une composante stochastique, et le jeu peut accueillir 
+tuiles introduit une composante stochastique et le jeu peut accueillir 
 jusqu'à cinq joueurs, ce qui invalide les hypothèses habituelles des 
 formulations à deux joueurs à somme nulle.
 
@@ -191,7 +191,7 @@ des besoins du projet :
 \begin{itemize}
   \item[-] \textbf{Minimax}\cite{minimax}, pour déterminer les coups 
   optimaux en modélisant l'opposition entre les joueurs ;
-  \item[-] \textbf{Alpha-Beta}\cite{alpha_beta}, qui réduit le nombre 
+  \item[-] \textbf{Alpha-Beta}\cite{alpha_beta} qui réduit le nombre 
   d'états explorés en élaguant les branches non pertinentes ;
   \item[-] \textbf{Star2.5}, une extension d'Alpha-Beta aux jeux 
   stochastiques via des nœuds de chance, retenu comme algorithme 
@@ -272,7 +272,7 @@ lands_components = {
 }
 Cette structure permet d'identifier rapidement les routes, cités et 
 monastères complétés pour le scoring, de détecter les conflits de 
-placement de meeples, et de gérer la fusion de groupes lorsqu'une 
+placement de meeples et de gérer la fusion de groupes lorsqu'une 
 nouvelle tuile connecte des composantes existantes.
 
 \paragraph{Mise à jour du graphe.}
@@ -300,7 +300,7 @@ class GraphLogic:
 }
 
 \paragraph{Données bas niveau.}
-En complément de \texttt{GraphLogic}, qui applique les règles de 
+En complément de \texttt{GraphLogic} qui applique les règles de 
 connexité métier, la classe \texttt{GraphData} centralise toutes les 
 opérations bas niveau de manipulation du graphe :
 
@@ -390,7 +390,7 @@ En stockant la meilleure valeur courante pour le joueur "max" ($\alpha$) et cell
 
 Le principe est le suivant : dès qu’une branche s’avère trop défavorable pour l’un des joueurs, elle ne peut plus influencer la décision finale et peut être abandonnée. Le gain en temps est particulièrement important lorsque les successeurs sont ordonnés de manière à évaluer d'abord les coups les plus prometteurs.
 
-{\normalsize
+{\small
   \begin{minted}[frame=single]{text}
 fonction alpha_beta(etat, profondeur, alpha, beta, joueur_max):
     SI profondeur = 0 OU estFeuille(etat) ALORS
@@ -428,7 +428,7 @@ min récupère cette valeur et la retient à $4$ plutôt que $8$ afin
 de minimiser le gain de son adversaire.
 
 Le nœud max transmet alors $4$ comme borne $\beta$ au nœud min 
-parent, qui la propage à son tour à l'enfant max suivant. Cet enfant 
+parent qui la propage à son tour à l'enfant max suivant. Cet enfant 
 obtient la valeur $8$ ; or $8 \geq 4$ ce qui signifie que le nœud 
 min parent ne retiendra jamais cette valeur. L'exploration de cette 
 branche est donc interrompue : la valeur $2$ est élaguée.
@@ -444,7 +444,7 @@ demandée.
 \begin{minipage}{0.45\textwidth}
     \centering
     \frame{\includegraphics[width=\textwidth]{images/alpha_beta_example.png}}
-    \caption{Exemple d'un arbre de jeu exploré avec coupes par Alpha-Beta}
+    \caption{Exemple d'un arbre de jeu exploré avec coupes par Alpha-Beta\cite{heyden2009implementing}}
     \label{fig:alpha_betaexample}
 \end{minipage}
 \end{figure}
@@ -473,6 +473,7 @@ impraticable dans le cadre d'un algorithme chronométré. Plusieurs
 techniques de pruning ont été développées pour pallier ce problème.
 
 \paragraph{Star1.}
+
 Star1 exploite les bornes $\alpha$ et $\beta$ déjà présentes dans 
 Alpha-Beta pour borner l'évaluation des nœuds de chance. Plutôt que 
 de calculer exactement l'espérance de tous les enfants d'un nœud de 
@@ -485,6 +486,7 @@ des enfants restants est interrompue. Cela permet d'éviter d'explorer
 des tirages de tuiles peu pertinents.
 
 \paragraph{Star2.}
+
 Star2 améliore cette approche en resserrant davantage les bornes 
 utilisées pour le pruning. Là où Star1 se limite aux bornes globales 
 $\alpha$ et $\beta$, Star2 exploite également des bornes locales sur 
@@ -497,6 +499,7 @@ se révèle donc plus efficace que Star1, en particulier lorsque le
 nombre d'événements aléatoires est élevé.
 
 \paragraph{Star2.5.}
+
 Star2.5 introduit une approche séquentielle : plutôt que de 
 considérer les enfants d'un nœud de chance comme un ensemble non 
 ordonné, ils sont parcourus dans un ordre spécifique, en priorisant 
@@ -508,7 +511,7 @@ significatifs, on obtient plus rapidement une estimation suffisamment
 précise pour déclencher un pruning, maximisant ainsi les chances de 
 coupure précoce.
 
-{\normalsize
+{\small
   \begin{minted}[frame=single]{text}
 fonction expectimax_star25(etat, profondeur, alpha, beta, joueur_max):
   SI profondeur = 0 OU estFeuille(etat) ALORS
@@ -521,7 +524,7 @@ fonction expectimax_star25(etat, profondeur, alpha, beta, joueur_max):
     // Trier les événements (par probabilité décroissante par exemple)
     evenements = trierEvenements(etat)
     POUR TOUT (ev, proba) dans evenements FAIRE
-      v = expectimax_star25(resultat(etat, ev), profondeur - 1, alpha, beta, joueur_max)
+      v = expectimax_star25(resultat(etat, ev), profondeur-1, alpha, beta, joueur_max)
       valeur = valeur + proba * v
       // Mise à jour des bornes restantes
       borne_min = valeur + sommeProbaRestante(evenements) * valeurMinPossible()
@@ -562,7 +565,7 @@ $$0.8 \times (-20) + 0.2 \times 10 = -14$$
 \begin{minipage}{0.45\textwidth}
     \centering
     \frame{\includegraphics[width=\textwidth]{images/star2example.png}}
-    \caption{Exemple d'arbre de jeu partiel avec Star2 menant à une coupe}
+    \caption{Exemple d'arbre de jeu partiel avec Star2 menant à une coupe\cite{heyden2009implementing}}
     \label{fig:star2example}
 \end{minipage}
 \hfill
@@ -597,11 +600,11 @@ adverses, avant de revenir à un nœud chance puis à un nœud max.
 \subsection{Technique Iterative Deepening}
 
 L'algorithme Minimax avec approfondissement itératif (Iterative Deepening) est une technique de parcours progressif des profondeurs sur l'arbre des états d'un jeu. 
-Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur "max" est enregistré en remplaçant le précédent, et sera alors renvoyé après épuisement du temps donné. 
+Après un parcours avec une nouvelle profondeur explorée, le meilleur coup pour le joueur "max" est enregistré en remplaçant le précédent et sera alors renvoyé après épuisement du temps donné. 
 Cette technique a pour avantage de déterminer une solution utile même sur une courte durée, tandis que l'exploration classique ne garantit pas que la profondeur fixée soit suffisante pour obtenir un résultat fiable après un temps bloquant.
 
 En pratique, la recherche commence à faible profondeur puis augmente progressivement jusqu'à atteindre le temps limite :
-{\normalsize
+{\small
   \begin{minted}[frame=single]{text}
 fonction choix_coup(etat, temps_max):
     profondeur = 1
@@ -635,7 +638,7 @@ L'évaluation repose sur plusieurs critères pondérés selon leur
 importance stratégique : le score actuel des joueurs, le potentiel 
 de complétion des routes, cités et monastères en cours, le nombre 
 de pions disponibles pour chaque joueur, la présence de pions bloqués 
-sur des structures difficilement complétables, et enfin le contrôle 
+sur des structures difficilement complétables et enfin le contrôle 
 des champs adjacents à des cités complètes.
 
 La fonction ne prétend pas fournir une estimation parfaite, mais guide 
@@ -671,7 +674,7 @@ l'intégration de variantes du jeu.
 \section{Architecture}
 Dans cette section, nous présentons l'architecture logicielle retenue pour l'implémentation du jeu Carcassonne.
 Le projet adopte une architecture n-tiers\cite{n_tier_architecture} visant à séparer clairement les responsabilités afin d'améliorer la maintenabilité, la testabilité et l'évolutivité du code.
-Le principe fondamental de cette architecture est de diviser le système en couches distinctes, chacune ayant des responsabilités spécifiques, et de limiter les dépendances au minimum grâce à des interfaces bien définies.
+Le principe fondamental de cette architecture est de diviser le système en couches distinctes, chacune ayant des responsabilités spécifiques et de limiter les dépendances au minimum grâce à des interfaces bien définies.
 
 Dans un modèle n-tiers classique, chaque couche n'utilise que les services exposés par la couche située en dessous d'elle et ne dépend pas des détails d'implémentation de cette couche. Cela permet, par exemple, de remplacer l'interface utilisateur (CLI ou GUI) sans toucher à la logique métier, ou de simuler la persistance en tests unitaires en fournissant un faux service de stockage.
 
@@ -764,7 +767,7 @@ Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{
 \end{figure}
 
 Ainsi, le module Présentation dépend uniquement du module Business 
-Logic via l'interface \texttt{IBusiness \allowbreak LogicFactory}, qui permet 
+Logic via l'interface \texttt{IBusiness \allowbreak LogicFactory} qui permet 
 d'instancier les objets du module Business Logic et d'en appeler 
 les méthodes sans que la Présentation n'accède directement aux 
 données. De manière analogue, le module Business Logic dépend 
@@ -806,14 +809,14 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
     \centering
     \frame{\includegraphics[width=0.8\textwidth]{images/monte_carlo_example.png}}
     \centering
-    \caption{Exemple d'application de l'algorithme MCTS}\label{fig:monte_carlo_example}
+    \caption{Exemple d'application de l'algorithme MCTS\cite{heyden2009implementing}}\label{fig:monte_carlo_example}
 \end{figure}
 
 
 À l'issue de l'algorithme, dont le fonctionnement est détaillé par 
 le pseudo-code ci-après, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
 
-{\normalsize
+{\small
   \begin{minted}[frame=single]{text}
 fonction mcts (etat, t0, budget, racine)
 	TANT QUE tempsActuel() - t0 < budget FAIRE
@@ -851,12 +854,11 @@ La fonction \texttt{get\_possible\_moves} génère l'ensemble des coups possible
 La sélection des nœuds dans l'arbre peut se faire via l'algorithme UCT (Upper Confidence Bound applied to Trees)\cite{kocsis2006bandit}. Cette méthode équilibre exploitation (favoriser les coups déjà performants) et exploration (tester de nouvelles possibilités) grâce à un paramètre de pondération. Elle prend en compte le nombre de visites et les scores des nœuds, tout en priorisant les nœuds encore jamais explorés afin d'assurer une couverture suffisante de l'espace des coups possibles.
 
 Une alternative à la méthode UCT consiste à guider la phase de 
-sélection de MCTS par un modèle de machine learning inspirée du 
-cours de machine learning \cite{ml_course_2026}. Pour chaque 
+sélection de MCTS par un modèle de machine learning \cite{pandey2019machine}. Pour chaque 
 nœud enfant, un vecteur de caractéristiques est construit (reward 
 moyen, nombre de visites, score, présence d'un meeple, etc.), 
 identique à celui utilisé lors de l'entraînement. Le modèle prédit 
-alors un score pour chaque coup, et le coup ayant la meilleure 
+alors un score pour chaque coup et le coup ayant la meilleure 
 évaluation est sélectionné. En cas d'indisponibilité du modèle, le 
 système bascule automatiquement vers la méthode UCT, garantissant 
 ainsi la robustesse de l'ensemble.
@@ -867,7 +869,7 @@ L'entraînement est réalisé hors ligne via le script
 \texttt{mcts\_ml\_training.py}, à partir de données issues de 
 simulations de parties. Chaque exemple du dataset est constitué d'un 
 couple \textit{(features, target)}, où les features décrivent un état 
-ou un nœud MCTS, et la target correspond à une mesure de qualité 
+ou un nœud MCTS et la target correspond à une mesure de qualité 
 (reward final ou estimation de victoire). Les données sont stockées 
 au format JSON Lines, puis converties en tableaux numériques via 
 NumPy. Le fichier d'exemple fourni constitue une validation technique 
@@ -893,24 +895,67 @@ garantissant la cohérence entre apprentissage et inférence. Le modèle
 est utilisé exclusivement en prédiction, sans mise à jour des poids.
 
 \paragraph{Prérequis, sous-besoins, dépendances, intégration dans le projet, tests et validation.}
-Les prérequis pour l’implémentation de mcts dans le code sont : F1, F4, F8, F9, F10, F11, F13, F15, F20, F26, F27, F31.
+Les besoins F1, F4 et F15 assurent un shell interactif permettant de 
+visualiser l'état du jeu. Les besoins F8, F9, F10, F11, F13 et F20 
+garantissent que l'algorithme MCTS dispose des éléments nécessaires 
+à son fonctionnement : gestion de la pioche, nombre de joueurs, règles 
+de placement, détection de fin de partie et possibilité d'annuler ou 
+rejouer des coups pour faire évoluer l'arbre de recherche. Les besoins 
+F26 et F27 permettent de stocker et de manipuler l'état du jeu via la 
+structure \textit{graph}, tandis que F31 borne le temps de réflexion 
+de l'algorithme, garantissant qu'un résultat est toujours disponible 
+à l'échéance.
 
-Plus précisément, F1, F4 et F15 assurent un shell interactif dans lequel visualiser l’état de jeu. F8, F9, F10, F11, F13 et F20 assurent que l’on peut construire l’algorithme mcts avec notamment la pioche, le nombre de joueurs, les règles pour savoir les coups légaux et la fin de partie, la possibilité d’annuler ou de jouer des coups pour pouvoir faire évoluer l’arbres. F26 et F27 permettent de stocker l’état de jeu dans la structure ‘graph’ et de pouvoir agir dessus avec les algorithmes. F31 permet de limiter le temps qu’on accorde à l’algorithme, ainsi quand le temps de réponse arrive à échéance, on a un résultat prêt à être renvoyé.
+Sur le plan fonctionnel, le joueur IA MCTS est encapsulé dans la 
+classe \texttt{MCTSPlayer} qui permet de choisir entre les fonctions 
+de sélection UCT et ML via les options \texttt{--ai-mode mcts} et 
+\texttt{--ai-mcts-selection}. Le temps de réponse borné, assuré par 
+F31, empêche le tour du joueur IA de dépasser la durée impartie.
 
-Pour les dépendances, on doit de manière fonctionnel pouvoir créer un joueur IA qui utilise mcts avec la fonction de sélection spécifiée, c’est ce qu’on a avec MCTSPlayer qui choisit entre UCT et ML. Un tel joueur est créé par les sous-besoins non fonctionnels suivants : pouvoir rentrer en option –ai-mode mcts et –ai-mcts-selection SELECTION pour pouvoir choisir une IA mcts avec la fonction de sélection SELECTION associée, également avoir un temps de réponse borné pour éviter que l’appel à l’algorithme et donc le tour du joueur IA soit trop long, c’est ce qu’on a avec F31 qui est bien implémenté.
+\paragraph{Couverture de tests.}
+La partie MCTS atteint une couverture de 90\%. Les tests du fichier 
+\texttt{mcts\_player\_test.py} valident le noyau algorithmique : 
+structure des nœuds (état, parent, coup, statistiques), sélection de 
+stratégie (UCT ou ML), condition terminale, génération des coups 
+légaux, expansion, rollout, calcul de récompense et rétropropagation. 
+Ils vérifient également la robustesse de la sélection ML face à 
+plusieurs scénarios de repli : modèle absent, échec au chargement ou 
+erreur en prédiction. Dans chacun de ces cas, l'algorithme bascule 
+automatiquement sur UCT, sécurisant ainsi le mode ML dans les 
+environnements où Keras ou le modèle ne sont pas disponibles.
 
-Nous avons la partie code mcts qui est couverte à 90% : Les tests de la partie MCTS couvrent d’abord le noyau algorithmique du joueur MCTS dans mcts_player_test.py. Ils vérifient la structure des nœuds (état, parent, coup, statistiques), la sélection de stratégie (UCT ou ML), la condition terminale, puis les opérations clés du cycle MCTS: génération des coups légaux, sélection UCT, expansion d’un coup non exploré, rollout, calcul de récompense et rétropropagation. En pratique, cela valide que le moteur prend des décisions cohérentes et met bien à jour ses compteurs de visites et de rewards.
-La sélection ML est aussi testée de façon robuste dans ce même fichier, avec plusieurs cas de forme de prédictions (liste, scalaire custom) et surtout des scénarios de repli. Les tests confirment que si le modèle est absent, échoue au chargement, ou plante en prédiction, l’algorithme retombe automatiquement sur UCT au lieu de casser l’exécution. Cela sécurise le mode ML dans les environnements où Keras ou le modèle ne sont pas toujours disponibles.
-Les tests couvrent également la sécurité de l’état du jeu pendant les simulations. Ils valident que jouer puis annuler un coup IA restaure correctement la main courante, le tour joueur, l’historique, les scores, les meeples, les composants scorés, ainsi que des éléments de graph et de deck. Les scénarios de rollout testent aussi le comportement quand une main est injouable, quand il faut piocher à nouveau, et quand aucune pioche n’est possible, ce qui protège les cas limites de boucle de simulation.
-Enfin, la partie entraînement du modèle de sélection MCTS est couverte dans mcts_ml_training_test.py. Les tests vérifient le parsing des datasets (JSON et JSONL), la validation des données invalides, la construction/compilation/entraînement/sauvegarde du modèle avec des doublures de Numpy/Keras, et le parsing des arguments CLI. En résumé, la suite teste bien la fiabilité fonctionnelle du MCTS (UCT + ML fallback) et la chaîne de training, même si elle reste majoritairement unitaire et peu orientée benchmark qualité de jeu en partie longue.
+La cohérence de l'état du jeu pendant les simulations est également 
+vérifiée : jouer puis annuler un coup restaure correctement la main 
+courante, le tour joueur, l'historique, les scores, les meeples et 
+les composantes du graphe. Les scénarios de rollout couvrent les cas 
+limites tels qu'une main injouable, une pioche nécessaire ou une 
+pioche vide.
 
-Cette partie est intégrée dans le projet à travers mcts_player.py dans le package ia de BusinessLogic, on a également mcts_ml_training.py qui se trouve dans ce module et qui entraîne le modèle par machine learning, les données entraînées sont présentes dans le module Datas dans mcts_selection.keras. Cela respecte donc bien l’architecture.
+La chaîne d'entraînement du modèle ML est quant à elle couverte dans 
+\texttt{mcts\_ml\_training\_test.py} qui teste le parsing des 
+datasets (JSON et JSONL), la validation des données invalides, ainsi 
+que la construction, la compilation, l'entraînement et la sauvegarde 
+du modèle.
 
-En revanche, pour pouvoir totalement valider cette fonctionnalité, il faudrait des tests qui mettent en place le déroulement de parties entières avec temps de réflexion assez élevé pour assurer que l’on ne tombe pas sur un comportement inattendu du début à la fin d’une partie. Cela prendrait un temps bien trop important pour les tests lancés par pytest. En dehors de ça, les larges tests permettent d’assurer que mcts est implémenté et fonctionnel à 90%.
+\paragraph{Intégration dans l'architecture.}
+\texttt{mcts\_player.py} est intégré dans le package \texttt{ia} du 
+module Business Logic, aux côtés de \texttt{mcts\_ml\_training.py} 
+qui gère l'entraînement du modèle. Le modèle entraîné 
+(\texttt{mcts\_selection.keras}) est stocké dans le module Données, 
+conformément à l'architecture du projet.
 
-
+Une limite subsiste cependant : pour valider pleinement cette 
+fonctionnalité, des tests simulant des parties complètes avec un 
+temps de réflexion suffisamment élevé seraient nécessaires. Ces tests 
+étant trop coûteux en temps pour être intégrés à la suite pytest, la 
+validation repose sur les tests unitaires existants qui assurent le 
+bon fonctionnement de MCTS dans les cas couverts.
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
+
+
+
+
 Afin de permettre à plusieurs joueurs de s'affronter à distance, nous 
 avons implémenté une fonctionnalité de jeu en réseau. Cette partie 
 repose sur une architecture client-serveur : le serveur gère l'état 
@@ -941,7 +986,7 @@ interactions entre ces composants, en mettant en évidence les flux de
 données et les canaux de communication.
 \begin{figure}[H]
     \centering
-    \frame{\includegraphics[width=1\textwidth]{images/diagramme_du_réseau.png}}
+    \frame{\includegraphics[width=1\textwidth]{images/Businnes_Logic.png}}
     \centering
     \caption{Schéma représentatif de l'architecture du jeu en réseau}\label{fig:network_diagram}
 \end{figure}
@@ -956,15 +1001,15 @@ La fonction \texttt{server\_running} permet d'accepter des connexions clients ta
 
 Pour accomplir cette gestion, plusieurs fonctions internes sont utilisées :
 
-La première est \texttt{check\_all\_invitations\_timeout}, qui renvoie la liste des clients ayant reçu une invitation dont le délai de réponse est dépassé. La fonction \texttt{launch\_availables\_games} permet de lancer toutes les parties pouvant l'être, c'est-à-dire les parties pour lesquelles les invitations ont toutes été résolues et le nombre de joueurs est correct. 
+La première est \texttt{check\_all\_invitations\_timeout} qui renvoie la liste des clients ayant reçu une invitation dont le délai de réponse est dépassé. La fonction \texttt{launch\_availables\_games} permet de lancer toutes les parties pouvant l'être, c'est-à-dire les parties pour lesquelles les invitations ont toutes été résolues et le nombre de joueurs est correct. 
 
 Conjointement, la fonction \texttt{clean\_finished\_games} se charge de nettoyer les parties terminées, tandis que \texttt{check\_clients\_timeout} vérifie si les clients ayant effectué une déconnexion inopinée ont dépassé leur délai de time-out.
 
-Chaque socket de client est ensuite redirigé dans son propre thread vers la fonction \texttt{handle\_client}, qui se charge de la communication entre le serveur et un client. Si le client souhaite quitter, un message est envoyé à tous les clients du serveur. La commande \texttt{quit} est la seule commande qui peut être effectuée sans être enregistré auprès du serveur. Si le client n'est pas encore enregistré, la fonction \texttt{handle\_client\_registering} se charge de l'enregistrer, et différents messages sont envoyés en fonction de la réussite ou de l'échec de l'enregistrement. Dans le cas d'un échec, deux messages principaux peuvent être envoyés : soit le nom d'utilisateur est déjà pris, soit le client est sous un time-out pour déconnexion inopinée.
+Chaque socket de client est ensuite redirigé dans son propre thread vers la fonction \texttt{handle\_client} qui se charge de la communication entre le serveur et un client. Si le client souhaite quitter, un message est envoyé à tous les clients du serveur. La commande \texttt{quit} est la seule commande qui peut être effectuée sans être enregistré auprès du serveur. Si le client n'est pas encore enregistré, la fonction \texttt{handle\_client\_registering} se charge de l'enregistrer, et différents messages sont envoyés en fonction de la réussite ou de l'échec de l'enregistrement. Dans le cas d'un échec, deux messages principaux peuvent être envoyés : soit le nom d'utilisateur est déjà pris, soit le client est sous un time-out pour déconnexion inopinée.
 
-Une fois le client enregistré auprès du serveur, celui-ci traite les messages du client et envoie les réponses appropriées via la fonction \texttt{process\_message}, qui utilise la classe \texttt{online\_communications} afin de déterminer les réponses. La gestion de nombreuses erreurs est présente dans cette fonction, et quoi qu'il arrive, les structures de données du serveur seront mises à jour.
+Une fois le client enregistré auprès du serveur, celui-ci traite les messages du client et envoie les réponses appropriées via la fonction \texttt{process\_message} qui utilise la classe \texttt{online\_communications} afin de déterminer les réponses. La gestion de nombreuses erreurs est présente dans cette fonction et quoi qu'il arrive, les structures de données du serveur seront mises à jour.
 
-Les dernières fonctions notables du serveur sont les suivantes : \texttt{send\_to\_group} et \texttt{send\_to\_client}, qui permettent d'envoyer des messages respectivement à un groupe de joueurs ou à un joueur. On trouve également des accesseurs pour les différentes structures de données du serveur, ainsi que la fonction \texttt{server\_stop}, appelée aussi bien lors d'un arrêt normal que lors d'un arrêt brutal du serveur. Cette fonction nettoie toutes les ressources proprement.
+Les dernières fonctions notables du serveur sont les suivantes : \texttt{send\_to\_group} et \texttt{send\_to\_client} qui permettent d'envoyer des messages respectivement à un groupe de joueurs ou à un joueur. On trouve également des accesseurs pour les différentes structures de données du serveur, ainsi que la fonction \texttt{server\_stop}, appelée aussi bien lors d'un arrêt normal que lors d'un arrêt brutal du serveur. Cette fonction nettoie toutes les ressources proprement.
 
 
 \subsubsection{Client}
@@ -972,7 +1017,7 @@ Le fichier \texttt{client.py} sert principalement à envoyer et recevoir des inf
 
 La première fonction utilisée est \texttt{create\_default\_online\_player}. Elle se charge de créer un compte pour un serveur donné. Par défaut, il s'agit du serveur local. Toutefois, si un problème d'authentification survient sur un serveur externe, cette fonction permet de créer un compte spécifique pour ce serveur, en générant un nouveau nom d'utilisateur tout en conservant le même mot de passe.
 
-La deuxième fonction rencontrée est \texttt{list\_available\_servers}. Elle écoute sur le port 12346 pour détecter les transmissions UDP broadcast des serveurs et constitue à partir de celles-ci une liste de serveurs disponibles. Tout serveur n'ayant pas envoyé de message depuis un certain temps est retiré de cette liste par la fonction \texttt{check\_servers\_last\_time\_sent}, qui vérifie la date de la dernière diffusion de chaque serveur.
+La deuxième fonction rencontrée est \texttt{list\_available\_servers}. Elle écoute sur le port 12346 pour détecter les transmissions UDP broadcast des serveurs et constitue à partir de celles-ci une liste de serveurs disponibles. Tout serveur n'ayant pas envoyé de message depuis un certain temps est retiré de cette liste par la fonction \texttt{check\_servers\_last\_time\_sent} qui vérifie la date de la dernière diffusion de chaque serveur.
 
 Ensuite, la fonction \texttt{join\_server} permet de rejoindre un serveur figurant dans la liste des serveurs disponibles. Si aucun argument n'est fourni à cette fonction, elle récupérera les informations nécessaires auprès du serveur personnel, à condition que celui-ci figure dans la liste des serveurs disponibles ; sinon, aucune connexion ne sera établie. Lorsqu'une connexion est effectuée, un thread est créé côté client pour gérer la communication avec le serveur.
 
@@ -999,13 +1044,13 @@ La plupart des commandes dépendent de l'état du serveur et/ou de la base de do
 
 La base de données constitue un élément central du serveur. Presque toutes les opérations importantes y passent, que ce soit pour récupérer des informations, en créer de nouvelles, les modifier, ou plus rarement les supprimer. La classe \texttt{games\_repository} est conçue de manière à ce que le serveur et la logique métier n'aient pas à connaître la structure interne de la base de données.
 
-Toutes les opérations sur la base de données reposent sur deux types de transactions : les transactions \textit{query}, qui sont des transactions de sélection de données, et les transactions \textit{non query}, qui sont des transactions de modification des n-uplets. Ces opérations sont protégées contre toute injection de code SQL par des utilisateurs malveillants.
+Toutes les opérations sur la base de données reposent sur deux types de transactions : les transactions \textit{query} qui sont des transactions de sélection de données et les transactions \textit{non query} qui sont des transactions de modification des n-uplets. Ces opérations sont protégées contre toute injection de code SQL par des utilisateurs malveillants.
 
 Pour répondre aux besoins de Carcassonne, plusieurs tables ont été créées. La première, et l'une des plus importantes, est la table des joueurs. Chaque joueur y possède un identifiant unique généré automatiquement par la base de données. La table contient également le nom d'utilisateur principal et le mot de passe. Le statut du joueur est inclus pour gérer correctement les événements et peut prendre l'une des quatre valeurs suivantes : \texttt{idle}, \texttt{away}, \texttt{waitgame} ou \texttt{ingame}, représentant les différents états possibles du joueur. Le numéro de groupe du joueur est également présent et est initialement à \texttt{null}. Enfin, deux booléens sont utilisés : l'un indique si le joueur est connecté et l'autre s'il est un client courtois, c'est-à-dire un client qui quitte le serveur correctement.
 
 Pour représenter les groupes de joueurs dans chaque partie, la table \texttt{groups} contient l'identifiant auto-généré du groupe, le nombre de joueurs dans celui-ci et l'identifiant de l'hôte. La table \texttt{scoreboard} est plus simple. Elle stocke pour chaque joueur son identifiant, son nombre de victoires et de défaites. La table \texttt{current\_games} conserve les parties en cours avec l'identifiant auto-généré de la partie, son nom et le groupe associé.
 
-L'une des tables les plus importantes pour la gestion des parties est la table \texttt{pending\_invitations}. Chaque invitation y possède un identifiant auto-généré, l'identifiant du groupe concerné, l'identifiant du joueur invité et le statut de l'invitation, qui peut être soit \texttt{waiting} soit \texttt{accepted}. La date d'envoi de l'invitation est également enregistrée afin de gérer le temps maximum de réponse.
+L'une des tables les plus importantes pour la gestion des parties est la table \texttt{pending\_invitations}. Chaque invitation y possède un identifiant auto-généré, l'identifiant du groupe concerné, l'identifiant du joueur invité et le statut de l'invitation qui peut être soit \texttt{waiting} soit \texttt{accepted}. La date d'envoi de l'invitation est également enregistrée afin de gérer le temps maximum de réponse.
 
 Pour gérer les conflits de noms d'utilisateurs entre différents serveurs, la table \texttt{usernames} a été créée. Elle contient l'adresse du serveur et le nom d'utilisateur associé. Si un serveur n'est pas référencé dans cette table, le nom 
 d'utilisateur principal est utilisé par défaut, sous réserve qu'il 
@@ -1025,7 +1070,7 @@ complexité des règles de Carcassonne et la mise en œuvre des
 intelligences artificielles. Cette section propose une analyse critique 
 de notre travail, organisée en cinq parties : le respect du cahier 
 des charges, les performances obtenues, les limites et bugs rencontrés, 
-les pistes d'amélioration envisageables, et enfin l'usage des outils 
+les pistes d'amélioration envisageables et enfin l'usage des outils 
 d'intelligence artificielle au cours du développement.
 
 \subsection{Cahier des charges}
@@ -1042,7 +1087,7 @@ avons également vérifié la compatibilité des bibliothèques utilisées
 avec les exigences du cahier des charges.
 
 Grâce à cette approche, le projet atteint une couverture globale 
-d'environ 80\% ce qui constitue un résultat conforme aux exigences 
+d'environ 90\% ce qui constitue un résultat conforme aux exigences 
 du cahier des charges.
 
 
@@ -1212,7 +1257,7 @@ Nous analysons les résultats obtenus à travers plusieurs expérimentations afi
 \subsubsection{IA}
 \label{subsubsec:iaperfo}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{lcccc}
 \hline
@@ -1232,7 +1277,9 @@ mixtes, chaque partie incluant une IA de chaque type.}
 \end{table}
 
 La table \ref{ia_comparaison} présente les performances des différentes intelligences 
-artificielles sur 15 parties mixtes. L'IA Iterative domine nettement 
+artificielles sur 15 parties mixtes. Afin de garantir l’équité expérimentale, 
+chaque IA a occupé chaque position de départ qui est considérée comme plus favorable à trois reprises sur les 15 parties, avec une alternance systématique des positions.
+L'IA Iterative domine nettement 
 avec un taux de victoire de 60\% et une position moyenne de 1.63, tandis 
 que les autres IA, notamment les variantes MCTS, obtiennent des 
 performances significativement plus faibles dans ce contexte compétitif.
@@ -1253,7 +1300,7 @@ multi-agents compétitif. Plusieurs hypothèses peuvent expliquer ce
 phénomène. D'une part, les simulations MCTS reposent sur des modèles 
 adverses simplifiés, souvent aléatoires, ce qui les rend moins robustes 
 face à des stratégies variées. D'autre part, le coût computationnel élevé 
-des simulations, qui impliquent de rejouer toute la logique du jeu, limite 
+des simulations qui impliquent de rejouer toute la logique du jeu, limite 
 le nombre d'itérations réalisables et donc la qualité des décisions prises. 
 Enfin, les variantes MCTS implémentées (UCT et ML) peuvent ne pas être 
 optimalement adaptées à ce type de jeu ou à ce format multi-joueurs.
@@ -1284,16 +1331,10 @@ Malgré nos efforts pour implémenter correctement les différentes fonctionnali
 
 \subsubsection{Limites}
 \begin{itemize}
-  \item [$\bullet$] Nous n'avons pas traité le cas d'une tuile impossible 
-  à placer ce qui peut survenir dans certaines configurations de jeu. 
-  Dans ce cas, le comportement du programme n'est pas défini : la partie 
-  peut se bloquer sans message d'erreur explicite pour le joueur.
-  \item [$\bullet$] La taille du plateau de jeu dans le GUI est fixe et 
-  ne s'adapte pas dynamiquement à la taille de la fenêtre. Ainsi, si la 
-  fenêtre est agrandie, les éléments de l'interface tels que les boutons 
-  s'ajustent correctement, mais le plateau de jeu reste de taille fixe, 
-  créant un déséquilibre visuel et une expérience utilisateur sous-optimale.
-  \item [$\bullet$] Les fonctions d'évaluation heuristiques utilisées par 
+  \item [$\bullet$] Le taux de couverture des tests atteint environ 80\%. Toutefois, ce chiffre ne prend pas en compte les tests liés à l’interface graphique. 
+  En effet, ces derniers sont particulièrement difficiles à automatiser (avec une couverture moyenne d’environ 25\%). 
+  Il est donc pertinent d’envisager d’autres approches pour évaluer la qualité du GUI, comme des tests manuels ou des retours utilisateurs.
+  \item [$\bullet$] Les fonctions d'évaluation heuristiques (F33) utilisées par 
   les IA ne modélisent pas certaines stratégies avancées, comme le blocage 
   adverse ou la gestion optimale des meeples restants. Cela limite leur 
   efficacité en contexte compétitif multi-joueurs, comme l'illustrent les 
@@ -1304,6 +1345,11 @@ Malgré nos efforts pour implémenter correctement les différentes fonctionnali
   valeur nécessite de retrouver et mettre à jour chaque occurrence 
   manuellement, augmentant ainsi le risque d'incohérences et d'erreurs 
   difficiles à détecter.
+  \item [$\bullet$]  Le module \texttt{graph} respecte globalement la structure 
+  attendue en liste d’adjacence avec gestion des composantes connexes (F26). 
+  Toutefois, il n’est pas totalement indépendant et intègre encore des éléments 
+  de logique métier (joueur, meeple, tuile), ce qui nuit à la séparation des 
+  responsabilités.
   \item [$\bullet$]  Le serveur ne semble fonctionner correctement que dans 
   l'environnement du Cremi. En effet, les tests effectués en réseau local 
   n'ont pas été concluants, suggérant que le serveur repose sur des 
@@ -1327,6 +1373,7 @@ Malgré nos efforts pour implémenter correctement les différentes fonctionnali
 \subsubsection{Bugs}
 
 \begin{itemize}
+  \item [-] Le besoin F12, relatif à la gestion des messages d’erreur, est implémenté dans le GUI, bien que certains cas restent non couverts, notamment lors du chargement d’une partie invalide.
   \item [-] Les besoins F39 et F40 concernant les fonctionnalités avancées du serveur sont pleinement fonctionnels dans le CLI, mais partiellement implémentés dans le GUI. 
   En particulier, la commande new permettant de lancer une nouvelle partie depuis le GUI n'est pas opérationnelle. Le message est bien envoyé au serveur mais la réponse n'est pas correctement traitée et affichée côté GUI. 
   Cela s'explique par la complexité du pattern Visitor mis en place qui n'a pas pu être étendu à temps à l'ensemble des types de messages du serveur.
@@ -1344,7 +1391,7 @@ L'amélioration la plus évidente concerne l'organisation générale du code.
 Un manque de prévoyance dans l'architecture initiale a conduit à des choix 
 d'implémentation qui ont rendu certaines parties du projet difficiles à 
 maintenir et à faire évoluer. Cela s'est illustré notamment lors de la 
-restructuration des fichiers \textit{game.py} et \textit{gui.py}, qui 
+restructuration des fichiers \textit{game.py} et \textit{gui.py} qui 
 dépassaient chacun les 1000 lignes et concentraient trop de 
 responsabilités distinctes. Nous avons tenté de remédier à ce problème 
 au fil du développement, mais avons parfois dû faire des compromis pour 
@@ -1373,7 +1420,7 @@ le blocage adverse ou la gestion optimale des meeples.
 Nous avons ainsi réussi à implémenter un projet fonctionnel répondant 
 à une grande partie des besoins du cahier des charges. Les améliorations 
 restantes relèvent principalement de la qualité du code, de la robustesse 
-de certaines fonctionnalités et de l'expérience utilisateur, et ne 
+de certaines fonctionnalités et de l'expérience utilisateur et ne 
 remettent pas en cause le bon fonctionnement général du projet.
 
 \subsection{Utilisation de l'IA}
@@ -1418,7 +1465,7 @@ l'IA peinant alors à respecter les contraintes de l'architecture existante.
 
 Enfin, l'IA a également contribué à l'amélioration de ce rapport, en 
 nous aidant à structurer nos idées, à formuler nos analyses de manière 
-plus claire et concise, et à corriger les fautes d'orthographe et de 
+plus claire et concise et à corriger les fautes d'orthographe et de 
 grammaire.
 
 
@@ -1445,55 +1492,55 @@ grammaire.
 \hline
 \endhead
 
-F1 & Lancement du programme & Non fait \\ \hline
-F2 & Fichier de configuration & Non fait \\ \hline
-F3 & Internationalisation (i18n) & Non fait \\ \hline
-F4 & Interface en ligne de commande & Non fait \\ \hline
-F5 & Interface graphique & Non fait \\ \hline
-F6 & Mode blitz & Non fait \\ \hline
-F7 & Mode contest & Non fait \\ \hline
-F8 & Graine aléatoire & Non fait \\ \hline
-F9 & Mélange des tuiles & Non fait \\ \hline
-F10 & Options spécifiques & Partiel \\ \hline
+F1 & Lancement du programme & Fait \\ \hline
+F2 & Fichier de configuration & Fait \\ \hline
+F3 & Internationalisation (i18n) & Fait \\ \hline
+F4 & Interface en ligne de commande & Fait \\ \hline
+F5 & Interface graphique & Fait \\ \hline
+F6 & Mode blitz & Fait \\ \hline
+F7 & Mode contest & Fait \\ \hline
+F8 & Graine aléatoire & Fait \\ \hline
+F9 & Mélange des tuiles & Fait \\ \hline
+F10 & Options spécifiques & Fait \\ \hline
 
-F11 & Gestion des règles & Non fait \\ \hline
-F12 & Gestion des erreurs utilisateur & Non fait \\ \hline
-F13 & Gestion du undo/redo & Non fait \\ \hline
-F14 & Gestion des conseils & Non fait \\ \hline
+F11 & Gestion des règles & Fait \\ \hline
+F12 & Gestion des erreurs utilisateur & Partiel \\ \hline
+F13 & Gestion du undo/redo & Fait \\ \hline
+F14 & Gestion des conseils & Fait \\ \hline
 
-F15 & Shell interactif & Non fait \\ \hline
-F16 & Proposer de sauvegarder avant quitter & Non fait \\ \hline
-F17 & Édition de la commande en cours & Non fait \\ \hline
-F18 & Historique des commandes tapées & Non fait \\ \hline
-F19 & Complétion des commandes & Non fait \\ \hline
-F20 & Notation des coups & Non fait \\ \hline
+F15 & Shell interactif & Fait \\ \hline
+F16 & Proposer de sauvegarder avant quitter & Fait \\ \hline
+F17 & Édition de la commande en cours & Fait \\ \hline
+F18 & Historique des commandes tapées & Fait \\ \hline
+F19 & Complétion des commandes & Partiel \\ \hline
+F20 & Notation des coups & Fait \\ \hline
 
-F21 & Sauvegarde et restauration d'une partie & Non fait \\ \hline
-F22 & Commentaires dans la sauvegarde & Non fait \\ \hline
-F23 & Format des paramètres du jeu & Non fait \\ \hline
-F24 & Format du plateau de jeu & Non fait \\ \hline
-F25 & Format de l'historique & Non fait \\ \hline
+F21 & Sauvegarde et restauration d'une partie & Fait \\ \hline
+F22 & Commentaires dans la sauvegarde & Fait \\ \hline
+F23 & Format des paramètres du jeu & Fait \\ \hline
+F24 & Format du plateau de jeu & Fait \\ \hline
+F25 & Format de l'historique & Fait \\ \hline
 
-F26 & Module \textit{graph} & Non fait \\ \hline
-F27 & Algorithmes de manipulation des graphes & Non fait \\ \hline
+F26 & Module \textit{graph} & Fait \\ \hline
+F27 & Algorithmes de manipulation des graphes & Fait \\ \hline
 
-F28 & Menus de l'application & Non fait \\ \hline
-F29 & Raccourcis clavier & Non fait \\ \hline
-F30 & Drag'n'drop & Non fait \\ \hline
+F28 & Menus de l'application & Fait \\ \hline
+F29 & Raccourcis clavier & Fait \\ \hline
+F30 & Drag'n'drop & Fait \\ \hline
 
-F31 & Temps de réflexion borné & Non fait \\ \hline
-F32 & Minimax avec $\alpha$$\beta$-pruning & Non fait \\ \hline
-F33 & Fonctions d'évaluation pour Minimax & Non fait \\ \hline
-F34 & Approfondissement itératif de Minimax & Non fait \\ \hline
-F35 & Profondeur de recherche de Minimax & Non fait \\ \hline
-F36 & Monte Carlo Tree Search (MCTS) & Non fait \\ \hline
-F37 & Fonction de sélection par Machine Learning & Non fait \\ \hline
+F31 & Temps de réflexion borné & Fait \\ \hline
+F32 & Minimax avec $\alpha$$\beta$-pruning & Fait \\ \hline
+F33 & Fonctions d'évaluation pour Minimax & Fait \\ \hline
+F34 & Approfondissement itératif de Minimax & Fait \\ \hline
+F35 & Profondeur de recherche de Minimax & Fait \\ \hline
+F36 & Monte Carlo Tree Search (MCTS) & Fait \\ \hline
+F37 & Fonction de sélection par Machine Learning & Fait \\ \hline
 
 F38 & Découverte de serveurs et connexion client-
-serveur basique & Non fait \\ \hline
-F39 & Serveur multi-clients et gestion de parties & Non fait \\ \hline
+serveur basique & Fait \\ \hline
+F39 & Serveur multi-clients et gestion de parties & Partiel \\ \hline
 F40 & Système d'invitations et gestion avancée des
-joueurs & Non fait \\ \hline
+joueurs & Partiel \\ \hline
 
 \end{longtable}
 
