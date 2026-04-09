@@ -73,7 +73,7 @@ class Board:
         orientation."""
         rotation = rotation % 4
         steps = (-rotation) % 4
-        for _ in range(steps):
+        for _step in range(steps):
             position = Board.MEEPLE_ROTATION_MAP[position]
         return position
 

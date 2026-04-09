@@ -1,10 +1,12 @@
 """Tests for InfoMessage - GUI information dialog display."""
 
-from carcassonne.presentation.gui.info_message import InfoMessage
-import pytest
 from unittest.mock import Mock, patch, MagicMock
 
+import pytest
+
 pytest.importorskip("gi")
+
+from carcassonne.presentation.gui.info_message import InfoMessage  # noqa: E402
 
 
 def test_info_message_initialization() -> None:

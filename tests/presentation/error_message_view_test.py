@@ -1,11 +1,16 @@
 """Tests for ErrorMessageView - GUI error dialog display."""
 
-from carcassonne.presentation.gui.error_message_view import ErrorMessageView
-from carcassonne.presentation.gui import error_message_view
-import pytest
+from types import SimpleNamespace
 from unittest.mock import Mock, patch, MagicMock
 
+import pytest
+
 pytest.importorskip("gi")
+
+from carcassonne.presentation.gui import error_message_view  # noqa: E402
+from carcassonne.presentation.gui.error_message_view import (  # noqa: E402
+    ErrorMessageView,
+)
 
 
 def test_error_message_view_initialization() -> None:
@@ -80,25 +85,24 @@ def test_show_error_fallback_when_alert_dialog_is_unavailable(
     gui.window.window = Mock()
     error_view = ErrorMessageView(gui)
 
-    # Force fallback path for environments without Gtk.AlertDialog.
-    monkeypatch.delattr(error_message_view.Gtk, "AlertDialog", raising=False)
+    dialog = MagicMock()
+    box = MagicMock()
+    label = MagicMock()
+    button = MagicMock()
+    fake_gtk = SimpleNamespace(
+        Window=MagicMock(return_value=dialog),
+        Box=MagicMock(return_value=box),
+        Label=MagicMock(return_value=label),
+        Button=MagicMock(return_value=button),
+        Orientation=SimpleNamespace(VERTICAL="vertical"),
+    )
 
-    with patch.object(error_message_view.Gtk, "Window") as mock_window_class, patch.object(
-        error_message_view.Gtk, "Box"
-    ) as mock_box_class, patch.object(error_message_view.Gtk, "Label") as mock_label_class, patch.object(
-        error_message_view.Gtk, "Button"
-    ) as mock_button_class:
-        dialog = MagicMock()
-        box = MagicMock()
-        label = MagicMock()
-        button = MagicMock()
+    # Force fallback path with a Gtk replacement that does not expose
+    # AlertDialog, which is more reliable than deleting attributes from
+    # the GI proxy module.
+    monkeypatch.setattr(error_message_view, "Gtk", fake_gtk)
 
-        mock_window_class.return_value = dialog
-        mock_box_class.return_value = box
-        mock_label_class.return_value = label
-        mock_button_class.return_value = button
-
-        error_view.show_error("Fallback error")
+    error_view.show_error("Fallback error")
 
     gui.window.window.present.assert_called_once()
     dialog.set_modal.assert_called_once_with(False)
