@@ -525,7 +525,7 @@ def play(self, move, game, client_service: IClientService) -> None:
         return
     result = game.play_move(move)
     if not result:
-        print(f"{move} failed")
+        print(_("{move} failed.").format(move=move))
         _print_board(game)
         return
     if not game.is_undo_history_empty():

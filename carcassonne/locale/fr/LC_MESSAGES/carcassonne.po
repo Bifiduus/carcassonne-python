@@ -1198,3 +1198,63 @@ msgstr "Socket introuvable pour le client {username}."
 
 msgid "Error sending to client {username}: {error}"
 msgstr "Erreur lors de l'envoi au client {username} : {error}"
+
+msgid "Deck is empty, cannot draw a tile."
+msgstr "Le deck est vide, impossible de piocher une tuile."
+
+msgid "No more river tiles available."
+msgstr "Il n'y a plus de tuiles de rivière disponibles."
+
+msgid "Error in getting position"
+msgstr "Erreur lors de la récupération de la position"
+
+msgid "Joining server: {server}"
+msgstr "Connexion au serveur : {server}"
+
+msgid "Error getting players: {error}"
+msgstr "Erreur lors de la récupération des joueurs : {error}"
+
+msgid "Error getting scoreboard: {error}"
+msgstr "Erreur lors de la récupération du tableau des scores : {error}"
+
+msgid "Error updating connection buttons: {error}"
+msgstr "Erreur lors de la mise à jour des boutons de connexion : {error}"
+
+msgid "Error disconnecting from server: {error}"
+msgstr "Erreur lors de la déconnexion du serveur : {error}"
+
+msgid "Error stopping local server: {error}"
+msgstr "Erreur lors de l'arrêt du serveur local : {error}"
+
+msgid "Error pinging server: {error}"
+msgstr "Erreur lors du ping du serveur : {error}"
+
+msgid "Dialog display error: {error}"
+msgstr "Erreur d'affichage de la boîte de dialogue : {error}"
+
+msgid "Error in _handle_server_message: {error}"
+msgstr "Erreur dans _handle_server_message : {error}"
+
+msgid "Error accepting invitation: {error}"
+msgstr "Erreur lors de l'acceptation de l'invitation : {error}"
+
+msgid "Error declining invitation: {error}"
+msgstr "Erreur lors du refus de l'invitation : {error}"
+
+msgid "Error cancelling invitation: {error}"
+msgstr "Erreur lors de l'annulation de l'invitation : {error}"
+
+msgid "Error setting status to away: {error}"
+msgstr "Erreur lors du passage au statut absent : {error}"
+
+msgid "Error setting status to idle: {error}"
+msgstr "Erreur lors du retour au statut inactif : {error}"
+
+msgid "Error parsing players list: {error}"
+msgstr "Erreur lors de l'analyse de la liste des joueurs : {error}"
+
+msgid "Error in _display_player_list: {error}"
+msgstr "Erreur dans _display_player_list : {error}"
+
+msgid "Error notifying host {host_id}: {error}"
+msgstr "Erreur lors de la notification de l'hôte {host_id} : {error}"
