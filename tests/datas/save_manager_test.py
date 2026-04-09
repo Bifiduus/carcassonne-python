@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 
 
 from carcassonne.business_logic.save_handler import SaveHandler
@@ -281,3 +282,110 @@ def test_load_game_from_file_accepts_none_seed(tmp_path: Path) -> None:
     assert handler.load_game_from_file(str(save_file)) == 0
     assert game.game_data.seed is None
     assert game.shuffle_calls == []
+
+
+def test_split_setting_line_supports_equal_and_colon_and_rejects_invalid() -> None:
+    handler = SaveHandler(DummyGame())
+
+    assert handler.split_setting_line("time=30") == ["time", "30"]
+    assert handler.split_setting_line("time:30") == ["time", "30"]
+
+    with pytest.raises(ValueError):
+        handler.split_setting_line("invalid-setting-line")
+
+
+@pytest.mark.parametrize(
+    ("value", "setting", "expected_ok"),
+    [
+        (-1, "time", False),
+        (61, "time", False),
+        (5, "num_ai_players", False),
+        (11, "ai_time", False),
+        (10, "time", True),
+        (4, "num_ai_players", True),
+        (10, "ai_time", True),
+    ],
+)
+def test_check_integer_limits_validates_ranges(
+    value: int,
+    setting: str,
+    expected_ok: bool,
+    capsys,
+) -> None:
+    handler = SaveHandler(DummyGame())
+
+    assert handler.check_integer_limits(value, setting) is expected_ok
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    if expected_ok:
+        assert "Error:" not in output
+    else:
+        assert "Error:" in output
+
+
+def test_print_missing_settings_only_outputs_when_non_empty(capsys) -> None:
+    handler = SaveHandler(DummyGame())
+
+    handler._print_missing_settings("boolean", set())
+    assert capsys.readouterr().err == ""
+
+    handler._print_missing_settings("integer", {"time"})
+    assert "Missing integer settings" in capsys.readouterr().err
+
+
+def test_load_game_from_file_rejects_directory_path(tmp_path: Path, capsys) -> None:
+    handler = SaveHandler(DummyGame())
+    directory_path = tmp_path / "as_directory.txt"
+    directory_path.mkdir()
+
+    result = handler.load_game_from_file(str(directory_path))
+
+    assert result == -1
+    assert "is a directory, not a file" in (capsys.readouterr().err)
+
+
+def test_load_game_from_file_reports_setting_parse_and_validation_errors(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    class StrictGame(DummyGame):
+        def set_game_configuration(self, key: str, value) -> None:
+            if key == "blitz":
+                raise RuntimeError("boom")
+            super().set_game_configuration(key, value)
+
+    game = StrictGame()
+    handler = SaveHandler(game)
+    save_file = tmp_path / "settings_errors.txt"
+    save_file.write_text(
+        "\n".join(
+            [
+                "[Settings]",
+                "bad_line_without_separator",
+                "file_keybinds=[broken-format",
+                "blitz=True",
+                "time=abc",
+                "ai_mode=",
+                "unknown_setting=42",
+                "",
+                "[GameState]",
+                "NumberOfPlayers: 2,1",
+                "PlayersOrder: [0, 1, 2]",
+                "GameScore: [0: 1, 1: 2, 2: 3]",
+                "Seed: 0",
+                "",
+                "[History]",
+            ]
+        )
+    )
+
+    assert handler.load_game_from_file(str(save_file)) == 0
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "Warning: Invalid setting line" in output
+    assert "Error: Missing required keybinds in file_keybinds" in output
+    assert "Error: Invalid boolean value for blitz" in output
+    assert "Error: Invalid integer value for time" in output
+    assert "Error: Empty string value for ai_mode" in output
+    assert "Warning: Unknown setting 'unknown_setting'." in output

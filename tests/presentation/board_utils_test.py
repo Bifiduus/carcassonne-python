@@ -3,6 +3,7 @@
 from carcassonne.presentation.gui import board_utils
 import pytest
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 pytest.importorskip("gi")
 
@@ -204,3 +205,141 @@ class TestMeeplePosGrids:
         assert board_utils.MEEPLE_POS_CARDINAL["N"] == (0, 1)
         assert board_utils.MEEPLE_POS_CARDINAL["E"] == (1, 2)
         assert board_utils.MEEPLE_POS_CARDINAL["W"] == (1, 0)
+
+
+class DummyPixbuf:
+    def __init__(self, width: int, height: int) -> None:
+        self.width = width
+        self.height = height
+
+    def get_width(self) -> int:
+        return self.width
+
+    def get_height(self) -> int:
+        return self.height
+
+
+class DummyCairoContext:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def save(self) -> None:
+        self.calls.append(("save",))
+
+    def restore(self) -> None:
+        self.calls.append(("restore",))
+
+    def translate(self, x, y) -> None:
+        self.calls.append(("translate", x, y))
+
+    def rotate(self, angle) -> None:
+        self.calls.append(("rotate", angle))
+
+    def scale(self, sx, sy) -> None:
+        self.calls.append(("scale", sx, sy))
+
+    def paint_with_alpha(self, alpha) -> None:
+        self.calls.append(("paint_with_alpha", alpha))
+
+    def set_source_rgb(self, r, g, b) -> None:
+        self.calls.append(("set_source_rgb", r, g, b))
+
+    def set_line_width(self, width) -> None:
+        self.calls.append(("set_line_width", width))
+
+    def move_to(self, x, y) -> None:
+        self.calls.append(("move_to", x, y))
+
+    def line_to(self, x, y) -> None:
+        self.calls.append(("line_to", x, y))
+
+    def stroke(self) -> None:
+        self.calls.append(("stroke",))
+
+
+def test_rotate_meeple_label_respects_orientation_steps() -> None:
+    assert board_utils._rotate_meeple_label("N", 0) == "N"
+    assert board_utils._rotate_meeple_label("N", 1) == "E"
+    assert board_utils._rotate_meeple_label("NE", 2) == "SW"
+    assert board_utils._rotate_meeple_label("C", 3) == "C"
+
+
+def test_draw_preview_grid_draws_two_vertical_and_two_horizontal_lines() -> None:
+    cr = DummyCairoContext()
+
+    board_utils.draw_preview_grid(cr, x=10, y=20, size=90)
+
+    assert ("set_source_rgb", 0, 1, 0) in cr.calls
+    assert ("set_line_width", 1) in cr.calls
+    assert cr.calls.count(("move_to", 40.0, 20)) == 1
+    assert cr.calls.count(("line_to", 40.0, 110)) == 1
+    assert cr.calls.count(("move_to", 70.0, 20)) == 1
+    assert cr.calls.count(("line_to", 70.0, 110)) == 1
+
+
+def test_draw_pixbuf_with_alpha_applies_transform_and_alpha(monkeypatch) -> None:
+    cr = DummyCairoContext()
+    pixbuf = DummyPixbuf(width=50, height=25)
+    gdk_call = Mock()
+    monkeypatch.setattr(board_utils.Gdk, "cairo_set_source_pixbuf", gdk_call)
+
+    board_utils.draw_pixbuf_with_alpha(
+        cr,
+        x=10,
+        y=20,
+        size=100,
+        pixbuf=pixbuf,
+        orientation=1,
+        alpha=0.4,
+    )
+
+    assert ("translate", 60.0, 70.0) in cr.calls
+    assert ("scale", 2.0, 4.0) in cr.calls
+    assert ("paint_with_alpha", 0.4) in cr.calls
+    gdk_call.assert_called_once_with(cr, pixbuf, -25.0, -12.5)
+
+
+def test_draw_pixbuf_wrapper_uses_opaque_alpha(monkeypatch) -> None:
+    wrapped_call = Mock()
+    monkeypatch.setattr(board_utils, "draw_pixbuf_with_alpha", wrapped_call)
+
+    board_utils.draw_pixbuf(
+        cr=object(),
+        x=1,
+        y=2,
+        size=3,
+        pixbuf=object(),
+        orientation=2,
+    )
+
+    assert wrapped_call.call_args.args[-1] == 1.0
+
+
+def test_draw_meeples_draws_only_target_tile_and_uses_color_fallback() -> None:
+    cr = DummyCairoContext()
+    players = {
+        0: SimpleNamespace(get_color=lambda: "blue"),
+        1: SimpleNamespace(get_color=lambda: "unknown"),
+    }
+    meeples = [
+        {"tile_id": 7, "position": 0, "player_id": 0},
+        {"tile_id": 7, "position": 2, "player_id": 1},
+        {"tile_id": 8, "position": 4, "player_id": 0},
+    ]
+
+    board_utils.draw_meeples(
+        cr,
+        x=0,
+        y=0,
+        size=90,
+        meeples=meeples,
+        tile_id=7,
+        players=players,
+        orientation=0,
+    )
+
+    # One set_source_rgb call per meeple on target tile only (2 meeples).
+    set_colors = [call for call in cr.calls if call[0] == "set_source_rgb"]
+    assert len(set_colors) == 2
+    assert ("set_source_rgb", 0, 0, 1) in set_colors
+    assert ("set_source_rgb", 1, 0, 0) in set_colors

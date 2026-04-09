@@ -280,3 +280,162 @@ def test_provide_hint_with_different_vertices_and_sides() -> None:
     assert gui_data.hint_empty_positions == [(3, 4)]
     assert gui_data.hint_neighbor_id is None
     assert gui_data.hint_tile is None
+
+
+def test_get_component_display_name_variants() -> None:
+    assert GameDataGui._get_component_display_name("F2") == "field F2"
+    assert GameDataGui._get_component_display_name("C1") == "city C1"
+    assert GameDataGui._get_component_display_name("R3") == "road R3"
+    assert GameDataGui._get_component_display_name("M0") == "monastery M0"
+    assert GameDataGui._get_component_display_name("X") == "X"
+
+
+def test_run_contest_gui_success_sets_flags_and_move() -> None:
+    game = Mock()
+    game.load_game_from_file.return_value = 0
+    game.game_mode_manager = SimpleNamespace(run_contest=Mock(return_value="CFFF/0N0"))
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    success, result = gui_data.run_contest_gui("contest.txt")
+
+    assert success is True
+    assert result == "CFFF/0N0"
+    assert gui_data.highlight_contest_move is True
+    assert gui_data.contest_move_str == "CFFF/0N0"
+
+
+def test_run_contest_gui_load_failure_returns_error_message() -> None:
+    game = Mock()
+    game.load_game_from_file.return_value = 1
+    game.game_mode_manager = SimpleNamespace(run_contest=Mock())
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    success, result = gui_data.run_contest_gui("contest.txt")
+
+    assert success is False
+    assert "Could not load contest file" in result
+    game.game_mode_manager.run_contest.assert_not_called()
+
+
+def test_run_contest_gui_value_error_is_propagated() -> None:
+    game = Mock()
+    game.load_game_from_file.side_effect = ValueError("bad file")
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    success, result = gui_data.run_contest_gui("contest.txt")
+
+    assert success is False
+    assert result == "bad file"
+
+
+def test_play_move_gui_in_contest_mode_is_read_only() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.highlight_contest_move = True
+    gui_data.gui = SimpleNamespace(error_message=Mock())
+    gui_data.current_tile = TilesView("CFFF", tile_id=1)
+
+    gui_data.play_move_gui()
+
+    gui_data.gui.error_message.show_error.assert_called_once()
+    game.play_move.assert_not_called()
+
+
+def test_build_error_message_for_empty_move() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    message = gui_data._build_error_message("")
+
+    assert "No tile has been selected" in message
+
+
+def test_build_error_message_when_no_tile_in_hand() -> None:
+    game = Mock()
+    game.game_data = SimpleNamespace(current_hand=None)
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    message = gui_data._build_error_message("CFFF/0N0")
+
+    assert "draw a tile" in message
+
+
+def test_translate_invalid_move_reason_exact_tile_unavailable() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    message = gui_data._translate_invalid_move_reason("tile CFFF is not available")
+
+    assert message == "The tile CFFF is not available."
+
+
+def test_translate_invalid_move_reason_component_occupied() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    message = gui_data._translate_invalid_move_reason(
+        "component C1 already contains a meeple"
+    )
+
+    assert message == "A meeple is already present on city C1."
+
+
+def test_translate_invalid_move_reason_unknown_returns_none() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+
+    assert gui_data._translate_invalid_move_reason("unexpected reason") is None
+
+
+def test_rotate_current_tile_updates_move_and_preview() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.current_tile = TilesView("CFFF", tile_id=1)
+    gui_data.current_tile.move = "CFFF/0N0"
+    gui_data.board_view = Mock()
+    gui_data.gui = SimpleNamespace(tile_preview=SimpleNamespace(update_rotation=Mock()))
+
+    gui_data.rotate_current_tile()
+
+    assert gui_data.current_orientation == 1
+    assert gui_data.current_tile.move.endswith("1")
+    gui_data.board_view.refresh.assert_called_once()
+    gui_data.gui.tile_preview.update_rotation.assert_called_once()
+
+
+def test_rotate_current_tile_without_tile_does_nothing() -> None:
+    game = Mock()
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = Mock()
+
+    gui_data.rotate_current_tile()
+
+    gui_data.board_view.refresh.assert_not_called()
+
+
+def test_draw_tile_returns_none_and_resets_state() -> None:
+    game = Mock()
+    game.draw_tile.return_value = None
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.current_orientation = 3
+
+    result = gui_data.draw_tile()
+
+    assert result is None
+    assert gui_data.current_tile is None
+    assert gui_data.current_orientation == 0
+
+
+def test_draw_tile_sets_current_tile_and_refreshes_board() -> None:
+    game = Mock()
+    game.draw_tile.return_value = "CFFF"
+    gui_data = GameDataGui(game, Mock(), Mock())
+    gui_data.board_view = Mock()
+
+    result = gui_data.draw_tile()
+
+    assert result == "CFFF"
+    assert gui_data.current_tile is not None
+    assert gui_data.current_tile.current_tile == "CFFF"
+    assert gui_data.nb_tiles == 1
+    gui_data.board_view.refresh.assert_called_once()
