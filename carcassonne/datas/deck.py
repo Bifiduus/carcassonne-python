@@ -5,6 +5,8 @@ It includes tile initialization, deterministic shuffling, and draw helpers.
 
 import random
 
+from carcassonne.i18n import gettext as _
+
 
 class Deck:
     """Represent the draw pile and tile order for a game."""
@@ -123,7 +125,7 @@ class Deck:
         """
         if not self.tiles:
             if not silent:
-                print("Deck is empty, cannot draw a tile.")
+                print(_("Deck is empty, cannot draw a tile."))
             return None
         return self.tiles.pop()
 
@@ -136,7 +138,7 @@ class Deck:
         """
         if not self.river_tiles:
             if not silent:
-                print("No more river tiles available.")
+                print(_("No more river tiles available."))
             return None
         return self.river_tiles.pop(0)
 

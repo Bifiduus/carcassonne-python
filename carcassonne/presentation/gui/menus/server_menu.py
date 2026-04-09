@@ -241,7 +241,7 @@ class ServerMenu(Gtk.Box):
     def on_join_server(self, button, server, popup):
         """Join a selected server."""
         try:
-            print(f"Joining server: {server}")
+            print(_("Joining server: {server}").format(server=server))
             result = self.client_service.join_server(server)
             if result:
                 # Close the popup safely
@@ -251,7 +251,10 @@ class ServerMenu(Gtk.Box):
                 self.show_message(_("Error"), _("Failed to join server."))
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error joining server: {e}", file=sys.stderr)
+            print(
+                _("Error joining server: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error joining server: {error}").format(error=e),
@@ -263,14 +266,17 @@ class ServerMenu(Gtk.Box):
         try:
             self.server_service.server_start(port)
             self.current_port = port
-            print(f"Server started successfully on port {port}")
+            print(_("Server started on port {port}").format(port=port))
             self.show_message(
                 _("Success"),
                 _("Server started on port {port}").format(port=port),
             )
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error starting server: {e}", file=sys.stderr)
+            print(
+                _("Error starting server: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error starting server: {error}").format(error=e),
@@ -284,7 +290,10 @@ class ServerMenu(Gtk.Box):
             self.show_message(_("Success"), _("Server stopped successfully."))
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error stopping server: {e}", file=sys.stderr)
+            print(
+                _("Error stopping server: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error stopping server: {error}").format(error=e),
@@ -312,7 +321,10 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Server status"), status_text)
         except Exception as e:
-            print(f"Error getting server status: {e}", file=sys.stderr)
+            print(
+                _("Error getting server status: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error getting server status: {error}").format(error=e),
@@ -338,7 +350,10 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Connected players"), players_text)
         except Exception as e:
-            print(f"Error getting players: {e}", file=sys.stderr)
+            print(
+                _("Error getting players: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error getting players: {error}").format(error=e),
@@ -387,7 +402,10 @@ class ServerMenu(Gtk.Box):
 
             self.show_message(_("Server scoreboard"), scoreboard_text)
         except Exception as e:
-            print(f"Error getting scoreboard: {e}", file=sys.stderr)
+            print(
+                _("Error getting scoreboard: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error getting scoreboard: {error}").format(error=e),
@@ -409,7 +427,12 @@ class ServerMenu(Gtk.Box):
             server_running = self.server_service.is_server_running()
             self.btn_stop_local_server.set_visible(server_running)
         except Exception as e:
-            print(f"Error updating connection buttons: {e}", file=sys.stderr)
+            print(
+                _("Error updating connection buttons: {error}").format(
+                    error=e
+                ),
+                file=sys.stderr,
+            )
             self.btn_disconnect.set_visible(False)
             self.btn_ping.set_visible(False)
             self.btn_stop_local_server.set_visible(False)
@@ -424,7 +447,12 @@ class ServerMenu(Gtk.Box):
                 self.update_connection_buttons()
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error disconnecting from server: {e}", file=sys.stderr)
+            print(
+                _("Error disconnecting from server: {error}").format(
+                    error=e
+                ),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error disconnecting from server: {error}").format(
@@ -443,7 +471,10 @@ class ServerMenu(Gtk.Box):
             )
             self.update_connection_buttons()
         except Exception as e:
-            print(f"Error stopping local server: {e}", file=sys.stderr)
+            print(
+                _("Error stopping local server: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error stopping local server: {error}").format(error=e),
@@ -460,7 +491,10 @@ class ServerMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error pinging server: {e}", file=sys.stderr)
+            print(
+                _("Error pinging server: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error pinging server: {error}").format(error=e),
@@ -510,7 +544,10 @@ class ServerMenu(Gtk.Box):
                 btn_ok.grab_focus()
             except Exception as e:
                 print(f"{title}: {message}")
-                print(f"Dialog display error: {e}", file=sys.stderr)
+                print(
+                    _("Dialog display error: {error}").format(error=e),
+                    file=sys.stderr,
+                )
             return False
 
         GLib.idle_add(_show_dialog)
@@ -532,7 +569,12 @@ class ServerMenu(Gtk.Box):
                 ),
             )
         except Exception as e:
-            print(f"Error in _handle_server_message: {e}", file=sys.stderr)
+            print(
+                _("Error in _handle_server_message: {error}").format(
+                    error=e
+                ),
+                file=sys.stderr,
+            )
         finally:
             self._popup_pending = False  # release lock
         return False

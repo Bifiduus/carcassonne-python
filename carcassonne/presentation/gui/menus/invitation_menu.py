@@ -206,7 +206,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error sending invitation: {e}", file=sys.stderr)
+            print(
+                _("Error sending invitation: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error sending invitation: {error}").format(error=e),
@@ -223,7 +226,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error accepting invitation: {e}", file=sys.stderr)
+            print(
+                _("Error accepting invitation: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error accepting invitation: {error}").format(error=e),
@@ -240,7 +246,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error declining invitation: {e}", file=sys.stderr)
+            print(
+                _("Error declining invitation: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error declining invitation: {error}").format(error=e),
@@ -257,7 +266,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error cancelling invitation: {e}", file=sys.stderr)
+            print(
+                _("Error cancelling invitation: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error cancelling invitation: {error}").format(error=e),
@@ -274,7 +286,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error setting status to away: {e}", file=sys.stderr)
+            print(
+                _("Error setting status to away: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error setting status to away: {error}").format(error=e),
@@ -291,7 +306,10 @@ class InvitationMenu(Gtk.Box):
                 )
             # Response will arrive via visit_server_message() from server
         except Exception as e:
-            print(f"Error setting status to idle: {e}", file=sys.stderr)
+            print(
+                _("Error setting status to idle: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error setting status to idle: {error}").format(error=e),
@@ -345,7 +363,10 @@ class InvitationMenu(Gtk.Box):
                 btn_ok.grab_focus()
             except Exception as e:
                 print(f"{title}: {message}")
-                print(f"Dialog display error: {e}")
+                print(
+                    _("Dialog display error: {error}").format(error=e),
+                    file=sys.stderr,
+                )
             return False
 
         GLib.idle_add(_show_dialog)
@@ -374,7 +395,12 @@ class InvitationMenu(Gtk.Box):
                     ),
                 )
         except Exception as e:
-            print(f"Error in _handle_server_message: {e}", file=sys.stderr)
+            print(
+                _("Error in _handle_server_message: {error}").format(
+                    error=e
+                ),
+                file=sys.stderr,
+            )
         finally:
             self._popup_pending = False  # release lock
         # Important: tell GLib not to call this function again.
@@ -416,13 +442,19 @@ class InvitationMenu(Gtk.Box):
             self.show_message(_("Connected players"), "\n".join(lines))
 
         except (ValueError, SyntaxError, IndexError) as e:
-            print(f"Error parsing players list: {e}", file=sys.stderr)
+            print(
+                _("Error parsing players list: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Connected players"),
                 _("Raw response:\n{message}").format(message=message),
             )
         except Exception as e:
-            print(f"Error in _display_player_list: {e}", file=sys.stderr)
+            print(
+                _("Error in _display_player_list: {error}").format(error=e),
+                file=sys.stderr,
+            )
             self.show_message(
                 _("Error"),
                 _("Error while displaying: {error}").format(error=e),
