@@ -92,7 +92,7 @@ class GameConfiguration:
         self._normalize_keybind_settings()
 
     def _normalize_time_key(self):
-        """Move legacy `timeout` configuration into the canonical `time` key."""
+        """Move legacy `timeout` config into the canonical `time` key."""
         if "time" not in self.settings and "timeout" in self.settings:
             self.settings["time"] = self.settings["timeout"]
         self.settings.pop("timeout", None)
@@ -269,7 +269,7 @@ class GameConfiguration:
         return normalized_key, normalized_value
 
     def _normalize_keybind_settings(self):
-        """Ensure both keybind sections contain all expected default actions."""
+        """Ensure both keybind sections have all expected default actions."""
         self.settings["file_keybinds"] = _merge_keybinds(
             self.settings.get("file_keybinds"),
             FILE_KEYBIND_DEFAULTS,

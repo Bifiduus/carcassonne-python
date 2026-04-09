@@ -17,7 +17,8 @@ class RiverManager:
         # The compass index (0-3) opposite to the last river segment direction.
         # Used to prevent immediate U-turns.
         self.river_previous_opposite_direction = 0
-        # Compass index of the outgoing river side of the last river tile placed.
+        # Compass index of the outgoing river side of the last
+        # river tile placed.
         self.river_turn = None
 
     def initialize_river(self) -> None:
@@ -40,7 +41,8 @@ class RiverManager:
         immediately reverse the river back on itself.
 
         Args:
-            turn: Compass index (0=N, 1=E, 2=S, 3=W) of the outgoing river side.
+            turn: Compass index (0=N, 1=E, 2=S, 3=W) of the
+                outgoing river side.
         """
         if self.river_turn is not None:
             self.river_previous_opposite_direction = (self.river_turn + 2) % 4

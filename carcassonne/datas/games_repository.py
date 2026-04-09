@@ -163,7 +163,8 @@ class GameRepository(IGamesRepository):
             params: SQL parameters bound to placeholders in the query.
 
         Returns:
-            int | None: The last row ID of the executed non-query, or None if not applicable.
+            int | None: The last row ID of the executed non-query,
+                or None when not applicable.
         """
         with self.lock:
             cur = self.db.cursor()
@@ -263,7 +264,8 @@ class GameRepository(IGamesRepository):
         """Check all remaining timeouts and return the evaluation result.
 
         Args:
-            timeout: Timeout value in seconds or timestamp depending on the context.
+            timeout: Timeout value in seconds or timestamp
+                depending on the context.
 
         Returns:
             list[int]: Player ids whose timeout expired during this scan.
@@ -790,7 +792,8 @@ class GameRepository(IGamesRepository):
         """Check all invitations timeout and return the evaluation result.
 
         Args:
-            timeout: Timeout value in seconds or timestamp depending on the context.
+            timeout: Timeout value in seconds or timestamp
+                depending on the context.
 
         Returns:
             list[int]: Invited player ids whose invitation expired.

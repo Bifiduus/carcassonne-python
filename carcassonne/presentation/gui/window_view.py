@@ -145,7 +145,7 @@ class WindowView:
         GLib.timeout_add(50, self._animate_header)
 
     def _animate_header(self):
-        """Update header gradient colors; returns True to keep timeout alive."""
+        """Update header gradient; returns True to keep timeout alive."""
         self._t += 0.02
 
         # Animated colors for a fluid header effect.

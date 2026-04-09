@@ -19,7 +19,7 @@ from carcassonne.business_logic.score_manager import ScoreManager
 # These constants name every cell in that grid.
 NORTHWEST_MATRIX = (0, 0)   # top-left corner
 NORTH_MATRIX = (0, 1)       # top edge / north side
-NORTHEAST_MATRIX = (0, 2)   # top-right corner  
+NORTHEAST_MATRIX = (0, 2)   # top-right corner
 WEST_MATRIX = (1, 0)        # left edge / west side
 CENTER_MATRIX = (1, 1)      # center of the tile (city, monastery, …)
 EAST_MATRIX = (1, 2)        # right edge / east side
@@ -29,8 +29,9 @@ SOUTHEAST_MATRIX = (2, 2)   # bottom-right corner
 
 
 class Board:
-    # Maps a meeple placement direction to its 90° clockwise rotated equivalent.
-    # Used to convert meeple positions back to the tile's base (unrotated) orientation.
+    # Maps a meeple placement direction to its 90° clockwise
+    # rotated equivalent. Used to convert meeple positions back
+    # to the tile's base (unrotated) orientation.
     MEEPLE_ROTATION_MAP = {
         "N": "E",
         "E": "S",
@@ -103,7 +104,8 @@ class Board:
         Args:
             move:           Full move string, e.g. ``"CFFF/1N0"`` or
                             ``"FSRS/m/0S1/C"`` (tile/[center/]anchor/[meeple]).
-            graph:          Graph structure holding all placed tiles and meeples.
+            graph:          Graph structure holding all placed
+                            tiles and meeples.
             tiles_info:     Metadata about tile sides, directions and matrices.
             history:        Undo/redo stack to append the new record to.
             players:        Dict mapping player_id → Player object.
@@ -272,7 +274,8 @@ class Board:
         returns the tile code to the available deck.
 
         Args:
-            move:      Move string prefixed with a header, e.g. ``":CFFF/1N0"``.
+            move:      Move string prefixed with a header,
+                       e.g. ``":CFFF/1N0"``.
             graph:     Graph from which the vertex/meeple will be removed.
             tiles_info: Deck metadata; the tile code is re-added here.
             history:   History stack (not modified directly in this method).

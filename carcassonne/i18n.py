@@ -36,7 +36,8 @@ class POTranslations(NullTranslations):
     def _parse_catalog(po_file: Path) -> dict[str, str]:
         """Parse a gettext `.po` file into a msgid -> msgstr dictionary."""
         catalog: dict[str, str] = {}
-        # ``state`` tracks whether multiline continuations apply to msgid/msgstr.
+        # ``state`` tracks whether multiline continuations apply to
+        # msgid/msgstr.
         state: str | None = None
         current_msgid: str | None = None
         current_msgstr: str | None = None

@@ -53,11 +53,13 @@ class GameData:
         self.minimum_number_of_players = 2
         # Number of AI-controlled players in the current game.
         self.number_of_ai_players = 0
-        # Optional fixed seed set via configuration; None = generate at runtime.
+        # Optional fixed seed set via configuration;
+        # None means generate at runtime.
         self.default_seed = None
         # Algorithm used to shuffle the deck ("fisher-yates" or "naive").
         self.shuffle_algo = "fisher-yates"
-        # The tile currently in the active player's hand (drawn but not placed).
+        # The tile currently in the active player's hand
+        # (drawn but not yet placed).
         self.current_hand: str | None = None
         # Path to the current save file, if any.
         self.save_file = None
@@ -73,7 +75,8 @@ class GameData:
         # Index into players_order pointing at the current player's slot.
         self.current_player_order_list = 0
 
-        # True once end-of-game scoring has been applied (prevents double scoring).
+        # True once end-of-game scoring has been applied
+        # (prevents double scoring).
         self._end_game_scored = False
         # True when all remaining tiles are unplayable for the current state.
         self.no_playable_tiles_remaining = False

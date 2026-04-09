@@ -124,7 +124,8 @@ class Game(IGameService):
         self.river = None
         # Dirty flag: True when the game has unsaved changes.
         self._has_unsaved_changes = False
-        # When True, mutations do not set _has_unsaved_changes (used during load).
+        # When True, mutations do not set _has_unsaved_changes
+        # (used during load).
         self._save_tracking_suspended = False
         _gui_mode = (config_overrides or {}).get("gui", False)
         if self.game_mode_manager.get_mode() != "contest" and not _gui_mode:

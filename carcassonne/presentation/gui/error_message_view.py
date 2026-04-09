@@ -9,7 +9,7 @@ Gtk = importlib.import_module("gi.repository.Gtk")
 
 
 class ErrorMessageView:
-    """Display non-blocking error dialogs tied to the main application window."""
+    """Display non-blocking error dialogs tied to the application window."""
 
     def __init__(self, gui):
         """Store parent GUI reference used as transient window parent."""

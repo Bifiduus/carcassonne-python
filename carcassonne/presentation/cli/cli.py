@@ -250,14 +250,14 @@ class GameCLI:
             readline.write_history_file('.carcassonne_history')
 
     def _render_board(self) -> None:
-        """Print board representation while preserving trailing newline rules."""
+        """Print the board while preserving trailing newline rules."""
         board = self.game.get_printed_board()
         if not board.endswith("\n"):
             board += "\n"
         print(board, end="")
 
     def _tick_once(self) -> None:
-        """Execute one periodic tick: blitz update, timeout messages, AI turn."""
+        """Execute one periodic tick: blitz, timeout messages, AI turn."""
         self.game.tick_blitz()
         timeout_message = str(self.game.get_timeout_message() or "")
         clean_message = timeout_message.strip()

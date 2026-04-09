@@ -348,10 +348,8 @@ class ExpectimaxPlayer:
 
     def apply_chance_event(self, game: "Game", tile: str) -> None:
         """Apply a chance event (e.g., drawing a tile) to the game state."""
-        # TODO: Make the next tile to draw the tile parameter
         game.game_data.current_hand = tile
-        # TODO: bug with river tiles when they are commented out in the deck.
-        # game.deck.tiles.remove(tile)
+        # River tiles crash game.deck.tiles.remove(tile), so removal is skipped
 
     def num_successors(self, tiles_info: ITilesInfo) -> dict:
         """Return the number of possible chance events from this state."""

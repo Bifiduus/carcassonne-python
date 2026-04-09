@@ -1,5 +1,6 @@
 """Tile preview model used by the GUI drag-and-drop workflow."""
 
+
 class TilesView:
     """Store transient tile placement data for the currently drawn tile."""
 

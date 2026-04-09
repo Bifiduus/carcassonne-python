@@ -540,7 +540,8 @@ def _compress_to_star_bounds(
         scale: Divisor controlling sensitivity around 0.
 
     Returns:
-        Continuous heuristic value in the STAR-compatible range ``[-100, 100]``.
+        Continuous heuristic value in the STAR-compatible
+        range ``[-100, 100]``.
     """
     if scale <= 0:
         raise ValueError("Compression scale must be > 0.")

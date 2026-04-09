@@ -370,9 +370,9 @@ class TilesInfo(ITilesInfo):
         self.tiles_count[tile_code] -= 1
 
     def get_tile_definition(self, tile_code: str) -> ITile | None:
-        """Return the tile definition from repository data or in-memory state."""
+        """Return tile definition from repository data or in-memory state."""
         return self.tiles.get(tile_code)
 
     def get_direction_matrix(self) -> list[list[list[str]]]:
-        """Return the direction matrix from repository data or in-memory state."""
+        """Return direction matrix from repository data or in-memory state."""
         return self.direction_matrix

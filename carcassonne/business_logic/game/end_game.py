@@ -17,7 +17,8 @@ class EndGame:
         - No player has any time remaining (blitz mode), OR
         - All remaining tiles are proven unplayable.
 
-        Final scoring is applied at most once (guarded by ``_end_game_scored``).
+        Final scoring is applied at most once (guarded by
+        ``_end_game_scored``).
 
         Returns:
             True if the game has ended, False otherwise.
