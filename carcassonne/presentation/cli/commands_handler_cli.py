@@ -118,7 +118,7 @@ def _apply_history_action(game, action_name: str, count: int) -> int:
         return action_many(count)
 
     changed = 0
-    for _ in range(count):
+    for i in range(count):
         available_moves = getattr(game.game_data.history, history_attr, [])
         if len(available_moves) == 0:
             break

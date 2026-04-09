@@ -917,10 +917,11 @@ class Game(IGameService):
         if count < 1:
             raise ValueError("undo count must be a positive integer")
         undone = 0
-        for _ in range(count):
+        for i in range(count):
             before_signature = self._history_signature(self.game_data.history)
             self.undo()
-            if self._history_signature(self.game_data.history) == before_signature:
+            if (self._history_signature(self.game_data.history)
+                    == before_signature):
                 break
             undone += 1
         return undone
@@ -929,10 +930,11 @@ class Game(IGameService):
         if count < 1:
             raise ValueError("redo count must be a positive integer")
         redone = 0
-        for _ in range(count):
+        for i in range(count):
             before_signature = self._history_signature(self.game_data.history)
             self.redo()
-            if self._history_signature(self.game_data.history) == before_signature:
+            if (self._history_signature(self.game_data.history)
+                    == before_signature):
                 break
             redone += 1
         return redone
