@@ -56,6 +56,8 @@ def completer(texte, state):
     if state < len(matches):
         return matches[state][len(prefix):]
     else:
+        if state == 0 and len(matches) == 0:
+            print("\a", end="")  # beep when no commands match
         return None
 
 
