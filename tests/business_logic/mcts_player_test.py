@@ -604,12 +604,15 @@ def test_play_move_for_ai_and_undo_restore_state_and_deck() -> None:
     original_player = game.get_current_player()
     original_score = original_player.get_score_int()
     original_meeples = original_player.get_meeples()
+    original_board_meeples = {"origin": 1}
+    game.game_data.graph.set_meeples(original_board_meeples.copy())
 
     assert player.play_move_for_ai(game, "CRRF/0N0") is False
     assert player.play_move_for_ai(game, "CFFF/0N0/NW") is True
     assert game.game_data.current_hand is None
     assert game.game_data.current_player_order_list == 1
     assert game.game_data.history.past_moves[-1].move_str == "CFFF/0N0/NW"
+    game.game_data.graph.set_meeples({"transient": 99})
 
     player.undo_for_ai(game)
 
@@ -620,5 +623,6 @@ def test_play_move_for_ai_and_undo_restore_state_and_deck() -> None:
     assert original_player.get_meeples() == original_meeples
     assert game.game_data.board.removed_moves == ["0:CFFF/0N0/NW;"]
     assert game.game_data.deck.tiles[-1] == "CFFF"
+    assert game.game_data.graph.get_meeples() == original_board_meeples
     assert game.game_data.graph.lands_components == {"before": [1]}
     assert game.game_data.graph.next_set_id == 2

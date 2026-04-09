@@ -429,6 +429,8 @@ def test_star25_returns_alpha_when_search_phase_drops_below_bound() -> None:
 def test_play_move_for_ai_and_undo_restore_previous_state() -> None:
     game = DummyGame({"CFFF/0N0/NW"}, meeples=1, current_hand="CFFF")
     player = create_player(game)
+    original_board_meeples = {"origin": 1}
+    game.game_data.graph.set_meeples(original_board_meeples.copy())
 
     assert player.play_move_for_ai(game, "CRRF/0N0") is False
 
@@ -442,6 +444,7 @@ def test_play_move_for_ai_and_undo_restore_previous_state() -> None:
     assert game.game_data.history.past_moves[-1].move_str == "CFFF/0N0/NW"
     assert original_player.get_score_int() == original_score + 5
     assert original_player.get_meeples() == original_meeples - 1
+    game.game_data.graph.set_meeples({"transient": 99})
 
     player.undo_for_ai(game)
 
@@ -449,6 +452,7 @@ def test_play_move_for_ai_and_undo_restore_previous_state() -> None:
     assert game.game_data.current_hand is None
     assert original_player.get_score_int() == original_score
     assert original_player.get_meeples() == original_meeples
+    assert game.game_data.graph.get_meeples() == original_board_meeples
     assert game.game_data.board.removed_moves == ["0:CFFF/0N0/NW;"]
     assert game.game_data.board.scored_components == {"before"}
     assert game.game_data.graph.lands_components == {"before": [1]}

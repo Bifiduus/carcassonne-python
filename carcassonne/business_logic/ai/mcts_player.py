@@ -553,6 +553,7 @@ class MCTSPlayer:
                     saved_scores,
                     saved_meeples,
                     saved_scored,
+                    saved_board_meeples,
                     saved_lands_components,
                     saved_next_set_id,
                 ) = self._sim_state_stack.pop()
@@ -561,6 +562,7 @@ class MCTSPlayer:
                 for pid, meeples in saved_meeples.items():
                     game.game_data.players[pid].meeples = meeples
                 game.game_data.board.scored_components = saved_scored
+                game.game_data.graph.set_meeples(saved_board_meeples)
                 game.game_data.graph.lands_components = saved_lands_components
                 game.game_data.graph.next_set_id = saved_next_set_id
 
@@ -592,6 +594,9 @@ class MCTSPlayer:
                 for pid, p in game.game_data.players.items()
             }
             saved_scored = set(game.game_data.board.scored_components)
+            saved_board_meeples = copy.deepcopy(
+                game.game_data.graph.get_meeples()
+            )
             saved_lands_components = copy.deepcopy(
                 game.game_data.graph.lands_components
             )
@@ -615,6 +620,7 @@ class MCTSPlayer:
                     saved_scores,
                     saved_meeples,
                     saved_scored,
+                    saved_board_meeples,
                     saved_lands_components,
                     saved_next_set_id,
                 )
