@@ -30,10 +30,10 @@
 
 \subsection{Existant}
 
-\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par Klaus-Jürgen Wrede en 2000, conçu pour 2 à 6 joueurs.
+\textbf{Carcassonne} est un jeu de stratégie et de placement de tuiles créé par Klaus-Jürgen Wrede en 2000, conçu pour 2 à 5 joueurs.
 Il s'agit d'un jeu stochastique à information parfaite, c'est-à-dire un jeu où le hasard intervient dans le tirage des tuiles mais où l'ensemble des éléments présents sur le plateau est visible de tous les joueurs.
 
-Le jeu a connu un succès commercial important donnant lieu à de nombreuses extensions et variantes au fil des années. Il est devenu un classique des jeux de société modernes, alliant stratégie, gestion de ressources et placement de tuiles. Sur le plan académique et technique, Carcassonne représente un terrain d'étude privilégié pour l'intelligence artificielle (IA) et les algorithmes de décision, en raison de sa nature stochastique, de son système de scoring complexe et de la diversité des stratégies possibles. Plusieurs travaux académiques et implémentations logicielles ont étudié les problématiques liées à l'intelligence artificielle pour Carcassonne. L'article de Heyden et al.\cite{heyden2009implementing} propose une analyse détaillée de l'arbre de jeu et des techniques de recherche heuristique adaptées aux contraintes de ce jeu, tandis que d'autres études explorent des approches basées sur Monte Carlo ou Expectimax pour gérer l'incertitude liée à la pioche des tuiles.
+Le jeu a connu un succès commercial important, donnant lieu à de nombreuses extensions et variantes au fil des années. Il est devenu un classique des jeux de société modernes alliant stratégie, gestion de ressources et placement de tuiles. Sur le plan académique et technique, Carcassonne représente un terrain d'étude privilégié pour l'intelligence artificielle (IA) et les algorithmes de décision, en raison de sa nature stochastique, de son système de scoring complexe et de la diversité des stratégies possibles. Plusieurs travaux académiques et implémentations logicielles ont étudié les problématiques liées à l'intelligence artificielle pour Carcassonne. L'article de Heyden et al.\cite{heyden2009implementing} propose une analyse détaillée de l'arbre de jeu et des techniques de recherche heuristique adaptées aux contraintes de ce jeu, tandis que d'autres études explorent des approches basées sur Monte Carlo ou Expectimax pour gérer l'incertitude liée à la pioche des tuiles.
 
 
 \subsection{Contexte}
@@ -301,7 +301,7 @@ class GraphLogic:
 
 \paragraph{Données bas niveau.}
 En complément de \texttt{GraphLogic} qui applique les règles de 
-connexité métier, la classe \texttt{GraphData} centralise toutes les 
+connexité, la classe \texttt{Graph \allowbreak Data} centralise toutes les 
 opérations bas niveau de manipulation du graphe :
 
 {\normalsize
@@ -322,13 +322,13 @@ Cette classe assure l'ajout et la suppression de tuiles orientées
 tuiles (\texttt{set\_neighbor}), la recherche de voisinage à une 
 position donnée (\texttt{find\_neighbor\_at}), ainsi que la gestion 
 des meeples (\texttt{add}/\texttt{remove}/\texttt{set\_meeple}) et 
-la réinitialisation complète du graphe (\texttt{reset\_graph}).
+la réinitialisation complète du graphe (\texttt{reset \allowbreak \_graph}).
 
 
 \subsection{Mélange des tuiles}
 
 La gestion de la pioche repose sur deux algorithmes de mélange, tous 
-deux implémentés \textit{in place} sur la liste représentant la pioche.
+deux implémentés sur la liste représentant la pioche.
 
 L'algorithme principal retenu est \textit{Fisher-Yates}\cite{fisher_yates} 
 qui garantit une permutation uniforme des tuiles lorsqu'il est associé 
@@ -465,7 +465,7 @@ variante prenant en compte les événements aléatoires :
 \textit{Expectimax}. Cet algorithme fonctionne comme Alpha-Beta, mais 
 introduit entre chaque étage de l'arbre des \textit{nœuds de chance}, 
 dont chaque fils représente un événement aléatoire possible depuis 
-l'état courant — ici, le tirage d'une tuile particulière.
+l'état courant, ici le tirage d'une tuile particulière.
 
 L'ajout de nœuds de chance à chaque niveau de l'arbre augmente 
 cependant considérablement sa taille, rendant son parcours exhaustif 
@@ -480,8 +480,8 @@ de calculer exactement l'espérance de tous les enfants d'un nœud de
 chance, une borne inférieure et une borne supérieure de 
 cette espérance au fur et à mesure de l'exploration sont maintenues. Si, à un moment 
 donné, il devient certain que la valeur finale du nœud de chance ne 
-pourra pas influencer la décision du parent — c'est-à-dire qu'elle 
-est déjà en dehors de l'intervalle $[\alpha, \beta]$ — l'exploration 
+pourra pas influencer la décision du parent. C'est-à-dire qu'elle 
+est déjà en dehors de l'intervalle $[\alpha, \beta]$ et l'exploration 
 des enfants restants est interrompue. Cela permet d'éviter d'explorer 
 des tirages de tuiles peu pertinents.
 
@@ -644,8 +644,8 @@ des champs adjacents à des cités complètes.
 La fonction ne prétend pas fournir une estimation parfaite, mais guide 
 efficacement la recherche vers des coups jugés prometteurs. Comme 
 mentionné en section \ref{subsubsec:iaperfo}, certaines notions 
-stratégiques avancées — comme le blocage adverse ou la gestion optimale 
-des meeples — ne sont pas encore modélisées, ce qui constitue une 
+stratégiques avancées comme le blocage adverse ou la gestion optimale 
+des meeples ne sont pas encore modélisées ce qui constitue une 
 limite connue de l'implémentation actuelle.
 
 \subsection{Lien avec le projet}
@@ -653,8 +653,8 @@ limite connue de l'implémentation actuelle.
 Les différentes techniques présentées dans cette section sont combinées 
 afin de rendre la recherche de coups pertinents possible malgré la 
 complexité combinatoire élevée de Carcassonne. L'approche adoptée mêle 
-Star2.5 — qui étend Alpha-Beta aux jeux stochastiques via des nœuds 
-de chance — l'approfondissement itératif et une fonction d'évaluation 
+Star2.5 qui étend Alpha-Beta aux jeux stochastiques via des nœuds 
+de chance, l'approfondissement itératif et une fonction d'évaluation 
 heuristique multi-joueurs où le joueur IA est considéré comme joueur 
 max et ses adversaires comme joueurs min.
 
@@ -816,7 +816,7 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
 À l'issue de l'algorithme, qui est similaire à l'explication ci-dessus, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
 
 
-Les fonctions \texttt{play\_move\_for\_ai} et \texttt{undo\_for\_ai} permettent de simuler des coups sans altérer définitivement l'état réel du jeu. Lorsqu'un coup est joué via \texttt{play\_move\_for\_ai}, l'état courant (scores, meeples, structures du graphe, etc.) est sauvegardé avant application puis stocké dans une pile. À l'inverse, \texttt{undo\_for\_ai} restaure précisément cet état en annulant le dernier coup joué. Ce mécanisme garantit que chaque simulation reste indépendante et n'impacte jamais la partie réelle.
+Les fonctions \texttt{play\_move\_for\_ai} et \texttt{undo\_for\_ai} permettent de simuler des coups sans altérer définitivement l'état réel du jeu. Lorsqu'un coup est joué via \texttt{play\_move\_for\_ai}, l'état courant (scores, meeples, structures du graphe, etc.) est sauvegardé avant application puis stocké dans une pile. À l'inverse, \texttt{undo\_ \allowbreak for\_ai} restaure précisément cet état en annulant le dernier coup joué. Ce mécanisme garantit que chaque simulation reste indépendante et n'impacte jamais la partie réelle.
 
 La fonction \texttt{get\_possible\_moves} génère l'ensemble des coups possibles à partir de l'état courant et de la tuile en main. Elle consiste à tester toutes les positions, rotations et placements de meeples possibles, puis à vérifier leur validité à l'aide de la fonction \texttt{check\_move} définie dans \texttt{rules\_manager.py}.
 
@@ -883,7 +883,7 @@ F31, empêche le tour du joueur IA de dépasser la durée impartie.
 
 \paragraph{Couverture de tests.}
 La partie MCTS atteint une couverture de 90\%. Les tests du fichier 
-\texttt{mcts\_player\_test.py} valident le noyau algorithmique : 
+\texttt{mcts\_player\_ \allowbreak test.py} valident le noyau algorithmique : 
 structure des nœuds (état, parent, coup, statistiques), sélection de 
 stratégie (UCT ou ML), condition terminale, génération des coups 
 légaux, expansion, rollout, calcul de récompense et rétropropagation. 
@@ -910,7 +910,7 @@ du modèle.
 \texttt{mcts\_player.py} est intégré dans le package \texttt{ia} du 
 module Business Logic, aux côtés de \texttt{mcts\_ml\_training.py} 
 qui gère l'entraînement du modèle. Le modèle entraîné 
-(\texttt{mcts\_selection.keras}) est stocké dans le module Données, 
+(\texttt{mcts\_ \allowbreak selection.keras}) est stocké dans le module Données, 
 conformément à l'architecture du projet.
 
 Une limite subsiste cependant : pour valider pleinement cette 
@@ -1107,7 +1107,7 @@ nombreux bugs et a significativement ralenti l'avancement du projet.
 
 \subsubsection{Command Line Interface (CLI)}
 
-Le CLI a été relativement simple à implémenter, notamment grâce à la 
+Le CLI n'a pas posé de difficultés à être implémenter, notamment grâce à la 
 bibliothèque \textit{readline} de Python qui facilite la saisie des 
 commandes et a permis de répondre aisément à deux besoins principaux : 
 l'édition de la commande en cours et la gestion de l'historique des 
@@ -1297,6 +1297,9 @@ Malgré nos efforts pour implémenter correctement les différentes fonctionnali
   \item [$\bullet$] Le taux de couverture des tests atteint environ 80\%. Toutefois, ce chiffre ne prend pas en compte les tests liés à l’interface graphique. 
   En effet, ces derniers sont particulièrement difficiles à automatiser (avec une couverture moyenne d’environ 25\%). 
   Il est donc pertinent d’envisager d’autres approches pour évaluer la qualité du GUI, comme des tests manuels ou des retours utilisateurs.
+  \item [$\bullet$] En GUI, le lancement d'une partie entraîne un gel de 
+  l'interface le temps que les IA effectuent leurs tours, l'affichage 
+  ne se mettant à jour qu'une fois l'ensemble des décisions calculées.
   \item [$\bullet$] Les fonctions d'évaluation heuristiques (F33) utilisées par 
   les IA ne modélisent pas certaines stratégies avancées, comme le blocage 
   adverse ou la gestion optimale des meeples restants. Cela limite leur 
@@ -1474,7 +1477,7 @@ F15 & Shell interactif & Fait \\ \hline
 F16 & Proposer de sauvegarder avant quitter & Fait \\ \hline
 F17 & Édition de la commande en cours & Fait \\ \hline
 F18 & Historique des commandes tapées & Fait \\ \hline
-F19 & Complétion des commandes & Partiel \\ \hline
+F19 & Complétion des commandes & Fait \\ \hline
 F20 & Notation des coups & Fait \\ \hline
 
 F21 & Sauvegarde et restauration d'une partie & Fait \\ \hline
