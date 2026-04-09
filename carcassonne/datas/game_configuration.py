@@ -61,6 +61,16 @@ SETTING_ALIASES = {"timeout": "time"}
 
 
 def _merge_keybinds(raw_keybinds, defaults: dict[str, str]) -> dict[str, str]:
+    """Merge persisted keybind overrides with the default bindings.
+
+    Args:
+        raw_keybinds: Raw keybind mapping loaded from configuration.
+        defaults: Default keybind mapping used as fallback.
+
+    Returns:
+        dict[str, str]: Keybind mapping containing defaults plus valid
+            overrides found in `raw_keybinds`.
+    """
     merged = defaults.copy()
 
     if not isinstance(raw_keybinds, dict):
@@ -82,12 +92,21 @@ class GameConfiguration:
         self._normalize_keybind_settings()
 
     def _normalize_time_key(self):
+        """Move legacy `timeout` configuration into the canonical `time` key."""
         if "time" not in self.settings and "timeout" in self.settings:
             self.settings["time"] = self.settings["timeout"]
         self.settings.pop("timeout", None)
 
     @staticmethod
     def _normalize_setting_key(key: str) -> str:
+        """Validate and normalize one configuration key name.
+
+        Args:
+            key: Raw setting key provided by the caller.
+
+        Returns:
+            str: Canonical setting name, including alias resolution.
+        """
         if not isinstance(key, str):
             raise TypeError("configuration key must be a string")
         normalized = key.strip()
@@ -97,6 +116,14 @@ class GameConfiguration:
 
     @staticmethod
     def _parse_bool(value) -> bool:
+        """Parse one configuration value as a boolean.
+
+        Args:
+            value: Raw boolean-like value to convert.
+
+        Returns:
+            bool: Parsed boolean value.
+        """
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
@@ -109,6 +136,14 @@ class GameConfiguration:
 
     @staticmethod
     def _parse_int(value) -> int:
+        """Parse one configuration value as an integer.
+
+        Args:
+            value: Raw integer-like value to convert.
+
+        Returns:
+            int: Parsed integer value.
+        """
         if isinstance(value, bool):
             raise ValueError(f"invalid integer value: {value}")
         if isinstance(value, int):
@@ -125,6 +160,16 @@ class GameConfiguration:
         raise ValueError(f"invalid integer value: {value}")
 
     def normalize_setting_update(self, key: str, value) -> tuple[str, object]:
+        """Validate and normalize a pending setting update.
+
+        Args:
+            key: Raw configuration key to update.
+            value: Raw value associated with `key`.
+
+        Returns:
+            tuple[str, object]: Normalized `(key, value)` pair ready to store
+                in `self.settings`.
+        """
         normalized_key = self._normalize_setting_key(key)
         if normalized_key not in DEFAULT_SETTINGS:
             raise KeyError(
@@ -205,6 +250,16 @@ class GameConfiguration:
         return normalized_key, value
 
     def set_setting_value(self, key: str, value) -> tuple[str, object]:
+        """Apply one validated setting update to the current configuration.
+
+        Args:
+            key: Raw configuration key to update.
+            value: Raw value to normalize and persist.
+
+        Returns:
+            tuple[str, object]: Normalized `(key, value)` pair stored in the
+                configuration.
+        """
         normalized_key, normalized_value = self.normalize_setting_update(
             key,
             value,
@@ -214,6 +269,7 @@ class GameConfiguration:
         return normalized_key, normalized_value
 
     def _normalize_keybind_settings(self):
+        """Ensure both keybind sections contain all expected default actions."""
         self.settings["file_keybinds"] = _merge_keybinds(
             self.settings.get("file_keybinds"),
             FILE_KEYBIND_DEFAULTS,
@@ -224,10 +280,16 @@ class GameConfiguration:
         )
 
     def _write_config(self, config: configparser.ConfigParser):
+        """Write a prepared config parser to the user configuration file.
+
+        Args:
+            config: Populated config parser ready to serialize.
+        """
         with open(CONFIG_PATH, "w") as f:
             config.write(f, space_around_delimiters=False)
 
     def create_default_config(self):
+        """Create the default configuration file on disk."""
         config = configparser.ConfigParser()
         config["defaults"] = {
             "verbose": "false",
@@ -250,6 +312,12 @@ class GameConfiguration:
         self._write_config(config)
 
     def load_config(self):
+        """Load configuration settings from disk.
+
+        Returns:
+            dict[str, object]: Configuration dictionary built from defaults
+                and file overrides when available.
+        """
         config = configparser.ConfigParser()
         settings = deepcopy(DEFAULT_SETTINGS)
 
@@ -325,6 +393,7 @@ class GameConfiguration:
         return settings
 
     def save_config(self):
+        """Persist the current configuration to the user config file."""
         config = configparser.ConfigParser()
         config["defaults"] = {
             "verbose": str(self.settings["verbose"]).lower(),
@@ -349,12 +418,26 @@ class GameConfiguration:
         self._write_config(config)
 
     def show_config(self):
+        """Print the current configuration values to standard output."""
         print(_("Current game configuration:"))
         for key, value in self.settings.items():
             print(f"  {key}: {value}")
 
     def get_setting(self):
+        """Return a copy of the full configuration mapping.
+
+        Returns:
+            dict[str, object]: Snapshot of all stored settings.
+        """
         return self.settings.copy()
 
     def get_setting_value(self, key):
+        """Return the value associated with one configuration key.
+
+        Args:
+            key: Setting name to look up.
+
+        Returns:
+            object | None: Stored value for `key`, or None if absent.
+        """
         return self.settings.get(key)

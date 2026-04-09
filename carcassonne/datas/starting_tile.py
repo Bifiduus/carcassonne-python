@@ -9,7 +9,14 @@ from typing import Any
 
 
 def initialize_starting_tile(graph: Any) -> None:
-    """Initialize the default starting tile (CRFR) on the graph."""
+    """Initialize the default starting tile (CRFR) on the graph.
+
+    Args:
+        graph: Mutable graph data structure storing board vertices and links.
+
+    Returns:
+        None.
+    """
     graph.add_vertex(
         vertex_id=0, name="CRFR", middle="", orientation=0, position=(0, 0)
     )
@@ -22,7 +29,14 @@ def initialize_starting_tile(graph: Any) -> None:
 
 
 def initialize_starting_tile_river(graph: Any) -> None:
-    """Initialize the river starting tile (FFSF) on the graph."""
+    """Initialize the river starting tile (FFSF) on the graph.
+
+    Args:
+        graph: Mutable graph data structure storing board vertices and links.
+
+    Returns:
+        None.
+    """
     graph.add_vertex(
         vertex_id=0, name="FFSF", middle="", orientation=0, position=(0, 0)
     )

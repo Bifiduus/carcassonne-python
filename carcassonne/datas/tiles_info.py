@@ -352,35 +352,27 @@ class TilesInfo(ITilesInfo):
                 seen_base_codes.add(base_code)
 
     def is_tile_left(self, tile_code: str) -> bool:
-        """
-        Checks if there are tiles left of the specified type in the game.
-
-        Returns True if there are tiles left, False otherwise.
-        """
+        """Checks if there are tiles left of the specified type in the game."""
         if self.tiles_count.get(tile_code, 0) > 0:
             return True
         return False
 
     def add_tile(self, tile_code: str) -> None:
-        """
-        Increases the count of the specified tile type by one.
-        """
+        """Increases the count of the specified tile type by one."""
         if tile_code not in self.tiles_count:
             raise ValueError(f"Invalid tile code: {tile_code}")
         self.tiles_count[tile_code] += 1
 
     def remove_tile(self, tile_code: str) -> None:
-        """
-        Decreases the count of the specified tile type by one.
-
-        Raises a ValueError if there are no tiles left of that type.
-        """
+        """Decreases the count of the specified tile type by one."""
         if self.tiles_count.get(tile_code, 0) <= 0:
             raise ValueError(f"No tiles left of type: {tile_code}")
         self.tiles_count[tile_code] -= 1
 
     def get_tile_definition(self, tile_code: str) -> ITile | None:
+        """Return the tile definition from repository data or in-memory state."""
         return self.tiles.get(tile_code)
 
     def get_direction_matrix(self) -> list[list[list[str]]]:
+        """Return the direction matrix from repository data or in-memory state."""
         return self.direction_matrix

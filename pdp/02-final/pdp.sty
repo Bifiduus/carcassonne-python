@@ -8,6 +8,10 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage[svgnames]{xcolor} % Enabling colors by their 'svgnames'
+
+\definecolor{myblue}{RGB}{21, 96, 189}
+
 
 \usepackage{lmodern}
 \usepackage{palatino}
@@ -41,7 +45,7 @@
 
 \usepackage{graphicx}
 \usepackage{hyperref}
-\usepackage[svgnames]{xcolor} % Enabling colors by their 'svgnames'
+
 
 %------------------------------------------------------------------------------
 %	CUSTOM MACROS AND COMMANDS
@@ -108,7 +112,7 @@
   \noindent\HRule%
   \vspace{0pt} % Horizontal rule before the title
   \fontsize{32}{36}\usefont{T1}{ppl}{b}{n}\selectfont % Palatino
-  \color{DarkBlue} % Text color for the title and author(s)
+  \color{myblue} % Text color for the title and author(s)
 }
 
 \posttitle{%
@@ -126,3 +130,45 @@
   \par%
   \noindent\HRule % Horizontal rule after the title
 }
+
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\pgfplotsset{compat=1.18}
+
+\usepackage{enumitem}
+
+% ===========================
+% Titles formatting
+% ===========================
+
+% Section principale : très grande
+\titleformat{\section}[hang]
+  {\normalfont\LARGE\bfseries\color{myblue}}
+  {\thesection}{1em}{}
+
+\titlespacing*{\section}{0pt}{4ex plus 1ex minus .2ex}{3ex}
+
+% Sous-section : grande
+\titleformat{\subsection}[hang]
+  {\normalfont\Large\bfseries}
+  {\thesubsection}{1em}{}
+
+\titlespacing*{\subsection}{0.75em}{3ex plus .5ex minus .2ex}{1.5ex}
+
+% Subsubsection : légèrement agrandie
+\titleformat{\subsubsection}[hang]
+  {\normalfont\large\bfseries}
+  {\thesubsubsection}{1em}{}
+
+\titlespacing*{\subsubsection}{1.5em}{2ex plus .5ex minus .2ex}{1ex}
+
+
+
+\usepackage{subcaption}
+
+\usepackage{wrapfig}
+
+\usepackage[most]{tcolorbox}
+
+\usepackage{longtable}
+\usepackage{url}

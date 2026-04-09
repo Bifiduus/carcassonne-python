@@ -1,11 +1,13 @@
 """Tests for board_utils module - GUI helper functions for coordinate calculations."""
 
-from carcassonne.presentation.gui import board_utils
-import pytest
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
+
 pytest.importorskip("gi")
+
+from carcassonne.presentation.gui import board_utils  # noqa: E402
 
 
 class TestNormalizeName:

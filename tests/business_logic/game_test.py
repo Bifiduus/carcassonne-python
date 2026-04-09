@@ -15,8 +15,11 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
         lambda players: None,
     )
 
+    graph = GraphData()
+    graph.initialize_starting_tile()
+
     game = Game(
-        GraphData(),
+        graph,
         2,
         {
             "ai_mode": "minimax",
@@ -72,6 +75,11 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
         "_ensure_current_player_playable",
         lambda: True,
     )
+    monkeypatch.setattr(
+        game.deck_manager,
+        "draw_tile",
+        lambda silent=False: game.game_data.current_hand
+    )
 
     game.game_data.current_player_order_list = 1
     game.game_data.players = {
@@ -93,8 +101,11 @@ def test_play_ai_turn_restores_end_game_flags_after_minimax_search(
         lambda players: None,
     )
 
+    graph = GraphData()
+    graph.initialize_starting_tile()
+
     game = Game(
-        GraphData(),
+        graph,
         2,
         {
             "ai_mode": "minimax",
@@ -153,6 +164,11 @@ def test_play_ai_turn_restores_end_game_flags_after_minimax_search(
     monkeypatch.setattr(
         game.deck_manager,
         "draw_tile",
+        lambda silent=False: game.game_data.current_hand
+    )
+    monkeypatch.setattr(
+        game.deck_manager,
+        "draw_tile",
         lambda silent=True: "CRRF",
     )
 
@@ -181,8 +197,11 @@ def test_play_ai_turn_restores_end_game_flags_after_mcts_search(
         lambda players: None,
     )
 
+    graph = GraphData()
+    graph.initialize_starting_tile()
+
     game = Game(
-        GraphData(),
+        graph,
         2,
         {
             "ai_mode": "mcts",
@@ -225,7 +244,7 @@ def test_play_ai_turn_restores_end_game_flags_after_mcts_search(
     monkeypatch.setattr(
         game.deck_manager,
         "draw_tile",
-        lambda silent=True: "CRRF",
+        lambda silent=False: game.game_data.current_hand
     )
 
     played_moves = []
