@@ -761,7 +761,7 @@ Ce module n'implémente aucune règle métier et n'interagit jamais directement 
 Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{fig:diagram_archi_final}), conformément au principe d'architecture N-tiers.
 \begin{figure}[H]
     \centering
-    \frame{\includegraphics[width=1\textwidth]{images/diagram_archi_final.png}}
+    \frame{\includegraphics[width=0.9\textwidth]{images/diagram_archi_final.png}}
     \centering
     \caption{Vue d'ensemble de l'architecture du projet}\label{fig:diagram_archi_final}
 \end{figure}
@@ -807,45 +807,14 @@ Le fonctionnement de l'algorithme repose sur la répétition de cinq étapes pri
 
 \begin{figure}[H]
     \centering
-    \frame{\includegraphics[width=0.8\textwidth]{images/monte_carlo_example.png}}
+    \frame{\includegraphics[width=0.65\textwidth]{images/monte_carlo_example.png}}
     \centering
     \caption{Exemple d'application de l'algorithme MCTS\cite{heyden2009implementing}}\label{fig:monte_carlo_example}
 \end{figure}
 
 
-À l'issue de l'algorithme, dont le fonctionnement est détaillé par 
-le pseudo-code ci-après, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
+À l'issue de l'algorithme, qui est similaire à l'explication ci-dessus, le coup choisi correspond au nœud enfant de la racine présentant le meilleur score.
 
-{\small
-  \begin{minted}[frame=single]{text}
-fonction mcts (etat, t0, budget, racine)
-	TANT QUE tempsActuel() - t0 < budget FAIRE
-    // 1) SELECTION
-    noeud = racine
-    TANT QUE noeud.estEntierementDeveloppe() ET NON noeud.estTerminal() FAIRE
-        noeud = selection(noeud)
-    FIN TANT QUE
-    // 2) EXPANSION
-    SI NON noeud.estTerminal() ALORS
-        action = choisirActionNonEssayee(noeud)
-        etat_enfant = appliquerAction(noeud.etat, action)
-        enfant = ajouterEnfant(noeud, etat_enfant, action)
-        noeud = enfant
-    FIN SI
-    // 3) SIMULATION (ROLLOUT)
-    recompense = simulationAleatoire(noeud.etat)
-    // 4) RETROPROPAGATION
-    TANT QUE noeud != null FAIRE
-        noeud.visites = noeud.visites + 1
-        noeud.gain_total = noeud.gain_total + recompense
-        noeud = noeud.parent
-    FIN TANT QUE
-  FIN TANT QUE
-  // Choix final: meilleur enfant de la racine (souvent max visites)
-  meilleur = argmax_enfant(racine, critere = visites)
-  RETOURNER meilleur.action
-\end{minted}
-}
 
 Les fonctions \texttt{play\_move\_for\_ai} et \texttt{undo\_for\_ai} permettent de simuler des coups sans altérer définitivement l'état réel du jeu. Lorsqu'un coup est joué via \texttt{play\_move\_for\_ai}, l'état courant (scores, meeples, structures du graphe, etc.) est sauvegardé avant application puis stocké dans une pile. À l'inverse, \texttt{undo\_for\_ai} restaure précisément cet état en annulant le dernier coup joué. Ce mécanisme garantit que chaque simulation reste indépendante et n'impacte jamais la partie réelle.
 
@@ -953,9 +922,6 @@ bon fonctionnement de MCTS dans les cas couverts.
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
 
-
-
-
 Afin de permettre à plusieurs joueurs de s'affronter à distance, nous 
 avons implémenté une fonctionnalité de jeu en réseau. Cette partie 
 repose sur une architecture client-serveur : le serveur gère l'état 
@@ -967,32 +933,29 @@ adaptation numérique. Sa mise en place a nécessité que le jeu de base,
 les joueurs et le CLI soient préalablement fonctionnels, afin de 
 pouvoir tester rapidement les échanges entre client et serveur.
 
-L'implémentation est organisée autour de quatre composants principaux, 
-répartis dans les modules du projet :
+  L'implémentation est organisée autour de quatre composants principaux, 
+répartis dans les modules du projet qui sont illustrés à la figure \ref{fig:network_diagram} :
 \begin{itemize}
-  \item [$\bullet$] \texttt{online\_communications} (module Business 
-  Logic) : gère les réponses du serveur aux commandes des clients ;
-  \item [$\bullet$] \texttt{games\_repository} (module Datas) : 
+
+  \item [$\bullet$] \texttt{online\_communications} : gère les réponses du serveur aux commandes des clients ;
+  \item [$\bullet$] \texttt{games\_repository} : 
   représente la base de données et les opérations associées ;
-  \item [$\bullet$] \texttt{server} (module Business Logic) : assure 
+  \item [$\bullet$] \texttt{server} : assure 
   le fonctionnement global du serveur, incluant la gestion des clients, 
   des parties et de l'état interne ;
-  \item [$\bullet$] \texttt{client.py} (module Business Logic) : gère 
+  \item [$\bullet$] \texttt{client.py} : gère 
   la communication avec le serveur et les interactions avec l'utilisateur.
-\end{itemize}
-
-Le schéma ci-dessous (figure \ref{fig:network_diagram}) illustre les 
-interactions entre ces composants, en mettant en évidence les flux de 
-données et les canaux de communication.
+  \end{itemize}
 \begin{figure}[H]
+
     \centering
-    \frame{\includegraphics[width=1\textwidth]{images/Businnes_Logic.png}}
-    \centering
+    \frame{\includegraphics[width=0.65\textwidth]{images/server_diagram_v2.png}}
     \caption{Schéma représentatif de l'architecture du jeu en réseau}\label{fig:network_diagram}
+
 \end{figure}
 
-Les parties suivantes détaillent le fonctionnement de chaque composant 
-et le rôle de leurs principales fonctions dans la gestion du jeu en réseau.
+Ces composants travaillent ensemble pour gérer les interactions entre serveur et clients, 
+en mettant en évidence les flux de données et les canaux de communication.
 
 \subsubsection{Serveur}
 La première fonction du serveur est \texttt{server\_start}. Cette fonction démarre le serveur en TCP sur un port donné en argument. Si aucun port n'est donné, le port 12345 sera utilisé par défaut. Suite à cela, un thread pour le serveur est créé et démarré sur la fonction \texttt{server\_running}.
@@ -1459,9 +1422,8 @@ coding}, une pratique consistant à décrire un comportement souhaité en
 langage naturel et à laisser l'IA générer le code correspondant. Cette 
 approche a été utilisée principalement pour peaufiner certaines 
 fonctionnalités et corriger des bugs mineurs. Elle s'est avérée efficace 
-pour des tâches bien circonscrites, mais a montré ses limites dès lors 
-que les modifications impliquaient plusieurs composantes interdépendantes, 
-l'IA peinant alors à respecter les contraintes de l'architecture existante.
+pour des tâches bien circonscrites mais a montré ses limites dès lors 
+qu'il fallait respecter les contraintes de l'architecture existante.
 
 Enfin, l'IA a également contribué à l'amélioration de ce rapport, en 
 nous aidant à structurer nos idées, à formuler nos analyses de manière 
