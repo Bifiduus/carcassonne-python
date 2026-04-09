@@ -94,7 +94,11 @@ class RulesManager:
                     return set_name
         return None
 
-    def _resolve_meeple_component_name(self, graph: IGraphData, meeple) -> str | None:
+    def _resolve_meeple_component_name(
+        self,
+        graph: IGraphData,
+        meeple,
+    ) -> str | None:
         """Resolve the live component name for a meeple from tile and position.
 
         Falls back to the stored `lands_components` label when resolution is
