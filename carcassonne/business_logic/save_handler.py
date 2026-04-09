@@ -1,7 +1,7 @@
 from __future__ import annotations
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List
 
 from carcassonne.i18n import gettext as _
 
@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 class SaveHandler:
     boolean_settings = [
         "verbose",
+        "debug",
         "blitz",
         "contest",
         "river",
     ]
     integer_settings = [
         "time",
-        "num_ai",
         "num_ai_players",
         "ai_time",
         "ai_minimax_depth",
@@ -33,6 +33,12 @@ class SaveHandler:
         "file_keybinds",
         "game_keybinds",
     ]
+
+    required_keys = {
+        "file_keybinds": ["app.new", "app.load", "app.save",
+                          "app.config", "app.info", "app.quit"],
+        "game_keybinds": ["app.undo", "app.redo", "app.pause", "app.hint"]
+    }
 
     def __init__(self, game: "Game"):
         self.game = game
@@ -144,12 +150,64 @@ class SaveHandler:
                 keybinds_dict[action.strip()] = key.strip()
         self.game.set_game_configuration(section, keybinds_dict)
 
-    def split_setting_line(self, line: str) -> tuple[str, str]:
+    def split_setting_line(self, line: str) -> List[str]:
         if "=" in line:
             return line.split("=", 1)
         if ":" in line:
             return line.split(":", 1)
         raise ValueError(f"Invalid setting line: {line}")
+
+    def check_integer_limits(self, value: int, setting_name: str):
+        check = True
+        if value < 0:
+            print(
+                _("Error: Invalid integer value for {setting}: {value}"
+                  " (must be non-negative).").format(
+                    setting=setting_name, value=value
+                ),
+                file=sys.stderr
+            )
+            check = False
+        # Check specific limits
+        elif setting_name == "time" and value > 60:
+            print(
+                _("Error: Invalid value for {setting}: {value}"
+                  " (must be <= 60).").format(
+                    setting=setting_name, value=value
+                ),
+                file=sys.stderr
+            )
+            check = False
+        elif setting_name == "num_ai_players" and value > 4:
+            print(
+                _("Error: Invalid value for {setting}: {value}"
+                  " (must be <= 4).").format(
+                    setting=setting_name, value=value
+                ),
+                file=sys.stderr
+            )
+            check = False
+        elif setting_name == "ai_time" and value > 10:
+            print(
+                _("Error: Invalid value for {setting}: {value}"
+                  " (must be <= 10).").format(
+                    setting=setting_name, value=value
+                ),
+                file=sys.stderr
+            )
+            check = False
+        return check
+
+    def _print_missing_settings(self, setting_type: str,
+                                missing_settings: set):
+        """Helper method to print missing settings error."""
+        if missing_settings:
+            print(
+                _("Error: Missing {type} settings: {settings}").format(
+                    type=setting_type, settings=list(missing_settings)
+                ),
+                file=sys.stderr
+            )
 
     def load_game_from_file(self, filename: str) -> int:
         if filename is None or filename.strip() == "":
@@ -192,9 +250,21 @@ class SaveHandler:
         settings_parsed = False
         game_state_parsed = False
         history_parsed = False
-        commentary = False
         game_score = False
         sections_parsed = 0
+
+        # Track required lines in GameState
+        number_of_players_found = False
+        players_order_found = False
+        game_score_found = False
+        seed_found = False
+
+        # Track found settings
+        found_boolean_settings = set()
+        found_integer_settings = set()
+        found_string_settings = set()
+        found_keybinds_settings = set()
+
         for line in lines:
             # Remove comments and strip whitespace
             line = line.strip().split("#")[0]
@@ -228,7 +298,8 @@ class SaveHandler:
                         _(
                             "Warning: [Settings] section not found before "
                             "[GameState]."
-                        )
+                        ),
+                        file=sys.stderr
                     )
                 sections_parsed += 1
                 settings_section = False
@@ -242,7 +313,8 @@ class SaveHandler:
                         _(
                             "Warning: [GameState] section not found before "
                             "[History]."
-                        )
+                        ),
+                        file=sys.stderr
                     )
                 sections_parsed += 1
                 settings_section = False
@@ -254,7 +326,6 @@ class SaveHandler:
                 continue  # Skip empty lines
             if settings_section:
                 # Parse settings and configure the game accordingly.
-                # This is a placeholder for demonstration purposes.
                 # Configuration of the game, shuffle algorithm and seed.
                 try:
                     setting, value = self.split_setting_line(line)
@@ -262,105 +333,249 @@ class SaveHandler:
                     print(
                         _("Warning: Invalid setting line '{line}'.").format(
                             line=line
-                        )
+                        ),
+                        file=sys.stderr
                     )
                     continue
-                if setting.strip() in self.keybinds_settings:
-                    self.handle_keybinds_load(value, setting.strip())
-                elif setting.strip() in self.boolean_settings:
-                    self.game.set_game_configuration(
-                        setting.strip(), value.strip().lower() == "true"
-                    )
-                elif setting.strip() in self.integer_settings:
-                    self.game.set_game_configuration(
-                        setting.strip(), int(value.strip())
-                    )
-                elif setting.strip() in self.string_settings:
-                    self.game.set_game_configuration(
-                        setting.strip(), value.strip()
+                setting_name = setting.strip()
+                if setting_name in self.keybinds_settings:
+                    try:
+                        self.handle_keybinds_load(value, setting_name)
+                        found_keybinds_settings.add(setting_name)
+                        # Validate keybinds content
+                        keybinds_dict = (self.game.get_game_configuration().
+                                         get(setting_name, {}))
+                        keys = self.required_keys.get(setting_name, [])
+                        missing_keys = [
+                            key for key in keys if key not in keybinds_dict]
+                        if missing_keys:
+                            print(
+                                _("Error: Missing required keybinds in "
+                                  "{setting}: {missing}").format(
+                                    setting=setting_name, missing=missing_keys
+                                ),
+                                file=sys.stderr
+                            )
+                    except Exception as e:
+                        print(
+                            _("Error: Invalid keybinds format for {setting}:"
+                              " {value}. Error: {error}").format(
+                                setting=setting_name, value=value.strip(),
+                                error=str(e)
+                            ),
+                            file=sys.stderr
+                        )
+                elif setting_name in self.boolean_settings:
+                    try:
+                        bool_value = value.strip().lower() == "true"
+                        self.game.set_game_configuration(
+                            setting_name, bool_value)
+                        found_boolean_settings.add(setting_name)
+                    except Exception as e:
+                        print(
+                            _("Error: Invalid boolean value for {setting}:"
+                              " {value}. Error: {error}").format(
+                                setting=setting_name, value=value.strip(),
+                                error=str(e)
+                            ),
+                            file=sys.stderr
+                        )
+                elif setting_name in self.integer_settings:
+                    try:
+                        found_integer_settings.add(
+                            setting_name)
+                        int_value = int(value.strip())
+                        ok = self.check_integer_limits(int_value, setting_name)
+                        if ok:
+                            self.game.set_game_configuration(
+                                setting_name, int_value)
+                    except ValueError:
+                        print(
+                            _("Error: Invalid integer value for {setting}:"
+                              " {value}").format(
+                                setting=setting_name, value=value.strip()
+                            ),
+                            file=sys.stderr
+                        )
+                elif setting_name in self.string_settings:
+                    str_value = value.strip()
+                    # contest_file can be empty,
+                    # but other string settings should not be empty
+                    if not str_value and setting_name != "contest_file":
+                        print(
+                            _("Error: Empty string value for {setting}").
+                            format(
+                                setting=setting_name
+                            ),
+                            file=sys.stderr
+                        )
+                        continue
+                    self.game.set_game_configuration(setting_name, str_value)
+                    found_string_settings.add(setting_name)
+                else:
+                    print(
+                        _("Warning: Unknown setting '{setting}'.").format(
+                            setting=setting_name
+                        ),
+                        file=sys.stderr
                     )
             elif game_state_section:
-                # Here you would parse the game state.
-                # This is a placeholder for demonstration purposes.
                 # Game scores and player order.
 
                 if line.startswith("NumberOfPlayers:"):
-                    line = line.split("NumberOfPlayers:")[1].strip()
-                    if line == "":
+                    number_of_players_found = True
+                    line_content = line.split("NumberOfPlayers:")[1].strip()
+                    if line_content == "":
                         print(
-                            _("Warning: Number of players not specified."),
+                            _("Error: Number of players not specified."),
                             file=sys.stderr,
                         )
                         continue
-                    number_of_players, number_of_ai_players = (
-                        line.split(",") if "," in line else (line, "0")
-                    )
-                    human_players = int(number_of_players.strip())
-                    ai_players = int(number_of_ai_players.strip())
-                    total_players = human_players + ai_players
-                    min_players = self.game.get_minimum_number_of_players()
-                    max_players = self.game.get_maximum_number_of_players()
-                    if total_players > max_players:
+                    try:
+                        parts = (line_content.split(",") if "," in
+                                 line_content else [
+                            line_content, "0"])
+                        human_players = int(parts[0].strip())
+                        ai_players = int(parts[1].strip()) if len(
+                            parts) > 1 else 0
+                        total_players = human_players + ai_players
+                        min_players = self.game.get_minimum_number_of_players()
+                        max_players = self.game.get_maximum_number_of_players()
+                        if (total_players < min_players
+                                or total_players > max_players):
+                            print(
+                                _(
+                                    "Error: Number of players should be "
+                                    "between {min_players} and {max_players}."
+                                ).format(
+                                    min_players=min_players,
+                                    max_players=max_players,
+                                ),
+                                file=sys.stderr,
+                            )
+                            continue
+                        self.game.set_number_of_ai_players(ai_players)
+                    except ValueError as e:
                         print(
-                            _(
-                                "Warning: Number of players should be "
-                                "between {min_players} and {max_players}."
-                            ).format(
-                                min_players=min_players,
-                                max_players=max_players,
+                            _("Error: Invalid number of players format:"
+                              " {line}. "
+                              "Error: {error}").format(
+                                line=line, error=str(e)
                             ),
-                            file=sys.stderr,
+                            file=sys.stderr
                         )
-                        continue
-                    self.game.set_number_of_ai_players(ai_players)
 
-                if line.startswith("PlayersOrder:"):
-                    line = line.split("PlayersOrder:")[1].strip()
-                    if line == "":
+                elif line.startswith("PlayersOrder:"):
+                    players_order_found = True
+                    line_content = line.split("PlayersOrder:")[1].strip()
+                    if line_content == "":
                         print(
-                            _("Warning: Players order not specified."),
+                            _("Error: Players order not specified."),
                             file=sys.stderr,
                         )
                         continue
-                    self.game.game_data.players_order = [
-                        int(player_id.strip())
-                        for player_id in line.strip("[]").split(",")
-                    ]
+                    try:
+                        players_order = [
+                            int(player_id.strip())
+                            for player_id in (line_content.strip("[]").
+                                              split(","))
+                        ]
+                        # Validate that player IDs are reasonable
+                        #  (e.g., non-negative)
+                        if any(pid < 0 for pid in players_order):
+                            print(
+                                _("Error: Invalid player ID in players order"
+                                  " (must be non-negative)."),
+                                file=sys.stderr
+                            )
+                            continue
+                        self.game.game_data.players_order = players_order
+                    except ValueError as e:
+                        print(
+                            _("Error: Invalid players order format: {line}. "
+                              "Error: {error}").format(
+                                line=line, error=str(e)
+                            ),
+                            file=sys.stderr
+                        )
 
-                if line.startswith("GameScore:"):
+                elif line.startswith("GameScore:"):
+                    game_score_found = True
                     # Assuming the format is "GameScore: [Player1ID: 10,
                     # Player2ID: 20]"
-                    line = line.split("GameScore:")[1].strip()
-                    if line == "" or line == "[]":
+                    line_content = line.split("GameScore:")[1].strip()
+                    if line_content == "" or line_content == "[]":
                         print(_("Warning: No score yet."), file=sys.stderr)
                         continue
-                    line = line.split("[")[1].strip("]")
-                    scores = line.split(",")
-                    if len(scores) > len(self.game.game_data.players):
+                    try:
+                        scores_part = line_content.split("[")[1].strip("]")
+                        scores = scores_part.split(",")
+                        if len(scores) > len(self.game.game_data.players):
+                            print(
+                                _("Warning: More scores than players."),
+                                file=sys.stderr,
+                            )
+                        for score in scores:
+                            playerID, points = score.split(":")
+                            pid = int(playerID.strip())
+                            pts = int(points.strip())
+                            if pts < 0:
+                                print(
+                                    _("Error: Invalid score for player {pid}:"
+                                      " {pts} (must be non-negative).").format(
+                                        pid=pid, pts=pts
+                                    ),
+                                    file=sys.stderr
+                                )
+                                continue
+                            for player in self.game.game_data.players.values():
+                                if player.get_id() == pid:
+                                    player.score.set_points(pts)
+                        game_score = True
+                    except (ValueError, IndexError) as e:
                         print(
-                            _("Warning: More scores than players."),
-                            file=sys.stderr,
+                            _("Error: Invalid game score format: {line}."
+                              " Error: {error}").format(
+                                line=line, error=str(e)
+                            ),
+                            file=sys.stderr
                         )
-                    for score in scores:
-                        playerID, points = score.split(":")
-                        for player in self.game.game_data.players.values():
-                            if player.get_id() == int(playerID.strip()):
-                                player.score.set_points(int(points.strip()))
-                    game_score = True
-                if line.startswith("Seed:"):
+
+                elif line.startswith("Seed:"):
+                    seed_found = True
                     # Assuming the format is "Seed: the seed"
-                    line = line.split("Seed:")[1].strip()
+                    line_content = line.split("Seed:")[1].strip()
                     game_data = self.game.game_data
-                    if line == "" or line.lower() == "none":
+                    if line_content == "" or line_content.lower() == "none":
                         print(_("Warning: No seed."), file=sys.stderr)
                         game_data.seed = None
                         game_data.initialize_starting_tile_based_on_config()
                         continue
-                    game_data.seed = int(line)
-                    game_data.initialize_starting_tile_based_on_config()
-                    self.game.shuffle_deck("fisher-yates", game_data.seed)
-                    if game_data.game_configuration.get_setting_value("river"):
-                        self.game.river_manager.initialize_river()
+                    try:
+                        seed_value = int(line_content)
+                        if seed_value < 0:
+                            print(
+                                _("Error: Invalid seed value: {seed}"
+                                  " (must be non-negative).").format(
+                                    seed=seed_value
+                                ),
+                                file=sys.stderr
+                            )
+                            continue
+                        game_data.seed = seed_value
+                        game_data.initialize_starting_tile_based_on_config()
+                        self.game.shuffle_deck("fisher-yates", game_data.seed)
+                        if (game_data.game_configuration.
+                                get_setting_value("river")):
+                            self.game.river_manager.initialize_river()
+                    except ValueError as e:
+                        print(
+                            _("Error: Invalid seed format: {line}. "
+                              "Error: {error}").format(
+                                line=line, error=str(e)
+                            ),
+                            file=sys.stderr
+                        )
 
             elif history_section:
                 if not game_score:
@@ -392,6 +607,39 @@ class SaveHandler:
                             ),
                             file=sys.stderr,
                         )
+
+        # Check for missing required lines in GameState
+        if game_state_parsed:
+            if not number_of_players_found:
+                print(
+                    _("Error: NumberOfPlayers line is missing in [GameState] "
+                      "section."), file=sys.stderr)
+            if not players_order_found:
+                print(
+                    _("Error: PlayersOrder line is missing in [GameState] "
+                      "section."), file=sys.stderr)
+            if not game_score_found:
+                print(
+                    _("Error: GameScore line is missing in [GameState] "
+                      "section."), file=sys.stderr)
+            if not seed_found:
+                print(
+                    _("Error: Seed line is missing in [GameState] section."),
+                    file=sys.stderr)
+
+        # Check for missing required settings in Settings
+        if settings_parsed:
+            missing_boolean = set(self.boolean_settings) - \
+                found_boolean_settings
+            self._print_missing_settings("boolean", missing_boolean)
+            missing_integer = set(self.integer_settings) - \
+                found_integer_settings
+            self._print_missing_settings("integer", missing_integer)
+            missing_string = set(self.string_settings) - found_string_settings
+            self._print_missing_settings("string", missing_string)
+            missing_keybinds = set(self.keybinds_settings) - \
+                found_keybinds_settings
+            self._print_missing_settings("keybinds", missing_keybinds)
 
         if sections_parsed < 3:
             print(

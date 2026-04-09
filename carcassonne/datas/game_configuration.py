@@ -189,7 +189,8 @@ class GameConfiguration:
         if normalized_key in DICT_SETTINGS:
             if not isinstance(value, dict):
                 raise ValueError(
-                    _("Invalid value for '{param}': expected a mapping.").format(
+                    _("Invalid value for '{param}':"
+                      " expected a mapping.").format(
                         param=normalized_key
                     )
                 )

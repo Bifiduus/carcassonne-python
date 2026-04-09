@@ -8,7 +8,9 @@ from carcassonne.interfaces.i_client_service import IClientService
 from carcassonne.interfaces.i_game_service import IGameService
 from carcassonne.presentation.cli import commands_handler_cli
 
+import os
 import readline
+import signal
 import threading
 import time
 
@@ -47,6 +49,10 @@ COMMANDS = [
 ]
 
 
+class GameFinishedInterrupt(Exception):
+    """Internal control-flow exception used to stop a blocking prompt."""
+
+
 def completer(texte, state):
 
     # filtrer les commandes qui commencent par text
@@ -78,7 +84,9 @@ class GameCLI:
         self._tick_last_message = ""
         self._stop_event = threading.Event()
         self._game_lock = threading.RLock()
-        self._input_thread: threading.Thread | None = None
+        self._tick_thread: threading.Thread | None = None
+        self._wakeup_signal = getattr(signal, "SIGUSR1", None)
+        self._previous_wakeup_handler = None
 
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
@@ -102,73 +110,96 @@ class GameCLI:
     def _local_player_can_act(self) -> bool:
         return self.game.get_current_player().get_id() == self.local_player_id
 
+    def _handle_game_finished_signal(self, signum, frame) -> None:
+        raise GameFinishedInterrupt()
+
+    def _install_wakeup_signal_handler(self) -> None:
+        if self._wakeup_signal is None:
+            return
+        self._previous_wakeup_handler = signal.getsignal(self._wakeup_signal)
+        signal.signal(self._wakeup_signal, self._handle_game_finished_signal)
+
+    def _restore_wakeup_signal_handler(self) -> None:
+        if self._wakeup_signal is None:
+            return
+        previous_handler = self._previous_wakeup_handler
+        if previous_handler is None:
+            previous_handler = signal.SIG_DFL
+        signal.signal(self._wakeup_signal, previous_handler)
+        self._previous_wakeup_handler = None
+
+    def _wake_input_prompt(self) -> None:
+        if self._wakeup_signal is None:
+            return
+        if threading.current_thread() is threading.main_thread():
+            return
+        try:
+            os.kill(os.getpid(), self._wakeup_signal)
+        except OSError:
+            return
+
+    def _start_tick_loop(self) -> None:
+        if self._tick_thread is not None and self._tick_thread.is_alive():
+            return
+        self._tick_thread = threading.Thread(
+            target=self._tick_loop,
+            name="carcassonne-cli-tick",
+        )
+        self._tick_thread.start()
+
+    def _tick_loop(self) -> None:
+        last_tick = time.monotonic()
+        while self.running and not self._stop_event.is_set():
+            now = time.monotonic()
+            if now - last_tick >= self._tick_interval_seconds:
+                with self._game_lock:
+                    if not self.running or self._stop_event.is_set():
+                        break
+                    self._tick_once()
+                last_tick = now
+            time.sleep(self._tick_sleep_seconds)
+
     def run(self):
         with self._game_lock:
             if not self.game.end_game():
                 self._render_board()
+                self._tick_once()
 
-        self._start_input_loop()
-        last_tick = time.monotonic()
+        if not self.running or self._stop_event.is_set():
+            readline.write_history_file('.carcassonne_history')
+            return
 
+        self._install_wakeup_signal_handler()
+        self._start_tick_loop()
         try:
-            while self.running:
-                now = time.monotonic()
-                if now - last_tick >= self._tick_interval_seconds:
-                    with self._game_lock:
-                        self._tick_once()
-                    last_tick = now
-                time.sleep(self._tick_sleep_seconds)
+            while self.running and not self._stop_event.is_set():
+                try:
+                    command = input(">> ").strip()
+                except GameFinishedInterrupt:
+                    if not self.running or self._stop_event.is_set():
+                        break
+                    continue
+                except EOFError:
+                    self.running = False
+                    break
+                except KeyboardInterrupt:
+                    print("\n" + _("Game over."))
+                    self.running = False
+                    break
+
+                with self._game_lock:
+                    if not self.running or self._stop_event.is_set():
+                        break
+                    self.handle_command(command)
         except KeyboardInterrupt:
             print("\n" + _("Game over."))
             self.running = False
         finally:
             self._stop_event.set()
-            if self._input_thread is not None:
-                self._input_thread.join(timeout=0.2)
+            if self._tick_thread is not None:
+                self._tick_thread.join(timeout=0.2)
+            self._restore_wakeup_signal_handler()
             readline.write_history_file('.carcassonne_history')
-
-    def _start_input_loop(self) -> None:
-        if self._input_thread is not None and self._input_thread.is_alive():
-            return
-        self._input_thread = threading.Thread(
-            target=self._input_loop,
-            name="carcassonne-cli-input",
-            daemon=True,
-        )
-        self._input_thread.start()
-
-    def _input_loop(self) -> None:
-        while self.game.get_current_player().is_ai_player():
-            self.game.play_ai_turn(self.game)
-
-        while (
-            self.game.get_current_player().is_ai_player()
-            and not self.game.end_game()
-        ):
-            with self._game_lock:
-                if not self.running or self.game.end_game():
-                    break
-                self.game.play_ai_turn(self.game)
-
-        if self.game.end_game():
-            self._on_game_over()
-            return
-
-        while self.running and not self._stop_event.is_set():
-            try:
-                command = input(">> ").strip()
-            except EOFError:
-                self.running = False
-                break
-            except KeyboardInterrupt:
-                print("\n" + _("Game over."))
-                self.running = False
-                break
-
-            with self._game_lock:
-                if not self.running:
-                    break
-                self.handle_command(command)
 
     def _render_board(self) -> None:
         board = self.game.get_printed_board()
@@ -201,6 +232,7 @@ class GameCLI:
         """Display final scores and stop the game loop."""
         if not self.running:
             return
+        print()
         self.running = False
         self._stop_event.set()
         self._render_board()
@@ -235,6 +267,7 @@ class GameCLI:
                     score=score,
                 )
             )
+        self._wake_input_prompt()
 
     def handle_command(self, command):
         is_turn_bound_command = self._is_turn_bound_command(command)

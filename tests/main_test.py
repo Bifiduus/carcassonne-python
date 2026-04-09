@@ -265,6 +265,29 @@ class MainBootstrapTestCase(unittest.TestCase):
         game_cli.return_value.run.assert_called_once_with()
         self.assertIn("Loading game from file: save.txt", stdout.getvalue())
 
+    def test_main_warns_when_time_is_provided_without_blitz(self):
+        game = Mock()
+        game.game_data = Mock()
+
+        with (
+            patch.object(main_module, "configure_i18n"),
+            patch.object(main_module.signal, "signal"),
+            patch.object(
+                main_module.ArgumentParser,
+                "parse_args",
+                return_value=build_args(time=15),
+            ),
+            patch.object(main_module, "Server", return_value=Mock()),
+            patch.object(main_module, "Client", return_value=Mock()),
+            patch.object(main_module, "Game", return_value=game),
+            patch.object(main_module, "GameCLI", return_value=Mock()),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main_module.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Warning: --time is ignored", stderr.getvalue())
+
     def test_main_gui_mode_uses_create_gui(self):
         game = Mock()
         game.game_data = Mock()
