@@ -5,15 +5,20 @@ from __future__ import annotations
 import ast
 import builtins
 from gettext import NullTranslations, translation
+import locale
 import os
 from pathlib import Path
 import sys
-from typing import Mapping
+from typing import Callable, Mapping, MutableMapping
 
 TEXT_DOMAIN = "carcassonne"
 DEFAULT_LANGUAGE = "en"
 SUPPORTED_LANGUAGES = frozenset({"en", "fr"})
 LOCALE_DIR = Path(__file__).resolve().parent / "locale"
+SYSTEM_LOCALE_CANDIDATES = {
+    "en": ("en_US.UTF-8", "en_US.utf8", "C.UTF-8", "C.utf8", "C"),
+    "fr": ("fr_FR.UTF-8", "fr_FR.utf8", "fr_FR"),
+}
 
 _TRANSLATION: NullTranslations = NullTranslations()
 CURRENT_LANGUAGE = DEFAULT_LANGUAGE
@@ -133,6 +138,66 @@ def is_language_supported(language: str | None) -> bool:
     """Return True when the language is supported by the application."""
 
     return bool(language in SUPPORTED_LANGUAGES)
+
+
+def is_system_locale_supported(locale_name: str) -> bool:
+    """Return True when the C library accepts the locale name."""
+
+    current_locale = locale.setlocale(locale.LC_ALL)
+    try:
+        locale.setlocale(locale.LC_ALL, locale_name)
+    except locale.Error:
+        return False
+    finally:
+        try:
+            locale.setlocale(locale.LC_ALL, current_locale)
+        except locale.Error:
+            pass
+    return True
+
+
+def get_supported_system_locale(
+    language: str,
+    locale_is_supported: Callable[[str], bool] | None = None,
+) -> str | None:
+    """Return an installed system locale matching the application language."""
+
+    checker = is_system_locale_supported
+    if locale_is_supported is not None:
+        checker = locale_is_supported
+
+    for candidate in SYSTEM_LOCALE_CANDIDATES.get(language, ()):
+        if checker(candidate):
+            return candidate
+    return None
+
+
+def prepare_gui_locale(
+    language: str,
+    env: MutableMapping[str, str] | None = None,
+    locale_is_supported: Callable[[str], bool] | None = None,
+) -> str | None:
+    """Rewrite short or invalid locale names before GTK initializes."""
+
+    environment = os.environ if env is None else env
+    checker = is_system_locale_supported
+    if locale_is_supported is not None:
+        checker = locale_is_supported
+
+    requested_locale = get_language_from_environment(environment)
+    if requested_locale and checker(requested_locale):
+        return requested_locale
+
+    supported_locale = get_supported_system_locale(
+        language,
+        locale_is_supported=checker,
+    )
+    if supported_locale is None:
+        return None
+
+    target_variable = "LC_ALL" if environment.get("LC_ALL") else "LANG"
+    environment[target_variable] = supported_locale
+    return supported_locale
 
 
 def _load_translation(language: str) -> NullTranslations:

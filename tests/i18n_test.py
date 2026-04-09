@@ -65,6 +65,49 @@ class I18NTestCase(unittest.TestCase):
         self.assertEqual(i18n.normalize_language("en_US.UTF-8"), "en")
         self.assertEqual(i18n.normalize_language("fr-FR@euro"), "fr")
 
+    def test_prepare_gui_locale_rewrites_short_lang_for_gtk(self):
+        env = {"LANG": "fr"}
+
+        selected_locale = i18n.prepare_gui_locale(
+            "fr",
+            env=env,
+            locale_is_supported=lambda locale_name: (
+                locale_name == "fr_FR.UTF-8"
+            ),
+        )
+
+        self.assertEqual(selected_locale, "fr_FR.UTF-8")
+        self.assertEqual(env["LANG"], "fr_FR.UTF-8")
+
+    def test_prepare_gui_locale_preserves_supported_locale(self):
+        env = {"LANG": "fr_FR.UTF-8"}
+
+        selected_locale = i18n.prepare_gui_locale(
+            "fr",
+            env=env,
+            locale_is_supported=lambda locale_name: (
+                locale_name == "fr_FR.UTF-8"
+            ),
+        )
+
+        self.assertEqual(selected_locale, "fr_FR.UTF-8")
+        self.assertEqual(env["LANG"], "fr_FR.UTF-8")
+
+    def test_prepare_gui_locale_updates_lc_all_when_present(self):
+        env = {"LANG": "fr", "LC_ALL": "fr"}
+
+        selected_locale = i18n.prepare_gui_locale(
+            "fr",
+            env=env,
+            locale_is_supported=lambda locale_name: (
+                locale_name == "fr_FR.UTF-8"
+            ),
+        )
+
+        self.assertEqual(selected_locale, "fr_FR.UTF-8")
+        self.assertEqual(env["LC_ALL"], "fr_FR.UTF-8")
+        self.assertEqual(env["LANG"], "fr")
+
 
 if __name__ == "__main__":
     unittest.main()

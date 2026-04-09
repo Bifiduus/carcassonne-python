@@ -24,7 +24,7 @@ from carcassonne.business_logic.game.game import Game
 from carcassonne.interfaces.i_graph_data import IGraphData
 from carcassonne.presentation.cli.cli import GameCLI
 from carcassonne.datas.datas_factory import DatasFactory
-from carcassonne.i18n import configure_i18n, gettext as _
+from carcassonne.i18n import configure_i18n, gettext as _, prepare_gui_locale
 from carcassonne.logger import setup_logging
 from carcassonne.interfaces.i_server_service import IServerService
 
@@ -75,7 +75,7 @@ def main() -> int:
     """
     Starting point of the program.
     """
-    configure_i18n()
+    selected_language = configure_i18n()
 
     parser = ArgumentParser()
     parser.add_argument(
@@ -375,6 +375,7 @@ def main() -> int:
         if game.game_data.game_configuration.get_setting_value("river"):
             game.river_manager.initialize_river()
     if args.gui:
+        prepare_gui_locale(selected_language)
         from carcassonne.presentation.gui.create_gui import CreateGui
 
         CreateGui(game, client_service, server_service)
