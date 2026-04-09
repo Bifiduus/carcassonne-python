@@ -892,6 +892,23 @@ features sont reconstruites à la volée pour chaque nœud exploré,
 garantissant la cohérence entre apprentissage et inférence. Le modèle 
 est utilisé exclusivement en prédiction, sans mise à jour des poids.
 
+\paragraph{Prérequis, sous-besoins, dépendances, intégration dans le projet, tests et validation.}
+Les prérequis pour l’implémentation de mcts dans le code sont : F1, F4, F8, F9, F10, F11, F13, F15, F20, F26, F27, F31.
+
+Plus précisément, F1, F4 et F15 assurent un shell interactif dans lequel visualiser l’état de jeu. F8, F9, F10, F11, F13 et F20 assurent que l’on peut construire l’algorithme mcts avec notamment la pioche, le nombre de joueurs, les règles pour savoir les coups légaux et la fin de partie, la possibilité d’annuler ou de jouer des coups pour pouvoir faire évoluer l’arbres. F26 et F27 permettent de stocker l’état de jeu dans la structure ‘graph’ et de pouvoir agir dessus avec les algorithmes. F31 permet de limiter le temps qu’on accorde à l’algorithme, ainsi quand le temps de réponse arrive à échéance, on a un résultat prêt à être renvoyé.
+
+Pour les dépendances, on doit de manière fonctionnel pouvoir créer un joueur IA qui utilise mcts avec la fonction de sélection spécifiée, c’est ce qu’on a avec MCTSPlayer qui choisit entre UCT et ML. Un tel joueur est créé par les sous-besoins non fonctionnels suivants : pouvoir rentrer en option –ai-mode mcts et –ai-mcts-selection SELECTION pour pouvoir choisir une IA mcts avec la fonction de sélection SELECTION associée, également avoir un temps de réponse borné pour éviter que l’appel à l’algorithme et donc le tour du joueur IA soit trop long, c’est ce qu’on a avec F31 qui est bien implémenté.
+
+Nous avons la partie code mcts qui est couverte à 90% : Les tests de la partie MCTS couvrent d’abord le noyau algorithmique du joueur MCTS dans mcts_player_test.py. Ils vérifient la structure des nœuds (état, parent, coup, statistiques), la sélection de stratégie (UCT ou ML), la condition terminale, puis les opérations clés du cycle MCTS: génération des coups légaux, sélection UCT, expansion d’un coup non exploré, rollout, calcul de récompense et rétropropagation. En pratique, cela valide que le moteur prend des décisions cohérentes et met bien à jour ses compteurs de visites et de rewards.
+La sélection ML est aussi testée de façon robuste dans ce même fichier, avec plusieurs cas de forme de prédictions (liste, scalaire custom) et surtout des scénarios de repli. Les tests confirment que si le modèle est absent, échoue au chargement, ou plante en prédiction, l’algorithme retombe automatiquement sur UCT au lieu de casser l’exécution. Cela sécurise le mode ML dans les environnements où Keras ou le modèle ne sont pas toujours disponibles.
+Les tests couvrent également la sécurité de l’état du jeu pendant les simulations. Ils valident que jouer puis annuler un coup IA restaure correctement la main courante, le tour joueur, l’historique, les scores, les meeples, les composants scorés, ainsi que des éléments de graph et de deck. Les scénarios de rollout testent aussi le comportement quand une main est injouable, quand il faut piocher à nouveau, et quand aucune pioche n’est possible, ce qui protège les cas limites de boucle de simulation.
+Enfin, la partie entraînement du modèle de sélection MCTS est couverte dans mcts_ml_training_test.py. Les tests vérifient le parsing des datasets (JSON et JSONL), la validation des données invalides, la construction/compilation/entraînement/sauvegarde du modèle avec des doublures de Numpy/Keras, et le parsing des arguments CLI. En résumé, la suite teste bien la fiabilité fonctionnelle du MCTS (UCT + ML fallback) et la chaîne de training, même si elle reste majoritairement unitaire et peu orientée benchmark qualité de jeu en partie longue.
+
+Cette partie est intégrée dans le projet à travers mcts_player.py dans le package ia de BusinessLogic, on a également mcts_ml_training.py qui se trouve dans ce module et qui entraîne le modèle par machine learning, les données entraînées sont présentes dans le module Datas dans mcts_selection.keras. Cela respecte donc bien l’architecture.
+
+En revanche, pour pouvoir totalement valider cette fonctionnalité, il faudrait des tests qui mettent en place le déroulement de parties entières avec temps de réflexion assez élevé pour assurer que l’on ne tombe pas sur un comportement inattendu du début à la fin d’une partie. Cela prendrait un temps bien trop important pour les tests lancés par pytest. En dehors de ça, les larges tests permettent d’assurer que mcts est implémenté et fonctionnel à 90%.
+
+
 
 \subsection{Seconde fonctionnalité : Jeu en réseau}
 Afin de permettre à plusieurs joueurs de s'affronter à distance, nous 
