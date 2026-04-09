@@ -85,6 +85,166 @@ def test_play_ai_turn_uses_current_hand_for_minimax_search(monkeypatch):
     assert game.game_data.current_hand is None
 
 
+def test_play_ai_turn_restores_end_game_flags_after_minimax_search(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.r.shuffle",
+        lambda players: None,
+    )
+
+    game = Game(
+        GraphData(),
+        2,
+        {
+            "ai_mode": "minimax",
+            "ai_time": 1,
+            "ai_minimax_depth": 2,
+            "num_ai_players": 1,
+        },
+        datas_factory=DatasFactory(),
+    )
+
+    game.game_data.current_player_order_list = 1
+    game.game_data.players = {
+        0: Player(0, "Player 0", "green"),
+        1: Player(1, "Player 1", "red", True),
+    }
+    game.game_data.players_order = [0, 1]
+    game.game_data.current_hand = "CRRF"
+    game.game_data.no_playable_tiles_remaining = False
+    game.game_data._end_game_scored = False
+
+    class FakeExpectimaxPlayer:
+        def __init__(
+            self,
+            game_state,
+            start_time,
+            max_time,
+            depth,
+            eval_name="",
+        ):
+            self.depth_max = depth
+
+        def search(
+            self,
+            game_state,
+            depth,
+            alpha,
+            beta,
+            player_to_max,
+            next_player,
+        ):
+            game_state.game_data.no_playable_tiles_remaining = True
+            game_state.game_data._end_game_scored = True
+            return 0.0, "CRRF/0N0"
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.ai_model.ExpectimaxPlayer",
+        FakeExpectimaxPlayer,
+    )
+    monkeypatch.setattr(game, "tick_blitz", lambda: False)
+    monkeypatch.setattr(game, "end_game", lambda: False)
+    monkeypatch.setattr(
+        game.blitz_manager,
+        "_ensure_current_player_playable",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        game.deck_manager,
+        "draw_tile",
+        lambda silent=True: "CRRF",
+    )
+
+    played_moves = []
+
+    def fake_play_move(move):
+        played_moves.append(move)
+        game.game_data.current_hand = None
+        game.game_data.current_player_order_list = 0
+        return True
+
+    monkeypatch.setattr(game, "play_move", fake_play_move)
+
+    game.play_ai_turn(game)
+
+    assert played_moves == ["CRRF/0N0"]
+    assert game.game_data.no_playable_tiles_remaining is False
+    assert game.game_data._end_game_scored is False
+
+
+def test_play_ai_turn_restores_end_game_flags_after_mcts_search(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "carcassonne.business_logic.game.game_data.r.shuffle",
+        lambda players: None,
+    )
+
+    game = Game(
+        GraphData(),
+        2,
+        {
+            "ai_mode": "mcts",
+            "ai_time": 1,
+            "num_ai_players": 1,
+        },
+        datas_factory=DatasFactory(),
+    )
+
+    game.game_data.current_player_order_list = 1
+    game.game_data.players = {
+        0: Player(0, "Player 0", "green"),
+        1: Player(1, "Player 1", "red", True),
+    }
+    game.game_data.players_order = [0, 1]
+    game.game_data.current_hand = "CRRF"
+    game.game_data.no_playable_tiles_remaining = False
+    game.game_data._end_game_scored = False
+
+    class FakeMCTSPlayer:
+        def __init__(self, game_state, start_time, max_time, eval_name=""):
+            pass
+
+        def mcts(self, game_state):
+            game_state.game_data.no_playable_tiles_remaining = True
+            game_state.game_data._end_game_scored = True
+            return "CRRF/0N0"
+
+    monkeypatch.setattr(
+        "carcassonne.business_logic.ai_model.MCTSPlayer",
+        FakeMCTSPlayer,
+    )
+    monkeypatch.setattr(game, "tick_blitz", lambda: False)
+    monkeypatch.setattr(game, "end_game", lambda: False)
+    monkeypatch.setattr(
+        game.blitz_manager,
+        "_ensure_current_player_playable",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        game.deck_manager,
+        "draw_tile",
+        lambda silent=True: "CRRF",
+    )
+
+    played_moves = []
+
+    def fake_play_move(move):
+        played_moves.append(move)
+        game.game_data.current_hand = None
+        game.game_data.current_player_order_list = 0
+        return True
+
+    monkeypatch.setattr(game, "play_move", fake_play_move)
+
+    game.play_ai_turn(game)
+
+    assert played_moves == ["CRRF/0N0"]
+    assert game.game_data.no_playable_tiles_remaining is False
+    assert game.game_data._end_game_scored is False
+
+
 def test_game_constructor_applies_seed_and_shuffle_before_auto_start(
     monkeypatch,
 ):

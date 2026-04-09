@@ -756,63 +756,92 @@ class Game(IGameService):
         if self.game_data.current_hand is None:
             self.end_game()
             return
+        search_hand_to_restore = self.game_data.current_hand
+        no_playable_tiles_to_restore = getattr(
+            self.game_data,
+            "no_playable_tiles_remaining",
+            None,
+        )
+        end_game_scored_to_restore = getattr(
+            self.game_data,
+            "_end_game_scored",
+            None,
+        )
         ai_time = self.get_game_configuration().get("ai_time")
         model = None
         move = None
         eval_score = None
-        if self.get_game_configuration().get("ai_mode") == "random":
-            model = RandomPlayer()
-            move = model.random_move(self.game_data.current_hand, game)
-        elif self.get_game_configuration().get("ai_mode") == "minimax":
-            start_time = time.time()
-            depth = self.get_game_configuration().get("ai_minimax_depth", 5)
-            eval_name = self.get_game_configuration().get(
-                "ai_minimax_scoring", "baseline"
-            )
-            model = ExpectimaxPlayer(
-                game,
-                start_time,
-                ai_time or 10.0,
-                depth or 5,
-                eval_name=eval_name,
-            )
-            eval_score, move = model.search(
-                game,
-                depth=model.depth_max,
-                alpha=float("-inf"),
-                beta=float("inf"),
-                player_to_max=ai_player.get_id(),
-                next_player=ai_player.get_id(),
-            )
-        elif self.get_game_configuration().get("ai_mode") == "iterative":
-            start_time = time.time()
-            depth = self.get_game_configuration().get("ai_minimax_depth", 5)
-            eval_name = self.get_game_configuration().get(
-                "ai_minimax_scoring", "baseline"
-            )
-            model = IterativeDeepeningPlayer(
-                game,
-                start_time,
-                ai_time or 10.0,
-                depth or 5,
-                eval_name=eval_name,
-            )
-            eval_score, move = model.search(
-                game,
-                alpha=float("-inf"),
-                beta=float("inf"),
-                player_to_max=ai_player.get_id(),
-                next_player=ai_player.get_id(),
-            )
-        elif self.get_game_configuration().get("ai_mode") == "mcts":
-            start_time = time.time()
-            eval_fn_name = self.get_game_configuration().get(
-                "ai_mcts_selection", "UCT"
-            )
-            model = MCTSPlayer(
-                game, start_time, ai_time or 10.0, eval_fn_name or "UCT"
-            )
-            move = model.mcts(game)
+        try:
+            if self.get_game_configuration().get("ai_mode") == "random":
+                model = RandomPlayer()
+                move = model.random_move(self.game_data.current_hand, game)
+            elif self.get_game_configuration().get("ai_mode") == "minimax":
+                start_time = time.time()
+                depth = self.get_game_configuration().get(
+                    "ai_minimax_depth", 5
+                )
+                eval_name = self.get_game_configuration().get(
+                    "ai_minimax_scoring", "baseline"
+                )
+                model = ExpectimaxPlayer(
+                    game,
+                    start_time,
+                    ai_time or 10.0,
+                    depth or 5,
+                    eval_name=eval_name,
+                )
+                eval_score, move = model.search(
+                    game,
+                    depth=model.depth_max,
+                    alpha=float("-inf"),
+                    beta=float("inf"),
+                    player_to_max=ai_player.get_id(),
+                    next_player=ai_player.get_id(),
+                )
+            elif self.get_game_configuration().get("ai_mode") == "iterative":
+                start_time = time.time()
+                depth = self.get_game_configuration().get(
+                    "ai_minimax_depth", 5
+                )
+                eval_name = self.get_game_configuration().get(
+                    "ai_minimax_scoring", "baseline"
+                )
+                model = IterativeDeepeningPlayer(
+                    game,
+                    start_time,
+                    ai_time or 10.0,
+                    depth or 5,
+                    eval_name=eval_name,
+                )
+                eval_score, move = model.search(
+                    game,
+                    alpha=float("-inf"),
+                    beta=float("inf"),
+                    player_to_max=ai_player.get_id(),
+                    next_player=ai_player.get_id(),
+                )
+            elif self.get_game_configuration().get("ai_mode") == "mcts":
+                start_time = time.time()
+                eval_fn_name = self.get_game_configuration().get(
+                    "ai_mcts_selection", "UCT"
+                )
+                model = MCTSPlayer(
+                    game,
+                    start_time,
+                    ai_time or 10.0,
+                    eval_fn_name or "UCT",
+                )
+                move = model.mcts(game)
+        finally:
+            # AI search explores hypothetical states. Ensure game-over flags
+            # and hand remain those from the real turn before applying move.
+            self.game_data.current_hand = search_hand_to_restore
+            if no_playable_tiles_to_restore is not None:
+                self.game_data.no_playable_tiles_remaining = (
+                    no_playable_tiles_to_restore
+                )
+            if end_game_scored_to_restore is not None:
+                self.game_data._end_game_scored = end_game_scored_to_restore
         if not move:
             print(
                 _("AI Player {player} has no legal move.").format(

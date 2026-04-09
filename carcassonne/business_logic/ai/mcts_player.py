@@ -352,7 +352,12 @@ class MCTSPlayer:
                     return counter
                 _discard_unplayable_tile(state, state.game_data.current_hand)
                 state.game_data.current_hand = None
-                drawn_tile = state.draw_tile(silent=True)
+                # Use DeckManager directly when available to avoid triggering
+                # real end-game side effects through Game.draw_tile().
+                if hasattr(state, "deck_manager"):
+                    drawn_tile = state.deck_manager.draw_tile(silent=True)
+                else:
+                    drawn_tile = state.draw_tile(silent=True)
                 if drawn_tile is None:
                     return counter
                 dead_hand_retries += 1
@@ -410,6 +415,16 @@ class MCTSPlayer:
         player_order_to_restore: int = (
             game_root.game_data.current_player_order_list
         )
+        no_playable_tiles_to_restore = getattr(
+            game_root.game_data,
+            "no_playable_tiles_remaining",
+            None,
+        )
+        end_game_scored_to_restore = getattr(
+            game_root.game_data,
+            "_end_game_scored",
+            None,
+        )
 
         score_to_restore: list[int] = [
             game_root.game_data.players[i].score.score
@@ -466,6 +481,14 @@ class MCTSPlayer:
             game_root.game_data.current_player_order_list = (
                 player_order_to_restore
             )
+            if no_playable_tiles_to_restore is not None:
+                game_root.game_data.no_playable_tiles_remaining = (
+                    no_playable_tiles_to_restore
+                )
+            if end_game_scored_to_restore is not None:
+                game_root.game_data._end_game_scored = (
+                    end_game_scored_to_restore
+                )
 
             game_root.river_manager.river_active = river_active_to_restore
             game_root.river_manager.river_previous_opposite_direction = (
@@ -506,6 +529,12 @@ class MCTSPlayer:
         game_root.game_data.deck.tiles = deck_to_restore.copy()
         game_root.game_data.deck.river_tiles = river_deck_to_restore.copy()
         game_root.game_data.current_player_order_list = player_order_to_restore
+        if no_playable_tiles_to_restore is not None:
+            game_root.game_data.no_playable_tiles_remaining = (
+                no_playable_tiles_to_restore
+            )
+        if end_game_scored_to_restore is not None:
+            game_root.game_data._end_game_scored = end_game_scored_to_restore
         game_root.river_manager.river_active = river_active_to_restore
         game_root.river_manager.river_previous_opposite_direction = (
             river_previous_direction_to_restore
