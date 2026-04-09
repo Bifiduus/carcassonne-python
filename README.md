@@ -96,7 +96,7 @@ python3 -m carcassonne --blitz --time 15
 Load a saved game:
 
 ```bash
-python3 -m carcassonne --file save.txt
+python3 -m carcassonne save.txt
 ```
 
 Run contest mode on a saved position:
