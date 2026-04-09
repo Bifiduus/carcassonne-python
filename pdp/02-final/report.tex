@@ -231,12 +231,12 @@ encapsule l'ensemble des informations associées à une tuile posée :
   \begin{minted}[frame=single]{python}
 @dataclass
 class Vertex:
-    id: int                              # Identifiant unique de la tuile
-    name: str                            # Code de la tuile (ex: "CRFR", "FSRS/m")
-    orientation: int                     # Rotation (0-3)
-    position: tuple[int, int]            # Coordonnées (x, y) sur le plateau
-    neighbors: Dict[int, int]            # Arêtes vers les tuiles adjacentes
-    matrix: list[list]                   # Matrice 3x3 des terrains orientée
+    id: int                          # Identifiant unique de la tuile
+    name: str                        # Code de la tuile (ex: "CRFR", "FSRS/m")
+    orientation: int                 # Rotation (0-3)
+    position: tuple[int, int]        # Coordonnées (x, y) sur le plateau
+    neighbors: Dict[int, int]        # Arêtes vers les tuiles adjacentes
+    matrix: list[list]               # Matrice 3x3 des terrains orientée
 \end{minted}
 }
 
@@ -608,7 +608,8 @@ fonction choix_coup(etat, temps_max):
     meilleur_coup = null
     debut = temps()
     TANT_QUE temps() - debut < temps_max FAIRE
-        meilleur_coup =  expectimax_star25(etat, profondeur, -infinite, +infinite, TRUE)
+        meilleur_coup =  expectimax_star25(etat, 
+        profondeur, -infinite, +infinite, TRUE)
         profondeur += 1
     FIN TANT_QUE
     RETOURNER meilleur_coup
@@ -763,7 +764,7 @@ Les dépendances entre modules sont strictement unidirectionnelles (figure \ref{
 \end{figure}
 
 Ainsi, le module Présentation dépend uniquement du module Business 
-Logic via l'interface \texttt{IBusinessLogicFactory}, qui permet 
+Logic via l'interface \texttt{IBusiness \allowbreak LogicFactory}, qui permet 
 d'instancier les objets du module Business Logic et d'en appeler 
 les méthodes sans que la Présentation n'accède directement aux 
 données. De manière analogue, le module Business Logic dépend 
@@ -836,11 +837,11 @@ fonction mcts (etat, t0, budget, racine)
         noeud.gain_total = noeud.gain_total + recompense
         noeud = noeud.parent
     FIN TANT QUE
-FIN TANT QUE
-// Choix final: meilleur enfant de la racine (souvent max visites)
-meilleur = argmax_enfant(racine, critere = visites)
-RETOURNER meilleur.action
-  \end{minted}
+  FIN TANT QUE
+  // Choix final: meilleur enfant de la racine (souvent max visites)
+  meilleur = argmax_enfant(racine, critere = visites)
+  RETOURNER meilleur.action
+\end{minted}
 }
 
 Les fonctions \texttt{play\_move\_for\_ai} et \texttt{undo\_for\_ai} permettent de simuler des coups sans altérer définitivement l'état réel du jeu. Lorsqu'un coup est joué via \texttt{play\_move\_for\_ai}, l'état courant (scores, meeples, structures du graphe, etc.) est sauvegardé avant application puis stocké dans une pile. À l'inverse, \texttt{undo\_for\_ai} restaure précisément cet état en annulant le dernier coup joué. Ce mécanisme garantit que chaque simulation reste indépendante et n'impacte jamais la partie réelle.
