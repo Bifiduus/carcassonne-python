@@ -11,7 +11,6 @@ from carcassonne.interfaces.i_business_logic_factory import (
 @lru_cache(maxsize=1)
 def _build_registry() -> dict[str, type[Any]]:
     """Create a class-name to class-object registry for business logic."""
-    from carcassonne.business_logic.ai.ai_manager import AIModelManager
     from carcassonne.business_logic.ai.expectimax_player import (
         ExpectimaxPlayer,
         IterativeDeepeningPlayer,
@@ -51,7 +50,6 @@ def _build_registry() -> dict[str, type[Any]]:
     from carcassonne.business_logic.server import Server
 
     return {
-        "AIModelManager": AIModelManager,
         "BlitzManager": BlitzManager,
         "Board": Board,
         "Client": Client,
