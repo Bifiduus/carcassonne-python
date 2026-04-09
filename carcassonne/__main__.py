@@ -30,6 +30,8 @@ from carcassonne.interfaces.i_server_service import IServerService
 
 
 class ArgumentParser(argparse.ArgumentParser):
+    """Argument parser that prints localized errors with full help text."""
+
     def error(self, message: str):  # pylint: disable=arguments-differ
         # Print error + help to stderr and exit with code 1.
         print(f"{_('error')}: {message}", file=sys.stderr)
@@ -42,6 +44,12 @@ ALREADY_SHUTTING_DOWN: bool = False
 
 def shutdown_all(signum, frame, server_service: IServerService,
                  client_service: IClientService):
+    """Best-effort shutdown hook for SIGINT/SIGTERM.
+
+    Ensures both client and server services are asked to stop once, even if
+    multiple signals are received in a short interval.
+    """
+    del frame
     global ALREADY_SHUTTING_DOWN
     print(
         _(
@@ -75,6 +83,8 @@ def main() -> int:
     """
     Starting point of the program.
     """
+    # Configure translations before parsing arguments so all CLI help/error
+    # messages are emitted in the selected language.
     selected_language = configure_i18n()
 
     parser = ArgumentParser()
@@ -253,6 +263,7 @@ def main() -> int:
             "(contest mode is non-interactive)"
         )
 
+    # Runtime overrides merged into persistent configuration values.
     config_overrides = {}
     # CLI contract: blitz mode is enabled only when -b/--blitz is passed.
     config_overrides["blitz"] = bool(args.blitz)
@@ -265,7 +276,7 @@ def main() -> int:
         config_overrides["time"] = args.time if args.time is not None else 30
     if args.contest and file_to_load:
         config_overrides["contest_file"] = file_to_load
-    # map -p/--players to num_ai_players for AI settings
+    # Map total players to configured AI players (player 0 remains human).
     if args.players and 1 <= args.players <= 5:
         config_overrides["num_ai_players"] = args.players - 1
     if args.time is not None and not args.blitz:
@@ -304,6 +315,7 @@ def main() -> int:
         print(_("Welcome to Carcassonne"))
         print(_("Type 'help' to see the list of commands.") + "\n")
 
+    # Build the core service graph (factories -> game/server/client).
     business_logic_factory: IBusinessLogicFactory = BusinessLogicFactory()
     datas_factory: IDatasFactory = DatasFactory()
 
@@ -328,7 +340,7 @@ def main() -> int:
     )
     client_service: IClientService = Client(game_repo, server_service)
 
-    # Register the global signal handler once
+    # Register one global shutdown handler for both SIGTERM and SIGINT.
     handler = partial(
         shutdown_all,
         server_service=server_service,
@@ -346,7 +358,7 @@ def main() -> int:
         client_service.list_available_servers()
         client_service.join_server(args.server)
 
-    # mettre en place client_service dans le reste
+    # Keep game runtime settings in sync with parsed CLI options.
     game.game_data.shuffle_algo = args.shuffle
     game.game_data.default_seed = args.seed
     if args.version:
@@ -382,8 +394,6 @@ def main() -> int:
     else:
         game_cli = GameCLI(game, server_service, client_service)
         game_cli.run()
-
-    # Call a function to start the game
 
     return 0
 

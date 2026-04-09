@@ -15,6 +15,7 @@ TEXT_DOMAIN = "carcassonne"
 DEFAULT_LANGUAGE = "en"
 SUPPORTED_LANGUAGES = frozenset({"en", "fr"})
 LOCALE_DIR = Path(__file__).resolve().parent / "locale"
+# Preferred system locale candidates per app language, in fallback order.
 SYSTEM_LOCALE_CANDIDATES = {
     "en": ("en_US.UTF-8", "en_US.utf8", "C.UTF-8", "C.utf8", "C"),
     "fr": ("fr_FR.UTF-8", "fr_FR.utf8", "fr_FR"),
@@ -33,10 +34,13 @@ class POTranslations(NullTranslations):
 
     @staticmethod
     def _parse_catalog(po_file: Path) -> dict[str, str]:
+        """Parse a gettext `.po` file into a msgid -> msgstr dictionary."""
         catalog: dict[str, str] = {}
+        # ``state`` tracks whether multiline continuations apply to msgid/msgstr.
         state: str | None = None
         current_msgid: str | None = None
         current_msgstr: str | None = None
+        # Fuzzy entries are intentionally ignored to avoid half-reviewed text.
         is_fuzzy = False
 
         def flush_entry() -> None:
@@ -201,6 +205,7 @@ def prepare_gui_locale(
 
 
 def _load_translation(language: str) -> NullTranslations:
+    """Load compiled gettext catalog, fallback to plain `.po`, then null."""
     try:
         return translation(
             TEXT_DOMAIN,
@@ -239,6 +244,7 @@ def configure_i18n(
                 file=err_stream,
             )
 
+    # Install translation object globally and expose ``_`` via builtins.
     _TRANSLATION = _load_translation(selected_language)
     CURRENT_LANGUAGE = selected_language
     builtins.__dict__["_"] = gettext
