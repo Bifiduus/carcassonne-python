@@ -214,10 +214,13 @@ class Client(IClientService):
                     message_content, server)
 
     def list_available_servers(self, timeout: float = 5.0) -> dict[str, int]:
-        """
-        Listen for available servers via UDP broadcasts for a specified
-          timeout period.
-        Returns a list of server names that responded within the timeout.
+        """Listen for available servers announced over UDP broadcast.
+
+        Args:
+            timeout: Maximum number of seconds to wait for replies.
+
+        Returns:
+            Mapping of server addresses to their advertised TCP port.
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
