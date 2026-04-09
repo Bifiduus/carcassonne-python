@@ -48,23 +48,52 @@ COMMANDS = [
     "back",
 ]
 
+# Stores the last ambiguous query handled by completer so we can emulate
+# "first TAB beeps, second TAB lists candidates" behavior.
+_LAST_AMBIGUOUS_QUERY = ""
+
 
 class GameFinishedInterrupt(Exception):
     """Internal control-flow exception used to stop a blocking prompt."""
 
 
 def completer(texte, state):
+    global _LAST_AMBIGUOUS_QUERY
 
     # filtrer les commandes qui commencent par text
     line = readline.get_line_buffer()
     prefix = line[:-len(texte)] if texte else line
-    matches = [cmd for cmd in COMMANDS if cmd.startswith(prefix + texte)]
-    if state < len(matches):
-        return matches[state][len(prefix):]
-    else:
-        if state == 0 and len(matches) == 0:
-            print("\a", end="")  # beep when no commands match
+    query = prefix + texte
+    matches = [cmd for cmd in COMMANDS if cmd.startswith(query)]
+
+    if len(matches) == 0:
+        if state == 0:
+            print("\a", end="", flush=True)
+        _LAST_AMBIGUOUS_QUERY = ""
         return None
+
+    if len(matches) == 1:
+        _LAST_AMBIGUOUS_QUERY = ""
+        if state == 0:
+            return matches[0][len(prefix):]
+        return None
+
+    # Ambiguous completion: first TAB beeps, second TAB lists candidates.
+    if state == 0:
+        if _LAST_AMBIGUOUS_QUERY != query:
+            _LAST_AMBIGUOUS_QUERY = query
+            print("\a", end="", flush=True)
+            # Keep the current input unchanged.
+            return ""
+
+        print()
+        for candidate in matches:
+            print(candidate)
+        # Keep query so following TAB presses continue listing choices
+        # without beeping again, until input changes.
+        return ""
+
+    return None
 
 
 class GameCLI:

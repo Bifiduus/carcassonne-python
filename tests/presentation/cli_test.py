@@ -75,8 +75,13 @@ def test_cli_init_ignores_missing_history_file() -> None:
 
 
 def test_completer_and_cli_helpers_cover_basic_cases() -> None:
-    with patch.object(cli_module.readline, "get_line_buffer", return_value="sh"):
-        assert cli_module.completer("sh", 0) == "shuffle"
+    cli_module._LAST_AMBIGUOUS_QUERY = ""
+    with patch.object(
+        cli_module.readline,
+        "get_line_buffer",
+        return_value="shuffle",
+    ):
+        assert cli_module.completer("shuffle", 0) == "shuffle"
     with patch.object(cli_module.readline, "get_line_buffer", return_value="zzz"):
         assert cli_module.completer("zzz", 0) is None
 
@@ -88,6 +93,28 @@ def test_completer_and_cli_helpers_cover_basic_cases() -> None:
 
     game.get_current_player.return_value = DummyPlayer(2)
     assert cli._local_player_can_act() is False
+
+
+def test_completer_ambiguous_input_beeps_then_lists_matches(capsys) -> None:
+    cli_module._LAST_AMBIGUOUS_QUERY = ""
+
+    with patch.object(cli_module.readline, "get_line_buffer", return_value="h"):
+        assert cli_module.completer("h", 0) == ""
+    first_tab = capsys.readouterr().out
+    assert "\a" in first_tab
+
+    with patch.object(cli_module.readline, "get_line_buffer", return_value="h"):
+        assert cli_module.completer("h", 0) == ""
+    second_tab = capsys.readouterr().out
+    assert "help" in second_tab
+    assert "hint" in second_tab
+
+    with patch.object(cli_module.readline, "get_line_buffer", return_value="h"):
+        assert cli_module.completer("h", 0) == ""
+    third_tab = capsys.readouterr().out
+    assert "\a" not in third_tab
+    assert "help" in third_tab
+    assert "hint" in third_tab
 
 
 def test_cli_handle_command_dispatches_to_handlers_and_reports_unknown(capsys) -> None:
